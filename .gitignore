@@ -1,0 +1,71 @@
+# =========================
+# OS / Editor
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# =========================
+# Node
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Environment files (SECRETS)
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Build output
+# =========================
+dist/
+build/
+out/
+.next/
+.vite/
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Cache
+# =========================
+.cache/
+.eslintcache
+.turbo/
+
+# =========================
+# Backend specific
+# =========================
+apps/backend/prisma/dev.db
+apps/backend/prisma/*.db
+apps/backend/prisma/*.db-journal
+
+# =========================
+# Frontend specific
+# =========================
+apps/frontend/dist/
+apps/frontend/.vite/
+
+# =========================
+# Tests / Coverage
+# =========================
+coverage/
+
+# =========================
+# Misc
+# =========================
+*.pem
+*.key
+*.crt
