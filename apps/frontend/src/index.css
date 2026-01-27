@@ -130,3 +130,21 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Company logo scrolling animation */
+@keyframes scroll-seamless {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-75%);
+  }
+}
+
+.animate-scroll-seamless {
+  animation: scroll-seamless 60s linear infinite;
+}
+
+.animate-scroll-seamless:hover {
+  animation-play-state: paused;
+}

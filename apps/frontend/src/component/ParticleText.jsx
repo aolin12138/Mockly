@@ -19,15 +19,18 @@ export default function ParticleText({ scrollProgress = 0 }) {
     let rotationY = 0; // Horizontal rotation
     let rotationX = 0.3; // Tilt angle
     
-    // Load company logos from Clearbit Logo API (free, no auth required)
+    // Load company logos from Simple Icons CDN (free, high-quality SVGs)
     const logoImages = {};
     const logoUrls = {
-      'GOOGLE': 'https://logo.clearbit.com/google.com',
-      'APPLE': 'https://logo.clearbit.com/apple.com',
-      'MICROSOFT': 'https://logo.clearbit.com/microsoft.com',
-      'AMAZON': 'https://logo.clearbit.com/amazon.com',
-      'META': 'https://logo.clearbit.com/meta.com',
-      'NETFLIX': 'https://logo.clearbit.com/netflix.com'
+      'APPLE': 'https://cdn.simpleicons.org/apple/white',
+      'GOOGLE': 'https://cdn.simpleicons.org/google',
+      'META': 'https://cdn.simpleicons.org/meta',
+      'NVIDIA': 'https://cdn.simpleicons.org/nvidia',
+      'TESLA': 'https://cdn.simpleicons.org/tesla/white',
+      'NETFLIX': 'https://cdn.simpleicons.org/netflix',
+      'SPOTIFY': 'https://cdn.simpleicons.org/spotify',
+      'UBER': 'https://cdn.simpleicons.org/uber/white',
+      'AIRBNB': 'https://cdn.simpleicons.org/airbnb'
     };
     
     // Create high-quality fallback logos with proper branding
@@ -38,54 +41,34 @@ export default function ParticleText({ scrollProgress = 0 }) {
       const ctx = canvas.getContext('2d');
       
       const logos = {
-        GOOGLE: {
-          draw: (ctx) => {
-            // Google "G" logo
-            ctx.fillStyle = '#4285F4';
-            ctx.fillRect(0, 0, 200, 200);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 140px "Product Sans", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('G', 100, 105);
-          }
-        },
         APPLE: {
           draw: (ctx) => {
-            // Apple logo silhouette
             ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, 200, 200);
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 140px "SF Pro", Arial, sans-serif';
+            ctx.font = 'bold 140px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('', 100, 105);
           }
         },
-        MICROSOFT: {
+        GOOGLE: {
           draw: (ctx) => {
-            // Microsoft four squares
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#4285F4';
             ctx.fillRect(0, 0, 200, 200);
-            const colors = ['#F25022', '#7FBA00', '#00A4EF', '#FFB900'];
-            const size = 45;
-            const gap = 10;
-            [
-              [50, 50, colors[0]], [105, 50, colors[1]],
-              [50, 105, colors[2]], [105, 105, colors[3]]
-            ].forEach(([x, y, color]) => {
-              ctx.fillStyle = color;
-              ctx.fillRect(x, y, size, size);
-            });
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 140px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('G', 100, 105);
           }
         },
         AMAZON: {
           draw: (ctx) => {
-            // Amazon smile
             ctx.fillStyle = '#FF9900';
             ctx.fillRect(0, 0, 200, 200);
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 100px Arial, sans-serif';
+            ctx.font = 'bold 140px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('a', 100, 105);
@@ -93,7 +76,6 @@ export default function ParticleText({ scrollProgress = 0 }) {
         },
         META: {
           draw: (ctx) => {
-            // Meta infinity symbol
             ctx.fillStyle = '#0668E1';
             ctx.fillRect(0, 0, 200, 200);
             ctx.fillStyle = '#ffffff';
@@ -103,16 +85,70 @@ export default function ParticleText({ scrollProgress = 0 }) {
             ctx.fillText('M', 100, 105);
           }
         },
-        NETFLIX: {
+        NVIDIA: {
           draw: (ctx) => {
-            // Netflix N
-            ctx.fillStyle = '#E50914';
+            ctx.fillStyle = '#76B900';
             ctx.fillRect(0, 0, 200, 200);
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 140px "Bebas Neue", sans-serif';
+            ctx.font = 'bold 140px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('N', 100, 105);
+          }
+        },
+        TESLA: {
+          draw: (ctx) => {
+            ctx.fillStyle = '#CC0000';
+            ctx.fillRect(0, 0, 200, 200);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 140px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('T', 100, 105);
+          }
+        },
+        NETFLIX: {
+          draw: (ctx) => {
+            ctx.fillStyle = '#E50914';
+            ctx.fillRect(0, 0, 200, 200);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 140px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('N', 100, 105);
+          }
+        },
+        SPOTIFY: {
+          draw: (ctx) => {
+            ctx.fillStyle = '#1DB954';
+            ctx.fillRect(0, 0, 200, 200);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 140px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('S', 100, 105);
+          }
+        },
+        UBER: {
+          draw: (ctx) => {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, 200, 200);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 140px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('U', 100, 105);
+          }
+        },
+        AIRBNB: {
+          draw: (ctx) => {
+            ctx.fillStyle = '#FF5A5F';
+            ctx.fillRect(0, 0, 200, 200);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 140px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('A', 100, 105);
           }
         }
       };
@@ -142,61 +178,106 @@ export default function ParticleText({ scrollProgress = 0 }) {
       img.src = url;
     });
     
-    // Company logos orbiting around Earth with random paths
+    // Company logos orbiting around Earth with balanced atomic-style distribution
     const companies = [
       { 
-        name: 'GOOGLE', 
-        angleY: 0, 
-        angleZ: Math.random() * Math.PI * 2,
-        orbitRadius: earthRadius * 1.15, 
-        speedY: 0.004,
-        speedZ: 0.003,
-        inclination: Math.random() * Math.PI * 0.5
-      },
-      { 
         name: 'APPLE', 
-        angleY: Math.PI / 3, 
-        angleZ: Math.random() * Math.PI * 2,
+        angleY: 0, 
+        angleZ: 0,
         orbitRadius: earthRadius * 1.18, 
         speedY: 0.005,
-        speedZ: 0.0035,
-        inclination: Math.random() * Math.PI * 0.5
+        speedZ: 0.003,
+        inclination: Math.PI * 0.15,
+        trail: [],
+        color: '160, 160, 160' // Apple gray
       },
       { 
-        name: 'MICROSOFT', 
-        angleY: Math.PI * 2 / 3, 
-        angleZ: Math.random() * Math.PI * 2,
-        orbitRadius: earthRadius * 1.16, 
-        speedY: 0.0045,
-        speedZ: 0.004,
-        inclination: Math.random() * Math.PI * 0.5
-      },
-      { 
-        name: 'AMAZON', 
-        angleY: Math.PI, 
-        angleZ: Math.random() * Math.PI * 2,
-        orbitRadius: earthRadius * 1.2, 
-        speedY: 0.0055,
-        speedZ: 0.0025,
-        inclination: Math.random() * Math.PI * 0.5
+        name: 'GOOGLE', 
+        angleY: Math.PI * 2 / 9, 
+        angleZ: Math.PI * 0.4,
+        orbitRadius: earthRadius * 1.18, 
+        speedY: 0.005,
+        speedZ: 0.003,
+        inclination: Math.PI * 0.35,
+        trail: [],
+        color: '66, 133, 244' // Google blue
       },
       { 
         name: 'META', 
-        angleY: Math.PI * 4 / 3, 
-        angleZ: Math.random() * Math.PI * 2,
-        orbitRadius: earthRadius * 1.17, 
-        speedY: 0.0048,
-        speedZ: 0.0038,
-        inclination: Math.random() * Math.PI * 0.5
+        angleY: Math.PI * 4 / 9, 
+        angleZ: Math.PI * 0.8,
+        orbitRadius: earthRadius * 1.18, 
+        speedY: 0.005,
+        speedZ: 0.003,
+        inclination: Math.PI * 0.05,
+        trail: [],
+        color: '6, 104, 225' // Meta blue
+      },
+      { 
+        name: 'NVIDIA', 
+        angleY: Math.PI * 6 / 9, 
+        angleZ: Math.PI * 1.2,
+        orbitRadius: earthRadius * 1.18, 
+        speedY: 0.005,
+        speedZ: 0.003,
+        inclination: Math.PI * 0.45,
+        trail: [],
+        color: '118, 185, 0' // NVIDIA green
+      },
+      { 
+        name: 'TESLA', 
+        angleY: Math.PI * 8 / 9, 
+        angleZ: Math.PI * 1.6,
+        orbitRadius: earthRadius * 1.18, 
+        speedY: 0.005,
+        speedZ: 0.003,
+        inclination: Math.PI * 0.25,
+        trail: [],
+        color: '204, 0, 0' // Tesla red
       },
       { 
         name: 'NETFLIX', 
-        angleY: Math.PI * 5 / 3, 
-        angleZ: Math.random() * Math.PI * 2,
-        orbitRadius: earthRadius * 1.22, 
-        speedY: 0.0052,
-        speedZ: 0.0032,
-        inclination: Math.random() * Math.PI * 0.5
+        angleY: Math.PI * 10 / 9, 
+        angleZ: Math.PI * 0.2,
+        orbitRadius: earthRadius * 1.18, 
+        speedY: 0.005,
+        speedZ: 0.003,
+        inclination: Math.PI * 0.4,
+        trail: [],
+        color: '229, 9, 20' // Netflix red
+      },
+      { 
+        name: 'SPOTIFY', 
+        angleY: Math.PI * 12 / 9, 
+        angleZ: Math.PI * 0.6,
+        orbitRadius: earthRadius * 1.18, 
+        speedY: 0.005,
+        speedZ: 0.003,
+        inclination: Math.PI * 0.1,
+        trail: [],
+        color: '29, 185, 84' // Spotify green
+      },
+      { 
+        name: 'UBER', 
+        angleY: Math.PI * 14 / 9, 
+        angleZ: Math.PI * 1.0,
+        orbitRadius: earthRadius * 1.18, 
+        speedY: 0.005,
+        speedZ: 0.003,
+        inclination: Math.PI * 0.3,
+        trail: [],
+        color: '0, 0, 0' // Uber black
+      },
+      { 
+        name: 'AIRBNB', 
+        angleY: Math.PI * 16 / 9, 
+        angleZ: Math.PI * 1.4,
+        orbitRadius: earthRadius * 1.18, 
+        speedY: 0.005,
+        speedZ: 0.003,
+        inclination: Math.PI * 0.2,
+        trail: [],
+        color: '255, 90, 95' // Airbnb pink
       },
     ];
     
@@ -209,12 +290,12 @@ export default function ParticleText({ scrollProgress = 0 }) {
       width = canvas.offsetWidth;
       height = canvas.offsetHeight;
       centerX = width / 2;
-      centerY = height * 0.35;
+      centerY = height * 0.42;
       earthRadius = Math.min(width, height) * 0.22;
       
       // Update company orbit radii
-      companies.forEach((company, i) => {
-        company.orbitRadius = earthRadius * [1.15, 1.18, 1.16, 1.2, 1.17, 1.22][i];
+      companies.forEach((company) => {
+        company.orbitRadius = earthRadius * 1.18;
       });
       
       // Regenerate text particles with new dimensions
@@ -257,7 +338,7 @@ export default function ParticleText({ scrollProgress = 0 }) {
     
     // Generate sphere particles
     const earthParticles = [];
-    const particleCount = 1200;
+    const particleCount = 3000;
     for (let i = 0; i < particleCount; i++) {
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
@@ -304,7 +385,7 @@ export default function ParticleText({ scrollProgress = 0 }) {
       offCtx.fillStyle = 'white';
       offCtx.textAlign = 'center';
       offCtx.textBaseline = 'middle';
-      offCtx.fillText('MOCKLY', width / 2, height * 0.75);
+      offCtx.fillText('MOCKLY', width / 2, height * 0.85);
       
       // Sample pixels to create text particles
       const imageData = offCtx.getImageData(0, 0, width, height);
@@ -337,10 +418,10 @@ export default function ParticleText({ scrollProgress = 0 }) {
     let mouseInfluence = 0;
     
     // Physics parameters for text particles
-    const homeStrength = 0.008;
+    const homeStrength = 0.003;
     const damping = 0.92;
     const maxSpeed = 8;
-    const influenceRadius = 120;
+    const influenceRadius = 60;
     const mouseStrength = 0.006;
     
     const handleMouseMove = (e) => {
@@ -399,8 +480,8 @@ export default function ParticleText({ scrollProgress = 0 }) {
           
           const rotated = rotate3D(x, y, z, rotationX, rotationY);
           
-          // Different colors for land and ocean
-          const color = particle.isLand ? '#90EE90' : '#4A90E2';
+          // Different colors for land and ocean - more vibrant
+          const color = particle.isLand ? '#52D452' : '#2E7DD2';
           const size = particle.isLand ? 2 : 1.5;
           
           draw3DPoint(rotated.x, rotated.y, rotated.z, size, color);
@@ -412,7 +493,7 @@ export default function ParticleText({ scrollProgress = 0 }) {
       // Companies fade out earlier (invisible at 60% scroll)
       const companyOpacity = Math.max(0, 1 - (progress * 1.66));
       
-      // Draw connections and company logos
+      // Draw company logos with trails
       if (companyOpacity > 0.01) {
         ctx.save();
         ctx.globalAlpha = companyOpacity;
@@ -430,28 +511,55 @@ export default function ParticleText({ scrollProgress = 0 }) {
           // Apply Earth's rotation to make orbit relative to Earth
           const rotated = rotate3D(x, y, z, rotationX, rotationY);
           
-          // Calculate screen position and scale
+          // Calculate screen position and scale for logo (with expansion)
           const scale = 1 / (1 + rotated.z * 0.003);
           const screenX = centerX + rotated.x * scale;
           const screenY = centerY + rotated.y * scale;
           
-          // Find and draw connections to nearest Earth particles
-          if (rotated.z > -currentEarthRadius * 2 && scale > 0) {
-            const nearestParticles = findNearestParticles(rotated, 5);
+          // Calculate trail position without expansion (fixed orbit)
+          const trailRadius = company.orbitRadius; // Use original orbit radius
+          const trailX = trailRadius * Math.cos(company.angleY);
+          const trailY = trailRadius * Math.sin(company.angleY) * Math.sin(company.inclination);
+          const trailZ = trailRadius * Math.sin(company.angleY) * Math.cos(company.inclination);
+          const trailRotated = rotate3D(trailX, trailY, trailZ, rotationX, rotationY);
+          const trailScale = 1 / (1 + trailRotated.z * 0.003);
+          const trailScreenX = centerX + trailRotated.x * trailScale;
+          const trailScreenY = centerY + trailRotated.y * trailScale;
+          
+          // Add trail position (without expansion)
+          company.trail.push({ x: trailScreenX, y: trailScreenY, scale: trailScale });
+          
+          // Keep trail length limited (25 points for longer trails)
+          if (company.trail.length > 25) {
+            company.trail.shift();
+          }
+          
+          // Draw trail
+          if (company.trail.length > 1) {
+            ctx.lineWidth = 3 * scale;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
             
-            ctx.strokeStyle = `rgba(100, 150, 255, ${0.2 * scale})`;
-            ctx.lineWidth = 0.5;
-            
-            nearestParticles.forEach(({ rotated: pRotated }) => {
-              const pScale = 1 / (1 + pRotated.z * 0.003);
-              const pScreenX = centerX + pRotated.x * pScale;
-              const pScreenY = centerY + pRotated.y * pScale;
-              
-              ctx.beginPath();
-              ctx.moveTo(screenX, screenY);
-              ctx.lineTo(pScreenX, pScreenY);
-              ctx.stroke();
+            ctx.beginPath();
+            company.trail.forEach((point, i) => {
+              if (i === 0) {
+                ctx.moveTo(point.x, point.y);
+              } else {
+                ctx.lineTo(point.x, point.y);
+              }
             });
+            
+            // Gradient effect on trail with brand color
+            const gradient = ctx.createLinearGradient(
+              company.trail[0].x, company.trail[0].y,
+              screenX, screenY
+            );
+            gradient.addColorStop(0, `rgba(${company.color}, 0)`);
+            gradient.addColorStop(0.5, `rgba(${company.color}, 0.6)`);
+            gradient.addColorStop(1, `rgba(${company.color}, 0.9)`);
+            
+            ctx.strokeStyle = gradient;
+            ctx.stroke();
           }
           
           // Draw logo if in front and loaded
