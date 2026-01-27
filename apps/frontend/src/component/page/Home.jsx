@@ -1,47 +1,70 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import ParticleText from '../ParticleText';
 
 const Home = () => {
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Calculate scroll progress from 0 to 1 based on hero height (80vh)
+      const scrolled = window.scrollY;
+      const maxScroll = window.innerHeight * 0.8; // Complete transition after 80vh
+      const progress = Math.min(scrolled / maxScroll, 1);
+      setScrollProgress(progress);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Calculate opacity for hero text (fade out)
+  const textOpacity = 1 - scrollProgress * 1.5; // Fade faster
+  const textTransform = `translateY(${scrollProgress * -50}px)`; // Move up slightly
+
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header />
-      
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen flex items-center">
-        {/* Particle Background */}
-        <div className="absolute inset-0 w-full h-full pointer-events-none">
-          <ParticleText />
-        </div>
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 pointer-events-none">
-          <div className="text-center max-w-4xl mx-auto pointer-events-auto">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-              Ace Your Next
-              <span className="text-blue-400"> Interview</span>
-            </h1>
-            <p className="text-xl sm:text-2xl text-slate-300 mb-10 leading-relaxed">
-              Practice behavioral and technical interviews with AI-powered feedback.
-              Get ready for your dream job at top companies.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/register"
-                className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition duration-200"
-              >
-                Get Started Free
-              </Link>
-              <Link
-                to="/login"
-                className="px-8 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white text-lg font-semibold rounded-lg border-2 border-white/30 hover:border-white/50 transition duration-200"
-              >
-                Sign In
-              </Link>
+      {/* Fixed Hero Section */}
+      <div className="fixed inset-0 z-0" style={{ height: '80vh' }}>
+        <Header />
+        <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 h-full flex items-center">
+          {/* Particle Background - receives scroll progress */}
+          <div className="absolute inset-0 w-full h-full pointer-events-none">
+            <ParticleText scrollProgress={scrollProgress} />
+          </div>
+          
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pointer-events-none">
+            <div 
+              className="text-center max-w-4xl mx-auto pointer-events-auto transition-all duration-300"
+              style={{ 
+                opacity: textOpacity,
+                transform: textTransform
+              }}
+            >
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
+                Ace Your Next
+                <span className="text-blue-400"> Interview</span>
+              </h1>
+              <p className="text-lg sm:text-xl text-slate-300 mb-8 leading-relaxed">
+                Practice behavioral and technical interviews with AI-powered feedback.
+                Get ready for your dream job at top companies.
+              </p>
+              <div className="flex justify-center">
+                <Link
+                  to="/register"
+                  className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition duration-200"
+                >
+                  Get Started Free
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
+
+      {/* Scrolling Content - positioned to scroll over fixed hero */}
+      <div className="relative z-10" style={{ marginTop: '80vh' }}>
 
       {/* Features Section */}
       <section className="py-20 bg-white">
@@ -130,6 +153,7 @@ const Home = () => {
           </p>
         </div>
       </footer>
+      </div>
     </div>
   );
 };
