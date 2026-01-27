@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Header from './component/page/Header';
 
 import behaviourIcon from './assets/behaviour.png';
 import technicalIcon from './assets/technical.png';
@@ -12,6 +13,15 @@ import metaIcon from './assets/meta.png';
 import mailIcon from './assets/mail.png';
 
 const App = () => {
+  const navigate = useNavigate();
+
+  // Check if user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+    }
+  }, [navigate]);
   // Initialise from localStorage if available
   const [company, setCompany] = useState(
     () => (typeof window !== 'undefined' && localStorage.getItem('selectedCompany')) || null
@@ -30,8 +40,6 @@ const App = () => {
       return null;
     }
   });
-
-  const navigate = useNavigate();
 
   const ready = Boolean(company) && interviewType;
 
@@ -71,6 +79,8 @@ const App = () => {
 
   return (
     <div className='min-h-screen text-slate-900 flex flex-col' style={backgroundStyle}>
+      <Header />
+      
       {/* Hero section */}
       <section className='w-full bg-slate-50'>
         <div className='mx-auto flex max-w-5xl flex-col items-center px-4 pt-28 pb-24 text-center md:pt-32 md:pb-32'>
