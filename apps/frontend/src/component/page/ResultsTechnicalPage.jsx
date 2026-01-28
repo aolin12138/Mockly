@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Waveform } from '../ui/waveform';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LoadingPage } from '../LoadingPage';
+import { LoadingPage } from './LoadingPage';
 import { SAMPLE_FEEDBACK } from './constants';
 
 // For results, go via our local proxy instead of hitting n8n directly.
