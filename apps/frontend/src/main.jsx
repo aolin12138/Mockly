@@ -6,6 +6,7 @@ import Home from './component/page/Home';
 import Login from './component/page/Login';
 import Register from './component/page/Register';
 import Profile from './component/page/Profile';
+import Dashboard from './component/page/Dashboard';
 import App from './App';
 import TechnicalInterviewPage from './component/page/TechnicalInterviewPage';
 import BehavioralInterviewPage from './component/page/BehaviouralInterviewPage';
@@ -32,7 +33,8 @@ root.render(
           <Route path='/login' element={<Login />} />
           <Route path='/register' element={<Register />} />
           <Route path='/profile' element={<Profile />} />
-          <Route path='/dashboard' element={<App />} />
+          <Route path='/dashboard' element={<Dashboard />} />
+          <Route path='/setup' element={<App />} />
           <Route path='/technical' element={<TechnicalInterviewPage />} />
           <Route path='/behavioural' element={<BehavioralInterviewPage />} />
           <Route path='/results' element={<ResultsPage />} />

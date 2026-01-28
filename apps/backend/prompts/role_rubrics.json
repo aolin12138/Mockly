@@ -1,0 +1,88 @@
+{
+  "behavioral_grad": {
+    "focus": [
+      "ownership",
+      "decision making",
+      "collaboration"
+    ],
+    "signals": [
+      "clear impact explanation",
+      "handles ambiguity"
+    ],
+    "red_flags": [
+      "vague contributions",
+      "no reflection"
+    ]
+  },
+  "behavioral_senior": {
+    "focus": [
+      "leadership",
+      "trade-offs",
+      "system thinking"
+    ],
+    "signals": [
+      "drives decisions",
+      "balances constraints"
+    ],
+    "red_flags": [
+      "over-engineering",
+      "poor stakeholder awareness"
+    ]
+  },
+  "behavioral_intern": {
+    "focus": [
+      "communication",
+      "learning mindset",
+      "basic structure"
+    ],
+    "signals": [
+      "asks clarifying questions",
+      "reflects on mistakes"
+    ],
+    "red_flags": [
+      "cannot explain own projects",
+      "blames others"
+    ]
+  },
+  "behavioral_dsa_intern": {
+    "technical_focus": [
+      "arrays",
+      "strings",
+      "hashmaps",
+      "basic recursion"
+    ],
+    "evaluation": [
+      "problem understanding",
+      "step-by-step reasoning",
+      "edge cases"
+    ],
+    "difficulty": "easy → medium"
+  },
+  "behavioral_dsa_grad": {
+    "technical_focus": [
+      "arrays",
+      "trees",
+      "graphs",
+      "hashmaps"
+    ],
+    "evaluation": [
+      "correctness",
+      "complexity analysis",
+      "clean implementation"
+    ],
+    "difficulty": "medium"
+  },
+  "behavioral_dsa_senior": {
+    "technical_focus": [
+      "advanced data structures",
+      "optimization",
+      "trade-offs"
+    ],
+    "evaluation": [
+      "solution justification",
+      "alternatives",
+      "scalability"
+    ],
+    "difficulty": "medium → hard"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "general_tech": {
+    "tone": "structured, calm, analytical",
+    "behavioral_style": "STAR",
+    "technical_emphasis": [
+      "problem decomposition",
+      "clarity of explanation",
+      "edge cases",
+      "time and space complexity"
+    ],
+    "followup_style": "probe reasoning and trade-offs",
+    "notes": [
+      "thinking out loud is encouraged",
+      "clarity > speed"
+    ]
+  },
+  "finance": {
+    "tone": "professional, precise",
+    "behavioral_style": "STAR",
+    "technical_emphasis": [
+      "correctness",
+      "risk awareness",
+      "clean logic"
+    ],
+    "followup_style": "challenge assumptions",
+    "notes": [
+      "avoid hand-wavy answers",
+      "explain impact of mistakes"
+    ]
+  },
+  "quant": {
+    "tone": "direct, fast-paced",
+    "behavioral_style": "concise",
+    "technical_emphasis": [
+      "speed to solution",
+      "mathematical rigor",
+      "accuracy under pressure"
+    ],
+    "followup_style": "rapid probing",
+    "notes": [
+      "expect mental math",
+      "minimal hints"
+    ]
+  },
+  "startup": {
+    "tone": "conversational, pragmatic",
+    "behavioral_style": "story-based",
+    "technical_emphasis": [
+      "practical trade-offs",
+      "decision making",
+      "ownership"
+    ],
+    "followup_style": "what would you ship?",
+    "notes": [
+      "perfection not required",
+      "bias toward action"
+    ]
+  }
+}
