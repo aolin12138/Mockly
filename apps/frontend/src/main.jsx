@@ -11,6 +11,7 @@ import TechnicalInterviewPage from './component/page/TechnicalInterviewPage';
 import BehavioralInterviewPage from './component/page/BehaviouralInterviewPage';
 import ResultsPage from './component/page/ResultsPage';
 import TechnicalResultsPage from './component/page/ResultsTechnicalPage';
+import { ThemeProvider } from './context/ThemeContext';
 
 import './index.css';
 
@@ -24,18 +25,20 @@ const root = ReactDOM.createRoot(rootElement);
 
 root.render(
   <React.StrictMode>
-    <Router>
-      <Routes>
-        <Route path='/' element={<Home />} />
-        <Route path='/login' element={<Login />} />
-        <Route path='/register' element={<Register />} />
-        <Route path='/profile' element={<Profile />} />
-        <Route path='/dashboard' element={<App />} />
-        <Route path='/technical' element={<TechnicalInterviewPage />} />
-        <Route path='/behavioural' element={<BehavioralInterviewPage />} />
-        <Route path='/results' element={<ResultsPage />} />
-        <Route path='/results-technical' element={<TechnicalResultsPage />} />
-      </Routes>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <Routes>
+          <Route path='/' element={<Home />} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/register' element={<Register />} />
+          <Route path='/profile' element={<Profile />} />
+          <Route path='/dashboard' element={<App />} />
+          <Route path='/technical' element={<TechnicalInterviewPage />} />
+          <Route path='/behavioural' element={<BehavioralInterviewPage />} />
+          <Route path='/results' element={<ResultsPage />} />
+          <Route path='/results-technical' element={<TechnicalResultsPage />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   </React.StrictMode>
 );

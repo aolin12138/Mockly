@@ -7,6 +7,28 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Smooth theme transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Disable transitions for elements that shouldn't animate */
+.no-transition,
+.no-transition * {
+  transition: none !important;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 :root {
   color-scheme: light;
   --radius: 0.625rem;
@@ -43,11 +65,44 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.185 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.244 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.244 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.244 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.477 0.214 29.234);
+  --border: oklch(0.244 0 0);
+  --input: oklch(0.244 0 0);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.773 0.154 70.537);
+  --chart-2: oklch(0.721 0.146 191.402);
+  --chart-3: oklch(0.676 0.135 229.296);
+  --chart-4: oklch(0.654 0.169 85.698);
+  --chart-5: oklch(0.801 0.156 70.537);
+  --sidebar: oklch(0.145 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.244 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.244 0 0);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f8fafc; /* slate-50-ish */
-  color: #020617; /* slate-950-ish */
 }
 
 @theme inline {
@@ -131,20 +186,101 @@ body {
   }
 }
 
-/* Company logo scrolling animation */
-@keyframes scroll-seamless {
+/* Company logo infinite scrolling animation */
+@keyframes infinite-scroll {
   from {
     transform: translateX(0);
   }
   to {
-    transform: translateX(-75%);
+    transform: translateX(-50%);
   }
 }
 
-.animate-scroll-seamless {
-  animation: scroll-seamless 60s linear infinite;
+@layer utilities {
+  .animate-infinite-scroll {
+    animation: infinite-scroll 30s linear infinite;
+  }
+  
+  .animate-infinite-scroll:hover {
+    animation-play-state: paused;
+  }
+  
+  /* Space Background Utilities */
+  .bg-universe {
+    background: radial-gradient(circle at center bottom, #1B2735 0%, #090A0F 100%);
+  }
+
+  .perspective-grid {
+    background-size: 50px 50px;
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    transform: perspective(500px) rotateX(60deg);
+    transform-origin: center top;
+    mask-image: linear-gradient(to bottom, transparent, black 40%, black 80%, transparent);
+  }
+
+  /* Noise Texture */
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  }
 }
 
-.animate-scroll-seamless:hover {
-  animation-play-state: paused;
+/* Universe Atmosphere Animations */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
 }
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  33% { transform: translateY(-20px) translateX(10px); }
+  66% { transform: translateY(10px) translateX(-10px); }
+}
+
+@keyframes aurora-shift {
+  0%, 100% { background-position: 0% 50%; opacity: 0.3; }
+  50% { background-position: 100% 50%; opacity: 0.5; }
+}
+
+.animate-twinkle-1 { animation: twinkle 3s ease-in-out infinite; }
+.animate-twinkle-2 { animation: twinkle 5s ease-in-out infinite 1s; }
+.animate-twinkle-3 { animation: twinkle 7s ease-in-out infinite 2s; }
+.animate-float-slow { animation: float-slow 20s ease-in-out infinite; }
+.animate-aurora { 
+  background-size: 200% 200%;
+  animation: aurora-shift 15s ease infinite;
+}
+
+/* Entrance Animations */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(60px); /* Increased from 40px for more visible movement */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 1.5s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-delay-200 { animation-delay: 200ms; }
+.animate-delay-300 { animation-delay: 300ms; }
+.animate-delay-500 { animation-delay: 500ms; }
+.animate-delay-700 { animation-delay: 700ms; }
+.animate-delay-1000 { animation-delay: 1000ms; }
+
