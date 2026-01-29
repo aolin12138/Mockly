@@ -13,6 +13,7 @@ import BehavioralInterviewPage from './component/page/BehaviouralInterviewPage';
 import ResultsPage from './component/page/ResultsPage';
 import TechnicalResultsPage from './component/page/ResultsTechnicalPage';
 import { ThemeProvider } from './context/ThemeContext';
+import InterviewSetup from './component/page/InterviewSetup';
 
 import './index.css';
 
@@ -34,7 +35,7 @@ root.render(
           <Route path='/register' element={<Register />} />
           <Route path='/profile' element={<Profile />} />
           <Route path='/dashboard' element={<Dashboard />} />
-          <Route path='/setup' element={<App />} />
+          <Route path='/setup' element={<InterviewSetup />} />
           <Route path='/technical' element={<TechnicalInterviewPage />} />
           <Route path='/behavioural' element={<BehavioralInterviewPage />} />
           <Route path='/results' element={<ResultsPage />} />

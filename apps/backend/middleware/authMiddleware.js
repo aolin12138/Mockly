@@ -1,19 +1,27 @@
 import jwt from 'jsonwebtoken';
 
 function authMiddleware(req, res, next) {
-  const token = req.headers['authorization'];
-  if (!token) {
+  // Expect header in the form "Bearer <token>" but also handle raw token for compatibility
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) {
     return res.status(401).json({ message: 'No token provided' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ message: 'invalid token' });
+  const token = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : authHeader;
+
+  console.log('Received token:', token);
+  jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, decoded) => {
+    if (err || !decoded?.userId) {
+      return res.status(401).json({ message: 'Invalid token' });
     }
-    req.userId = decoded.id;
+
+    // Attach user context to the request for downstream handlers
+    req.userId = decoded.userId;
+    req.userEmail = decoded.email;
     next();
   });
 }
-
 
 export default authMiddleware;

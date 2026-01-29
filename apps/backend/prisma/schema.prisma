@@ -19,5 +19,25 @@ model User {
   name         String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  agents       Agent[]
+}
+
+model Agent {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  histories History[]
+}
+
+model History {
+  id        String   @id @default(uuid()) // This represents the conversation id
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+  feedback  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 

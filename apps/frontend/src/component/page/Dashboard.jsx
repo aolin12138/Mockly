@@ -1,28 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
-  RadarChart, 
-  Radar, 
-  PolarGrid, 
+  RadarChart,
+  Radar,
+  PolarGrid,
   PolarAngleAxis,
   LineChart,
   Line
 } from 'recharts';
-import { 
-  Play, 
-  History, 
-  TrendingUp, 
-  Award, 
-  ChevronRight, 
-  Zap, 
-  BookOpen, 
+import {
+  Play,
+  History,
+  TrendingUp,
+  Award,
+  ChevronRight,
+  Zap,
+  BookOpen,
   LayoutDashboard,
   Settings,
   LogOut,
@@ -33,18 +33,17 @@ import { mockDashboardData } from '../../data/mockDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
-  <motion.button 
+  <motion.button
     onClick={onClick}
     whileHover={{ x: 5, backgroundColor: 'rgba(30, 41, 59, 0.5)' }}
     whileTap={{ scale: 0.95 }}
-    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors duration-200 group relative overflow-hidden cursor-pointer ${
-      active 
-        ? 'text-emerald-400' 
-        : 'text-slate-400'
-    }`}
+    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors duration-200 group relative overflow-hidden cursor-pointer ${active
+      ? 'text-emerald-400'
+      : 'text-slate-400'
+      }`}
   >
     {active && (
-      <motion.div 
+      <motion.div
         layoutId="activeTab"
         className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 rounded-xl"
         initial={false}
@@ -59,7 +58,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
 );
 
 const Card = ({ children, className = "", delay = 0 }) => (
-  <motion.div 
+  <motion.div
     variants={{
       hidden: { opacity: 0, y: 20 },
       visible: { opacity: 1, y: 0 }
@@ -79,14 +78,14 @@ const Dashboard = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-       // navigate('/login'); 
+      // navigate('/login'); 
     }
   }, [navigate]);
 
   const handleStartInterview = () => {
-    navigate('/setup'); 
+    navigate('/setup');
   };
-  
+
   const lastSession = mockDashboardData.recentActivity[0];
 
   const containerVariants = {
@@ -104,22 +103,24 @@ const Dashboard = () => {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans selection:bg-emerald-500/30 overflow-hidden relative">
       {/* Ambient Background */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
-         <div className="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-cyan-500/10 rounded-full blur-[100px]" />
-         <div className="absolute bottom-[-10%] left-[20%] w-[35%] h-[35%] bg-purple-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-cyan-500/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[35%] h-[35%] bg-purple-500/10 rounded-full blur-[120px]" />
       </div>
 
       {/* Sidebar */}
       <aside className="w-72 fixed h-full border-r border-white/5 bg-slate-900/50 backdrop-blur-xl hidden md:flex flex-col p-6 z-20 shadow-2xl">
-        <div className="mb-10 flex items-center space-x-3 px-2">
-
+        <button
+          onClick={() => navigate('/')}
+          className="mb-10 flex items-center space-x-3 px-2 hover:opacity-80 transition-opacity cursor-pointer"
+        >
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <span className="font-bold text-slate-900">M</span>
           </div>
           <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
             Mockly
           </span>
-        </div>
+        </button>
 
         <nav className="space-y-2 flex-1">
           <SidebarItem icon={LayoutDashboard} label="Overview" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
@@ -129,22 +130,22 @@ const Dashboard = () => {
         </nav>
 
         <div className="pt-6 border-t border-slate-800/60 space-y-2">
-           <SidebarItem icon={Settings} label="Settings" />
-           <SidebarItem icon={LogOut} label="Sign Out" onClick={() => navigate('/')} />
+          <SidebarItem icon={Settings} label="Settings" />
+          <SidebarItem icon={LogOut} label="Sign Out" onClick={() => navigate('/')} />
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 md:ml-72 p-8 h-screen overflow-y-auto no-scrollbar z-10 relative">
-        <motion.div 
+        <motion.div
           className="max-w-[1600px] mx-auto"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-        
+
           {/* Header */}
-          <motion.header 
+          <motion.header
             variants={{ hidden: { opacity: 0, y: -20 }, visible: { opacity: 1, y: 0 } }}
             className="flex justify-between items-center mb-10"
           >
@@ -168,7 +169,7 @@ const Dashboard = () => {
           <motion.div className="flex flex-col xl:flex-row gap-8" variants={containerVariants}>
             {/* Left Content Column */}
             <motion.div className="flex-1 space-y-8" variants={containerVariants}>
-              
+
               {/* Stats Row */}
               <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-6" variants={containerVariants}>
                 <Card className="group">
@@ -221,18 +222,18 @@ const Dashboard = () => {
                     <LineChart data={mockDashboardData.progressHistory}>
                       <defs>
                         <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.4} />
-                      <XAxis dataKey="name" stroke="#94a3b8" tick={{fontSize: 12}} axisLine={false} tickLine={false} dy={10} />
-                      <YAxis stroke="#94a3b8" tick={{fontSize: 12}} axisLine={false} tickLine={false} dx={-10} domain={[0, 100]} />
-                      <Tooltip 
+                      <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} dy={10} />
+                      <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} dx={-10} domain={[0, 100]} />
+                      <Tooltip
                         contentStyle={{ backgroundColor: 'rgba(30, 41, 59, 0.9)', backdropFilter: 'blur(10px)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
                         itemStyle={{ color: '#fff' }}
                       />
-                      <Line type="monotone" dataKey="score" stroke="#10b981" strokeWidth={3} dot={{r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 8, strokeWidth: 0, fill: '#34d399'}} />
+                      <Line type="monotone" dataKey="score" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8, strokeWidth: 0, fill: '#34d399' }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -251,13 +252,12 @@ const Dashboard = () => {
                     <div key={session.id} className="p-4 rounded-2xl bg-slate-800/20 border border-white/5 hover:bg-slate-800/40 hover:border-white/10 transition-all cursor-pointer group">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-4">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                            session.type === 'Technical' ? 'bg-blue-500/10 text-blue-400' :
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${session.type === 'Technical' ? 'bg-blue-500/10 text-blue-400' :
                             session.type === 'Behavioral' ? 'bg-purple-500/10 text-purple-400' :
-                            'bg-orange-500/10 text-orange-400'
-                          }`}>
-                            {session.type === 'Technical' ? <Zap size={18} /> : 
-                             session.type === 'Behavioral' ? <User size={18} /> : <LayoutDashboard size={18} />}
+                              'bg-orange-500/10 text-orange-400'
+                            }`}>
+                            {session.type === 'Technical' ? <Zap size={18} /> :
+                              session.type === 'Behavioral' ? <User size={18} /> : <LayoutDashboard size={18} />}
                           </div>
                           <div>
                             <h4 className="text-base font-bold text-slate-200 group-hover:text-white transition-colors">{session.topic}</h4>
@@ -265,11 +265,10 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                            session.score >= 80 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
-                            session.score >= 60 ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 
-                            'bg-red-500/10 text-red-400 border border-red-500/20'
-                          }`}>
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${session.score >= 80 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                            session.score >= 60 ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                              'bg-red-500/10 text-red-400 border border-red-500/20'
+                            }`}>
                             {session.score}% Score
                           </span>
                         </div>
@@ -285,9 +284,9 @@ const Dashboard = () => {
 
             {/* Right Panel (Desktop) */}
             <motion.div className="w-full xl:w-[400px] space-y-8" variants={containerVariants}>
-              
+
               {/* Start Interview CTA - Distant from Module Look */}
-              <motion.button 
+              <motion.button
                 variants={{ hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1 } }}
                 transition={{ duration: 0.5 }}
                 onClick={handleStartInterview}
@@ -298,45 +297,45 @@ const Dashboard = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 animate-gradient-xy" />
                 <div className="relative bg-slate-900/90 rounded-xl p-6 flex items-center justify-between border border-white/10 backdrop-blur-xl group-hover:bg-slate-900/80 transition-colors">
                   <div className="flex items-center space-x-4">
-                     <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-full flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform">
-                        <Play size={24} className="text-white fill-current ml-1" />
-                     </div>
-                     <div className="text-left">
-                        <h3 className="text-lg font-bold text-white">Start New Interview</h3>
-                        <p className="text-xs text-emerald-200">Mock up a fresh session</p>
-                     </div>
+                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-full flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform">
+                      <Play size={24} className="text-white fill-current ml-1" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-lg font-bold text-white">Start New Interview</h3>
+                      <p className="text-xs text-emerald-200">Mock up a fresh session</p>
+                    </div>
                   </div>
                   <ChevronRight size={24} className="text-slate-400 group-hover:text-white transition-colors group-hover:translate-x-1" />
                 </div>
               </motion.button>
-              
+
               {/* Last Session Summary - New Module */}
               {lastSession && (
                 <Card className="border-emerald-500/20 bg-emerald-900/5">
-                   <div className="flex items-center space-x-3 mb-4">
-                      <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
-                        <Activity size={20} />
-                      </div>
-                      <h3 className="font-bold text-white">Last Session Insight</h3>
-                   </div>
-                   <div className="mb-4">
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-slate-400">Topic</span>
-                        <span className="text-slate-200 font-medium">{lastSession.topic}</span>
-                      </div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-slate-400">Score</span>
-                        <span className={`font-bold ${lastSession.score >= 80 ? 'text-emerald-400' : 'text-yellow-400'}`}>{lastSession.score}%</span>
-                      </div>
-                   </div>
-                   <div className="p-3 bg-slate-800/30 rounded-xl border border-white/5">
-                      <p className="text-xs text-slate-300 italic leading-relaxed">
-                        "{lastSession.feedback || lastSession.summary}"
-                      </p>
-                   </div>
-                   <button className="w-full mt-4 text-xs font-bold text-emerald-400 text-center hover:text-emerald-300 transition-colors uppercase tracking-wide">
-                     View Full Report
-                   </button>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+                      <Activity size={20} />
+                    </div>
+                    <h3 className="font-bold text-white">Last Session Insight</h3>
+                  </div>
+                  <div className="mb-4">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-slate-400">Topic</span>
+                      <span className="text-slate-200 font-medium">{lastSession.topic}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-slate-400">Score</span>
+                      <span className={`font-bold ${lastSession.score >= 80 ? 'text-emerald-400' : 'text-yellow-400'}`}>{lastSession.score}%</span>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-slate-800/30 rounded-xl border border-white/5">
+                    <p className="text-xs text-slate-300 italic leading-relaxed">
+                      "{lastSession.feedback || lastSession.summary}"
+                    </p>
+                  </div>
+                  <button className="w-full mt-4 text-xs font-bold text-emerald-400 text-center hover:text-emerald-300 transition-colors uppercase tracking-wide">
+                    View Full Report
+                  </button>
                 </Card>
               )}
 
@@ -346,7 +345,7 @@ const Dashboard = () => {
                   <Award size={24} className="mr-3 text-cyan-400" /> Skill Breakdown
                 </h2>
                 <div className="h-[300px] w-full relative -ml-4">
-                   <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="70%" data={mockDashboardData.performance}>
                       <PolarGrid stroke="#334155" />
                       <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} />
@@ -358,7 +357,7 @@ const Dashboard = () => {
                         fill="#06b6d4"
                         fillOpacity={0.4}
                       />
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{ backgroundColor: 'rgba(30, 41, 59, 0.9)', backdropFilter: 'blur(10px)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
                         itemStyle={{ color: '#06b6d4' }}
                       />
@@ -369,33 +368,32 @@ const Dashboard = () => {
 
               {/* Focus Areas */}
               <Card>
-                 <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-white flex items-center">
                     <BookOpen size={24} className="mr-3 text-orange-400" /> Focus Areas
                   </h2>
                 </div>
-                
-                 <div className="space-y-3">
+
+                <div className="space-y-3">
                   {mockDashboardData.improvements.map((item) => (
                     <div key={item.id} className="flex items-start p-4 rounded-xl border border-white/5 bg-slate-800/10 hover:bg-slate-800/30 transition-colors group">
                       <div className="flex-1">
-                         <div className="flex items-center mb-1">
-                           <span className={`w-2 h-2 rounded-full mr-2 ${
-                              item.priority === 'High' ? 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.6)]' :
-                              item.priority === 'Medium' ? 'bg-yellow-400' : 'bg-blue-400'
+                        <div className="flex items-center mb-1">
+                          <span className={`w-2 h-2 rounded-full mr-2 ${item.priority === 'High' ? 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.6)]' :
+                            item.priority === 'Medium' ? 'bg-yellow-400' : 'bg-blue-400'
                             }`} />
-                           <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">{item.category}</span>
-                         </div>
-                         <p className="text-sm text-slate-200 font-medium group-hover:text-white transition-colors">{item.task}</p>
+                          <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">{item.category}</span>
+                        </div>
+                        <p className="text-sm text-slate-200 font-medium group-hover:text-white transition-colors">{item.task}</p>
                       </div>
                       <button className="p-2 hover:bg-white/10 rounded-lg text-slate-500 hover:text-emerald-400 transition-colors -mr-2">
                         <ChevronRight size={18} />
                       </button>
                     </div>
                   ))}
-                  
+
                   <button className="w-full mt-2 py-3 rounded-xl border border-dashed border-slate-700 text-slate-400 text-sm font-medium hover:bg-slate-800/50 hover:text-white hover:border-slate-500 transition-all flex items-center justify-center">
-                     + Add Custom Goal
+                    + Add Custom Goal
                   </button>
                 </div>
               </Card>
