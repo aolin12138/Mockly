@@ -14,7 +14,7 @@ const ParticleOrb = ({ state = 'idle', colors = ['#2792DC', '#9CE6E6'] }) => {
     const particles = [];
     const baseRadius = 150;
     const coreParticleCount = Math.floor(count * 0.35); // 35% for denser core
-    
+
     // Use Fibonacci sphere for more even distribution
     const goldenRatio = (1 + Math.sqrt(5)) / 2;
     const angleIncrement = Math.PI * 2 * goldenRatio;
@@ -23,7 +23,7 @@ const ParticleOrb = ({ state = 'idle', colors = ['#2792DC', '#9CE6E6'] }) => {
       let x, y, z;
       const isCore = i < coreParticleCount; // First 30% are core particles
       const radiusMultiplier = isCore ? 0.3 : 1; // Core particles stay closer to center
-      
+
       // Fibonacci sphere distribution for even spacing
       const t = i / (count - 1);
       const phi = Math.acos(1 - 2 * t);
@@ -69,7 +69,7 @@ const ParticleOrb = ({ state = 'idle', colors = ['#2792DC', '#9CE6E6'] }) => {
       const initialX = Math.cos(scatterAngle) * scatterDistance;
       const initialY = Math.sin(scatterAngle) * scatterDistance;
       const initialZ = (Math.random() - 0.5) * scatterRadius;
-      
+
       particles.push({
         targetX: x,
         targetY: y,
@@ -108,19 +108,19 @@ const ParticleOrb = ({ state = 'idle', colors = ['#2792DC', '#9CE6E6'] }) => {
   useEffect(() => {
     const duration = 2000; // 2 second intro
     const startTime = Date.now();
-    
+
     const animateIntro = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
+
       // Ease out cubic for smooth deceleration
       introProgressRef.current = 1 - Math.pow(1 - progress, 3);
-      
+
       if (progress < 1) {
         requestAnimationFrame(animateIntro);
       }
     };
-    
+
     animateIntro();
   }, []);
 
@@ -168,7 +168,7 @@ const ParticleOrb = ({ state = 'idle', colors = ['#2792DC', '#9CE6E6'] }) => {
         let baseX = particle.initialX + (particle.targetX - particle.initialX) * introProgress;
         let baseY = particle.initialY + (particle.targetY - particle.initialY) * introProgress;
         let baseZ = particle.initialZ + (particle.targetZ - particle.initialZ) * introProgress;
-        
+
         // Smooth transition to target position with faster ease
         const ease = 0.1; // Consistent smooth easing for all states
         particle.x += (baseX - particle.x) * ease;
@@ -180,27 +180,27 @@ const ParticleOrb = ({ state = 'idle', colors = ['#2792DC', '#9CE6E6'] }) => {
         let noise = Math.sin(time * 0.5 + index * 0.02) * 2;
         let noise2 = Math.cos(time * 0.4 + index * 0.03) * 2;
         let noiseZ = Math.sin(time * 0.35 + index * 0.025) * 2;
-        
+
         // Add smooth sound wave pulsing when speaking (outer particles only)
         if (state === 'speaking' && !particle.isCore) {
           // Create smooth radial wave pulses based on particle's angular position
           const time = timeRef.current;
           const waveSpeed = 2.0; // Speed of wave propagation
-          
+
           // Smooth wave pattern using particle's position angles
           const wavePhase1 = particle.phi * 3 - time * waveSpeed;
           const wavePhase2 = particle.theta * 2.5 - time * waveSpeed * 0.8;
-          
+
           // Combine for smooth, localized pulsing
           const radialPulse = (Math.sin(wavePhase1) * 0.6 + Math.sin(wavePhase2) * 0.4) * 8;
-          
+
           // Apply radial displacement in 3D
           const distance = Math.sqrt(particle.x ** 2 + particle.y ** 2 + particle.z ** 2);
           if (distance > 0) {
             const normalizedX = particle.x / distance;
             const normalizedY = particle.y / distance;
             const normalizedZ = particle.z / distance;
-            
+
             noise += normalizedX * radialPulse;
             noise2 += normalizedY * radialPulse;
             noiseZ += normalizedZ * radialPulse;
@@ -219,36 +219,36 @@ const ParticleOrb = ({ state = 'idle', colors = ['#2792DC', '#9CE6E6'] }) => {
         // Add mouse interaction - dandelion effect (blow away and float back)
         let finalProjX = projX;
         let finalProjY = projY;
-        
+
         if (mouseRef.current.active) {
           const dx = projX - mouseRef.current.x;
           const dy = projY - mouseRef.current.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           const influenceRadius = 45;
-          
+
           if (distance < influenceRadius) {
             // Particle is inside the circle - blow it away like dandelion seeds
             const angle = Math.atan2(dy, dx);
             const blowStrength = (1 - distance / influenceRadius) * 3.5; // Strong initial blow
-            
+
             // Apply blow force (instant push away)
             velocitiesRef.current[index].vx += Math.cos(angle) * blowStrength;
             velocitiesRef.current[index].vy += Math.sin(angle) * blowStrength;
           }
         }
-        
+
         // Apply air resistance (slow down over time)
         const airResistance = 0.96;
         velocitiesRef.current[index].vx *= airResistance;
         velocitiesRef.current[index].vy *= airResistance;
-        
+
         // Apply gentle pull back to original position (like gravity pulling seeds down)
         const returnForce = 0.01;
         const returnDx = projX - (centerX + particle.x * (500 / (500 + particle.z)));
         const returnDy = projY - (centerY + particle.y * (500 / (500 + particle.z)));
         velocitiesRef.current[index].vx -= returnDx * returnForce;
         velocitiesRef.current[index].vy -= returnDy * returnForce;
-        
+
         // Apply velocity
         finalProjX = projX + velocitiesRef.current[index].vx;
         finalProjY = projY + velocitiesRef.current[index].vy;

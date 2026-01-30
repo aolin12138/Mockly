@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -173,30 +173,60 @@ const InterviewSetup = () => {
 
     try {
       const token = localStorage.getItem('token');
+
+      if (!token) {
+        console.error("No authentication token found. Please log in.");
+        alert("Please log in to start an interview");
+        navigate('/login');
+        return;
+      }
+
       console.log("Using Token:", token);
 
       // Send configuration as JSON (CV file is already base64 encoded in formData)
-      const response = await fetch('http://localhost:3000/api/interview/prompt', {
+      const response = await fetch('http://localhost:3000/api/interview/session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
+        // No timeout - wait indefinitely
       });
 
       if (!response.ok) {
-        console.error("Failed to fetch prompts from backend");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Failed to fetch prompts from backend:", response.status, errorData);
+
+        if (response.status === 401) {
+          alert("Session expired. Please log in again.");
+          navigate('/login');
+          return;
+        }
+
+        if (errorData.details && errorData.details.includes('524')) {
+          alert("The interview preparation is taking too long. This is a known issue with the AI processing. Please:\n\n1. Try again in a few moments\n2. If the issue persists, contact support\n\nNote: Your configuration has been saved.");
+        } else {
+          alert(`Failed to prepare interview: ${errorData.details || 'Unknown error'}. Please try again.`);
+        }
+        return;
       } else {
         const data = await response.json();
         console.log("Received Prompts:", data);
+
+        const sessionId = data.sessionId;
+        if (!sessionId) {
+          alert('Session was created but sessionId is missing. Please try again.');
+          return;
+        }
+
+        localStorage.setItem('pendingInterviewMode', formData.session.interview_mode);
+        navigate(`/interview/session/${sessionId}/waiting`);
       }
     } catch (error) {
       console.error("Error submitting configuration:", error);
+      alert("An error occurred. Please try again.");
     }
-
-    // Navigate to interview page
-    navigate(`/${formData.session.interview_mode === 'behavioral' ? 'behavioural' : 'technical'}`);
   };
 
   const steps = [
@@ -451,7 +481,7 @@ const InterviewSetup = () => {
                             // Extract base64 data without the data URI prefix
                             const dataUrl = reader.result;
                             const base64Data = dataUrl.split(';base64,').pop();
-                            
+
                             updateField('candidate', 'cv_file', {
                               name: file.name,
                               type: file.type,

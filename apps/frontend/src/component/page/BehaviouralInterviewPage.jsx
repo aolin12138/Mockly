@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LiveWaveform } from '../ui/live-waveform.jsx';
 import { Phone, PhoneOff, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useConversation } from '@elevenlabs/react';
 import ParticleOrb from '../ui/particle-orb.jsx';
 import gradientBackground from '../../assets/gradient_background.png';
@@ -42,9 +42,46 @@ const N8N_WEBHOOK_URL = 'https://aolin12138.app.n8n.cloud/webhook/feedback';
 
 export default function BehaviouralInterviewPage() {
   const navigate = useNavigate();
+  const { sessionId } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testState, setTestState] = useState('idle'); // Test state for orb
   const [useTestMode, setUseTestMode] = useState(false); // Toggle between test and real
+  const [agentId, setAgentId] = useState('');
+
+  useEffect(() => {
+    if (sessionId) {
+      localStorage.setItem('currentSessionId', sessionId);
+    }
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const loadSession = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data?.agentId) {
+          setAgentId(data.agentId);
+          localStorage.setItem('currentAgentId', data.agentId);
+        }
+      } catch (error) {
+        console.error('Failed to load session agentId:', error);
+      }
+    };
+
+    loadSession();
+  }, [sessionId]);
 
   // Get selected company + CV from localStorage
   const selectedCompany =
@@ -98,6 +135,23 @@ export default function BehaviouralInterviewPage() {
     }
   };
 
+  const handleBackClick = async () => {
+    if (window.confirm('Are you sure you want to leave? This will cancel your interview session and you\'ll need to reconfigure.')) {
+      try {
+        const token = localStorage.getItem('token');
+        await fetch(`http://localhost:3000/api/interview/session/${sessionId}/cancel`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (error) {
+        console.error('Failed to cancel session:', error);
+      }
+      navigate('/dashboard');
+    }
+  };
+
   const backgroundStyle = {
     backgroundImage: `linear-gradient(
       180deg,
@@ -119,7 +173,7 @@ export default function BehaviouralInterviewPage() {
 
       // Start the ElevenLabs conversation
       await conversation.startSession({
-        agentId: AGENT_ID,
+        agentId: agentId || localStorage.getItem('currentAgentId') || AGENT_ID,
         connectionType: 'webrtc', // Use WebRTC for better quality
       });
     } catch (error) {
@@ -149,7 +203,7 @@ export default function BehaviouralInterviewPage() {
       <div className='w-full max-w-5xl relative'>
         {/* Back Button */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBackClick}
           className='absolute top-0 left-0 flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-emerald-400 transition-colors'
         >
           <ArrowLeft className='w-5 h-5' />
@@ -178,10 +232,10 @@ export default function BehaviouralInterviewPage() {
                     useTestMode
                       ? testState
                       : conversation.status === 'connected'
-                      ? conversation.isSpeaking
-                        ? 'speaking'
-                        : 'listening'
-                      : 'idle'
+                        ? conversation.isSpeaking
+                          ? 'speaking'
+                          : 'listening'
+                        : 'idle'
                   }
                   colors={orbColors}
                 />
@@ -207,11 +261,10 @@ export default function BehaviouralInterviewPage() {
                 <span className='text-sm font-medium text-slate-300'>Test Mode</span>
                 <button
                   onClick={() => setUseTestMode(!useTestMode)}
-                  className={`px-3 py-1 rounded text-xs font-medium transition ${
-                    useTestMode
+                  className={`px-3 py-1 rounded text-xs font-medium transition ${useTestMode
                       ? 'bg-emerald-600 text-white'
                       : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
+                    }`}
                 >
                   {useTestMode ? 'ON' : 'OFF'}
                 </button>
@@ -220,41 +273,37 @@ export default function BehaviouralInterviewPage() {
                 <div className='flex gap-2'>
                   <button
                     onClick={() => setTestState('idle')}
-                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${
-                      testState === 'idle'
+                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'idle'
                         ? 'bg-emerald-600 text-white'
                         : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                    }`}
+                      }`}
                   >
                     Idle
                   </button>
                   <button
                     onClick={() => setTestState('listening')}
-                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${
-                      testState === 'listening'
+                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'listening'
                         ? 'bg-emerald-600 text-white'
                         : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                    }`}
+                      }`}
                   >
                     Listening
                   </button>
                   <button
                     onClick={() => setTestState('speaking')}
-                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${
-                      testState === 'speaking'
+                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'speaking'
                         ? 'bg-emerald-600 text-white'
                         : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                    }`}
+                      }`}
                   >
                     Speaking
                   </button>
                   <button
                     onClick={() => setTestState('thinking')}
-                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${
-                      testState === 'thinking'
+                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'thinking'
                         ? 'bg-emerald-600 text-white'
                         : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                    }`}
+                      }`}
                   >
                     Thinking
                   </button>

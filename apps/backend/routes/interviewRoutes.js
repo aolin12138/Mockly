@@ -26,9 +26,9 @@ router.post('/init', (req, res) => {
   res.status(200).json({ message: 'Configuration received', config: interviewConfig });
 });
 
-// Prompt route to fetch prompts from n8n webhook
-router.post('/prompt', async (req, res) => {
-  console.log("Request received at /prompt");
+// Session route to create session + call n8n webhook
+router.post('/session', async (req, res) => {
+  console.log("Request received at /session");
 
   // Parse the interview config from JSON body
   let interviewConfig;
@@ -44,10 +44,6 @@ router.post('/prompt', async (req, res) => {
 
   const userId = req.userId; // From authMiddleware
   console.log("User ID from auth middleware:", userId);
-
-  if (!interviewConfig) {
-    return res.status(400).json({ error: 'No configuration provided' });
-  }
 
   // Check if user already has an agent
   let agent;
@@ -98,53 +94,98 @@ router.post('/prompt', async (req, res) => {
   }
 
   try {
-    // Add userId to the config
+    const session = await prisma.session.create({
+      data: {
+        userId: userId,
+        agentId: interviewConfig.agent_id || null
+      }
+    });
+
+    // Add userId + sessionId to the config
     interviewConfig.userId = userId;
+    interviewConfig.session_id = session.id;
 
     console.log("----- SENDING JSON PAYLOAD TO WEBHOOK -----");
     console.log(JSON.stringify(interviewConfig, null, 2));
     console.log("-------------------------------------------");
 
-    const response = await fetch('https://aolin12138.app.n8n.cloud/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {
+    // Fire webhook asynchronously (don't wait for response)
+    fetch('http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(interviewConfig),
+      body: JSON.stringify(interviewConfig)
+    }).then(() => {
+      console.log(`Webhook triggered for session ${session.id}`);
+    }).catch(error => {
+      console.error(`Webhook error for session ${session.id}:`, error.message);
     });
 
-    if (!response.ok) {
-      throw new Error(`External webhook failed with status: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    // Handle agent creation if webhook returned an agent ID
-    if (!interviewConfig.agent_id && data.agent_id) {
-      try {
-        agent = await prisma.agent.create({
-          data: {
-            id: data.agent_id, // Use the agent ID returned from ElevenLabs
-            userId: userId
-          }
-        });
-        console.log(`Created new agent record with ID: ${agent.id} for user: ${userId}`);
-        interviewConfig.agent_id = data.agent_id;
-      } catch (error) {
-        console.error("Error creating agent record after webhook response:", error);
-        return res.status(500).json({ error: 'Failed to create agent session', details: error.message });
-      }
-    }
-
-    // We expect to receive two prompts.
-    console.log("----- WEHOOK RESPONSE (PROMPTS) -----");
-    console.log(JSON.stringify(data, null, 2));
-    console.log("-------------------------------------");
-
-    res.json(data);
+    // Immediately return session ID (don't wait for webhook)
+    res.json({
+      sessionId: session.id
+    });
   } catch (error) {
-    console.error('Error fetching prompts:', error);
-    res.status(500).json({ error: 'Failed to fetch prompts', details: error.message });
+    console.error('Error creating session:', error);
+    res.status(500).json({ error: 'Failed to create session', details: error.message });
+  }
+});
+
+// Session status route (polled by frontend)
+router.get('/session/:sessionId', async (req, res) => {
+  const { sessionId } = req.params;
+  const userId = req.userId;
+
+  try {
+    const session = await prisma.session.findFirst({
+      where: {
+        id: sessionId,
+        userId: userId
+      }
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const ready = Boolean(session.agentId && session.interviewPrompt && session.interviewPlan && session.feedbackPrompt);
+
+    res.json({
+      sessionId: session.id,
+      agentId: session.agentId,
+      interviewPlan: session.interviewPlan,
+      interviewPrompt: session.interviewPrompt,
+      feedbackPrompt: session.feedbackPrompt,
+      feedback: session.feedback,
+      ready
+    });
+  } catch (error) {
+    console.error('Error fetching session:', error);
+    res.status(500).json({ error: 'Failed to fetch session', details: error.message });
+  }
+});
+
+// Cancel session route
+router.post('/session/:sessionId/cancel', async (req, res) => {
+  const { sessionId } = req.params;
+  const userId = req.userId;
+
+  try {
+    const session = await prisma.session.update({
+      where: {
+        id: sessionId
+      },
+      data: {
+        status: 'cancelled'
+      }
+    });
+
+    console.log(`Session ${sessionId} cancelled by user ${userId}`);
+    res.json({ success: true, sessionId: session.id });
+  } catch (error) {
+    console.error('Error cancelling session:', error);
+    res.status(500).json({ error: 'Failed to cancel session', details: error.message });
   }
 });
 

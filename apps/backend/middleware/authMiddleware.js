@@ -11,7 +11,6 @@ function authMiddleware(req, res, next) {
     ? authHeader.slice(7)
     : authHeader;
 
-  console.log('Received token:', token);
   jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, decoded) => {
     if (err || !decoded?.userId) {
       return res.status(401).json({ message: 'Invalid token' });

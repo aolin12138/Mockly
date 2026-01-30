@@ -20,6 +20,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   agents       Agent[]
+  sessions     Session[]
 }
 
 model Agent {
@@ -28,16 +29,19 @@ model Agent {
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  histories History[]
 }
 
-model History {
-  id        String   @id @default(uuid()) // This represents the conversation id
-  agentId   String
-  agent     Agent    @relation(fields: [agentId], references: [id])
-  feedback  Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Session {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  agentId          String?
+  feedbackPrompt   String?  @db.Text
+  interviewPrompt  String?  @db.Text
+  interviewPlan    String?  @db.Text
+  feedback         Json?
+  status           String   @default("pending")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 

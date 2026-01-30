@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
 import interviewRoutes from './routes/interviewRoutes.js';
+import interviewCallbackRoutes from './routes/interviewCallbackRoutes.js';
 import authMiddleware from './middleware/authMiddleware.js';
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/interview', interviewCallbackRoutes);
 app.use('/api/interview', authMiddleware, interviewRoutes);
 
 app.listen(PORT, () => {
