@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 function authMiddleware(req, res, next) {
   // Expect header in the form "Bearer <token>" but also handle raw token for compatibility
   const authHeader = req.headers['authorization'];
-  console.log('Auth header:', authHeader);
 
   if (!authHeader) {
     console.log('No authorization header provided');
@@ -13,8 +12,6 @@ function authMiddleware(req, res, next) {
   const token = authHeader.startsWith('Bearer ')
     ? authHeader.slice(7)
     : authHeader;
-
-  console.log('Token:', token.substring(0, 20) + '...');
 
   jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, decoded) => {
     if (err) {

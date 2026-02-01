@@ -26,7 +26,7 @@ router.post('/init', (req, res) => {
   res.status(200).json({ message: 'Configuration received', config: interviewConfig });
 });
 
-// Session route to create session + call n8n webhook
+// Session route to create session + call n8n webhook (NO DB SAVE)
 router.post('/session', async (req, res) => {
   console.log("Request received at /session");
 
@@ -45,26 +45,8 @@ router.post('/session', async (req, res) => {
   const userId = req.userId; // From authMiddleware
   console.log("User ID from auth middleware:", userId);
 
-  // Check if user already has an agent
-  let agent;
-  try {
-    agent = await prisma.agent.findFirst({
-      where: {
-        userId: userId
-      }
-    });
-
-    if (agent) {
-      console.log(`Found existing agent with ID: ${agent.id} for user: ${userId}`);
-      interviewConfig.agent_id = agent.id;
-    } else {
-      console.log(`No existing agent found for user: ${userId}. Will request agent creation from webhook.`);
-      interviewConfig.agent_id = null; // Signal to webhook that agent needs to be created
-    }
-  } catch (error) {
-    console.error("Error checking for existing agent:", error);
-    return res.status(500).json({ error: 'Failed to check agent session', details: error.message });
-  }
+  // Generate a temporary session ID (UUID-like)
+  const tempSessionId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   // Attach Company Profile
   if (interviewConfig.target && interviewConfig.target.company_preset) {
@@ -93,43 +75,55 @@ router.post('/session', async (req, res) => {
     }
   }
 
-  try {
-    const session = await prisma.session.create({
-      data: {
-        userId: userId,
-        agentId: interviewConfig.agent_id || null
-      }
-    });
+  // Add userId + sessionId to the config
+  interviewConfig.userId = userId;
+  interviewConfig.session_id = tempSessionId;
 
-    // Add userId + sessionId to the config
-    interviewConfig.userId = userId;
-    interviewConfig.session_id = session.id;
+  console.log("----- SENDING JSON PAYLOAD TO WEBHOOK -----");
+  console.log(JSON.stringify(interviewConfig, null, 2));
+  console.log("-------------------------------------------");
 
-    console.log("----- SENDING JSON PAYLOAD TO WEBHOOK -----");
-    console.log(JSON.stringify(interviewConfig, null, 2));
-    console.log("-------------------------------------------");
+  // Fire webhook asynchronously (don't wait for response)
+  fetch('http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(interviewConfig)
+  }).then(() => {
+    console.log(`Webhook triggered for temporary session ${tempSessionId}`);
+  }).catch(error => {
+    console.error(`Webhook error for session ${tempSessionId}:`, error.message);
+  });
 
-    // Fire webhook asynchronously (don't wait for response)
-    fetch('http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(interviewConfig)
-    }).then(() => {
-      console.log(`Webhook triggered for session ${session.id}`);
-    }).catch(error => {
-      console.error(`Webhook error for session ${session.id}:`, error.message);
-    });
+  // Return temp session ID immediately - NO DATABASE SAVE
+  res.json({
+    sessionId: tempSessionId
+  });
+});
 
-    // Immediately return session ID (don't wait for webhook)
-    res.json({
-      sessionId: session.id
-    });
-  } catch (error) {
-    console.error('Error creating session:', error);
-    res.status(500).json({ error: 'Failed to create session', details: error.message });
+// Technical session route - creates temporary session (NOT saved to DB)
+router.post('/technical/session', async (req, res) => {
+  console.log("Request received at /technical/session");
+
+  const interviewConfig = req.body;
+  if (!interviewConfig) {
+    return res.status(400).json({ error: 'No configuration provided' });
   }
+
+  const userId = req.userId; // From authMiddleware
+  console.log("User ID from auth middleware:", userId);
+
+  // Generate a temporary session ID (UUID-like)
+  const tempSessionId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  console.log(`Created temporary technical session ${tempSessionId} for user ${userId}`);
+  console.log("Session config:", JSON.stringify(interviewConfig, null, 2));
+
+  // Return session ID immediately - NO DATABASE SAVE, NO WEBHOOK
+  res.json({
+    sessionId: tempSessionId
+  });
 });
 
 // Session status route (polled by frontend)
@@ -186,6 +180,103 @@ router.post('/session/:sessionId/cancel', async (req, res) => {
   } catch (error) {
     console.error('Error cancelling session:', error);
     res.status(500).json({ error: 'Failed to cancel session', details: error.message });
+  }
+});
+
+// Get last agent for user (quick-start)
+router.get('/agent/last', async (req, res) => {
+  const userId = req.userId;
+  console.log(`Fetching last agent for user ${userId}`);
+
+  try {
+    const agent = await prisma.agent.findFirst({
+      where: {
+        userId: userId
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    if (!agent) {
+      return res.json({ agent: null });
+    }
+
+    res.json({
+      agent: {
+        id: agent.id,
+        name: agent.name
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching last agent:', error);
+    res.status(500).json({ error: 'Failed to fetch agent', details: error.message });
+  }
+});
+
+// Quick-start session with last agent setup
+router.post('/session/quick-start', async (req, res) => {
+  console.log("Request received at /session/quick-start");
+
+  const userId = req.userId;
+  console.log("User ID from auth middleware:", userId);
+
+  // Generate a temporary session ID (UUID-like)
+  const tempSessionId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  try {
+    // Fetch last agent
+    const agent = await prisma.agent.findFirst({
+      where: {
+        userId: userId
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    if (!agent) {
+      return res.status(400).json({ error: 'No previous agent setup found. Please configure a new session.' });
+    }
+
+    console.log(`Quick-start: Using agent ${agent.id} for user ${userId}`);
+
+    // Prepare quick-start config
+    const quickStartConfig = {
+      userId: userId,
+      session_id: tempSessionId,
+      agent_id: agent.id,
+      interview_mode: 'behavioral',
+      quick_start: true,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log("----- QUICK-START SESSION INITIATED -----");
+    console.log(JSON.stringify(quickStartConfig, null, 2));
+    console.log("----------------------------------------");
+
+    // Trigger webhook for quick-start
+    fetch('http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(quickStartConfig)
+    }).then(() => {
+      console.log(`Quick-start webhook triggered for session ${tempSessionId}`);
+    }).catch(error => {
+      console.error(`Webhook error for quick-start session ${tempSessionId}:`, error.message);
+    });
+
+    // Return temp session ID immediately
+    res.json({
+      sessionId: tempSessionId,
+      agentId: agent.id,
+      quick_start: true
+    });
+  } catch (error) {
+    console.error('Error creating quick-start session:', error);
+    res.status(500).json({ error: 'Failed to create quick-start session', details: error.message });
   }
 });
 
