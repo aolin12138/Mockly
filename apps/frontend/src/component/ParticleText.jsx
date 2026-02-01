@@ -447,13 +447,13 @@ export default function ParticleText({ scrollProgress = 0 }) {
 
     // Animation loop
     const startTime = Date.now();
-    
+
     function animate() {
       ctx.clearRect(0, 0, width, height);
 
       // Get current scroll progress
       const progress = scrollProgressRef.current;
-      
+
       // Earth expansion based on scroll (1 to 3x size at full scroll)
       const earthExpansionFactor = 1 + (progress * 2);
       const currentEarthRadius = earthRadius * earthExpansionFactor;      // Earth fade out (invisible at 80% scroll)
@@ -501,10 +501,10 @@ export default function ParticleText({ scrollProgress = 0 }) {
         companies.forEach(company => {
           // Calculate potential updated position for hover detection
           // We calculate the position WITHOUT updating angles first to check if mouse is over
-          
+
           // Calculate current parameters
           const radius = company.orbitRadius * earthExpansionFactor;
-          
+
           // Use current angles for hit testing (before update)
           const hitX = radius * Math.cos(company.angleY);
           const hitY = radius * Math.sin(company.angleY) * Math.sin(company.inclination);
@@ -513,23 +513,23 @@ export default function ParticleText({ scrollProgress = 0 }) {
           const hitScale = 1 / (1 + hitRotated.z * 0.003);
           const hitScreenX = centerX + hitRotated.x * hitScale;
           const hitScreenY = centerY + hitRotated.y * hitScale;
-          
+
           // Check hover state (if in front hemisphere and close to mouse)
           let isHovered = false;
           if (hitRotated.z > -currentEarthRadius && mouse.active) {
-             const dx = hitScreenX - mouse.x;
-             const dy = hitScreenY - mouse.y;
-             const dist = Math.sqrt(dx * dx + dy * dy);
-             // 40px radius threshold for smoother interaction
-             if (dist < 40 * hitScale) {
-                isHovered = true;
-             }
+            const dx = hitScreenX - mouse.x;
+            const dy = hitScreenY - mouse.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            // 40px radius threshold for smoother interaction
+            if (dist < 40 * hitScale) {
+              isHovered = true;
+            }
           }
 
           // Only update angles if NOT hovered
           if (!isHovered) {
-             company.angleY += company.speedY;
-             company.angleZ += company.speedZ;
+            company.angleY += company.speedY;
+            company.angleZ += company.speedZ;
           }
 
           // Calculate final render position
@@ -557,12 +557,12 @@ export default function ParticleText({ scrollProgress = 0 }) {
 
           // Add trail position (without expansion) only if moving
           if (!isHovered) {
-             company.trail.push({ x: trailScreenX, y: trailScreenY, scale: trailScale });
-             
-             // Keep trail length limited (25 points for longer trails)
-             if (company.trail.length > 25) {
-               company.trail.shift();
-             }
+            company.trail.push({ x: trailScreenX, y: trailScreenY, scale: trailScale });
+
+            // Keep trail length limited (25 points for longer trails)
+            if (company.trail.length > 25) {
+              company.trail.shift();
+            }
           }
 
           // Draw trail
@@ -603,7 +603,7 @@ export default function ParticleText({ scrollProgress = 0 }) {
               ctx.save();
               ctx.shadowColor = `rgba(${company.color}, 0.8)`;
               ctx.shadowBlur = isHovered ? 30 : 15; // Stronger glow on hover
-              
+
               ctx.drawImage(
                 logo,
                 screenX - logoSize / 2,
@@ -619,19 +619,19 @@ export default function ParticleText({ scrollProgress = 0 }) {
                 ctx.font = 'bold 14px "Inter", sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
-                
+
                 // Text Glow
                 ctx.shadowColor = 'black';
                 ctx.shadowBlur = 4;
                 ctx.lineWidth = 3;
-                
+
                 ctx.fillStyle = 'white';
                 ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-                ctx.strokeText(company.name, screenX, screenY - logoSize/2 - 8);
-                ctx.fillText(company.name, screenX, screenY - logoSize/2 - 8);
-                
+                ctx.strokeText(company.name, screenX, screenY - logoSize / 2 - 8);
+                ctx.fillText(company.name, screenX, screenY - logoSize / 2 - 8);
+
                 ctx.restore();
-                
+
                 // Change cursor style (needs canvas style update)
                 // We'll handle this by setting a global flag if any is hovered
                 canvas.style.cursor = 'pointer';
@@ -639,12 +639,12 @@ export default function ParticleText({ scrollProgress = 0 }) {
             }
           }
         });
-        
+
         // Reset cursor if no company is hovered (simplistic approach within this loop structure)
         // A better way is to track "anyHovered" outside the foEach
         // But since we are clearing rect every frame, we can just default it to default?
         // No, that flickers. Let's leave it for now or implement "anyHovered" logic if requested.
-        
+
         ctx.restore();
       }
 
@@ -747,7 +747,7 @@ export default function ParticleText({ scrollProgress = 0 }) {
     };
   }, []);
 
-    return (
+  return (
     <canvas
       ref={canvasRef}
       className="absolute inset-0 w-full h-full pointer-events-auto"
