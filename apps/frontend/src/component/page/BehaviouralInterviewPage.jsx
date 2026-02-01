@@ -262,8 +262,8 @@ export default function BehaviouralInterviewPage() {
                 <button
                   onClick={() => setUseTestMode(!useTestMode)}
                   className={`px-3 py-1 rounded text-xs font-medium transition ${useTestMode
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                     }`}
                 >
                   {useTestMode ? 'ON' : 'OFF'}
@@ -274,8 +274,8 @@ export default function BehaviouralInterviewPage() {
                   <button
                     onClick={() => setTestState('idle')}
                     className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'idle'
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                   >
                     Idle
@@ -283,8 +283,8 @@ export default function BehaviouralInterviewPage() {
                   <button
                     onClick={() => setTestState('listening')}
                     className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'listening'
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                   >
                     Listening
@@ -292,8 +292,8 @@ export default function BehaviouralInterviewPage() {
                   <button
                     onClick={() => setTestState('speaking')}
                     className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'speaking'
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                   >
                     Speaking
@@ -301,8 +301,8 @@ export default function BehaviouralInterviewPage() {
                   <button
                     onClick={() => setTestState('thinking')}
                     className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'thinking'
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                   >
                     Thinking

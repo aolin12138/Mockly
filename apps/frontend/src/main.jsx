@@ -41,6 +41,7 @@ root.render(
           <Route path='/technical/:sessionId' element={<TechnicalInterviewPage />} />
           <Route path='/behavioural/:sessionId' element={<BehavioralInterviewPage />} />
           <Route path='/results' element={<ResultsPage />} />
+          <Route path='/results/:sessionId' element={<ResultsPage />} />
           <Route path='/results-technical' element={<TechnicalResultsPage />} />
         </Routes>
       </Router>

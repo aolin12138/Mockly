@@ -4,6 +4,7 @@ import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
 import interviewRoutes from './routes/interviewRoutes.js';
 import interviewCallbackRoutes from './routes/interviewCallbackRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import authMiddleware from './middleware/authMiddleware.js';
 
 const app = express();
@@ -12,7 +13,9 @@ const PORT = process.env.PORT || 3000;
 // CORS configuration
 app.use(cors({
   origin: 'http://localhost:5173', // Vite dev server
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Debug: Check if DATABASE_URL is loaded
@@ -25,6 +28,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/interview', interviewCallbackRoutes);
 app.use('/api/interview', authMiddleware, interviewRoutes);
+app.use('/api/user', authMiddleware, userRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
