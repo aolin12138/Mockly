@@ -15,3 +15,37 @@ Content-Type: application/json
   "email": "testuser@example.com",
   "password": "SecurePass123!"
 }
+
+###
+# Get Random Question (replace TOKEN with actual JWT from login)
+GET http://localhost:3000/api/questions/random
+Authorization: Bearer TOKEN
+
+###
+# Get Specific Question by ID
+GET http://localhost:3000/api/questions/1
+Authorization: Bearer TOKEN
+
+###
+# Run Code - JavaScript (replace TOKEN and adjust code)
+POST http://localhost:3000/api/code/run
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "questionId": 1,
+  "language": "javascript",
+  "code": "function lengthOfLongestSubstring(s) {\n  const charIndex = {};\n  let maxLength = 0;\n  let left = 0;\n  \n  for (let right = 0; right < s.length; right++) {\n    if (s[right] in charIndex && charIndex[s[right]] >= left) {\n      left = charIndex[s[right]] + 1;\n    }\n    charIndex[s[right]] = right;\n    maxLength = Math.max(maxLength, right - left + 1);\n  }\n  \n  return maxLength;\n}"
+}
+
+###
+# Run Code - Python (replace TOKEN)
+POST http://localhost:3000/api/code/run
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "questionId": 1,
+  "language": "python",
+  "code": "def lengthOfLongestSubstring(s: str) -> int:\n    char_index = {}\n    max_length = 0\n    left = 0\n    \n    for right in range(len(s)):\n        if s[right] in char_index and char_index[s[right]] >= left:\n            left = char_index[s[right]] + 1\n        char_index[s[right]] = right\n        max_length = max(max_length, right - left + 1)\n    \n    return max_length"
+}

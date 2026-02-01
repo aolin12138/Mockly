@@ -74,11 +74,11 @@ const Dashboard = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Auth guard (optional)
+  // Auth guard
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      // navigate('/login');
+      navigate('/login');
     }
   }, [navigate]);
 
@@ -88,9 +88,11 @@ const Dashboard = () => {
       const token = localStorage.getItem('token');
       if (!token) {
         setLoading(false);
+        navigate('/login');
         return;
       }
 
+      console.log('Fetching user profile...');
       // Profile
       const profileResponse = await fetch('http://localhost:3000/api/user/profile', {
         headers: {
@@ -99,16 +101,24 @@ const Dashboard = () => {
         }
       });
 
+      console.log('Profile response status:', profileResponse.status);
+
       if (profileResponse.ok) {
         const user = await profileResponse.json();
+        console.log('User data fetched:', user);
         setUserData(user);
       } else if (profileResponse.status === 401) {
+        // Token expired or invalid
+        console.log('Token expired or invalid, redirecting to login');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         navigate('/login');
         return;
+      } else {
+        console.error('Failed to fetch profile:', profileResponse.status);
       }
 
+      console.log('Fetching user sessions...');
       // Sessions
       const sessionsResponse = await fetch('http://localhost:3000/api/user/sessions', {
         headers: {
@@ -117,21 +127,32 @@ const Dashboard = () => {
         }
       });
 
+      console.log('Sessions response status:', sessionsResponse.status);
+
       if (sessionsResponse.ok) {
         const sessionsList = await sessionsResponse.json();
+        console.log('Sessions fetched:', sessionsList.length, 'sessions');
         setSessions(sessionsList);
       } else if (sessionsResponse.status === 401) {
+        // Token expired or invalid
+        console.log('Token expired or invalid, redirecting to login');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         navigate('/login');
         return;
+      } else {
+        console.error('Failed to fetch sessions:', sessionsResponse.status);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+      // If there's a network error or the server is down
+      if (error.message?.includes('Failed to fetch')) {
+        console.error('Network error - check if backend is running');
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     fetchUserDataAndSessions();
@@ -281,6 +302,14 @@ const Dashboard = () => {
     navigate('/setup');
   };
 
+  const handleSignOut = () => {
+    // Clear authentication data
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    // Navigate to home/login
+    navigate('/');
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -321,7 +350,7 @@ const Dashboard = () => {
 
         <div className="pt-6 border-t border-slate-800/60 space-y-2">
           <SidebarItem icon={Settings} label="Settings" onClick={() => setActiveTab('settings')} />
-          <SidebarItem icon={LogOut} label="Sign Out" onClick={() => navigate('/')} />
+          <SidebarItem icon={LogOut} label="Sign Out" onClick={handleSignOut} />
         </div>
       </aside>
 
@@ -485,7 +514,7 @@ const Dashboard = () => {
               <motion.button
                 variants={{ hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1 } }}
                 transition={{ duration: 0.5 }}
-                onClick={handleStartInterview}
+                onClick={() => navigate('/setup')}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full relative overflow-hidden rounded-2xl p-1 group shadow-[0_0_40px_-10px_rgba(16,185,129,0.3)] mb-2 cursor-pointer"

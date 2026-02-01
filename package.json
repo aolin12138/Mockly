@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "node --watch ./apps/backend/server.js"
+    "start": "node --watch ./apps/backend/server.js",
+    "db:migrate": "cd apps/backend && npx prisma migrate dev",
+    "db:seed": "cd apps/backend && node prisma/seed.js"
   },
   "dependencies": {
     "@elevenlabs/react": "^0.12.1",
@@ -16,6 +18,7 @@
     "@prisma/client": "^7.2.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
+    "axios": "^1.13.4",
     "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

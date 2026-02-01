@@ -5,6 +5,8 @@ import authRoutes from './routes/authRoutes.js';
 import interviewRoutes from './routes/interviewRoutes.js';
 import interviewCallbackRoutes from './routes/interviewCallbackRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import technicalRoutes from './routes/technicalRoutes.js';
+import codeRunRoutes from './routes/codeRunRoutes.js';
 import authMiddleware from './middleware/authMiddleware.js';
 
 const app = express();
@@ -29,6 +31,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/interview', interviewCallbackRoutes);
 app.use('/api/interview', authMiddleware, interviewRoutes);
 app.use('/api/user', authMiddleware, userRoutes);
+app.use('/api/questions', technicalRoutes);
+app.use('/api/code', codeRunRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

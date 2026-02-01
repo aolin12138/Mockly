@@ -37,6 +37,20 @@ export default function SessionWaiting() {
       return;
     }
 
+    // For temporary sessions (format: temp_*), skip polling and go directly to interview
+    if (sessionId.startsWith('temp_')) {
+      localStorage.setItem('currentSessionId', sessionId);
+      const mode = localStorage.getItem('pendingInterviewMode') || 'behavioral';
+      const routeMap = {
+        'behavioral': 'behavioural',
+        'technical': 'technical',
+        'behavioral_plus_dsa': 'behavioural'
+      };
+      const route = routeMap[mode] || 'behavioural';
+      navigate(`/${route}/${sessionId}`);
+      return;
+    }
+
     let isActive = true;
 
     const poll = async () => {
@@ -63,7 +77,12 @@ export default function SessionWaiting() {
             localStorage.setItem('currentAgentId', data.agentId);
           }
           const mode = localStorage.getItem('pendingInterviewMode') || 'behavioral';
-          const route = mode === 'behavioral' ? 'behavioural' : 'technical';
+          const routeMap = {
+            'behavioral': 'behavioural',
+            'technical': 'technical',
+            'behavioral_plus_dsa': 'behavioural'
+          };
+          const route = routeMap[mode] || 'behavioural';
           navigate(`/${route}/${sessionId}`);
         }
       } catch {

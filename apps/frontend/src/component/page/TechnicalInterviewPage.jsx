@@ -1,650 +1,491 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import MonacoEditor from 'react-monaco-editor';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useConversation } from '@elevenlabs/react';
-import { Orb } from '../ui/orb';
-import { ArrowLeft } from 'lucide-react';
-import gradientBackground from '../../assets/gradient_background.png';
-
-/* ---------- Simple helper: read candidateCv from localStorage ---------- */
-function getStoredCv() {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem('candidateCv');
-    return raw ? JSON.parse(raw) : null;
-  } catch (err) {
-    console.warn('Failed to parse candidateCv from localStorage:', err);
-    return null;
-  }
-}
-
-/* ---------- Fallback dummy problem ---------- */
-
-const DUMMY_PROBLEM = {
-  id: 'two-sum',
-  title: 'Two Sum',
-  description:
-    'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.',
-  starterCode: `function twoSum(nums, target) {
-  // Write your solution here
-  // Return an array [i, j] with the indices of the two numbers
-}\n`,
-};
-
-/* ---------- Problem templates built from title ---------- */
-
-const PROBLEM_TEMPLATES = {
-  'Two Sum': {
-    id: 'two-sum',
-    title: 'Two Sum',
-    description:
-      'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.',
-    starterCode: `function twoSum(nums, target) {
-  // nums: number[]
-  // target: number
-  // Return [i, j] where nums[i] + nums[j] === target
-}\n`,
-  },
-  'Container With Most Water': {
-    id: 'container-with-most-water',
-    title: 'Container With Most Water',
-    description:
-      'Given n non-negative integers a1, a2, ..., an, where each represents a point at coordinate (i, ai). n vertical lines are drawn such that the two endpoints of the line i are at (i, ai) and (i, 0). Find two lines that, together with the x-axis, form a container that holds the most water.',
-    starterCode: `function maxArea(height) {
-  // height: number[]
-  // Return the maximum amount of water a container can store
-}\n`,
-  },
-  'Roman to Integer': {
-    id: 'roman-to-integer',
-    title: 'Roman to Integer',
-    description:
-      'Given a Roman numeral, convert it to an integer. The input is guaranteed to be within the range 1 to 3999.',
-    starterCode: `function romanToInt(s) {
-  // s: string representing a Roman numeral
-  // Return the corresponding integer
-}\n`,
-  },
-  'Regular Expression Matching': {
-    id: 'regular-expression-matching',
-    title: 'Regular Expression Matching',
-    description:
-      "Implement regular expression matching with support for '.' and '*'.\n\n'.' Matches any single character.\n'*' Matches zero or more of the preceding element.\n\nThe matching should cover the entire input string (not partial).",
-    starterCode: `function isMatch(s, p) {
-  // s: input string
-  // p: pattern with '.' and '*'
-  // Return true if pattern matches the entire string
-}\n`,
-  },
-  'Letter Combinations of a Phone Number': {
-    id: 'letter-combinations-of-a-phone-number',
-    title: 'Letter Combinations of a Phone Number',
-    description:
-      'Given a string containing digits from 2–9 inclusive, return all possible letter combinations that the number could represent. Return the answer in any order.',
-    starterCode: `function letterCombinations(digits) {
-  // digits: string of digits 2-9
-  // Return all possible letter combinations
-}\n`,
-  },
-};
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import Modal from '../ui/Modal.jsx';
+import { ArrowLeft, Play, RotateCcw, Check, X, ChevronDown, AlertCircle } from 'lucide-react';
 
 /**
- * Build a full problem object from just a title.
- * If we don’t have a template, fall back to a generic wrapper.
+ * TechnicalInterviewPage - Redesigned for Phase 3
+ * Features:
+ * - 2-column layout (problem + constraints | Monaco editor)
+ * - Language selector (JavaScript/Python/Java)
+ * - Visible test results table
+ * - Dashboard-style UI (dark theme, glassmorphic cards)
+ * - Framer Motion animations
  */
-function buildProblemFromTitle(title) {
-  if (!title) return DUMMY_PROBLEM;
 
-  const template = PROBLEM_TEMPLATES[title];
-  if (template) return template;
-
-  return {
-    id: 'custom-problem',
-    title,
-    description:
-      `Solve the problem: ${title}.\n\n` +
-      'Write a clear, efficient solution and be prepared to explain its time and space complexity.',
-    starterCode: `// ${title}
-function solve(input) {
-  // TODO: implement your solution here
-}\n`,
-  };
-}
-
-/* -------------------------------------------------------------------------- */
-/*                      Shared config for voice interview                      */
-/* -------------------------------------------------------------------------- */
-
-// Per-company agent IDs
-const AGENT_IDS = {
-  google: 'agent_5301kc3cd46tfvb9yvb15b3r1kxt', // Google-style tech interviewer
-  meta: 'agent_3201kc3dbg7kfsgat6n0wsgfck8c', // Meta-style tech interviewer
-  other: 'agent_9401kc3dcz0heexs1tkpj1181f7y', // General software interviewer
-};
-
-// Helper to choose correct agent, defaulting to "other"
-function getAgentIdForCompany(company) {
-  if (company === 'google') return AGENT_IDS.google;
-  if (company === 'meta') return AGENT_IDS.meta;
-  return AGENT_IDS.other;
-}
-
-// Where we send code + problem snapshot so n8n / ElevenLabs tools can see it
-// (point this at your n8n webhook or Node proxy).
-const CODE_SNAPSHOT_ENDPOINT = 'http://localhost:4000/api/technical-code-snapshot';
-
-/* -------------------------------------------------------------------------- */
-/*                 Bottom-right widget (status only, no controls)             */
-/* -------------------------------------------------------------------------- */
-
-function TechnicalVoiceWidget({ conversation }) {
-  const isConnected = conversation.status === 'connected';
-  const isConnecting = conversation.status === 'connecting';
-
-  return (
-    <div
-      className='
-        fixed bottom-4 right-4
-        z-40
-        flex flex-col items-end gap-2
-        pointer-events-none
-      '
-    >
-      <div
-        className='
-          pointer-events-auto
-          rounded-2xl border border-slate-200/70 bg-white/95 shadow-lg
-          px-3 py-2.5
-          flex items-center gap-3
-          max-w-xs
-        '
-      >
-        <div className='w-[72px] h-[72px]'>
-          <Orb
-            colors={['#2792DC', '#9CE6E6']}
-            agentState={isConnected ? (conversation.isSpeaking ? 'talking' : 'listening') : null}
-            getInputVolume={() => conversation.getInputVolume?.() || 0}
-            getOutputVolume={() => conversation.getOutputVolume?.() || 0}
-          />
-        </div>
-
-        <div className='flex-1 min-w-0'>
-          <p className='text-xs font-semibold text-slate-800 truncate'>Technical interview coach</p>
-          <p className='text-[11px] text-slate-500'>
-            {conversation.status === 'disconnected' &&
-              'Interview coach is idle. Start the interview to connect.'}
-            {isConnecting && 'Connecting to your interviewer…'}
-            {isConnected &&
-              (conversation.isSpeaking
-                ? 'Interviewer is speaking…'
-                : 'Listening while you code. Just talk if you need help.')}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*                           Main technical page UI                           */
-/* -------------------------------------------------------------------------- */
+const Card = ({ children, className = '', delay = 0 }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5, delay }}
+    className={`relative bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-2xl p-6 shadow-lg overflow-hidden ${className}`}
+  >
+    {children}
+  </motion.div>
+);
 
 const TechnicalInterviewPage = () => {
   const navigate = useNavigate();
-  const { sessionId } = useParams();
-  const [agentId, setAgentId] = useState('');
 
+  // Question and code state
+  const [question, setQuestion] = useState(null);
+  const [code, setCode] = useState('');
+  const [language, setLanguage] = useState('javascript');
+  const [loading, setLoading] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [testResults, setTestResults] = useState(null);
+  const [showResults, setShowResults] = useState(false);
+  const [error, setError] = useState(null);
+  const [showExitWarning, setShowExitWarning] = useState(false);
+
+  // Auth guard and fetch question
   useEffect(() => {
-    if (sessionId) {
-      localStorage.setItem('currentSessionId', sessionId);
-    }
-  }, [sessionId]);
-
-  useEffect(() => {
-    if (!sessionId) return;
-
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      navigate('/login');
+      return;
+    }
 
-    const loadSession = async () => {
-      try {
-        const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
+    fetchQuestion(token);
 
-        if (!response.ok) return;
-        const data = await response.json();
-        if (data?.agentId) {
-          setAgentId(data.agentId);
-          localStorage.setItem('currentAgentId', data.agentId);
-        }
-      } catch (error) {
-        console.error('Failed to load session agentId:', error);
-      }
+    // Warn user when trying to leave the page
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+      setShowExitWarning(true);
+      return '';
     };
 
-    loadSession();
-  }, [sessionId]);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [navigate]);
 
-  // 🔹 Which company are we targeting? (google | meta | other)
-  const selectedCompany =
-    (typeof window !== 'undefined' && window.localStorage.getItem('selectedCompany')) || 'other';
-
-  const candidateCv = getStoredCv();
-
-  const [problem, setProblem] = useState(DUMMY_PROBLEM);
-  const [code, setCode] = useState(DUMMY_PROBLEM.starterCode);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showConsent, setShowConsent] = useState(true);
-
-  /* ---------- ElevenLabs conversation hook (shared with widget) ---------- */
-
-  const conversation = useConversation({
-    onConnect: () => {
-      console.log('[tech-voice] Agent connected, id:', conversation.getId?.());
-    },
-    onDisconnect: () => {
-      console.log('[tech-voice] Agent disconnected');
-    },
-    onMessage: (message) => {
-      console.log('[tech-voice] Message:', message);
-    },
-    onError: (error) => {
-      console.error('[tech-voice] Conversation error:', error);
-    },
-    onDebug: (debug) => {
-      console.log('[tech-voice debug]', debug);
-    },
-  });
-
-  const isConnecting = conversation.status === 'connecting';
-
-  // Send current code + problem + CV to your backend/n8n so the agent can “see” it
-  const syncCodeSnapshot = async () => {
+  const fetchQuestion = async (token) => {
     try {
-      const conversationId = conversation.getId?.();
+      setLoading(true);
+      setError(null);
 
-      const payload = {
-        code,
-        problemTitle: problem.title,
-        company: selectedCompany,
-        candidateCv, // 🔹 include CV context
-      };
+      const response = await fetch('http://localhost:3000/api/questions/random', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      // Only send conversation_id if we actually have one
-      if (conversationId) {
-        payload.conversation_id = conversationId;
+      if (!response.ok) {
+        throw new Error(`Failed to fetch question: ${response.statusText}`);
       }
 
-      await fetch(CODE_SNAPSHOT_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const data = await response.json();
+      setQuestion(data);
+
+      // Set initial code to boilerplate for selected language
+      if (data.boilerplate && data.boilerplate[language]) {
+        setCode(data.boilerplate[language]);
+      } else {
+        setCode('// Write your solution here\n');
+      }
     } catch (err) {
-      console.warn('[tech-voice] Failed to sync code snapshot (ok while wiring):', err);
+      setError(err.message);
+      console.error('Error fetching question:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 🔁 Debounced snapshot sync while the call is active
-  useEffect(() => {
-    // Only sync while the interviewer is connected or connecting
-    if (conversation.status !== 'connected' && conversation.status !== 'connecting') return;
+  const handleLanguageChange = (newLanguage) => {
+    setLanguage(newLanguage);
+    if (question && question.boilerplate && question.boilerplate[newLanguage]) {
+      setCode(question.boilerplate[newLanguage]);
+    }
+  };
 
-    const timeoutId = setTimeout(() => {
-      syncCodeSnapshot();
-    }, 5000); // 5 second debounce
+  const handleReset = () => {
+    if (question && question.boilerplate && question.boilerplate[language]) {
+      setCode(question.boilerplate[language]);
+      setTestResults(null);
+      setShowResults(false);
+    }
+  };
 
-    return () => clearTimeout(timeoutId);
-  }, [code, conversation.status]); // re-run when code changes during an active session
+  const handleRunCode = async () => {
+    if (!question || !code) {
+      setError('Please enter code to run');
+      return;
+    }
 
-  const startVoiceCoach = async () => {
-    // ✅ If already connecting or connected, do nothing
-    if (conversation.status === 'connected' || conversation.status === 'connecting') {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
       return;
     }
 
     try {
-      // Ask for mic first
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      setRunning(true);
+      setError(null);
+      setTestResults(null);
 
-      const sessionAgentId = agentId || localStorage.getItem('currentAgentId') || getAgentIdForCompany(selectedCompany);
-      console.log('[tech-voice] Starting session for company:', selectedCompany, 'agent:', sessionAgentId);
-
-      // Start the ElevenLabs session
-      await conversation.startSession({
-        agentId: sessionAgentId,
-        connectionType: 'webrtc',
+      const response = await fetch('http://localhost:3000/api/code/run', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          questionId: question.id,
+          code,
+          language,
+        }),
       });
 
-      // Once session is live, send an initial snapshot that can include conversation_id
-      await syncCodeSnapshot();
-    } catch (error) {
-      console.error('[tech-voice] Failed to start conversation:', error);
-      alert('Failed to start the interview coach. Please check microphone permissions.');
+      if (!response.ok) {
+        throw new Error(`Code execution failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      setTestResults(result);
+      setShowResults(true);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error running code:', err);
+    } finally {
+      setRunning(false);
     }
   };
 
-  const endVoiceCoach = async () => {
-    try {
-      await conversation.endSession();
-    } catch (error) {
-      console.error('[tech-voice] Failed to end conversation:', error);
-    }
-  };
-
-  /* ---------- Fetch random problem on mount via Node proxy ---------- */
-
-  useEffect(() => {
-    const fetchProblem = async () => {
-      try {
-        const response = await fetch('http://localhost:4000/api/technical-interview', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            start: true,
-            company: selectedCompany, // 🔹 pass company to backend/n8n
-            candidateCv, // 🔹 optional: let backend personalise problem if desired
-          }),
-        });
-
-        const data = await response.json();
-        const raw = Array.isArray(data) && data[0] ? data[0] : data;
-
-        const built = buildProblemFromTitle(raw?.title);
-        setProblem(built);
-        setCode(built.starterCode);
-      } catch (err) {
-        console.error('Error fetching the problem (using dummy problem instead):', err);
-        setProblem(DUMMY_PROBLEM);
-        setCode(DUMMY_PROBLEM.starterCode);
-      }
-    };
-
-    fetchProblem();
-  }, [selectedCompany, candidateCv]);
-
-  /* ---------- Submit + complete: eval, end call, go to results ---------- */
-
-  const handleBackClick = async () => {
-    if (window.confirm('Are you sure you want to leave? This will cancel your interview session and you\'ll need to reconfigure.')) {
-      try {
-        const token = localStorage.getItem('token');
-        await fetch(`http://localhost:3000/api/interview/session/${sessionId}/cancel`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-      } catch (error) {
-        console.error('Failed to cancel session:', error);
-      }
+  const handleBack = () => {
+    if (window.confirm('Leave the technical interview?')) {
       navigate('/dashboard');
     }
   };
 
-  const handleSubmitAndComplete = async () => {
-    setIsSubmitting(true);
+  // Render loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 flex items-center justify-center">
+        <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="text-center">
+          <div className="text-emerald-400 text-4xl mb-4">⟳</div>
+          <p className="text-slate-300">Loading question...</p>
+        </motion.div>
+      </div>
+    );
+  }
 
-    try {
-      // 🔹 Capture the conversation id *before* ending the session
-      const conversationId = conversation.getId?.() || null;
-      console.log('[technical-submit] conversationId at submit:', conversationId);
+  // Render error state
+  if (error && !question) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 flex items-center justify-center">
+        <Card className="max-w-md">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertCircle className="w-6 h-6 text-red-400" />
+            <h2 className="text-lg font-semibold text-slate-100">Error Loading Question</h2>
+          </div>
+          <p className="text-slate-300 mb-4">{error}</p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
+          >
+            Return to Dashboard
+          </button>
+        </Card>
+      </div>
+    );
+  }
 
-      if (conversation.status === 'connected') {
-        await endVoiceCoach();
-      }
-
-      const response = await fetch('http://localhost:4000/api/technical-interview', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_code: code,
-          randomized_problem: {
-            title: problem.title,
-            description: problem.description,
-          },
-          company: selectedCompany,
-          candidateCv, // 🔹 main CV-aware evaluation hook for n8n / LLM
-          conversation_id: conversationId,
-        }),
-      });
-
-      const data = await response.json();
-      console.log('[technical-feedback] response:', data);
-
-      // ✅ Support both: plain object OR [ { ... } ]
-      const first = Array.isArray(data) && data[0] ? data[0] : data;
-
-      navigate('/results-technical', {
-        state: {
-          raw: data,
-          feedback: first.feedback || null,
-          transcript: first.transcript || null,
-          audio: first.audio || null,
-          problem,
-          code,
-          company: selectedCompany,
-          candidateCv,
-        },
-      });
-    } catch (error) {
-      console.error('Error submitting the code:', error);
-      alert('Failed to submit and complete the interview. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  /* ---------- Consent modal: start interview + auto-connect voice ---------- */
-
-  const handleStartInterview = async () => {
-    setShowConsent(false);
-
-    // Kick off the voice call as soon as they accept.
-    // Spoken intro lives in the ElevenLabs agent config.
-    await startVoiceCoach();
-  };
-
-  /* --------------------------------- Render -------------------------------- */
+  if (!question) {
+    return null;
+  }
 
   return (
-    <div
-      className='interview-container'
-      style={{
-        minHeight: '100vh',
-        padding: '2rem',
-        background: `linear-gradient(
-          180deg,
-          rgba(255,255,255,0.98) 0%,
-          rgba(248,250,252,0.97) 30%,
-          rgba(241,245,249,0.95) 65%,
-          rgba(226,232,240,0.92) 100%
-        ), url(${gradientBackground})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center bottom',
-        backgroundColor: '#f8fafc',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: '960px',
-          margin: '0 auto',
-          borderRadius: '0.75rem',
-          padding: '1.75rem',
-          position: 'relative',
-        }}
-      >
-        {/* Back Button */}
-        <button
-          onClick={handleBackClick}
-          className='absolute top-4 left-4 flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors'
-        >
-          <ArrowLeft className='w-5 h-5' />
-          <span className='text-sm font-medium'>Back</span>
-        </button>
-
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100 p-6">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className='text-center mb-6'>
-          <h1
-            style={{
-              fontSize: '2rem',
-              fontWeight: 700,
-              marginBottom: '0.5rem',
-              color: '#1F2937',
-            }}
-          >
-            <span className='text-slate-900 font-bold'>Rehearse.AI, </span>
-            <span className='text-slate-300 font-bold'>your technical interviewer</span>
-          </h1>
-
-          <p className='mt-3 text-sm text-slate-600 max-w-2xl mx-auto'>
-            Your interviewer will connect on voice, watch as you code, and jump in when you ask for
-            help. Think out loud if you like, and if you want a hint or a sanity check on your
-            approach, just speak up — otherwise code as you normally would in a real interview.
-          </p>
-        </div>
-
-        {/* Problem + editor */}
-        {problem && (
-          <div
-            style={{
-              maxWidth: '960px',
-              margin: '0 auto',
-              background: 'white',
-              borderRadius: '0.75rem',
-              padding: '1.75rem',
-              marginTop: '2rem',
-            }}
-          >
-            <h2
-              style={{
-                fontSize: '1.2rem',
-                fontWeight: 600,
-                marginTop: '0.75rem',
-                color: '#111827',
-              }}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-8"
+        >
+          <div>
+            <button
+              onClick={handleBack}
+              className="inline-flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-emerald-400 transition-colors mb-4"
             >
-              {problem.title}
-            </h2>
-            <p
-              style={{
-                fontSize: '1rem',
-                color: '#4b5563',
-                whiteSpace: 'pre-wrap',
-                marginBottom: '1rem',
-              }}
-            >
-              {problem.description}
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm">Back to Dashboard</span>
+            </button>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+              {question.title}
+            </h1>
+            <p className="text-slate-400 mt-2 text-sm">
+              Difficulty: <span className="text-emerald-400 font-medium">{question.difficulty}</span>
             </p>
-
-            {/* Monaco editor */}
-            <div style={{ height: '400px', borderRadius: '0.5rem', overflow: 'hidden' }}>
-              <MonacoEditor
-                value={code}
-                language='javascript'
-                onChange={setCode}
-                theme='vs-dark'
-                options={{
-                  selectOnLineNumbers: true,
-                  fontSize: 14,
-                  minimap: { enabled: false },
-                }}
-              />
-            </div>
-
-            {/* Single submit + complete button */}
-            <div style={{ marginTop: '1rem' }}>
-              <button
-                onClick={handleSubmitAndComplete}
-                disabled={isSubmitting}
-                style={{
-                  marginBottom: '0.75rem',
-                  padding: '0.5rem 1.4rem',
-                  borderRadius: '999px',
-                  border: 'none',
-                  backgroundColor: isSubmitting ? '#9ca3af' : '#111827',
-                  color: 'white',
-                  fontSize: '1rem',
-                  fontWeight: 500,
-                  cursor: isSubmitting ? 'default' : 'pointer',
-                }}
-              >
-                {isSubmitting ? 'Submitting…' : 'Submit & complete interview'}
-              </button>
-            </div>
           </div>
-        )}
-      </div>
+        </motion.div>
 
-      {/* Consent Modal */}
-      {showConsent && (
-        <div className='fixed inset-0 z-30 flex items-center justify-center bg-slate-900/40'>
-          <div className='bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden'>
-            <div className='px-6 py-4 border-b border-slate-200 flex items-center justify-between'>
-              <h2 className='text-sm font-semibold text-slate-900'>
-                Start your technical interview
-              </h2>
-              <button
-                type='button'
-                className='text-slate-400 hover:text-slate-600 text-xl leading-none'
-                onClick={() => navigate('/')}
-                aria-label='Close'
-              >
-                ×
-              </button>
-            </div>
+        {/* Main 2-column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Left: Problem Statement */}
+          <Card delay={0.1}>
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-lg font-semibold text-emerald-400 mb-3">Problem Statement</h2>
+                <p className="text-slate-300 whitespace-pre-wrap text-sm leading-relaxed">
+                  {question.problemStatement}
+                </p>
+              </div>
 
-            <div className='px-6 py-4 text-sm text-slate-600 max-h-[50vh] overflow-y-auto'>
-              <p className='mb-3'>
-                We&apos;ll connect you to a live AI technical interviewer over voice. They&apos;ll
-                watch as you code in real time.
-              </p>
-              <p className='mb-3'>
-                Talk through your thinking the way you would in a real on-site. If you get stuck on
-                syntax, want a hint, or need to sanity-check an approach, just say so and your
-                interviewer will respond.
-              </p>
-              <p>
-                If you prefer silence, that&apos;s fine too – start coding and only ask for help
-                when you want it.
-              </p>
-            </div>
+              {question.constraints && question.constraints.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-cyan-400 mb-2">Constraints</h3>
+                  <ul className="space-y-1">
+                    {question.constraints.map((constraint, idx) => (
+                      <li key={idx} className="text-slate-400 text-sm">
+                        • {constraint}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-            <div className='px-6 py-4 border-t border-slate-200 flex items-center justify-between gap-3 bg-slate-50'>
-              <button
-                type='button'
-                className='px-4 py-2 rounded-full text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-100'
-                onClick={() => navigate('/')}
-              >
-                Cancel
-              </button>
-              <button
-                type='button'
-                className='inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 shadow-sm'
-                onClick={handleStartInterview}
-                disabled={isConnecting}
-              >
-                {isConnecting ? 'Connecting…' : 'Start interview'}
-              </button>
+              {question.skillTargets && question.skillTargets.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-cyan-400 mb-2">Skills Tested</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {question.skillTargets.map((skill, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-xs text-emerald-300">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {question.visibleTests && question.visibleTests.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-cyan-400 mb-2">Example Test Cases</h3>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {question.visibleTests.map((test, idx) => (
+                      <div key={idx} className="bg-slate-800/50 rounded p-2 text-xs font-mono text-slate-300">
+                        <div>Input: <span className="text-cyan-300">{JSON.stringify(test.input)}</span></div>
+                        <div>Output: <span className="text-emerald-300">{JSON.stringify(test.expectedOutput)}</span></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
+          </Card>
+
+          {/* Right: Editor + Controls */}
+          <div className="space-y-4">
+            {/* Language Selector */}
+            <Card delay={0.2}>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-300">Language</label>
+                <div className="flex gap-2">
+                  {['javascript', 'python', 'java'].map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => handleLanguageChange(lang)}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${language === lang
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        }`}
+                    >
+                      {lang === 'javascript' ? 'JavaScript' : lang === 'python' ? 'Python' : 'Java'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Card>
+
+            {/* Monaco Editor */}
+            <Card delay={0.3} className="p-0 overflow-hidden">
+              <div style={{ height: '400px' }}>
+                <MonacoEditor
+                  value={code}
+                  language={language}
+                  onChange={setCode}
+                  theme="vs-dark"
+                  options={{
+                    selectOnLineNumbers: true,
+                    fontSize: 13,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    wordWrap: 'on',
+                  }}
+                />
+              </div>
+            </Card>
+
+            {/* Run & Reset Buttons */}
+            <Card delay={0.4} className="flex gap-3">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleRunCode}
+                disabled={running}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Play className="w-4 h-4" />
+                {running ? 'Running...' : 'Run Code'}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleReset}
+                disabled={running}
+                className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </motion.button>
+            </Card>
           </div>
         </div>
-      )}
 
-      {/* Bottom-right voice orb widget – status only */}
-      <TechnicalVoiceWidget conversation={conversation} />
+        {/* Test Results */}
+        <AnimatePresence>
+          {showResults && testResults && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <Card delay={0.5}>
+                <div className="space-y-4">
+                  {/* Error or Results Summary */}
+                  {testResults.error ? (
+                    <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <X className="w-5 h-5 text-red-400" />
+                        <h3 className="font-semibold text-red-400">{testResults.error}</h3>
+                      </div>
+                      {testResults.details && (
+                        <p className="text-sm text-red-200 font-mono whitespace-pre-wrap">{testResults.details}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-lg text-emerald-400">
+                          Test Results
+                        </h3>
+                        <span className="text-sm font-mono text-slate-400">
+                          {testResults.passedTests}/{testResults.totalTests} passed
+                        </span>
+                      </div>
+
+                      {/* Progress bar */}
+                      <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(testResults.passedTests / testResults.totalTests) * 100}%` }}
+                          transition={{ duration: 0.5, delay: 0.2 }}
+                          className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500"
+                        />
+                      </div>
+
+                      {/* Test result table */}
+                      {testResults.testResults && testResults.testResults.length > 0 && (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="border-b border-slate-700">
+                                <th className="text-left py-2 px-2 text-slate-400">#</th>
+                                <th className="text-left py-2 px-2 text-slate-400">Input</th>
+                                <th className="text-left py-2 px-2 text-slate-400">Expected</th>
+                                <th className="text-left py-2 px-2 text-slate-400">Actual</th>
+                                <th className="text-left py-2 px-2 text-slate-400">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {testResults.testResults.map((test) => (
+                                <tr key={test.id} className="border-b border-slate-800 hover:bg-slate-800/30">
+                                  <td className="py-2 px-2 text-slate-400">{test.id}</td>
+                                  <td className="py-2 px-2 font-mono text-cyan-300 text-xs truncate max-w-[120px]">
+                                    {JSON.stringify(test.input)}
+                                  </td>
+                                  <td className="py-2 px-2 font-mono text-emerald-300 text-xs">
+                                    {JSON.stringify(test.expected)}
+                                  </td>
+                                  <td className="py-2 px-2 font-mono text-slate-300 text-xs">
+                                    {test.error ? (
+                                      <span className="text-red-400">{test.error}</span>
+                                    ) : (
+                                      JSON.stringify(test.actual)
+                                    )}
+                                  </td>
+                                  <td className="py-2 px-2">
+                                    {test.passed ? (
+                                      <span className="inline-flex items-center gap-1 text-emerald-400">
+                                        <Check className="w-4 h-4" /> Pass
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 text-red-400">
+                                        <X className="w-4 h-4" /> Fail
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Error banner */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="fixed top-4 right-4 max-w-md"
+            >
+              <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                <p className="text-sm text-red-200">{error}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Exit Warning Modal */}
+        <Modal
+          isOpen={showExitWarning}
+          onClose={() => setShowExitWarning(false)}
+          title="⚠️ Are You Sure?"
+          type="warning"
+          primaryButtonText="Exit Session"
+          secondaryButtonText="Keep Working"
+          onPrimaryClick={() => {
+            navigate('/dashboard');
+          }}
+          onSecondaryClick={() => setShowExitWarning(false)}
+          showCloseButton={true}
+        >
+          <div className="space-y-3 text-slate-300 text-sm">
+            <p>If you leave now, your progress will be lost and you <span className="text-amber-200 font-semibold">cannot return</span> to this session.</p>
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+              <p className="text-amber-100">You will need to start a completely new session to continue practicing.</p>
+            </div>
+          </div>
+        </Modal>
+      </div>
     </div>
   );
 };
 
 export default TechnicalInterviewPage;
+

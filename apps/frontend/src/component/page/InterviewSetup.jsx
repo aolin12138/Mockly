@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import Modal from '../ui/Modal.jsx';
 import {
   ChevronRight,
   ChevronLeft,
@@ -128,13 +129,18 @@ const FileUpload = ({ file, onFileSelect }) => {
 const InterviewSetup = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const totalSteps = 3;
-
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastAgent, setLastAgent] = useState(null);
+  const [loadingAgent, setLoadingAgent] = useState(true);
   const [formData, setFormData] = useState({
     session: {
       interview_mode: "behavioral",
       duration_min: 30,
-      language: "en"
+      language: "en",
+      difficulty: "medium",
+      preferred_coding_language: "javascript",
+      technical_focus_areas: []
     },
     target: {
       company_preset: "general_tech",
@@ -165,10 +171,99 @@ const InterviewSetup = () => {
     }));
   };
 
-  const nextStep = () => setStep(prev => Math.min(prev + 1, totalSteps));
+  // Fetch last agent on component mount
+  useEffect(() => {
+    const fetchLastAgent = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setLoadingAgent(false);
+          return;
+        }
+
+        const response = await fetch('http://localhost:3000/api/interview/agent/last', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.agent) {
+            setLastAgent(data.agent);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch last agent:', error);
+      } finally {
+        setLoadingAgent(false);
+      }
+    };
+
+    fetchLastAgent();
+  }, []);
+
+  const getTotalSteps = () => {
+    if (formData.session.interview_mode === 'technical') {
+      return 2; // Step 1 (config) + Step 2 (focus areas)
+    }
+    return 3; // Step 1 (config) + Step 2 (target) + Step 3 (profile)
+  };
+
+  const nextStep = () => setStep(prev => Math.min(prev + 1, getTotalSteps()));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
+  const handleQuickStart = async () => {
+    if (!lastAgent) return;
+
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const response = await fetch('http://localhost:3000/api/interview/session/quick-start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      const data = await response.json();
+      const sessionId = data.sessionId;
+
+      if (!sessionId) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      localStorage.setItem('pendingInterviewMode', 'behavioral');
+      localStorage.setItem('currentSessionId', sessionId);
+      localStorage.setItem('currentAgentId', lastAgent.id);
+
+      // Go directly to waiting page (which will skip polling for temp sessions)
+      navigate(`/interview/session/${sessionId}/waiting`);
+    } catch (error) {
+      console.error('Error with quick-start:', error);
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async () => {
+    // First time: show confirmation modal
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmSession = async () => {
+    setIsSubmitting(true);
     console.log("Submitting Configuration:", formData);
 
     try {
@@ -183,8 +278,12 @@ const InterviewSetup = () => {
 
       console.log("Using Token:", token);
 
+      const endpoint = formData.session.interview_mode === 'technical'
+        ? 'http://localhost:3000/api/interview/technical/session'
+        : 'http://localhost:3000/api/interview/session';
+
       // Send configuration as JSON (CV file is already base64 encoded in formData)
-      const response = await fetch('http://localhost:3000/api/interview/session', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,17 +296,18 @@ const InterviewSetup = () => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("Failed to fetch prompts from backend:", response.status, errorData);
+        setIsSubmitting(false);
 
         if (response.status === 401) {
-          alert("Session expired. Please log in again.");
+          setShowConfirmModal(false);
           navigate('/login');
           return;
         }
 
         if (errorData.details && errorData.details.includes('524')) {
-          alert("The interview preparation is taking too long. This is a known issue with the AI processing. Please:\n\n1. Try again in a few moments\n2. If the issue persists, contact support\n\nNote: Your configuration has been saved.");
+          setShowConfirmModal(false);
         } else {
-          alert(`Failed to prepare interview: ${errorData.details || 'Unknown error'}. Please try again.`);
+          setShowConfirmModal(false);
         }
         return;
       } else {
@@ -216,16 +316,25 @@ const InterviewSetup = () => {
 
         const sessionId = data.sessionId;
         if (!sessionId) {
-          alert('Session was created but sessionId is missing. Please try again.');
+          setIsSubmitting(false);
+          setShowConfirmModal(false);
           return;
         }
 
         localStorage.setItem('pendingInterviewMode', formData.session.interview_mode);
-        navigate(`/interview/session/${sessionId}/waiting`);
+
+        // Technical: store config and go straight to editor, Behavioral: go to waiting
+        if (formData.session.interview_mode === 'technical') {
+          localStorage.setItem('technicalSessionConfig', JSON.stringify(formData.session));
+          navigate(`/technical/${sessionId}`);
+        } else {
+          navigate(`/interview/session/${sessionId}/waiting`);
+        }
       }
     } catch (error) {
       console.error("Error submitting configuration:", error);
-      alert("An error occurred. Please try again.");
+      setIsSubmitting(false);
+      setShowConfirmModal(false);
     }
   };
 
@@ -259,13 +368,25 @@ const InterviewSetup = () => {
 
         {/* Progress Header */}
         <div className="flex items-center justify-between mb-8 px-4">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-4">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
               <span className="font-bold text-slate-900">M</span>
             </div>
             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
               Setup
             </span>
+            {!loadingAgent && lastAgent && (
+              <div className="flex flex-col items-start self-end mt-6">
+                <button
+                  onClick={handleQuickStart}
+                  disabled={isSubmitting}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-cyan-500 to-emerald-500 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-[0_0_20px_-5px_rgba(34,211,238,0.4)] transition-all transform hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  <span>Quick Start</span>
+                </button>
+                <span className="text-xs text-cyan-400/70 mt-0.5 text-center w-full">With last setup</span>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center space-x-4">
@@ -315,6 +436,13 @@ const InterviewSetup = () => {
                         Behavioral
                       </SelectButton>
                       <SelectButton
+                        active={formData.session.interview_mode === 'technical'}
+                        onClick={() => updateField('session', 'interview_mode', 'technical')}
+                        icon={Code}
+                      >
+                        Technical
+                      </SelectButton>
+                      <SelectButton
                         active={formData.session.interview_mode === 'behavioral_plus_dsa'}
                         onClick={() => updateField('session', 'interview_mode', 'behavioral_plus_dsa')}
                         icon={Code}
@@ -324,46 +452,87 @@ const InterviewSetup = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-6">
-                    <div>
-                      <label className="text-sm font-medium text-slate-400 mb-2 block">Duration</label>
-                      <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
-                        {[15, 30, 45, 60].map(mins => (
-                          <button
-                            key={mins}
-                            onClick={() => updateField('session', 'duration_min', mins)}
-                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${formData.session.duration_min === mins
-                              ? 'bg-slate-700 text-white shadow-sm'
-                              : 'text-slate-500 hover:text-slate-300'
-                              }`}
-                          >
-                            {mins}m
-                          </button>
-                        ))}
+                  {/* BEHAVIORAL CONFIG */}
+                  {formData.session.interview_mode !== 'technical' && (
+                    <div className="space-y-6">
+                      <div>
+                        <label className="text-sm font-medium text-slate-400 mb-2 block">Duration</label>
+                        <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
+                          {[15, 30, 45, 60].map(mins => (
+                            <button
+                              key={mins}
+                              onClick={() => updateField('session', 'duration_min', mins)}
+                              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${formData.session.duration_min === mins
+                                ? 'bg-slate-700 text-white shadow-sm'
+                                : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                            >
+                              {mins}m
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-slate-400 mb-2 block">Language</label>
+                        <select
+                          value={formData.session.language}
+                          onChange={(e) => updateField('session', 'language', e.target.value)}
+                          className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-100 outline-none focus:border-emerald-500/50 appearance-none"
+                        >
+                          <option value="en">English (US)</option>
+                          <option value="es">Spanish</option>
+                          <option value="fr">French</option>
+                          <option value="de">German</option>
+                          <option value="zh">Chinese (Mandarin)</option>
+                        </select>
                       </div>
                     </div>
+                  )}
 
-                    <div>
-                      <label className="text-sm font-medium text-slate-400 mb-2 block">Language</label>
-                      <select
-                        value={formData.session.language}
-                        onChange={(e) => updateField('session', 'language', e.target.value)}
-                        className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-100 outline-none focus:border-emerald-500/50 appearance-none"
-                      >
-                        <option value="en">English (US)</option>
-                        <option value="es">Spanish</option>
-                        <option value="fr">French</option>
-                        <option value="de">German</option>
-                        <option value="zh">Chinese (Mandarin)</option>
-                      </select>
+                  {/* TECHNICAL CONFIG */}
+                  {formData.session.interview_mode === 'technical' && (
+                    <div className="space-y-6">
+                      <div>
+                        <label className="text-sm font-medium text-slate-400 mb-2 block">Difficulty</label>
+                        <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
+                          {['easy', 'medium', 'hard'].map(level => (
+                            <button
+                              key={level}
+                              onClick={() => updateField('session', 'difficulty', level)}
+                              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${formData.session.difficulty === level
+                                ? 'bg-slate-700 text-white shadow-sm'
+                                : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                            >
+                              {level}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-slate-400 mb-2 block">Preferred Language</label>
+                        <div className="space-y-2">
+                          {['javascript', 'python', 'java'].map(lang => (
+                            <SelectButton
+                              key={lang}
+                              active={formData.session.preferred_coding_language === lang}
+                              onClick={() => updateField('session', 'preferred_coding_language', lang)}
+                            >
+                              {lang.charAt(0).toUpperCase() + lang.slice(1)}
+                            </SelectButton>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </motion.div>
             )}
 
-            {/* STEP 2: TARGET ROLE */}
-            {step === 2 && (
+            {/* STEP 2: TARGET ROLE - ONLY FOR BEHAVIORAL */}
+            {step === 2 && formData.session.interview_mode !== 'technical' && (
               <motion.div
                 key="step2"
                 initial={{ opacity: 0, x: 20 }}
@@ -455,8 +624,34 @@ const InterviewSetup = () => {
               </motion.div>
             )}
 
-            {/* STEP 3: CANDIDATE PROFILE */}
-            {step === 3 && (
+            {/* STEP 2B: TECH FOCUS AREAS - ONLY FOR TECHNICAL */}
+            {step === 2 && formData.session.interview_mode === 'technical' && (
+              <motion.div
+                key="step2-tech"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
+              >
+                <div>
+                  <h2 className="text-3xl font-bold text-white mb-2">Focus Areas</h2>
+                  <p className="text-slate-400">Select topics you want to focus on.</p>
+                </div>
+
+                <div className="space-y-6">
+                  <TagInput
+                    label="Focus Areas"
+                    tags={formData.session.technical_focus_areas || []}
+                    onAdd={(tag) => updateField('session', 'technical_focus_areas', [...(formData.session.technical_focus_areas || []), tag])}
+                    onRemove={(tag) => updateField('session', 'technical_focus_areas', (formData.session.technical_focus_areas || []).filter(t => t !== tag))}
+                    placeholder="e.g. Arrays, Strings, Dynamic Programming, Graphs"
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 3: CANDIDATE PROFILE - ONLY FOR BEHAVIORAL */}
+            {step === 3 && formData.session.interview_mode !== 'technical' && (
               <motion.div
                 key="step3"
                 initial={{ opacity: 0, x: 20 }}
@@ -564,7 +759,7 @@ const InterviewSetup = () => {
               <span>Back</span>
             </button>
 
-            {step < totalSteps ? (
+            {step < getTotalSteps() ? (
               <button
                 onClick={nextStep}
                 className="flex items-center space-x-2 bg-white text-slate-900 px-8 py-3 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-[0_0_20px_-5px_rgba(255,255,255,0.3)]"
@@ -585,6 +780,45 @@ const InterviewSetup = () => {
 
         </div>
       </motion.div>
+
+      {/* Confirmation Modal */}
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => !isSubmitting && setShowConfirmModal(false)}
+        title="Confirm Interview Settings"
+        type="info"
+        primaryButtonText="Start Interview"
+        secondaryButtonText="Review Again"
+        onPrimaryClick={handleConfirmSession}
+        onSecondaryClick={() => setShowConfirmModal(false)}
+        isPrimaryLoading={isSubmitting}
+        showCloseButton={!isSubmitting}
+      >
+        <div className="space-y-4 text-slate-300 text-sm">
+          <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+            <p className="font-semibold text-white mb-2">📋 Please Verify Your Settings:</p>
+            <ul className="space-y-1 ml-2">
+              <li>✓ Interview Mode: <span className="text-emerald-400 font-medium capitalize">{formData.session.interview_mode.replace('_', ' ')}</span></li>
+              {formData.session.interview_mode === 'technical' ? (
+                <>
+                  <li>✓ Difficulty: <span className="text-emerald-400 font-medium capitalize">{formData.session.difficulty}</span></li>
+                  <li>✓ Language: <span className="text-emerald-400 font-medium capitalize">{formData.session.preferred_coding_language}</span></li>
+                </>
+              ) : (
+                <>
+                  <li>✓ Duration: <span className="text-emerald-400 font-medium">{formData.session.duration_min} minutes</span></li>
+                  <li>✓ Role: <span className="text-emerald-400 font-medium">{formData.target.role_title || 'Not specified'}</span></li>
+                </>
+              )}
+            </ul>
+          </div>
+
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+            <p className="font-semibold text-amber-200 mb-1">⚠️ Important:</p>
+            <p>Once you start the session, you will be charged with tokens/credits. Please ensure all your settings are correct before proceeding.</p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

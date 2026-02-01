@@ -5,6 +5,7 @@ import { LiveWaveform } from '../ui/live-waveform.jsx';
 import { Phone, PhoneOff, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useConversation } from '@elevenlabs/react';
+import Modal from '../ui/Modal.jsx';
 import ParticleOrb from '../ui/particle-orb.jsx';
 import gradientBackground from '../../assets/gradient_background.png';
 
@@ -47,6 +48,7 @@ export default function BehaviouralInterviewPage() {
   const [testState, setTestState] = useState('idle'); // Test state for orb
   const [useTestMode, setUseTestMode] = useState(false); // Toggle between test and real
   const [agentId, setAgentId] = useState('');
+  const [showExitWarning, setShowExitWarning] = useState(false);
 
   useEffect(() => {
     if (sessionId) {
@@ -136,20 +138,23 @@ export default function BehaviouralInterviewPage() {
   };
 
   const handleBackClick = async () => {
-    if (window.confirm('Are you sure you want to leave? This will cancel your interview session and you\'ll need to reconfigure.')) {
-      try {
-        const token = localStorage.getItem('token');
-        await fetch(`http://localhost:3000/api/interview/session/${sessionId}/cancel`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-      } catch (error) {
-        console.error('Failed to cancel session:', error);
-      }
-      navigate('/dashboard');
+    setShowExitWarning(true);
+  };
+
+  const handleConfirmExit = async () => {
+    setShowExitWarning(false);
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`http://localhost:3000/api/interview/session/${sessionId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+    } catch (error) {
+      console.error('Failed to cancel session:', error);
     }
+    navigate('/dashboard');
   };
 
   const backgroundStyle = {
@@ -349,6 +354,26 @@ export default function BehaviouralInterviewPage() {
           </div>
         </div>
       </div>
+
+      {/* Exit Warning Modal */}
+      <Modal
+        isOpen={showExitWarning}
+        onClose={() => setShowExitWarning(false)}
+        title="⚠️ Leave Interview?"
+        type="warning"
+        primaryButtonText="Leave & Cancel"
+        secondaryButtonText="Keep Interviewing"
+        onPrimaryClick={handleConfirmExit}
+        onSecondaryClick={() => setShowExitWarning(false)}
+        showCloseButton={true}
+      >
+        <div className="space-y-3 text-slate-300 text-sm">
+          <p>If you leave now, your session will be <span className="text-amber-200 font-semibold">cancelled immediately</span> and you won't receive feedback.</p>
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+            <p className="text-amber-100">You can start a new interview session from the dashboard.</p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
