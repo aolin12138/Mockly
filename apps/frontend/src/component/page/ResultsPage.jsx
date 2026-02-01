@@ -2,15 +2,15 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Waveform } from '../ui/waveform';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { LoadingPage } from './LoadingPage';
 import { SAMPLE_FEEDBACK } from './constants';
+import { motion } from 'framer-motion';
+import { CheckCircle2, XCircle, TrendingUp, Lightbulb, ArrowRight, Target } from 'lucide-react';
 
 /* --- N8N Webhook Config --- */
 const N8N_WEBHOOK_URL = 'https://aolin12138.app.n8n.cloud/webhook/feedback';
-
-const N8N_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || '';
-const USE_LOCAL_SAMPLE = false; // Toggle to render the sample JSON in constants.jsx
+const USE_LOCAL_SAMPLE = false;
 
 /* --- Helper to transform feedback data --- */
 function transformFeedbackData(feedbackData) {
@@ -21,48 +21,46 @@ function transformFeedbackData(feedbackData) {
     return null;
   }
 
-  // Handle array response
   let data = Array.isArray(feedbackData) ? feedbackData[0] : feedbackData;
-
-  console.log('Data object:', data);
-
   const feedback = data.feedback || data;
   const transcript = data.transcript;
   const audio = data.audio;
 
-  // Log what we're working with
-  console.log('Feedback object:', feedback);
-  console.log('Metrics:', feedback.metrics);
-
-  // Require metrics to be present
-  if (!feedback.metrics) {
-    console.error('No metrics found in feedback');
-    return null;
-  }
-
-  // Transform transcript if available
-  const transformedTranscript = transcript
-    ? transcript.map((msg, index) => ({
-      id: index + 1,
-      role: msg.role === 'agent' || msg.role === 'assistant' ? 'assistant' : 'user',
-      text: msg.text || msg.message || '',
-      timestart: msg.timestart ?? null,
-    }))
-    : null;
-
   return {
-    overallFeedback: feedback.overall_feedback || '',
-    metrics: feedback.metrics,
-    transcript: transformedTranscript,
+    overallScore: feedback.overall_score ?? null,
+    overallAssessment: feedback.overall_assessment || null,
+    dimensionScores: feedback.dimension_scores || [],
+    strengths: feedback.strengths || [],
+    areasForImprovement: feedback.areas_for_improvement || [],
+    overallRecommendation: feedback.overall_recommendation || null,
+    transcript: transcript
+      ? transcript.map((msg, index) => ({
+        id: index + 1,
+        role: msg.role === 'agent' || msg.role === 'assistant' ? 'assistant' : 'user',
+        text: msg.text || msg.message || '',
+        timestart: msg.timestart ?? null,
+      }))
+      : null,
     audio,
-    candidateAnswer: feedback.candidate_answer,
-    starFeedback: feedback.candidate_star_feedback,
-    rephrasedAnswer: feedback.rephrased_star_answer,
   };
 }
 
+/* --- Card Component --- */
+function Card({ children, className = "", delay = 0 }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay }}
+      className={`relative bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-3xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] overflow-hidden ${className}`}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none" />
+      {children}
+    </motion.div>
+  );
+}
 
-// --- Audio player with official ElevenLabs Waveform ---
+/* --- Audio Player Component --- */
 function AudioPlayer({ audio, audioRef }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -70,7 +68,6 @@ function AudioPlayer({ audio, audioRef }) {
 
   const source = audio?.base64 ? `data:${audio.mimeType || 'audio/mpeg'};base64,${audio.base64}` : null;
 
-  // Generate waveform data from base64 (reuse old logic for now)
   const generateWaveformSamples = (base64String, bars = 64) => {
     if (!base64String) return Array(bars).fill(0.25);
     const step = Math.max(1, Math.floor(base64String.length / (bars * 6)));
@@ -96,9 +93,7 @@ function AudioPlayer({ audio, audioRef }) {
         setProgress(el.currentTime / el.duration);
       }
     };
-    const handleLoadedMetadata = () => {
-      console.log('Audio loaded, duration:', el.duration);
-    };
+    const handleLoadedMetadata = () => console.log('Audio loaded, duration:', el.duration);
     const handleEnded = () => setIsPlaying(false);
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
@@ -132,17 +127,17 @@ function AudioPlayer({ audio, audioRef }) {
   };
 
   return (
-    <div className='bg-white rounded-3xl shadow-[0_20px_60px_rgba(148,163,184,0.35)] p-5 border border-slate-100'>
+    <Card delay={0.3}>
       <div className='flex items-center justify-between mb-3'>
         <div>
-          <p className='text-sm font-semibold text-slate-900'>Conversation replay</p>
-          <p className='text-xs text-slate-500'>Audio from the interview (base64 sample)</p>
+          <p className='text-sm font-semibold text-white'>Conversation replay</p>
+          <p className='text-xs text-slate-400'>Audio from the interview</p>
         </div>
         <button
           type='button'
           onClick={togglePlay}
           disabled={!source}
-          className='inline-flex items-center gap-2 rounded-full bg-slate-900 text-slate-50 px-4 py-2 text-xs font-medium hover:bg-slate-800 shadow-sm disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed transition-all'
+          className='inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 text-xs font-medium hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed transition-all'
         >
           {isPlaying ? (
             <>
@@ -186,12 +181,12 @@ function AudioPlayer({ audio, audioRef }) {
           <div className='flex-1 relative'>
             <Waveform data={samples} height={64} barWidth={4} barGap={2} />
             <div
-              className='absolute top-0 bottom-0 w-1 bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.8)] pointer-events-none'
+              className='absolute top-0 bottom-0 w-1 bg-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.8)] pointer-events-none'
               style={{ left: `${progress * 100}%`, transform: 'translateX(-50%)' }}
             />
             {hoverProgress !== null && (
               <div
-                className='absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_15px_rgba(255,255,255,0.9)] pointer-events-none'
+                className='absolute top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.9)] pointer-events-none'
                 style={{ left: `${hoverProgress * 100}%`, transform: 'translateX(-50%)' }}
               />
             )}
@@ -203,222 +198,13 @@ function AudioPlayer({ audio, audioRef }) {
 
       <div className='mt-3 flex items-center justify-between text-[11px] text-slate-500'>
         <span>{source ? 'Waveform powered by ElevenLabs UI' : 'No audio attached to this run'}</span>
-        <span>{Math.round(progress * 100)}% played</span>
+        <span className="text-emerald-400 font-medium">{Math.round(progress * 100)}% played</span>
       </div>
-    </div>
-  );
-}
-
-/* --- Helpers for color based on score --- */
-
-function getScoreColor(score) {
-  if (score >= 8) {
-    return {
-      text: 'text-emerald-600',
-      chipBg: 'bg-emerald-50',
-      chipBorder: 'border-emerald-100',
-      arc: '#059669',
-    };
-  }
-  if (score >= 5) {
-    return {
-      text: 'text-amber-600',
-      chipBg: 'bg-amber-50',
-      chipBorder: 'border-amber-100',
-      arc: '#d97706',
-    };
-  }
-  return {
-    text: 'text-rose-600',
-    chipBg: 'bg-rose-50',
-    chipBorder: 'border-rose-100',
-    arc: '#e11d48',
-  };
-}
-
-/* --- Radar chart (hoverable) --- */
-
-function RadarChart({ categories, activeId, onHover }) {
-  const size = 280;
-  const center = size / 2;
-  const maxRadius = size * 0.38;
-  const maxScore = 10;
-
-  const radarStroke = '#7c3aed'; // violet-600
-  const radarFill = 'rgba(129, 140, 248, 0.20)'; // indigo-ish
-  const radarPoint = '#7c3aed'; // same purple for points
-
-  const points = categories.map((cat, index) => {
-    const angle = (2 * Math.PI * index) / categories.length - Math.PI / 2;
-    const r = (cat.score / maxScore) * maxRadius;
-    const x = center + r * Math.cos(angle);
-    const y = center + r * Math.sin(angle);
-    return { x, y, cat };
-  });
-
-  const polygonPoints = points.map((p) => `${p.x},${p.y}`).join(' ');
-
-  const gridLines = [];
-  const levels = 5;
-  for (let i = 1; i <= levels; i += 1) {
-    const r = (maxRadius * i) / levels;
-    const circlePoints = [];
-    for (let j = 0; j < categories.length; j += 1) {
-      const angle = (2 * Math.PI * j) / categories.length - Math.PI / 2;
-      const x = center + r * Math.cos(angle);
-      const y = center + r * Math.sin(angle);
-      circlePoints.push(`${x},${y}`);
-    }
-    gridLines.push(
-      <polygon
-        key={i}
-        points={circlePoints.join(' ')}
-        fill='none'
-        stroke='#e5e7eb'
-        strokeWidth='1'
-      />
-    );
-  }
-
-  return (
-    <div className='bg-white rounded-3xl p-6 flex flex-col items-center justify-center'>
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        onMouseLeave={() => onHover(null)}
-      >
-        {/* grid */}
-        {gridLines}
-        {/* axes */}
-        {categories.map((_, index) => {
-          const angle = (2 * Math.PI * index) / categories.length - Math.PI / 2;
-          const x = center + maxRadius * Math.cos(angle);
-          const y = center + maxRadius * Math.sin(angle);
-          return (
-            <line
-              key={index}
-              x1={center}
-              y1={center}
-              x2={x}
-              y2={y}
-              stroke='#e5e7eb'
-              strokeWidth='1'
-            />
-          );
-        })}
-        {/* filled polygon */}
-        <polygon points={polygonPoints} fill={radarFill} stroke={radarStroke} strokeWidth='2' />
-        {/* points + labels */}
-        {points.map(({ x, y, cat }, index) => {
-          const isActive = cat.id === activeId;
-          const color = radarPoint;
-
-          // label position slightly further out
-          const angle = (2 * Math.PI * index) / categories.length - Math.PI / 2;
-          const labelR = maxRadius + 16;
-          const lx = center + labelR * Math.cos(angle);
-          const ly = center + labelR * Math.sin(angle);
-
-          return (
-            <g key={cat.id}>
-              {/* interactive point */}
-              <circle
-                cx={x}
-                cy={y}
-                r={isActive ? 6 : 4}
-                fill={color}
-                onMouseEnter={() => onHover(cat.id)}
-              />
-              {isActive && (
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={9}
-                  fill='none'
-                  stroke={color}
-                  strokeWidth='2'
-                  opacity='0.8'
-                />
-              )}
-
-              {/* label */}
-              <text
-                x={lx}
-                y={ly}
-                textAnchor='middle'
-                dominantBaseline='middle'
-                className={`text-[10px] cursor-default ${isActive ? 'font-semibold text-slate-900' : 'text-slate-400'
-                  }`}
-                onMouseEnter={() => onHover(cat.id)}
-              >
-                {cat.label}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
-
-/* --- Circular metric card (plan overview style) --- */
-
-function MetricCard({ category, active, onHover }) {
-  const percent = Math.round((category.score / 10) * 100);
-  const radius = 26;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - percent / 100);
-
-  const { text, chipBg, chipBorder, arc } = getScoreColor(category.score);
-
-  return (
-    <div
-      className={
-        'flex items-center gap-4 rounded-2xl border bg-white px-5 py-4 shadow-sm transition ' +
-        (active ? 'border-slate-400 shadow-md' : 'border-slate-200')
-      }
-      onMouseEnter={() => onHover(category.id)}
-      onMouseLeave={() => onHover(null)}
-    >
-      <div className='relative'>
-        <svg width='64' height='64'>
-          <circle cx='32' cy='32' r={radius} stroke='#e5e7eb' strokeWidth='5' fill='none' />
-          <circle
-            cx='32'
-            cy='32'
-            r={radius}
-            stroke={arc}
-            strokeWidth='5'
-            fill='none'
-            strokeLinecap='round'
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            transform='rotate(-90 32 32)'
-          />
-        </svg>
-        <div className='absolute inset-0 flex items-center justify-center'>
-          <span className={`text-xs font-semibold ${text}`}>{percent}%</span>
-        </div>
-      </div>
-
-      <div className='flex flex-col'>
-        <div className='flex items-center gap-2'>
-          <span className='text-sm font-semibold text-slate-900'>{category.label}</span>
-          <span
-            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${chipBg} ${chipBorder} ${text}`}
-          >
-            {category.score.toFixed(1)}/10
-          </span>
-        </div>
-        <p className='text-[11px] text-slate-500 mt-1'>{category.blurb}</p>
-      </div>
-    </div>
+    </Card>
   );
 }
 
 /* --- Helper to format time --- */
-
 function formatTime(seconds) {
   if (seconds == null) return null;
   const mins = Math.floor(seconds / 60);
@@ -426,8 +212,7 @@ function formatTime(seconds) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-/* --- Transcript bubble UI --- */
-
+/* --- Transcript Card --- */
 function TranscriptCard({ transcript, audioRef }) {
   const handleTimestampClick = (timestart) => {
     if (audioRef?.current && timestart != null) {
@@ -437,11 +222,11 @@ function TranscriptCard({ transcript, audioRef }) {
   };
 
   return (
-    <div className='bg-white rounded-3xl shadow-[0_20px_60px_rgba(148,163,184,0.35)] p-5'>
-      <h2 className='text-sm font-semibold text-slate-900 mb-1'>Chat history</h2>
-      <p className='text-xs text-slate-500 mb-4'>Click timestamp to jump to that moment in the audio.</p>
+    <Card delay={0.4}>
+      <h2 className='text-sm font-semibold text-white mb-1'>Chat history</h2>
+      <p className='text-xs text-slate-400 mb-4'>Click timestamp to jump to that moment in the audio.</p>
 
-      <div className='max-h-72 overflow-y-auto space-y-3 pr-1'>
+      <div className='max-h-72 overflow-y-auto space-y-3 pr-1 custom-scrollbar'>
         {transcript && transcript.length > 0 ? (
           transcript.map((m) => (
             <div
@@ -452,16 +237,16 @@ function TranscriptCard({ transcript, audioRef }) {
                 className={
                   'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ' +
                   (m.role === 'user'
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'bg-slate-50 text-slate-900 border border-slate-200 shadow-sm')
+                    ? 'bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-white border border-emerald-500/30'
+                    : 'bg-slate-800/40 text-slate-100 border border-white/5')
                 }
               >
                 <div className='mb-1 flex items-center justify-between gap-2'>
                   <span className='text-[11px] font-semibold'>
                     {m.role === 'user' ? (
-                      <span className='text-slate-300'>You</span>
+                      <span className='text-emerald-400'>You</span>
                     ) : (
-                      <span className='text-slate-600'>Rehearse.AI</span>
+                      <span className='text-cyan-400'>Rehearse.AI</span>
                     )}
                   </span>
                   {m.timestart != null && (
@@ -471,8 +256,8 @@ function TranscriptCard({ transcript, audioRef }) {
                       className={
                         'text-[10px] font-medium px-2 py-0.5 rounded-full transition hover:scale-105 cursor-pointer ' +
                         (m.role === 'user'
-                          ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                          : 'bg-slate-200 text-slate-600 hover:bg-slate-300')
+                          ? 'bg-emerald-500/30 text-emerald-300 hover:bg-emerald-500/40'
+                          : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50')
                       }
                     >
                       {formatTime(m.timestart)}
@@ -489,16 +274,86 @@ function TranscriptCard({ transcript, audioRef }) {
           </p>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 
-/* --- Main page --- */
+/* --- Dimension Scores Component --- */
+function DimensionScoresDisplay({ dimensionScores }) {
+  if (!dimensionScores || dimensionScores.length === 0) return null;
 
+  return (
+    <Card delay={0.2}>
+      <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <Target className="w-5 h-5 text-emerald-400" />
+        Dimension Scores
+      </h2>
+      <div className="grid gap-4 md:grid-cols-2">
+        {dimensionScores.map((dimension, idx) => {
+          const score = dimension.score || 0;
+          const percentage = (score / 10) * 100;
+          let colorClass = 'from-emerald-500 to-cyan-500';
+          let textColor = 'text-emerald-400';
+          let bgColor = 'bg-emerald-500/5';
+          let borderColor = 'border-emerald-500/20';
+
+          if (score < 5) {
+            colorClass = 'from-red-500 to-rose-500';
+            textColor = 'text-red-400';
+            bgColor = 'bg-red-500/5';
+            borderColor = 'border-red-500/20';
+          } else if (score < 7) {
+            colorClass = 'from-amber-500 to-orange-500';
+            textColor = 'text-amber-400';
+            bgColor = 'bg-amber-500/5';
+            borderColor = 'border-amber-500/20';
+          }
+
+          return (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 * idx, duration: 0.3 }}
+              className={`${bgColor} border ${borderColor} rounded-2xl p-4`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-white">{dimension.dimension}</span>
+                <span className={`text-xs font-bold ${textColor}`}>{score}/10</span>
+              </div>
+              <div className="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-3">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${percentage}%` }}
+                  transition={{ delay: 0.2 + 0.1 * idx, duration: 0.8, ease: "easeOut" }}
+                  className={`h-full bg-gradient-to-r ${colorClass} shadow-lg`}
+                />
+              </div>
+              {dimension.evidence && dimension.evidence.length > 0 && (
+                <div className="space-y-2 mt-3">
+                  {dimension.evidence.map((ev, evIdx) => (
+                    <div key={evIdx} className="text-xs">
+                      <p className="text-slate-300"><strong className="text-slate-200">Observation:</strong> {ev.observation}</p>
+                      {ev.reasoning && (
+                        <p className="text-slate-400 mt-1"><strong className="text-slate-300">Reasoning:</strong> {ev.reasoning}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+/* --- Main Results Page --- */
 export default function ResultsPage() {
   const navigate = useNavigate();
+  const { sessionId: urlSessionId } = useParams();
   const audioRef = useRef(null);
-  const [activeId, setActiveId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [feedbackData, setFeedbackData] = useState(null);
   const [error, setError] = useState(null);
@@ -514,26 +369,62 @@ export default function ResultsPage() {
 
     const fetchFeedback = async () => {
       try {
-        // Wait 5 seconds before fetching to allow ElevenLabs to save audio/transcript
         await new Promise(res => setTimeout(res, 5000));
-        // Call n8n webhook to get feedback
-        const response = await fetch(N8N_WEBHOOK_URL, {
-          method: 'POST',
+
+        // Get session ID from URL param or localStorage
+        const sessionId = urlSessionId || localStorage.getItem('currentSessionId');
+
+        if (!sessionId) {
+          throw new Error('No session ID found. Please start a new interview session.');
+        }
+
+        // Check if feedback already exists in the database
+        const checkFeedbackResponse = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
+        });
+
+        if (!checkFeedbackResponse.ok) {
+          throw new Error('Failed to fetch session data');
+        }
+
+        const sessionData = await checkFeedbackResponse.json();
+        const feedbackPrompt = sessionData.feedbackPrompt;
+        const agentId = sessionData.agentId;
+
+        // If feedback already exists in the database, use it
+        if (sessionData.feedback) {
+          console.log('Found existing feedback in database, using cached feedback');
+          const transformed = transformFeedbackData(sessionData.feedback);
+          if (transformed) {
+            setFeedbackData(transformed);
+            localStorage.setItem('interviewFeedback', JSON.stringify(sessionData.feedback));
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Only generate new feedback if we have the required data and no existing feedback
+        if (!feedbackPrompt || !agentId) {
+          throw new Error('Session data incomplete. Cannot generate feedback.');
+        }
+
+        // Send feedback request to N8N webhook
+        const response = await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            "xi-api-key": N8N_API_KEY,
+            agent_id: agentId,
+            feedback_agent_prompt: feedbackPrompt
           }),
         });
 
         const responseText = await response.text();
-        console.log('Webhook response:', responseText, 'Status:', response.status);
-
-        if (!response.ok) {
-          const errorMsg = responseText || response.statusText;
-          console.error('Webhook error response:', errorMsg);
-          throw new Error(`Webhook request failed: ${errorMsg}`);
+        console.log('Webhook response:', responseText, 'Status:', response.status); if (!response.ok) {
+          throw new Error(`Webhook request failed: ${responseText || response.statusText}`);
         }
 
         if (!responseText) {
@@ -541,13 +432,38 @@ export default function ResultsPage() {
         }
 
         const feedbackData = JSON.parse(responseText);
-
-        // Transform and store the feedback
         const transformed = transformFeedbackData(feedbackData);
         if (transformed) {
           setFeedbackData(transformed);
           localStorage.setItem('interviewFeedback', JSON.stringify(feedbackData));
           localStorage.removeItem('interviewError');
+
+          // Store feedback in database
+          const sessionId = localStorage.getItem('currentSessionId');
+          if (sessionId) {
+            try {
+              const saveFeedbackResponse = await fetch(`http://localhost:3000/api/interview/session/${sessionId}/callback`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                  feedback: feedbackData.feedback || feedbackData,
+                  feedback_prompt: feedbackPrompt
+                }),
+              });
+
+              if (!saveFeedbackResponse.ok) {
+                console.error('Failed to save feedback to database:', await saveFeedbackResponse.text());
+              } else {
+                console.log('Feedback successfully saved to database');
+              }
+            } catch (saveError) {
+              console.error('Error saving feedback to database:', saveError);
+              // Don't throw - we still want to show the feedback even if saving fails
+            }
+          }
         } else {
           setError('Invalid feedback data received - missing required fields');
         }
@@ -568,28 +484,16 @@ export default function ResultsPage() {
 
   if (error || !feedbackData) {
     return (
-      <div className='min-h-screen bg-slate-100 flex items-center justify-center px-4 py-10'>
+      <div className='min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10'>
         <div className='w-full max-w-md text-center'>
           <div className='mb-6'>
-            <div className='inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-4'>
-              <svg
-                className='h-8 w-8 text-red-600'
-                fill='none'
-                viewBox='0 0 24 24'
-                strokeWidth='1.5'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  d='M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z'
-                />
-              </svg>
+            <div className='inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20 border border-red-500/30 mb-4'>
+              <XCircle className='h-8 w-8 text-red-400' />
             </div>
-            <h1 className='text-2xl font-bold text-slate-900 mb-2'>
+            <h1 className='text-2xl font-bold text-white mb-2'>
               {error || 'Failed to load feedback'}
             </h1>
-            <p className='text-slate-600'>
+            <p className='text-slate-400'>
               We encountered an error while processing your interview feedback. Please try again.
             </p>
           </div>
@@ -602,14 +506,14 @@ export default function ResultsPage() {
                 localStorage.removeItem('interviewError');
                 window.location.reload();
               }}
-              className='inline-flex items-center justify-center rounded-full bg-slate-900 text-slate-50 px-5 py-2.5 text-sm font-medium hover:bg-slate-800 shadow-sm'
+              className='inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-5 py-2.5 text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25'
             >
               Retry
             </button>
             <button
               type='button'
               onClick={() => navigate('/')}
-              className='inline-flex items-center justify-center rounded-full border border-slate-300 text-slate-900 px-5 py-2.5 text-sm font-medium hover:bg-slate-50'
+              className='inline-flex items-center justify-center rounded-full border border-white/10 text-white px-5 py-2.5 text-sm font-medium hover:bg-white/5'
             >
               Start new interview
             </button>
@@ -619,134 +523,195 @@ export default function ResultsPage() {
     );
   }
 
-  const { metrics, transcript, overallFeedback, audio, candidateAnswer, starFeedback, rephrasedAnswer } = feedbackData;
-  const overall = (metrics.reduce((acc, c) => acc + c.score, 0) / metrics.length).toFixed(1);
+  const { overallScore, overallAssessment, dimensionScores, strengths, areasForImprovement, overallRecommendation, transcript, audio } = feedbackData;
+
+  // Helper to get recommendation badge color
+  const getRecommendationColor = (recommendation) => {
+    switch (recommendation) {
+      case 'strong_hire':
+        return { bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', text: 'text-emerald-400', label: 'Strong Hire' };
+      case 'hire':
+        return { bg: 'bg-cyan-500/20', border: 'border-cyan-500/40', text: 'text-cyan-400', label: 'Hire' };
+      case 'neutral':
+        return { bg: 'bg-amber-500/20', border: 'border-amber-500/40', text: 'text-amber-400', label: 'Neutral' };
+      case 'no_hire':
+        return { bg: 'bg-red-500/20', border: 'border-red-500/40', text: 'text-red-400', label: 'No Hire' };
+      default:
+        return { bg: 'bg-slate-500/20', border: 'border-slate-500/40', text: 'text-slate-400', label: recommendation };
+    }
+  };
+
+  const recommendationStyle = overallRecommendation ? getRecommendationColor(overallRecommendation) : null;
 
   return (
-    <div className='min-h-screen bg-slate-100 flex items-center justify-center px-4 py-10'>
-      <div className='w-full max-w-6xl space-y-6'>
-        {/* Header */}
-        <div>
-          <h1 className='text-2xl md:text-3xl font-bold tracking-tight text-slate-900'>
-            Interview summary
-          </h1>
-          <p className='mt-1 text-sm text-slate-500'>
-            Here&apos;s how this mock interview went across key skills, plus a quick replay of the
-            conversation.
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30 overflow-hidden relative">
+      {/* Ambient Background */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-cyan-500/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[35%] h-[35%] bg-purple-500/10 rounded-full blur-[120px]" />
+      </div>
 
-        {/* Overall feedback banner */}
-        {overallFeedback && (
-          <div className='bg-violet-50 border border-violet-200 rounded-2xl p-5'>
-            <h3 className='text-sm font-semibold text-slate-900 mb-2'>Overall feedback</h3>
-            <p className='text-sm text-slate-700'>{overallFeedback}</p>
-          </div>
-        )}
-
-        {/* Overall + radar card */}
-        <div className='bg-white rounded-3xl shadow-[0_20px_60px_rgba(148,163,184,0.35)] p-6 md:p-7 flex flex-col md:flex-row gap-6 items-center md:items-stretch'>
-          <div className='flex-1 flex flex-col justify-between'>
-            <div className='mb-4'>
-              <div className='inline-flex items-center gap-2 rounded-full bg-slate-900 text-slate-50 px-3 py-1 text-xs font-medium shadow-sm'>
-                <span className='inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-slate-900'>
-                  {overall}
-                </span>
-                <span>Overall score / 10</span>
-              </div>
-              <h2 className='mt-4 text-base font-semibold text-slate-900'>
-                Profile across interview skills
-              </h2>
-              <p className='mt-2 text-xs text-slate-500'>
-                Hover a point or card to highlight that skill.
-              </p>
-            </div>
-
-            <div className='grid grid-cols-2 gap-2 text-[11px] text-slate-500'>
-              {metrics.slice(0, 4).map((cat) => (
-                <button
-                  key={cat.id}
-                  type='button'
-                  className={
-                    'flex items-center justify-between rounded-xl px-2 py-1 border text-left transition ' +
-                    (activeId === cat.id
-                      ? 'border-slate-400 bg-slate-50'
-                      : 'border-transparent bg-slate-100')
-                  }
-                  onMouseEnter={() => setActiveId(cat.id)}
-                  onMouseLeave={() => setActiveId(null)}
-                >
-                  <span className='truncate'>{cat.label}</span>
-                  <span className='ml-2 font-semibold text-slate-700'>{cat.score.toFixed(1)}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className='flex-1'>
-            <RadarChart categories={metrics} activeId={activeId} onHover={setActiveId} />
-          </div>
-        </div>
-
-        {/* Plan-overview-style metric cards */}
-        <section className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <p className='text-sm font-semibold text-slate-900'>Skill breakdown</p>
-            <p className='text-xs text-slate-500'>
-              Green = strong · Yellow = mixed · Red = needs work
-            </p>
-          </div>
-          <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
-            {metrics.map((cat) => (
-              <MetricCard
-                key={cat.id}
-                category={cat}
-                active={activeId === cat.id}
-                onHover={setActiveId}
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* Audio replay + transcript */}
-        {audio && <AudioPlayer audio={audio} audioRef={audioRef} />}
-
-        <TranscriptCard transcript={transcript} audioRef={audioRef} />
-
-        {(candidateAnswer || starFeedback || rephrasedAnswer) && (
-          <section className='grid gap-4 md:grid-cols-2'>
-            {candidateAnswer && (
-              <div className='bg-white rounded-3xl border border-slate-100 shadow-[0_20px_60px_rgba(148,163,184,0.35)] p-5'>
-                <h3 className='text-sm font-semibold text-slate-900 mb-2'>Your answer</h3>
-                <p className='text-sm text-slate-700 whitespace-pre-wrap leading-relaxed'>{candidateAnswer}</p>
-              </div>
-            )}
-
-            {starFeedback && (
-              <div className='bg-white rounded-3xl border border-slate-100 shadow-[0_20px_60px_rgba(148,163,184,0.35)] p-5'>
-                <h3 className='text-sm font-semibold text-slate-900 mb-2'>STAR feedback</h3>
-                <p className='text-sm text-slate-700 whitespace-pre-wrap leading-relaxed'>{starFeedback}</p>
-              </div>
-            )}
-
-            {rephrasedAnswer && (
-              <div className='bg-white rounded-3xl border border-slate-100 shadow-[0_20px_60px_rgba(148,163,184,0.35)] p-5 md:col-span-2'>
-                <h3 className='text-sm font-semibold text-slate-900 mb-2'>Rephrased STAR answer</h3>
-                <p className='text-sm text-slate-700 whitespace-pre-wrap leading-relaxed'>{rephrasedAnswer}</p>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Retry button */}
-        <div className='pt-3 flex justify-center'>
-          <button
-            type='button'
-            onClick={() => navigate('/')}
-            className='inline-flex items-center justify-center rounded-full bg-slate-900 text-slate-50 px-5 py-2.5 text-sm font-medium hover:bg-slate-800 shadow-sm'
+      <div className='relative z-10 min-h-screen flex items-center justify-center px-4 py-10'>
+        <div className='w-full max-w-6xl space-y-6'>
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            Run another mock interview
-          </button>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h1 className='text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400'>
+                  Interview Summary
+                </h1>
+                <p className='mt-2 text-sm text-slate-400'>
+                  Here's your comprehensive performance analysis and feedback
+                </p>
+              </div>
+              {overallScore !== null && (
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
+                      {overallScore}/100
+                    </div>
+                    <div className="text-xs text-slate-400 mt-1">Overall Score</div>
+                  </div>
+                  {recommendationStyle && (
+                    <div className={`px-4 py-2 rounded-full ${recommendationStyle.bg} border ${recommendationStyle.border}`}>
+                      <span className={`text-sm font-semibold ${recommendationStyle.text}`}>
+                        {recommendationStyle.label}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Overall Assessment */}
+          {overallAssessment && (
+            <Card delay={0.1}>
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30">
+                  <TrendingUp className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className='text-sm font-semibold text-white'>Overall Assessment</h3>
+                    {overallAssessment.confidence_level && (
+                      <span className={`text-xs px-2 py-1 rounded-full ${overallAssessment.confidence_level === 'high' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                        overallAssessment.confidence_level === 'medium' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                          'bg-red-500/20 text-red-400 border border-red-500/30'
+                        }`}>
+                        {overallAssessment.confidence_level} confidence
+                      </span>
+                    )}
+                  </div>
+                  {overallAssessment.summary && (
+                    <p className='text-sm text-slate-300 leading-relaxed'>{overallAssessment.summary}</p>
+                  )}
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Dimension Scores */}
+          {dimensionScores && dimensionScores.length > 0 && <DimensionScoresDisplay dimensionScores={dimensionScores} />}
+
+          {/* Strengths and Areas for Improvement Grid */}
+          {(strengths.length > 0 || areasForImprovement.length > 0) && (
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Strengths */}
+              {strengths.length > 0 && (
+                <Card delay={0.25}>
+                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    Strengths
+                  </h2>
+                  <ul className="space-y-3">
+                    {strengths.map((strength, idx) => (
+                      <motion.li
+                        key={idx}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 + 0.05 * idx }}
+                        className="flex flex-col gap-1 text-sm text-slate-300 bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3"
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            {strength.dimension && (
+                              <span className="text-emerald-400 font-semibold text-xs">{strength.dimension}: </span>
+                            )}
+                            <span>{strength.description || strength}</span>
+                          </div>
+                        </div>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {/* Areas for Improvement */}
+              {areasForImprovement.length > 0 && (
+                <Card delay={0.3}>
+                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <XCircle className="w-5 h-5 text-red-400" />
+                    Areas for Improvement
+                  </h2>
+                  <ul className="space-y-4">
+                    {areasForImprovement.map((area, idx) => (
+                      <motion.li
+                        key={idx}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.35 + 0.05 * idx }}
+                        className="flex flex-col gap-2 text-sm text-slate-300 bg-red-500/5 border border-red-500/20 rounded-lg p-3"
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            {area.dimension && (
+                              <span className="text-red-400 font-semibold text-xs">{area.dimension}: </span>
+                            )}
+                            <span>{area.suggestion || area}</span>
+                          </div>
+                        </div>
+                        {area.example_better_response && (
+                          <div className="ml-3.5 mt-1 pl-3 border-l-2 border-amber-500/30 bg-amber-500/5 rounded p-2">
+                            <p className="text-xs text-amber-300"><strong>Better approach:</strong> {area.example_better_response}</p>
+                          </div>
+                        )}
+                      </motion.li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* Audio replay */}
+          {audio && <AudioPlayer audio={audio} audioRef={audioRef} />}
+
+          {/* Transcript */}
+          {transcript && transcript.length > 0 && <TranscriptCard transcript={transcript} audioRef={audioRef} />}
+
+          {/* Retry button */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            className='pt-3 flex justify-center'
+          >
+            <button
+              type='button'
+              onClick={() => navigate('/dashboard')}
+              className='inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-6 py-3 text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all'
+            >
+              Run another mock interview
+            </button>
+          </motion.div>
         </div>
       </div>
     </div>

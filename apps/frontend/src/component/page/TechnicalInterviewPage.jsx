@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import MonacoEditor from 'react-monaco-editor';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useConversation } from '@elevenlabs/react';
 import { Orb } from '../ui/orb';
+import { ArrowLeft } from 'lucide-react';
 import gradientBackground from '../../assets/gradient_background.png';
 
 /* ---------- Simple helper: read candidateCv from localStorage ---------- */
@@ -192,6 +193,43 @@ function TechnicalVoiceWidget({ conversation }) {
 
 const TechnicalInterviewPage = () => {
   const navigate = useNavigate();
+  const { sessionId } = useParams();
+  const [agentId, setAgentId] = useState('');
+
+  useEffect(() => {
+    if (sessionId) {
+      localStorage.setItem('currentSessionId', sessionId);
+    }
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const loadSession = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data?.agentId) {
+          setAgentId(data.agentId);
+          localStorage.setItem('currentAgentId', data.agentId);
+        }
+      } catch (error) {
+        console.error('Failed to load session agentId:', error);
+      }
+    };
+
+    loadSession();
+  }, [sessionId]);
 
   // 🔹 Which company are we targeting? (google | meta | other)
   const selectedCompany =
@@ -275,12 +313,12 @@ const TechnicalInterviewPage = () => {
       // Ask for mic first
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      const agentId = getAgentIdForCompany(selectedCompany);
-      console.log('[tech-voice] Starting session for company:', selectedCompany, 'agent:', agentId);
+      const sessionAgentId = agentId || localStorage.getItem('currentAgentId') || getAgentIdForCompany(selectedCompany);
+      console.log('[tech-voice] Starting session for company:', selectedCompany, 'agent:', sessionAgentId);
 
       // Start the ElevenLabs session
       await conversation.startSession({
-        agentId,
+        agentId: sessionAgentId,
         connectionType: 'webrtc',
       });
 
@@ -334,6 +372,23 @@ const TechnicalInterviewPage = () => {
   }, [selectedCompany, candidateCv]);
 
   /* ---------- Submit + complete: eval, end call, go to results ---------- */
+
+  const handleBackClick = async () => {
+    if (window.confirm('Are you sure you want to leave? This will cancel your interview session and you\'ll need to reconfigure.')) {
+      try {
+        const token = localStorage.getItem('token');
+        await fetch(`http://localhost:3000/api/interview/session/${sessionId}/cancel`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (error) {
+        console.error('Failed to cancel session:', error);
+      }
+      navigate('/dashboard');
+    }
+  };
 
   const handleSubmitAndComplete = async () => {
     setIsSubmitting(true);
@@ -426,8 +481,18 @@ const TechnicalInterviewPage = () => {
           margin: '0 auto',
           borderRadius: '0.75rem',
           padding: '1.75rem',
+          position: 'relative',
         }}
       >
+        {/* Back Button */}
+        <button
+          onClick={handleBackClick}
+          className='absolute top-4 left-4 flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors'
+        >
+          <ArrowLeft className='w-5 h-5' />
+          <span className='text-sm font-medium'>Back</span>
+        </button>
+
         {/* Header */}
         <div className='text-center mb-6'>
           <h1

@@ -1,0 +1,79 @@
+{
+  "general_tech": {
+    "preset_id": "general_tech",
+    "tone": "structured, calm, analytical",
+    "behavioral_style": "STAR",
+    "tempo": "moderate",
+    "base_rigor": "medium",
+    "hint_tolerance": "medium",
+    "technical_emphasis": [
+      "problem decomposition",
+      "clarity of explanation",
+      "edge cases",
+      "time and space complexity"
+    ],
+    "followup_style": "probe reasoning and trade-offs",
+    "notes": [
+      "thinking out loud is encouraged",
+      "clarity > speed"
+    ]
+  },
+  "finance": {
+    "preset_id": "finance",
+    "tone": "professional, precise",
+    "behavioral_style": "STAR",
+    "tempo": "moderate",
+    "base_rigor": "medium_to_high",
+    "hint_tolerance": "low",
+    "technical_emphasis": [
+      "correctness",
+      "risk awareness",
+      "clean logic",
+      "attention to detail"
+    ],
+    "followup_style": "challenge assumptions and edge cases",
+    "notes": [
+      "avoid hand-wavy answers",
+      "explain consequences of mistakes"
+    ]
+  },
+  "quant": {
+    "preset_id": "quant",
+    "tone": "direct, fast-paced",
+    "behavioral_style": "concise",
+    "tempo": "fast",
+    "base_rigor": "high",
+    "hint_tolerance": "very_low",
+    "technical_emphasis": [
+      "speed to solution",
+      "mathematical rigor",
+      "accuracy under pressure"
+    ],
+    "followup_style": "rapid probing and stress-testing",
+    "notes": [
+      "expect mental math",
+      "minimal guidance provided",
+      "precision over polish"
+    ]
+  },
+  "startup": {
+    "preset_id": "startup",
+    "tone": "conversational, pragmatic",
+    "behavioral_style": "story-based",
+    "tempo": "moderate_to_fast",
+    "base_rigor": "medium",
+    "hint_tolerance": "high",
+    "technical_emphasis": [
+      "practical trade-offs",
+      "decision making",
+      "ownership",
+      "shipping mindset"
+    ],
+    "followup_style": "what would you ship and why?",
+    "notes": [
+      "perfection not required",
+      "bias toward action",
+      "resource constraints matter"
+    ]
+  }
+}

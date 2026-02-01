@@ -1,0 +1,155 @@
+{
+  "behavioral_intern": {
+    "interview_mode": "behavioral",
+    "seniority": "intern",
+    "behavioral": {
+      "focus": [
+        "communication",
+        "learning mindset",
+        "basic structure"
+      ],
+      "signals": [
+        "asks clarifying questions",
+        "reflects on mistakes"
+      ],
+      "red_flags": [
+        "cannot explain own projects",
+        "blames others"
+      ]
+    }
+  },
+  "behavioral_grad": {
+    "interview_mode": "behavioral",
+    "seniority": "grad",
+    "behavioral": {
+      "focus": [
+        "ownership",
+        "decision making",
+        "collaboration"
+      ],
+      "signals": [
+        "clear impact explanation",
+        "handles ambiguity"
+      ],
+      "red_flags": [
+        "vague contributions",
+        "no reflection"
+      ]
+    }
+  },
+  "behavioral_senior": {
+    "interview_mode": "behavioral",
+    "seniority": "senior",
+    "behavioral": {
+      "focus": [
+        "leadership",
+        "trade-offs",
+        "system thinking"
+      ],
+      "signals": [
+        "drives decisions",
+        "balances constraints"
+      ],
+      "red_flags": [
+        "over-engineering",
+        "poor stakeholder awareness"
+      ]
+    }
+  },
+  "behavioral_plus_dsa_intern": {
+    "interview_mode": "behavioral_plus_dsa",
+    "seniority": "intern",
+    "behavioral": {
+      "focus": [
+        "communication",
+        "learning mindset"
+      ],
+      "signals": [
+        "asks clarifying questions",
+        "thinks out loud"
+      ],
+      "red_flags": [
+        "panics under guidance",
+        "cannot explain approach"
+      ]
+    },
+    "technical_dsa": {
+      "technical_focus": [
+        "arrays",
+        "strings",
+        "hashmaps",
+        "basic recursion"
+      ],
+      "evaluation_focus": [
+        "problem understanding",
+        "step-by-step reasoning",
+        "edge cases"
+      ],
+      "difficulty_band": "easy_to_medium"
+    }
+  },
+  "behavioral_plus_dsa_grad": {
+    "interview_mode": "behavioral_plus_dsa",
+    "seniority": "grad",
+    "behavioral": {
+      "focus": [
+        "ownership",
+        "decision making"
+      ],
+      "signals": [
+        "clear communication",
+        "structured problem solving"
+      ],
+      "red_flags": [
+        "hand-wavy reasoning",
+        "ignores edge cases"
+      ]
+    },
+    "technical_dsa": {
+      "technical_focus": [
+        "arrays",
+        "trees",
+        "graphs",
+        "hashmaps"
+      ],
+      "evaluation_focus": [
+        "correctness",
+        "complexity analysis",
+        "clean implementation"
+      ],
+      "difficulty_band": "medium"
+    }
+  },
+  "behavioral_plus_dsa_senior": {
+    "interview_mode": "behavioral_plus_dsa",
+    "seniority": "senior",
+    "behavioral": {
+      "focus": [
+        "leadership",
+        "trade-offs",
+        "decision ownership"
+      ],
+      "signals": [
+        "justifies decisions",
+        "balances constraints"
+      ],
+      "red_flags": [
+        "over-optimizing prematurely",
+        "poor explanation of trade-offs"
+      ]
+    },
+    "technical_dsa": {
+      "technical_focus": [
+        "advanced data structures",
+        "optimization",
+        "trade-offs"
+      ],
+      "evaluation_focus": [
+        "solution justification",
+        "alternatives",
+        "scalability"
+      ],
+      "difficulty_band": "medium_to_hard"
+    }
+  }
+}
