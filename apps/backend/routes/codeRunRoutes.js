@@ -46,6 +46,13 @@ router.post('/run', authMiddleware, async (req, res) => {
   try {
     const { questionId, code, language } = req.body;
 
+    console.log('Code run request:', {
+      questionId,
+      codeLength: code?.length,
+      language,
+      code: code?.substring(0, 100),
+    });
+
     // Validation
     if (!questionId || !code || !language) {
       return res.status(400).json({
@@ -67,7 +74,7 @@ router.post('/run', authMiddleware, async (req, res) => {
 
     // Fetch question
     const question = await prisma.question.findUnique({
-      where: { id: parseInt(questionId) },
+      where: { id: questionId },
     });
 
     if (!question) {
@@ -89,9 +96,26 @@ router.post('/run', authMiddleware, async (req, res) => {
       });
     }
 
-    // Generate harness with visible tests
+    // Parse hidden tests
+    let hiddenTests = [];
+    try {
+      hiddenTests = typeof question.hiddenTests === 'string'
+        ? JSON.parse(question.hiddenTests)
+        : question.hiddenTests;
+    } catch (parseError) {
+      console.error('Error parsing hidden tests:', parseError);
+      hiddenTests = [];
+    }
+
+    console.log('Visible tests:', visibleTests);
+    console.log('Hidden tests:', hiddenTests.length);
+
+    // Generate harness with ALL tests (visible + hidden)
+    const allTests = [...visibleTests, ...hiddenTests];
     const harnessFn = HARNESS_GENERATORS[language];
-    const harnessCode = harnessFn(code, visibleTests);
+    const harnessCode = harnessFn(code, allTests);
+
+    console.log('Generated harness code:', harnessCode.substring(0, 500));
 
     // Execute code on Judge0
     let executionResult;
@@ -106,67 +130,84 @@ router.post('/run', authMiddleware, async (req, res) => {
 
     // Check for compilation or runtime errors
     if (executionResult.compilationError) {
+      console.error('Compilation error:', executionResult.compilationError);
       return res.status(200).json({
         success: false,
         error: 'Compilation Error',
         details: executionResult.compilationError,
-        testResults: [],
-        passedTests: 0,
-        totalTests: visibleTests.length,
+        visibleTestResults: [],
+        visiblePassedTests: 0,
+        hiddenTestResults: [],
+        hiddenPassedTests: 0,
+        totalVisibleTests: visibleTests.length,
+        totalHiddenTests: hiddenTests.length,
       });
     }
 
     if (executionResult.runtimeError) {
+      console.error('Runtime error:', executionResult.runtimeError);
       return res.status(200).json({
         success: false,
         error: 'Runtime Error',
         details: executionResult.runtimeError,
-        testResults: [],
-        passedTests: 0,
-        totalTests: visibleTests.length,
+        visibleTestResults: [],
+        visiblePassedTests: 0,
+        hiddenTestResults: [],
+        hiddenPassedTests: 0,
+        totalVisibleTests: visibleTests.length,
+        totalHiddenTests: hiddenTests.length,
       });
     }
 
     // Extract test results from stdout
-    const testResults = extractJsonResults(executionResult.stdout);
+    const allTestResults = extractJsonResults(executionResult.stdout);
 
-    if (!testResults || !Array.isArray(testResults)) {
+    console.log('Execution result:', {
+      stdout: executionResult.stdout,
+      stderr: executionResult.stderr,
+      compilationError: executionResult.compilationError,
+      runtimeError: executionResult.runtimeError,
+      testResults: allTestResults,
+    });
+
+    if (!allTestResults || !Array.isArray(allTestResults)) {
       return res.status(200).json({
         success: false,
         error: 'Failed to parse test results',
         details: 'Could not extract test results from code output',
-        testResults: [],
-        passedTests: 0,
-        totalTests: visibleTests.length,
+        stdout: executionResult.stdout.substring(0, 500),
+        stderr: executionResult.stderr.substring(0, 500),
+        visibleTestResults: [],
+        visiblePassedTests: 0,
+        hiddenTestResults: [],
+        hiddenPassedTests: 0,
+        totalVisibleTests: visibleTests.length,
+        totalHiddenTests: hiddenTests.length,
       });
     }
 
-    // Count passed tests
-    const passedTests = testResults.filter(t => t.passed).length;
+    // Separate visible and hidden test results
+    const visibleTestResults = allTestResults.slice(0, visibleTests.length);
+    const hiddenTestResults = allTestResults.slice(visibleTests.length);
 
-    // Return results (never include hidden test information)
+    // Count passed tests
+    const visiblePassedTests = visibleTestResults.filter(t => t.passed).length;
+    const hiddenPassedTests = hiddenTestResults.filter(t => t.passed).length;
+
+    // Return results
+    // - Visible tests: include full details (id, input, expected, actual, passed, error)
+    // - Hidden tests: only pass/fail counts (no details)
     res.json({
       success: true,
-      testResults, // Each test: { id, input, expected, actual, passed, error }
-      passedTests,
-      totalTests: visibleTests.length,
+      visibleTestResults, // Full details for visible tests
+      visiblePassedTests,
+      totalVisibleTests: visibleTests.length,
+      // Hidden test results - save full details in backend but don't expose to user
+      hiddenPassedTests, // Only show count
+      totalHiddenTests: hiddenTests.length,
+      hiddenTestsDetails: hiddenTestResults, // Save for agent feedback later (could be stored in DB)
       executionTime: executionResult.executionTime,
       memoryUsed: executionResult.memoryUsed,
-      // Hidden test summary (never leak data)
-      hiddenTestsEstimate: {
-        totalCount: await prisma.question.findUnique({
-          where: { id: parseInt(questionId) },
-          select: { hiddenTests: true },
-        }).then(q => {
-          try {
-            const hidden = typeof q.hiddenTests === 'string' ? JSON.parse(q.hiddenTests) : q.hiddenTests;
-            return Array.isArray(hidden) ? hidden.length : 0;
-          } catch {
-            return 0;
-          }
-        }),
-        message: 'Hidden tests will be evaluated when you submit',
-      },
     });
   } catch (error) {
     console.error('Error in /run endpoint:', error);

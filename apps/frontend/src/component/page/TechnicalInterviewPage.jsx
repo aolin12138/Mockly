@@ -142,11 +142,11 @@ const TechnicalInterviewPage = () => {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Code execution failed: ${response.statusText}`);
-      }
-
       const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || result.error || `Code execution failed: ${response.statusText}`);
+      }
       setTestResults(result);
       setShowResults(true);
     } catch (err) {
@@ -292,8 +292,8 @@ const TechnicalInterviewPage = () => {
                       key={lang}
                       onClick={() => handleLanguageChange(lang)}
                       className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${language === lang
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                         }`}
                     >
                       {lang === 'javascript' ? 'JavaScript' : lang === 'python' ? 'Python' : 'Java'}
@@ -375,22 +375,22 @@ const TechnicalInterviewPage = () => {
                           Test Results
                         </h3>
                         <span className="text-sm font-mono text-slate-400">
-                          {testResults.passedTests}/{testResults.totalTests} passed
+                          {testResults.visiblePassedTests}/{testResults.totalVisibleTests} visible passed
                         </span>
                       </div>
 
-                      {/* Progress bar */}
+                      {/* Progress bar for visible tests */}
                       <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
-                          animate={{ width: `${(testResults.passedTests / testResults.totalTests) * 100}%` }}
+                          animate={{ width: `${(testResults.visiblePassedTests / testResults.totalVisibleTests) * 100}%` }}
                           transition={{ duration: 0.5, delay: 0.2 }}
                           className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500"
                         />
                       </div>
 
-                      {/* Test result table */}
-                      {testResults.testResults && testResults.testResults.length > 0 && (
+                      {/* Visible test result table */}
+                      {testResults.visibleTestResults && testResults.visibleTestResults.length > 0 && (
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs">
                             <thead>
@@ -403,7 +403,7 @@ const TechnicalInterviewPage = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {testResults.testResults.map((test) => (
+                              {testResults.visibleTestResults.map((test) => (
                                 <tr key={test.id} className="border-b border-slate-800 hover:bg-slate-800/30">
                                   <td className="py-2 px-2 text-slate-400">{test.id}</td>
                                   <td className="py-2 px-2 font-mono text-cyan-300 text-xs truncate max-w-[120px]">
@@ -434,6 +434,27 @@ const TechnicalInterviewPage = () => {
                               ))}
                             </tbody>
                           </table>
+                        </div>
+                      )}
+
+                      {/* Hidden tests summary */}
+                      {testResults.totalHiddenTests > 0 && (
+                        <div className="mt-4 p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold text-slate-300">Hidden Tests</h4>
+                            <span className="text-sm font-mono text-slate-400">
+                              {testResults.hiddenPassedTests}/{testResults.totalHiddenTests} passed
+                            </span>
+                          </div>
+                          <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${(testResults.hiddenPassedTests / testResults.totalHiddenTests) * 100}%` }}
+                              transition={{ duration: 0.5, delay: 0.3 }}
+                              className={`h-full ${testResults.hiddenPassedTests === testResults.totalHiddenTests ? 'bg-gradient-to-r from-emerald-500 to-cyan-500' : 'bg-gradient-to-r from-orange-500 to-red-500'}`}
+                            />
+                          </div>
+                          <p className="text-xs text-slate-400 mt-2">Details not shown to prevent cheating</p>
                         </div>
                       )}
                     </>

@@ -88,7 +88,7 @@ router.get('/:questionId', authMiddleware, async (req, res) => {
     const { questionId } = req.params;
 
     const question = await prisma.question.findUnique({
-      where: { id: parseInt(questionId) },
+      where: { id: questionId },
     });
 
     if (!question) {

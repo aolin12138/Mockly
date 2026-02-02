@@ -48,6 +48,14 @@ export async function submitCode(code, language, stdin = '') {
   const client = createJudge0Client();
 
   try {
+    console.log('Submitting code to Judge0:', {
+      language,
+      codeLength: code.length,
+      baseURL: JUDGE0_CONFIG.baseURL,
+      hasAPIKey: !!JUDGE0_CONFIG.rapidAPIKey,
+      hasAPIHost: !!JUDGE0_CONFIG.rapidAPIHost,
+    });
+
     const response = await client.post('/submissions', {
       source_code: code,
       language_id: LANGUAGE_IDS[language],
@@ -59,9 +67,14 @@ export async function submitCode(code, language, stdin = '') {
       throw new Error('No token returned from Judge0');
     }
 
+    console.log('Judge0 submission successful, token:', response.data.token);
     return response.data.token;
   } catch (error) {
-    console.error('Judge0 submission error:', error.message);
+    console.error('Judge0 submission error:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+    });
     throw new Error(`Failed to submit code to Judge0: ${error.message}`);
   }
 }
@@ -114,14 +127,53 @@ export async function pollResult(token, maxAttempts = 30, pollInterval = 1000) {
  * @returns {Object} Parsed result with code, stdout, stderr, status info
  */
 export function parseResult(result) {
+  let stdout = '';
+  let stderr = '';
+
+  // Try to decode base64, but handle both base64 and plain text
+  try {
+    if (result.stdout) {
+      // Check if it looks like base64 (contains only valid base64 chars)
+      if (/^[A-Za-z0-9+/=]*$/.test(result.stdout)) {
+        stdout = Buffer.from(result.stdout, 'base64').toString('utf-8');
+      } else {
+        stdout = result.stdout;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to decode stdout:', e.message);
+    stdout = result.stdout || '';
+  }
+
+  try {
+    if (result.stderr) {
+      // Check if it looks like base64
+      if (/^[A-Za-z0-9+/=]*$/.test(result.stderr)) {
+        stderr = Buffer.from(result.stderr, 'base64').toString('utf-8');
+      } else {
+        stderr = result.stderr;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to decode stderr:', e.message);
+    stderr = result.stderr || '';
+  }
+
+  console.log('Judge0 parsed result:', {
+    statusId: result.status?.id,
+    statusDescription: result.status?.description,
+    stdout: stdout.substring(0, 200),
+    stderr: stderr.substring(0, 200),
+  });
+
   return {
     token: result.token,
     status: result.status,
     languageId: result.language_id,
     compilationError: result.compile_error,
     runtimeError: result.runtime_error,
-    stdout: result.stdout ? Buffer.from(result.stdout, 'base64').toString('utf-8') : '',
-    stderr: result.stderr ? Buffer.from(result.stderr, 'base64').toString('utf-8') : '',
+    stdout,
+    stderr,
     exitCode: result.exit_code,
     executionTime: result.time,
     memoryUsed: result.memory,
