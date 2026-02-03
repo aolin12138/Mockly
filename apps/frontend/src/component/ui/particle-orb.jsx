@@ -288,8 +288,9 @@ const ParticleOrb = ({ state = 'idle', colors = ['#2792DC', '#9CE6E6'] }) => {
     // Add mouse event listeners for interactivity
     const handleMouseMove = (e) => {
       const rect = canvas.getBoundingClientRect();
-      mouseRef.current.x = (e.clientX - rect.left) * (canvas.offsetWidth / rect.width);
-      mouseRef.current.y = (e.clientY - rect.top) * (canvas.offsetHeight / rect.height);
+      // Scale mouse position from displayed size to internal canvas size
+      mouseRef.current.x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      mouseRef.current.y = (e.clientY - rect.top) * (canvas.height / rect.height);
       mouseRef.current.active = true;
     };
 
@@ -319,11 +320,7 @@ const ParticleOrb = ({ state = 'idle', colors = ['#2792DC', '#9CE6E6'] }) => {
         ref={canvasRef}
         width={600}
         height={600}
-        className="rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(51,65,85,0.2) 0%, rgba(15,23,42,0.8) 100%)',
-          filter: 'drop-shadow(0 0 50px rgba(255,255,255,0.1))',
-        }}
+        className="w-full h-full"
       />
     </div>
   );
