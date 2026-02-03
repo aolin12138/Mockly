@@ -41,6 +41,10 @@ router.get('/random', authMiddleware, async (req, res) => {
     let constraints = [];
     let skillTargets = [];
     let tags = [];
+    let hiddenTests = [];
+    let failureModes = [];
+    let hints = [];
+    let interviewerProbes = [];
 
     try {
       boilerplate = typeof q.boilerplate === 'string' ? JSON.parse(q.boilerplate) : q.boilerplate;
@@ -48,11 +52,17 @@ router.get('/random', authMiddleware, async (req, res) => {
       constraints = typeof q.constraints === 'string' ? JSON.parse(q.constraints) : q.constraints;
       skillTargets = typeof q.skillTargets === 'string' ? JSON.parse(q.skillTargets) : q.skillTargets;
       tags = typeof q.tags === 'string' ? JSON.parse(q.tags) : q.tags;
+      hiddenTests = typeof q.hiddenTests === 'string' ? JSON.parse(q.hiddenTests) : q.hiddenTests;
+      failureModes = typeof q.failureModes === 'string' ? JSON.parse(q.failureModes) : q.failureModes;
+      hints = typeof q.hints === 'string' ? JSON.parse(q.hints) : q.hints;
+      interviewerProbes = typeof q.interviewerProbes === 'string'
+        ? JSON.parse(q.interviewerProbes)
+        : q.interviewerProbes;
     } catch (parseError) {
       console.error('Error parsing question JSON:', parseError);
     }
 
-    // Return question with all necessary data, EXCLUDING hidden tests and hidden metadata
+    // Return question with full metadata (including hidden tests) for agent context
     res.json({
       id: q.id,
       slug: q.slug,
@@ -63,12 +73,11 @@ router.get('/random', authMiddleware, async (req, res) => {
       problemStatement: q.problemStatement,
       constraints,
       boilerplate, // All 3 languages
-      visibleTests, // Only visible tests (user can see these)
-      // NEVER include:
-      // - hiddenTests
-      // - failureModes
-      // - hints (could be exposed)
-      // - interviewerProbes
+      visibleTests, // Visible tests (user can see these)
+      hiddenTests,
+      failureModes,
+      hints,
+      interviewerProbes,
     });
   } catch (error) {
     console.error('Error fetching random question:', error);
@@ -103,6 +112,10 @@ router.get('/:questionId', authMiddleware, async (req, res) => {
     let constraints = [];
     let skillTargets = [];
     let tags = [];
+    let hiddenTests = [];
+    let failureModes = [];
+    let hints = [];
+    let interviewerProbes = [];
 
     try {
       boilerplate = typeof question.boilerplate === 'string' ? JSON.parse(question.boilerplate) : question.boilerplate;
@@ -110,6 +123,12 @@ router.get('/:questionId', authMiddleware, async (req, res) => {
       constraints = typeof question.constraints === 'string' ? JSON.parse(question.constraints) : question.constraints;
       skillTargets = typeof question.skillTargets === 'string' ? JSON.parse(question.skillTargets) : question.skillTargets;
       tags = typeof question.tags === 'string' ? JSON.parse(question.tags) : question.tags;
+      hiddenTests = typeof question.hiddenTests === 'string' ? JSON.parse(question.hiddenTests) : question.hiddenTests;
+      failureModes = typeof question.failureModes === 'string' ? JSON.parse(question.failureModes) : question.failureModes;
+      hints = typeof question.hints === 'string' ? JSON.parse(question.hints) : question.hints;
+      interviewerProbes = typeof question.interviewerProbes === 'string'
+        ? JSON.parse(question.interviewerProbes)
+        : question.interviewerProbes;
     } catch (parseError) {
       console.error('Error parsing question JSON:', parseError);
     }
@@ -125,6 +144,10 @@ router.get('/:questionId', authMiddleware, async (req, res) => {
       constraints,
       boilerplate,
       visibleTests,
+      hiddenTests,
+      failureModes,
+      hints,
+      interviewerProbes,
     });
   } catch (error) {
     console.error('Error fetching question:', error);
