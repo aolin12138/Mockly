@@ -9,6 +9,8 @@ export function generatePythonHarness(userCode, allTests) {
     const testCase = {
       id: idx + 1,
       input: test.input,
+      name: test.name || test.tag || test.description || `Test ${idx + 1}`,
+      tags: test.tags || [],
     };
     // Always include expected, even if it's 0, false, null, etc.
     if ('expected' in test || 'expectedOutput' in test) {
@@ -36,6 +38,8 @@ for test_case in test_cases:
         passed = actual == test_case['expected'] if 'expected' in test_case else True
         results.append({
             'id': test_case['id'],
+            'name': test_case['name'],
+            'tags': test_case.get('tags', []),
             'input': test_case['input'],
             'expected': test_case.get('expected'),
             'actual': actual,
@@ -45,6 +49,8 @@ for test_case in test_cases:
     except Exception as err:
         results.append({
             'id': test_case['id'],
+            'name': test_case['name'],
+            'tags': test_case.get('tags', []),
             'input': test_case['input'],
             'expected': test_case.get('expected'),
             'actual': None,

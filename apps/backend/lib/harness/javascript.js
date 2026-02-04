@@ -9,6 +9,8 @@ export function generateJavaScriptHarness(userCode, allTests) {
     const testCase = {
       id: idx + 1,
       input: test.input,
+      name: test.name || test.tag || test.description || `Test ${idx + 1}`,
+      tags: test.tags || [],
     };
     // Always include expected, even if it's 0, false, null, etc.
     if ('expected' in test || 'expectedOutput' in test) {
@@ -34,6 +36,8 @@ for (const testCase of testCases) {
     const passed = 'expected' in testCase ? actual === testCase.expected : true;
     results.push({
       id: testCase.id,
+      name: testCase.name,
+      tags: testCase.tags,
       input: testCase.input,
       expected: testCase.expected,
       actual: actual,
@@ -43,6 +47,8 @@ for (const testCase of testCases) {
   } catch (err) {
     results.push({
       id: testCase.id,
+      name: testCase.name,
+      tags: testCase.tags,
       input: testCase.input,
       expected: testCase.expected,
       actual: null,

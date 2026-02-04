@@ -26,7 +26,9 @@ import {
   Settings,
   LogOut,
   User,
-  Activity
+  Activity,
+  Code2,
+  Clock
 } from 'lucide-react';
 import { mockDashboardData } from '../../data/mockDashboardData';
 import { motion } from 'framer-motion';
@@ -172,6 +174,19 @@ const Dashboard = () => {
     const sortedSessions = [...sessions].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     const recentThree = sortedSessions.slice(0, 3);
 
+    // Detect if feedback is technical or behavioural based on structure
+    const isTechnicalFeedback = (feedback) => {
+      if (!feedback) return false;
+      // Technical feedback has: outcome, dimensions (array with label/key), codeAssessment, actionPlan
+      // Behavioural feedback has: overall_score, dimension_scores, areas_for_improvement
+      return (
+        feedback.outcome !== undefined ||
+        feedback.codeAssessment !== undefined ||
+        feedback.actionPlan !== undefined ||
+        (Array.isArray(feedback.dimensions) && feedback.dimensions.some(d => d.label || d.key))
+      );
+    };
+
     const normalizeFeedback = (rawFeedback) => {
       if (!rawFeedback) return null;
 
@@ -194,23 +209,18 @@ const Dashboard = () => {
         }
       }
 
-      // If feedback.feedback exists and is an object, unwrap it
+      // If feedback.feedback exists and is an object, unwrap it (for technical feedback from n8n)
       if (feedback && typeof feedback === 'object' && feedback.feedback && typeof feedback.feedback === 'object') {
         feedback = feedback.feedback;
-      }
-
-      // Verify it has actual feedback data
-      const hasScore = feedback?.overall_score !== undefined || feedback?.overallScore !== undefined;
-      const hasDimensions = Array.isArray(feedback?.dimension_scores) || Array.isArray(feedback?.dimensions) || Array.isArray(feedback?.metrics);
-
-      if (!hasScore && !hasDimensions) {
-        return null;
       }
 
       return feedback;
     };
 
-    const normalizeDimensionScores = (feedback) => {
+    // Normalize dimension scores for BEHAVIOURAL feedback
+    // Normalize dimension scores for BEHAVIOURAL feedback
+    // Behavioural scores can be 0-5, 0-10, or 0-100, we normalize to 0-5 for radar chart
+    const normalizeBehaviouralDimensionScores = (feedback) => {
       const rawDimensions = Array.isArray(feedback?.dimension_scores)
         ? feedback.dimension_scores.map((dim) => ({
           label: dim?.dimension || dim?.label || dim?.name || 'General',
@@ -225,66 +235,160 @@ const Dashboard = () => {
 
       if (!rawDimensions.length) return [];
 
+      // Detect the scale and normalize to 0-5 for display, keep original for calculations
       const maxScore = Math.max(...rawDimensions.map((item) => item.score || 0), 0);
-      const scale = maxScore <= 5 ? 20 : maxScore <= 10 ? 10 : 1;
+      let originalScale = 100; // Default assumption
+      if (maxScore <= 5) originalScale = 5;
+      else if (maxScore <= 10) originalScale = 10;
 
-      return rawDimensions.map((item) => ({
-        label: item.label,
-        score: Math.round(item.score * scale)
-      }));
+      return rawDimensions.map((item) => {
+        const normalizedTo100 = (item.score / originalScale) * 100;
+        return {
+          label: item.label,
+          score: Math.round((normalizedTo100 / 100) * 5 * 10) / 10, // Scale to 0-5 with one decimal
+          originalScore: Math.round(normalizedTo100) // Store as 0-100 for calculations
+        };
+      });
     };
 
-    const getScoreFromFeedback = (feedback) => {
-      const directScore = feedback?.overall_score ?? feedback?.overallScore ?? feedback?.score;
-      if (Number.isFinite(Number(directScore))) {
-        return Math.round(Number(directScore));
-      }
+    // Normalize dimension scores for TECHNICAL feedback
+    // Technical scores could be 0-10 or 0-100, we normalize to 0-100 for calculations
+    // and provide a 0-5 scale version for radar chart display
+    const normalizeTechnicalDimensionScores = (feedback) => {
+      // Technical feedback has dimensions array with: { key, label, score, ... }
+      const rawDimensions = Array.isArray(feedback?.dimensions)
+        ? feedback.dimensions.map((dim) => ({
+          label: dim?.label || dim?.key || dim?.name || 'General',
+          score: Number(dim?.score || 0)
+        }))
+        : [];
 
-      const normalizedDimensions = normalizeDimensionScores(feedback);
-      if (normalizedDimensions.length) {
-        const sum = normalizedDimensions.reduce((total, item) => total + (item.score || 0), 0);
-        return Math.round(sum / normalizedDimensions.length);
-      }
+      if (!rawDimensions.length) return [];
 
-      return 0;
+      // Detect scale: if max score <= 10, assume 0-10 scale and multiply by 10
+      const maxScore = Math.max(...rawDimensions.map((item) => item.score || 0), 0);
+      const isScaleTen = maxScore <= 10;
+
+      return rawDimensions.map((item) => {
+        // Normalize to 0-100
+        const normalizedTo100 = isScaleTen ? item.score * 10 : item.score;
+        return {
+          label: item.label,
+          score: Math.round((normalizedTo100 / 100) * 5 * 10) / 10, // Scale to 0-5 with one decimal
+          originalScore: Math.round(normalizedTo100) // Keep as 0-100 for calculations
+        };
+      });
+    };
+
+    const getScoreFromFeedback = (feedback, isTechnical) => {
+      if (isTechnical) {
+        // Technical feedback: check outcome.score, overall.score, or average dimensions
+        // Scores could be 0-10 or 0-100, normalize to 0-100
+        const outcomeScore = feedback?.outcome?.score;
+        const overallScore = feedback?.overall?.score;
+        if (Number.isFinite(Number(outcomeScore))) {
+          const score = Number(outcomeScore);
+          // If score is <= 10, assume it's on 0-10 scale and multiply by 10
+          if (score <= 10) return Math.round(score * 10);
+          return Math.round(score);
+        }
+        if (Number.isFinite(Number(overallScore))) {
+          const score = Number(overallScore);
+          // If score is <= 10, assume it's on 0-10 scale and multiply by 10
+          if (score <= 10) return Math.round(score * 10);
+          return Math.round(score);
+        }
+        // Fall back to average of dimensions (use originalScore which is 0-100)
+        const normalizedDimensions = normalizeTechnicalDimensionScores(feedback);
+        if (normalizedDimensions.length) {
+          const sum = normalizedDimensions.reduce((total, item) => total + (item.originalScore || 0), 0);
+          return Math.round(sum / normalizedDimensions.length);
+        }
+        return 0;
+      } else {
+        // Behavioural feedback
+        const directScore = feedback?.overall_score ?? feedback?.overallScore ?? feedback?.score;
+        if (Number.isFinite(Number(directScore))) {
+          // Normalize to 0-100 if needed
+          const score = Number(directScore);
+          if (score <= 5) return Math.round(score * 20);
+          if (score <= 10) return Math.round(score * 10);
+          return Math.round(score);
+        }
+
+        const normalizedDimensions = normalizeBehaviouralDimensionScores(feedback);
+        if (normalizedDimensions.length) {
+          const sum = normalizedDimensions.reduce((total, item) => total + (item.originalScore || 0), 0);
+          return Math.round(sum / normalizedDimensions.length);
+        }
+
+        return 0;
+      }
     };
 
     const parsedRecent = recentThree.map(s => {
       const feedback = normalizeFeedback(s.feedback);
+      
+      // Determine if technical - first check session.interviewType from DB, then check feedback structure
+      const isTechnical = s.interviewType === 'Technical' || (feedback && isTechnicalFeedback(feedback));
+      
       // Only process if feedback is valid
       if (!feedback) {
-        return { ...s, feedback: null, normalizedDimensions: [], computedScore: null, isPending: true };
+        return { ...s, feedback: null, normalizedDimensions: [], computedScore: null, isPending: true, isTechnical };
       }
-      const normalizedDimensions = normalizeDimensionScores(feedback);
-      const computedScore = getScoreFromFeedback(feedback);
-      return { ...s, feedback, normalizedDimensions, computedScore, isPending: false };
+      const normalizedDimensions = isTechnical 
+        ? normalizeTechnicalDimensionScores(feedback)
+        : normalizeBehaviouralDimensionScores(feedback);
+      const computedScore = getScoreFromFeedback(feedback, isTechnical);
+      return { ...s, feedback, normalizedDimensions, computedScore, isPending: false, isTechnical };
     });
 
+    // Calculate average only from sessions with valid scores
+    const sessionsWithScores = parsedRecent.filter(s => s.computedScore !== null && s.computedScore > 0);
     const averageScore =
-      parsedRecent.length > 0
-        ? Math.round(parsedRecent.reduce((sum, s) => sum + (s.computedScore || 0), 0) / parsedRecent.length)
+      sessionsWithScores.length > 0
+        ? Math.round(sessionsWithScores.reduce((sum, s) => sum + (s.computedScore || 0), 0) / sessionsWithScores.length)
         : 0;
 
     const totalTime = sortedSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
 
-    // Improvements (from areas_for_improvement)
+    // Improvements - handle both behavioural and technical
     const improvements = [];
     parsedRecent.forEach(session => {
-      const areas = session.feedback?.areas_for_improvement || [];
-      areas.forEach(area => {
-        const dimension = area?.dimension || 'general';
-        const task = area?.suggestion || dimension;
+      if (session.isTechnical) {
+        // Technical feedback: use actionPlan
+        const actionPlan = session.feedback?.actionPlan || [];
+        actionPlan.forEach((item, idx) => {
+          const title = item?.title || item?.suggestion || 'Improvement area';
+          const category = item?.category || 'Technical';
+          const id = `${session.id}-tech-${idx}`.replace(/\s+/g, '_');
+          if (!improvements.find(i => i.id === id)) {
+            improvements.push({
+              id,
+              category,
+              task: title,
+              priority: item?.priority === 1 ? 'High' : item?.priority === 2 ? 'Medium' : 'Low'
+            });
+          }
+        });
+      } else {
+        // Behavioural feedback: use areas_for_improvement
+        const areas = session.feedback?.areas_for_improvement || [];
+        areas.forEach(area => {
+          const dimension = area?.dimension || 'general';
+          const task = area?.suggestion || dimension;
 
-        const id = `${session.id}-${dimension}-${task}`.replace(/\s+/g, '_');
-        if (!improvements.find(i => i.id === id)) {
-          improvements.push({
-            id,
-            category: dimension,
-            task,
-            priority: 'Medium'
-          });
-        }
-      });
+          const id = `${session.id}-${dimension}-${task}`.replace(/\s+/g, '_');
+          if (!improvements.find(i => i.id === id)) {
+            improvements.push({
+              id,
+              category: dimension,
+              task,
+              priority: 'Medium'
+            });
+          }
+        });
+      }
     });
 
     return {
@@ -395,8 +499,17 @@ const Dashboard = () => {
                   </div>
                   <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Total Practice Time</h3>
                   <div className="flex items-end space-x-3">
-                    <p className="text-5xl font-bold text-white">{Math.round(stats.totalTime / 60)}</p>
-                    <span className="text-lg text-slate-500 font-medium mb-1.5">mins</span>
+                    {stats.totalTime >= 3600 ? (
+                      <>
+                        <p className="text-5xl font-bold text-white">{Math.floor(stats.totalTime / 3600)}</p>
+                        <span className="text-lg text-slate-500 font-medium mb-1.5">hr {Math.floor((stats.totalTime % 3600) / 60)}m</span>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-5xl font-bold text-white">{Math.floor(stats.totalTime / 60)}</p>
+                        <span className="text-lg text-slate-500 font-medium mb-1.5">mins</span>
+                      </>
+                    )}
                   </div>
                 </Card>
 
@@ -458,40 +571,69 @@ const Dashboard = () => {
                   {stats.recentSessions.length > 0 ? (
                     stats.recentSessions.map(session => {
                       const feedback = session.feedback || {};
-                      const feedbackScore = session.computedScore || feedback?.overall_score || 0;
-                      const sessionType = feedback?.interview_type || 'Interview';
-                      const sessionTopic = feedback?.position_title || 'Interview';
-                      const assessment = feedback?.overall_assessment?.summary || 'Interview session completed.';
+                      const feedbackScore = session.computedScore || 0;
+                      const isTechnical = session.isTechnical;
+                      
+                      // Determine session type and display info based on feedback structure
+                      let sessionType, sessionTopic, assessment;
+                      
+                      if (isTechnical) {
+                        // Technical interview feedback
+                        sessionType = 'Technical';
+                        sessionTopic = feedback?.meta?.questionTitle || feedback?.outcome?.verdict || 'Technical Interview';
+                        assessment = feedback?.overall?.summary || feedback?.outcome?.summary || 'Technical interview session completed.';
+                      } else {
+                        // Behavioural interview feedback
+                        sessionType = feedback?.interview_type || 'Behavioral';
+                        sessionTopic = feedback?.position_title || 'Interview';
+                        assessment = feedback?.overall_assessment?.summary || 'Interview session completed.';
+                      }
+
+                      // Navigate to correct results page based on type
+                      const handleSessionClick = () => {
+                        if (isTechnical) {
+                          navigate(`/results/technical/${session.id}`);
+                        } else {
+                          navigate(`/results/${session.id}`);
+                        }
+                      };
 
                       return (
                         <div
                           key={session.id}
-                          onClick={() => navigate(`/results/${session.id}`)}
+                          onClick={handleSessionClick}
                           className="p-4 rounded-2xl bg-slate-800/20 border border-white/5 hover:bg-slate-800/40 hover:border-emerald-500/30 transition-all cursor-pointer group"
                         >
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center space-x-4">
-                              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-800/50 text-slate-300">
-                                {sessionType === 'Technical' ? <Zap size={18} /> : sessionType === 'Behavioral' ? <User size={18} /> : <LayoutDashboard size={18} />}
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isTechnical ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800/50 text-slate-300'}`}>
+                                {isTechnical ? <Code2 size={18} /> : sessionType === 'Behavioral' ? <User size={18} /> : <LayoutDashboard size={18} />}
                               </div>
                               <div>
                                 <h4 className="text-base font-bold text-slate-200 group-hover:text-white transition-colors">{sessionTopic}</h4>
                                 <p className="text-xs text-slate-500">
                                   {sessionType} • {new Date(session.createdAt).toLocaleDateString()}
+                                  {session.duration ? ` • ${Math.floor(session.duration / 60)}m ${session.duration % 60}s` : ''}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <span
-                                className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${feedbackScore >= 80
-                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                  : feedbackScore >= 60
-                                    ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-                                    : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                                  }`}
-                              >
-                                {feedbackScore} Score
-                              </span>
+                              {session.isPending ? (
+                                <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                                  Pending
+                                </span>
+                              ) : (
+                                <span
+                                  className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${feedbackScore >= 80
+                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                    : feedbackScore >= 60
+                                      ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                                      : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                    }`}
+                                >
+                                  {feedbackScore} Score
+                                </span>
+                              )}
                             </div>
                           </div>
 
@@ -541,13 +683,14 @@ const Dashboard = () => {
                     <h2 className="text-xl font-bold text-white flex items-center">
                       <Award size={24} className="mr-3 text-cyan-400" /> Latest Performance
                     </h2>
+                    <span className="text-xs text-slate-400">Scale: 0-5</span>
                   </div>
                   <div className="h-[330px] w-full flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart data={stats.recentSessions[0].normalizedDimensions}>
                         <PolarGrid stroke="#334155" opacity={0.4} />
                         <PolarAngleAxis dataKey="label" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#cbd5e1' }} />
-                        <Radar name="Score" dataKey="score" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.3} />
+                        <Radar name="Score" dataKey="score" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.3} domain={[0, 5]} />
                         <Tooltip
                           contentStyle={{
                             backgroundColor: 'rgba(30, 41, 59, 0.9)',
@@ -557,7 +700,13 @@ const Dashboard = () => {
                             color: '#fff'
                           }}
                           itemStyle={{ color: '#06b6d4' }}
-                          formatter={(value) => `${value.toFixed(0)}%`}
+                          formatter={(value, name, props) => {
+                            const originalScore = props.payload?.originalScore;
+                            if (originalScore !== undefined) {
+                              return [`${value.toFixed(1)} / 5 (${originalScore}/100)`, name];
+                            }
+                            return [`${value.toFixed(0)}%`, name];
+                          }}
                         />
                       </RadarChart>
                     </ResponsiveContainer>

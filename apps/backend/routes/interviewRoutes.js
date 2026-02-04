@@ -126,6 +126,45 @@ router.post('/technical/session', async (req, res) => {
   });
 });
 
+// Save technical session with feedback to database
+router.post('/technical/save', async (req, res) => {
+  console.log("Request received at /technical/save");
+
+  const { conversationId, executionSummary, feedback, duration } = req.body;
+  const userId = req.userId; // From authMiddleware
+
+  if (!feedback) {
+    return res.status(400).json({ error: 'No feedback provided' });
+  }
+
+  try {
+    // Create session in database with feedback
+    const session = await prisma.session.create({
+      data: {
+        userId: userId,
+        interviewType: 'Technical',
+        feedback: feedback,
+        agentId: conversationId || null,
+        status: 'completed',
+        duration: duration || null, // Duration in seconds
+        // Store execution summary in interviewPlan field (repurposed for technical)
+        interviewPlan: executionSummary ? JSON.stringify(executionSummary) : null,
+      }
+    });
+
+    console.log(`Technical session saved to database: ${session.id}`);
+    console.log("Session details:", JSON.stringify({ id: session.id, userId, conversationId }, null, 2));
+
+    res.json({
+      success: true,
+      sessionId: session.id
+    });
+  } catch (error) {
+    console.error('Error saving technical session:', error);
+    res.status(500).json({ error: 'Failed to save session', details: error.message });
+  }
+});
+
 // Session status route (polled by frontend)
 router.get('/session/:sessionId', async (req, res) => {
   const { sessionId } = req.params;
@@ -180,6 +219,34 @@ router.post('/session/:sessionId/cancel', async (req, res) => {
   } catch (error) {
     console.error('Error cancelling session:', error);
     res.status(500).json({ error: 'Failed to cancel session', details: error.message });
+  }
+});
+
+// Update session duration route
+router.post('/session/:sessionId/duration', async (req, res) => {
+  const { sessionId } = req.params;
+  const { duration } = req.body;
+  const userId = req.userId;
+
+  if (!duration || typeof duration !== 'number') {
+    return res.status(400).json({ error: 'Invalid duration provided' });
+  }
+
+  try {
+    const session = await prisma.session.update({
+      where: {
+        id: sessionId
+      },
+      data: {
+        duration: duration
+      }
+    });
+
+    console.log(`Session ${sessionId} duration updated to ${duration} seconds by user ${userId}`);
+    res.json({ success: true, sessionId: session.id, duration: session.duration });
+  } catch (error) {
+    console.error('Error updating session duration:', error);
+    res.status(500).json({ error: 'Failed to update session duration', details: error.message });
   }
 });
 
