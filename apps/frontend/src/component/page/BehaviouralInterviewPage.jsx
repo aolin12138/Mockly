@@ -49,6 +49,7 @@ export default function BehaviouralInterviewPage() {
   const [useTestMode, setUseTestMode] = useState(false); // Toggle between test and real
   const [agentId, setAgentId] = useState('');
   const [showExitWarning, setShowExitWarning] = useState(false);
+  const [startTime, setStartTime] = useState(null); // Track when interview started
 
   useEffect(() => {
     if (sessionId) {
@@ -120,9 +121,32 @@ export default function BehaviouralInterviewPage() {
     setIsSubmitting(true);
 
     try {
+      // Calculate duration in seconds
+      const endTime = Date.now();
+      const durationSeconds = startTime ? Math.round((endTime - startTime) / 1000) : null;
+      console.log(`Behavioural interview duration: ${durationSeconds} seconds`);
+
       // End the conversation
       if (conversation.status === 'connected') {
         await conversation.endSession();
+      }
+
+      // Save duration to the session in the database
+      if (sessionId && durationSeconds) {
+        try {
+          const token = localStorage.getItem('token');
+          await fetch(`http://localhost:3000/api/interview/session/${sessionId}/duration`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ duration: durationSeconds })
+          });
+          console.log('Duration saved to session');
+        } catch (err) {
+          console.error('Failed to save duration:', err);
+        }
       }
 
       // Navigate to results page – now also pass company + CV via state
@@ -130,6 +154,7 @@ export default function BehaviouralInterviewPage() {
         state: {
           company: selectedCompany,
           candidateCv,
+          duration: durationSeconds,
         },
       });
     } finally {
@@ -175,6 +200,9 @@ export default function BehaviouralInterviewPage() {
     try {
       // Request microphone permission and start conversation
       await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Start timing the interview
+      setStartTime(Date.now());
 
       // Start the ElevenLabs conversation
       await conversation.startSession({

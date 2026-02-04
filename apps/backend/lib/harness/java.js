@@ -9,6 +9,8 @@ export function generateJavaHarness(userCode, allTests) {
     const testCase = {
       id: idx + 1,
       input: test.input,
+      name: test.name || test.tag || test.description || `Test ${idx + 1}`,
+      tags: test.tags || [],
     };
     // Always include expected, even if it's 0, false, null, etc.
     if ('expected' in test || 'expectedOutput' in test) {
@@ -35,15 +37,21 @@ public class TestRunner {
         java.util.List<Map<String, Object>> testCases = new ArrayList<>();
         ${testsCases.map(t => {
     const testInput = `"${t.input.replace(/"/g, '\\"')}"`;
+    const testName = `"${(t.name || '').replace(/"/g, '\\"')}"`;
+    const testTags = `Arrays.asList(${t.tags.map(tag => `"${tag}"`).join(', ')})`;
     if ('expected' in t) {
       return `Map<String, Object> test${t.id} = new LinkedHashMap<>();
         test${t.id}.put("id", ${t.id});
+        test${t.id}.put("name", ${testName});
+        test${t.id}.put("tags", ${testTags});
         test${t.id}.put("input", ${testInput});
         test${t.id}.put("expected", ${t.expected});
         testCases.add(test${t.id});`;
     } else {
       return `Map<String, Object> test${t.id} = new LinkedHashMap<>();
         test${t.id}.put("id", ${t.id});
+        test${t.id}.put("name", ${testName});
+        test${t.id}.put("tags", ${testTags});
         test${t.id}.put("input", ${testInput});
         testCases.add(test${t.id});`;
     }
@@ -52,6 +60,8 @@ public class TestRunner {
         for (Map<String, Object> testCase : testCases) {
             try {
                 int id = (int) testCase.get("id");
+                String name = (String) testCase.get("name");
+                List<String> tags = (List<String>) testCase.get("tags");
                 String input = (String) testCase.get("input");
                 Object expectedObj = testCase.get("expected");
                 
@@ -60,6 +70,8 @@ public class TestRunner {
                 
                 Map<String, Object> result = new LinkedHashMap<>();
                 result.put("id", id);
+                result.put("name", name);
+                result.put("tags", tags);
                 result.put("input", input);
                 result.put("expected", expectedObj);
                 result.put("actual", actual);
@@ -69,6 +81,8 @@ public class TestRunner {
             } catch (Exception e) {
                 Map<String, Object> result = new LinkedHashMap<>();
                 result.put("id", testCase.get("id"));
+                result.put("name", testCase.get("name"));
+                result.put("tags", testCase.get("tags"));
                 result.put("input", testCase.get("input"));
                 result.put("expected", testCase.get("expected"));
                 result.put("actual", null);

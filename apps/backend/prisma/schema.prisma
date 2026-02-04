@@ -47,6 +47,7 @@ model Session {
   interviewPlan    String?       @db.Text
   feedback         Json?
   status           String        @default("pending")
+  duration         Int?          // Duration in seconds
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 }

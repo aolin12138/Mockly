@@ -1,23 +1,40 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Waveform } from '../ui/waveform';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { LoadingPage } from './LoadingPage';
-import { SAMPLE_FEEDBACK } from './constants';
+import {
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Target,
+  TrendingUp,
+  Code2,
+  Bug,
+  Lightbulb,
+  Award,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Zap,
+  Brain,
+  FileCode,
+  MessageSquare,
+} from 'lucide-react';
 
 // For results, go via our local proxy instead of hitting n8n directly.
-// In dev: frontend at 5173 → proxy at 4000 (CORS already configured).
-// In prod: you can point this at your deployed backend and keep the same path.
 const TECHNICAL_API_URL = import.meta.env.DEV
   ? 'http://localhost:4000/api/technical-interview'
   : '/api/technical-interview';
 
 const USE_LOCAL_SAMPLE = false;
 
-/* --- Helper to transform feedback data --- */
+/* --- Helper to transform the new feedback schema --- */
 function transformFeedbackData(feedbackData) {
-  console.log('Transforming technical feedback data:', feedbackData);
+  console.log('=== TRANSFORM START ===');
+  console.log('Raw input:', JSON.stringify(feedbackData, null, 2).slice(0, 2000));
 
   if (!feedbackData) {
     console.error('No feedback data provided');
@@ -25,45 +42,96 @@ function transformFeedbackData(feedbackData) {
   }
 
   // If n8n / caller ever returns an array, unwrap first element
-  const data = Array.isArray(feedbackData) ? feedbackData[0] : feedbackData;
+  let data = Array.isArray(feedbackData) ? feedbackData[0] : feedbackData;
+  console.log('After array unwrap - keys:', Object.keys(data));
+  
+  // The structure from n8n is: { audio, transcript, feedback: { outcome, overall, ... } }
+  // So we need to get the nested feedback object for the actual feedback fields
+  const feedback = data.feedback || data;
+  console.log('Feedback object keys:', Object.keys(feedback));
+  console.log('Feedback.dimensions:', feedback.dimensions);
+  console.log('Feedback.actionPlan:', feedback.actionPlan);
+  console.log('Feedback.outcome:', feedback.outcome);
 
-  console.log('Data object:', data);
-
-  const feedback = data.feedback || data; // may be string or object
+  // Handle transcript - at top level of data
   const transcript = data.transcript;
-  const audio = data.audio;
-
-  console.log('feedback in results:', feedback);
-  console.log('transcript in results:', transcript);
-  console.log('audio in results:', audio);
-
-  console.log('Feedback object:', feedback);
-
-  const metrics = (typeof feedback === 'object' && feedback?.metrics) || data.metrics || [];
-
-  console.log('Metrics:', metrics);
-
   const transformedTranscript = transcript
     ? transcript.map((msg, index) => ({
-      id: index + 1,
-      role: msg.role === 'agent' || msg.role === 'assistant' ? 'assistant' : 'user',
-      text: msg.text || msg.message || '',
-      timestart: msg.timestart ?? null,
-    }))
+        id: index + 1,
+        role: msg.role === 'agent' || msg.role === 'assistant' ? 'assistant' : 'user',
+        text: msg.text || msg.message || '',
+        timestart: msg.timestart ?? null,
+      }))
     : null;
 
-  return {
-    overallFeedback:
-      typeof feedback === 'string'
-        ? feedback
-        : feedback.overall_feedback || feedback.feedback || '',
-    metrics,
+  // Build the result - feedback fields come from the nested feedback object
+  const result = {
+    meta: feedback.meta || {},
+    outcome: feedback.outcome || {},
+    overall: feedback.overall || {},
+    dimensions: feedback.dimensions || [],
+    debuggingNarrative: feedback.debuggingNarrative || feedback.debugging_narrative || null,
+    codeAssessment: feedback.codeAssessment || feedback.code_assessment || null,
+    actionPlan: feedback.actionPlan || feedback.action_plan || feedback.nextSteps || [],
+    ui: feedback.ui || {},
     transcript: transformedTranscript,
-    audio,
-    candidateAnswer: feedback.candidate_answer,
-    starFeedback: feedback.candidate_star_feedback,
-    rephrasedAnswer: feedback.rephrased_star_answer,
+    audio: data.audio, // audio is at top level
   };
+  
+  console.log('=== TRANSFORM RESULT ===');
+  console.log('dimensions count:', result.dimensions?.length);
+  console.log('actionPlan count:', result.actionPlan?.length);
+  console.log('First dimension:', result.dimensions?.[0]);
+  console.log('First actionPlan:', result.actionPlan?.[0]);
+  
+  return result;
+}
+
+/* --- Glassmorphism Card Component --- */
+function Card({ children, delay = 0, className = '' }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay }}
+      className={`bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl ${className}`}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* --- Collapsible Section Component --- */
+function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false, delay = 0 }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <Card delay={delay}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between text-left"
+      >
+        <div className="flex items-center gap-3">
+          {Icon && <Icon className="w-5 h-5 text-emerald-400" />}
+          <h2 className="text-lg font-semibold text-white">{title}</h2>
+        </div>
+        {isOpen ? (
+          <ChevronUp className="w-5 h-5 text-slate-400" />
+        ) : (
+          <ChevronDown className="w-5 h-5 text-slate-400" />
+        )}
+      </button>
+      <motion.div
+        initial={false}
+        animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
+        className="overflow-hidden"
+      >
+        <div className="pt-4">{children}</div>
+      </motion.div>
+    </Card>
+  );
 }
 
 /* --- Audio player with waveform --- */
@@ -105,22 +173,17 @@ function AudioPlayer({ audio, audioRef }) {
         setProgress(el.currentTime / el.duration);
       }
     };
-    const handleLoadedMetadata = () => {
-      console.log('Audio loaded, duration:', el.duration);
-    };
     const handleEnded = () => setIsPlaying(false);
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
 
     el.addEventListener('timeupdate', handleTimeUpdate);
-    el.addEventListener('loadedmetadata', handleLoadedMetadata);
     el.addEventListener('ended', handleEnded);
     el.addEventListener('play', handlePlay);
     el.addEventListener('pause', handlePause);
 
     return () => {
       el.removeEventListener('timeupdate', handleTimeUpdate);
-      el.removeEventListener('loadedmetadata', handleLoadedMetadata);
       el.removeEventListener('ended', handleEnded);
       el.removeEventListener('play', handlePlay);
       el.removeEventListener('pause', handlePause);
@@ -143,53 +206,31 @@ function AudioPlayer({ audio, audioRef }) {
   };
 
   return (
-    <div className='bg-white rounded-3xl shadow-[0_20px_60px_rgba(148,163,184,0.35)] p-5 border border-slate-100'>
-      <div className='flex items-center justify-between mb-3'>
+    <Card delay={0.5}>
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <p className='text-sm font-semibold text-slate-900'>Conversation replay</p>
-          <p className='text-xs text-slate-500'>
-            Audio from the technical interview (if available)
+          <p className="text-sm font-semibold text-white">Conversation Replay</p>
+          <p className="text-xs text-slate-400">
+            Audio from your technical interview
           </p>
         </div>
         <button
-          type='button'
+          type="button"
           onClick={togglePlay}
           disabled={!source}
-          className='inline-flex items-center gap-2 rounded-full bg-slate-900 text-slate-50 px-4 py-2 text-xs font-medium hover:bg-slate-800 shadow-sm disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed transition-all'
+          className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 text-xs font-medium hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed transition-all"
         >
           {isPlaying ? (
             <>
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                fill='none'
-                viewBox='0 0 24 24'
-                strokeWidth='1.5'
-                stroke='currentColor'
-                className='h-4 w-4'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  d='M15.75 5.25v13.5m-7.5-13.5v13.5'
-                />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="h-4 w-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
               </svg>
               Pause
             </>
           ) : (
             <>
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                fill='none'
-                viewBox='0 0 24 24'
-                strokeWidth='1.5'
-                stroke='currentColor'
-                className='h-4 w-4'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  d='M5.25 5.653c0-.856.917-1.398 1.667-.987l11.54 6.347a1.125 1.125 0 010 1.974l-11.54 6.347a1.125 1.125 0 01-1.667-.987V5.653z'
-                />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="h-4 w-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.987l11.54 6.347a1.125 1.125 0 010 1.974l-11.54 6.347a1.125 1.125 0 01-1.667-.987V5.653z" />
               </svg>
               Play
             </>
@@ -197,9 +238,9 @@ function AudioPlayer({ audio, audioRef }) {
         </button>
       </div>
 
-      <div className='w-full px-4 py-6'>
+      <div className="w-full px-4 py-6">
         <div
-          className='relative cursor-pointer flex items-center w-full gap-1'
+          className="relative cursor-pointer flex items-center w-full gap-1"
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -218,34 +259,29 @@ function AudioPlayer({ audio, audioRef }) {
           }}
           onMouseLeave={() => setHoverProgress(null)}
         >
-          <div className='flex-1 relative'>
+          <div className="flex-1 relative">
             <Waveform data={samples} height={64} barWidth={4} barGap={2} />
             <div
-              className='absolute top-0 bottom-0 w-1 bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.8)] pointer-events-none'
+              className="absolute top-0 bottom-0 w-1 bg-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.8)] pointer-events-none"
               style={{ left: `${progress * 100}%`, transform: 'translateX(-50%)' }}
             />
             {hoverProgress !== null && (
               <div
-                className='absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_15px_rgba(255,255,255,0.9)] pointer-events-none'
-                style={{
-                  left: `${hoverProgress * 100}%`,
-                  transform: 'translateX(-50%)',
-                }}
+                className="absolute top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.9)] pointer-events-none"
+                style={{ left: `${hoverProgress * 100}%`, transform: 'translateX(-50%)' }}
               />
             )}
           </div>
         </div>
       </div>
 
-      <audio ref={audioRef} src={source || undefined} preload='metadata' className='hidden' />
+      <audio ref={audioRef} src={source || undefined} preload="metadata" className="hidden" />
 
-      <div className='mt-3 flex items-center justify-between text-[11px] text-slate-500'>
-        <span>
-          {source ? 'Waveform powered by ElevenLabs-style UI' : 'No audio attached to this run'}
-        </span>
-        <span>{Math.round(progress * 100)}% played</span>
+      <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500">
+        <span>{source ? 'Waveform powered by ElevenLabs UI' : 'No audio attached'}</span>
+        <span className="text-emerald-400 font-medium">{Math.round(progress * 100)}% played</span>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -254,220 +290,310 @@ function AudioPlayer({ audio, audioRef }) {
 function getScoreColor(score) {
   if (score >= 8) {
     return {
-      text: 'text-emerald-600',
-      chipBg: 'bg-emerald-50',
-      chipBorder: 'border-emerald-100',
-      arc: '#059669',
+      text: 'text-emerald-400',
+      gradient: 'from-emerald-500 to-cyan-500',
+      bg: 'bg-emerald-500/10',
+      border: 'border-emerald-500/30',
+      arc: '#10b981',
     };
   }
   if (score >= 5) {
     return {
-      text: 'text-amber-600',
-      chipBg: 'bg-amber-50',
-      chipBorder: 'border-amber-100',
-      arc: '#d97706',
+      text: 'text-amber-400',
+      gradient: 'from-amber-500 to-orange-500',
+      bg: 'bg-amber-500/10',
+      border: 'border-amber-500/30',
+      arc: '#f59e0b',
     };
   }
   return {
-    text: 'text-rose-600',
-    chipBg: 'bg-rose-50',
-    chipBorder: 'border-rose-100',
-    arc: '#e11d48',
+    text: 'text-red-400',
+    gradient: 'from-red-500 to-rose-500',
+    bg: 'bg-red-500/10',
+    border: 'border-red-500/30',
+    arc: '#ef4444',
   };
 }
 
-/* --- Radar chart (hoverable) --- */
+/* --- Hire Signal Badge --- */
+function HireSignalBadge({ signal }) {
+  const styles = {
+    strong_hire: { bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', text: 'text-emerald-400', label: 'Strong Hire' },
+    hire: { bg: 'bg-cyan-500/20', border: 'border-cyan-500/40', text: 'text-cyan-400', label: 'Hire' },
+    lean_hire: { bg: 'bg-teal-500/20', border: 'border-teal-500/40', text: 'text-teal-400', label: 'Lean Hire' },
+    neutral: { bg: 'bg-amber-500/20', border: 'border-amber-500/40', text: 'text-amber-400', label: 'Neutral' },
+    lean_no_hire: { bg: 'bg-orange-500/20', border: 'border-orange-500/40', text: 'text-orange-400', label: 'Lean No Hire' },
+    no_hire: { bg: 'bg-red-500/20', border: 'border-red-500/40', text: 'text-red-400', label: 'No Hire' },
+  };
 
-function RadarChart({ categories, activeId, onHover }) {
-  const size = 280;
-  const center = size / 2;
-  const maxRadius = size * 0.38;
-  const maxScore = 10;
-
-  const radarStroke = '#7c3aed';
-  const radarFill = 'rgba(129, 140, 248, 0.20)';
-  const radarPoint = '#7c3aed';
-
-  if (!categories || categories.length === 0) {
-    return (
-      <div className='bg-white rounded-3xl p-6 flex items-center justify-center text-xs text-slate-500'>
-        No metric breakdown yet for this technical run.
-      </div>
-    );
-  }
-
-  const points = categories.map((cat, index) => {
-    const angle = (2 * Math.PI * index) / categories.length - Math.PI / 2;
-    const r = (cat.score / maxScore) * maxRadius;
-    const x = center + r * Math.cos(angle);
-    const y = center + r * Math.sin(angle);
-    return { x, y, cat };
-  });
-
-  const polygonPoints = points.map((p) => `${p.x},${p.y}`).join(' ');
-
-  const gridLines = [];
-  const levels = 5;
-  for (let i = 1; i <= levels; i += 1) {
-    const r = (maxRadius * i) / levels;
-    const circlePoints = [];
-    for (let j = 0; j < categories.length; j += 1) {
-      const angle = (2 * Math.PI * j) / categories.length - Math.PI / 2;
-      const x = center + r * Math.cos(angle);
-      const y = center + r * Math.sin(angle);
-      circlePoints.push(`${x},${y}`);
-    }
-    gridLines.push(
-      <polygon
-        key={i}
-        points={circlePoints.join(' ')}
-        fill='none'
-        stroke='#e5e7eb'
-        strokeWidth='1'
-      />
-    );
-  }
+  const style = styles[signal] || styles.neutral;
 
   return (
-    <div className='bg-white rounded-3xl p-6 flex flex-col items-center justify-center'>
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        onMouseLeave={() => onHover(null)}
-      >
-        {gridLines}
-        {categories.map((_, index) => {
-          const angle = (2 * Math.PI * index) / categories.length - Math.PI / 2;
-          const x = center + maxRadius * Math.cos(angle);
-          const y = center + maxRadius * Math.sin(angle);
-          return (
-            <line
-              key={index}
-              x1={center}
-              y1={center}
-              x2={x}
-              y2={y}
-              stroke='#e5e7eb'
-              strokeWidth='1'
-            />
-          );
-        })}
-        <polygon points={polygonPoints} fill={radarFill} stroke={radarStroke} strokeWidth='2' />
-        {points.map(({ x, y, cat }, index) => {
-          const id = cat.id || cat.name;
-          const isActive = id === activeId;
-          const color = radarPoint;
-          const angle = (2 * Math.PI * index) / categories.length - Math.PI / 2;
-          const labelR = maxRadius + 16;
-          const lx = center + labelR * Math.cos(angle);
-          const ly = center + labelR * Math.sin(angle);
-
-          return (
-            <g key={id}>
-              <circle
-                cx={x}
-                cy={y}
-                r={isActive ? 6 : 4}
-                fill={color}
-                onMouseEnter={() => onHover(id)}
-              />
-              {isActive && (
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={9}
-                  fill='none'
-                  stroke={color}
-                  strokeWidth='2'
-                  opacity='0.8'
-                />
-              )}
-              <text
-                x={lx}
-                y={ly}
-                textAnchor='middle'
-                dominantBaseline='middle'
-                className={
-                  'text-[10px] cursor-default ' +
-                  (isActive ? 'font-semibold text-slate-900' : 'text-slate-400')
-                }
-                onMouseEnter={() => onHover(id)}
-              >
-                {cat.label || cat.name}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+    <div className={`px-4 py-2 rounded-full ${style.bg} border ${style.border}`}>
+      <span className={`text-sm font-semibold ${style.text}`}>{style.label}</span>
     </div>
   );
 }
 
-/* --- Circular metric card --- */
+/* --- Outcome Badge --- */
+function OutcomeBadge({ solved }) {
+  if (solved) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40">
+        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <span className="text-sm font-medium text-emerald-400">Solved</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/20 border border-red-500/40">
+      <XCircle className="w-4 h-4 text-red-400" />
+      <span className="text-sm font-medium text-red-400">Not Solved</span>
+    </div>
+  );
+}
 
-function MetricCard({ category, active, onHover }) {
-  const percent = Math.round((category.score / 10) * 100);
-  const radius = 26;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - percent / 100);
+/* --- Dimension Score Card --- */
+function DimensionCard({ dimension, index }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  // Handle different field name variations
+  const score = dimension?.score ?? dimension?.rating ?? 0;
+  const percentage = (score / 10) * 100;
+  const colors = getScoreColor(score);
 
-  const { text, chipBg, chipBorder, arc } = getScoreColor(category.score);
+  const formatDimensionName = (name) => {
+    if (!name || typeof name !== 'string') return 'Unknown Dimension';
+    return name
+      .replace(/_/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2') // Handle camelCase
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
 
-  const id = category.id || category.name;
+  // Support multiple field names for dimension name (actual data uses 'key' and 'label')
+  const dimensionName = dimension?.label || dimension?.dimension || dimension?.name || dimension?.key || 'Unknown';
+  const summary = dimension?.summary || dimension?.description || dimension?.feedback || '';
+  const ratingLabel = dimension?.rating || dimension?.ratingLabel || null;
+  const evidence = dimension?.evidence || dimension?.examples || [];
+  const strengths = dimension?.strengths || [];
+  const weaknesses = dimension?.weaknesses || dimension?.areasForImprovement || [];
 
   return (
-    <div
-      className={
-        'flex items-center gap-4 rounded-2xl border bg-white px-5 py-4 shadow-sm transition ' +
-        (active ? 'border-slate-400 shadow-md' : 'border-slate-200')
-      }
-      onMouseEnter={() => onHover(id)}
-      onMouseLeave={() => onHover(null)}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 * index, duration: 0.3 }}
+      className={`${colors.bg} border ${colors.border} rounded-2xl p-4`}
     >
-      <div className='relative'>
-        <svg width='64' height='64'>
-          <circle cx='32' cy='32' r={radius} stroke='#e5e7eb' strokeWidth='5' fill='none' />
-          <circle
-            cx='32'
-            cy='32'
-            r={radius}
-            stroke={arc}
-            strokeWidth='5'
-            fill='none'
-            strokeLinecap='round'
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            transform='rotate(-90 32 32)'
-          />
-        </svg>
-        <div className='absolute inset-0 flex items-center justify-center'>
-          <span className={`text-xs font-semibold ${text}`}>{percent}%</span>
-        </div>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-semibold text-white">{formatDimensionName(dimensionName)}</span>
+        <span className={`text-xs font-bold ${colors.text}`}>{score}/10</span>
       </div>
 
-      <div className='flex flex-col'>
-        <div className='flex items-center gap-2'>
-          <span className='text-sm font-semibold text-slate-900'>
-            {category.label || category.name}
-          </span>
-          <span
-            className={
-              `inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ` +
-              `${chipBg} ${chipBorder} ${text}`
-            }
-          >
-            {category.score.toFixed(1)}/10
+      {/* Progress bar */}
+      <div className="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-3">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ delay: 0.2 + 0.1 * index, duration: 0.8, ease: 'easeOut' }}
+          className={`h-full bg-gradient-to-r ${colors.gradient} shadow-lg`}
+        />
+      </div>
+
+      {/* Rating label */}
+      {ratingLabel && (
+        <div className="mb-3">
+          <span className={`text-xs px-2 py-1 rounded-full ${colors.bg} ${colors.text} border ${colors.border}`}>
+            {ratingLabel}
           </span>
         </div>
-        {category.blurb && <p className='text-[11px] text-slate-500 mt-1'>{category.blurb}</p>}
+      )}
+
+      {/* Summary (always visible) */}
+      {summary && (
+        <p className="text-xs text-slate-300 mb-3">{summary}</p>
+      )}
+
+      {/* Strengths */}
+      {strengths && strengths.length > 0 && (
+        <div className="mb-2">
+          <p className="text-xs text-emerald-400 font-medium mb-1">Strengths:</p>
+          <ul className="space-y-1">
+            {strengths.map((s, i) => (
+              <li key={i} className="text-xs text-slate-300 flex items-start gap-1">
+                <span className="text-emerald-400">+</span>
+                <span>{typeof s === 'string' ? s : s.text || JSON.stringify(s)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Weaknesses */}
+      {weaknesses && weaknesses.length > 0 && (
+        <div className="mb-2">
+          <p className="text-xs text-amber-400 font-medium mb-1">Areas to Improve:</p>
+          <ul className="space-y-1">
+            {weaknesses.map((w, i) => (
+              <li key={i} className="text-xs text-slate-300 flex items-start gap-1">
+                <span className="text-amber-400">-</span>
+                <span>{typeof w === 'string' ? w : w.text || JSON.stringify(w)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Evidence (collapsible) */}
+      {evidence && evidence.length > 0 && (
+        <>
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors"
+          >
+            {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            {expanded ? 'Hide evidence' : `Show ${evidence.length} evidence points`}
+          </button>
+          
+          {expanded && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-3 space-y-2"
+            >
+              {evidence.map((ev, evIdx) => {
+                // Handle both object and string evidence
+                const observation = typeof ev === 'string' ? ev : (ev.observation || ev.text || ev.description || JSON.stringify(ev));
+                const quote = typeof ev === 'object' ? (ev.quote || ev.example) : null;
+                return (
+                  <div key={evIdx} className="text-xs bg-slate-800/50 rounded-lg p-3 border border-white/5">
+                    <p className="text-slate-300">
+                      <strong className="text-slate-200">Observation:</strong> {observation}
+                    </p>
+                    {quote && (
+                      <p className="text-slate-400 mt-1 italic border-l-2 border-emerald-500/30 pl-2">
+                        "{quote}"
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </motion.div>
+          )}
+        </>
+      )}
+    </motion.div>
+  );
+}
+
+/* --- Action Plan Item --- */
+function ActionPlanItem({ item, index }) {
+  // If item is just a string, render it simply
+  if (typeof item === 'string') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1 * index }}
+        className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center">
+            <span className="text-xs font-bold text-amber-400">{index + 1}</span>
+          </div>
+          <p className="text-sm text-slate-300">{item}</p>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Handle different field name variations from API
+  const title = item.title || item.focus_area || item.focusArea || item.area || 'Action Item';
+  
+  // Priority can be number (1=high, 2=medium, 3=low) or string
+  let priority = 'medium';
+  if (typeof item.priority === 'number') {
+    priority = item.priority === 1 ? 'high' : item.priority === 2 ? 'medium' : 'low';
+  } else if (typeof item.priority === 'string') {
+    priority = item.priority.toLowerCase();
+  }
+  
+  const how = item.how || item.recommendation || item.action || item.description || '';
+  const why = item.why || '';
+  const resources = item.resources || [];
+
+  const priorityStyles = {
+    high: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', badge: 'bg-red-500/20', label: 'High Priority' },
+    medium: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', badge: 'bg-amber-500/20', label: 'Medium' },
+    low: { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400', badge: 'bg-slate-500/20', label: 'Low' },
+  };
+
+  const style = priorityStyles[priority] || priorityStyles.medium;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.1 * index }}
+      className={`${style.bg} border ${style.border} rounded-xl p-4`}
+    >
+      <div className="flex items-start gap-3">
+        <div className={`flex-shrink-0 w-6 h-6 rounded-full ${style.badge} flex items-center justify-center`}>
+          <span className={`text-xs font-bold ${style.text}`}>{index + 1}</span>
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm font-semibold text-white">{title}</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full ${style.badge} ${style.text} uppercase font-medium`}>
+              {style.label}
+            </span>
+          </div>
+          
+          {how && (
+            <div className="mb-2">
+              <p className="text-xs text-slate-400 font-medium mb-1">How:</p>
+              <p className="text-xs text-slate-300">{how}</p>
+            </div>
+          )}
+          
+          {why && (
+            <div className="mb-2">
+              <p className="text-xs text-slate-400 font-medium mb-1">Why:</p>
+              <p className="text-xs text-slate-300">{why}</p>
+            </div>
+          )}
+          
+          {resources && resources.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-white/5">
+              <p className="text-xs text-slate-400 font-medium mb-1">Resources:</p>
+              <ul className="space-y-1">
+                {resources.map((resource, idx) => {
+                  const resourceText = typeof resource === 'string' ? resource : (resource.title || resource.name || resource.url || JSON.stringify(resource));
+                  const resourceUrl = typeof resource === 'object' ? resource.url : null;
+                  return (
+                    <li key={idx} className="text-xs text-cyan-400">
+                      {resourceUrl ? (
+                        <a href={resourceUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                          {resourceText}
+                        </a>
+                      ) : (
+                        <span>{resourceText}</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 /* --- Time formatter --- */
-
 function formatTime(seconds) {
   if (seconds == null) return null;
   const mins = Math.floor(seconds / 60);
@@ -475,26 +601,21 @@ function formatTime(seconds) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-/* --- Transcript bubble UI --- */
-
+/* --- Transcript Card --- */
 function TranscriptCard({ transcript, audioRef }) {
   const handleTimestampClick = (timestart) => {
     if (audioRef?.current && timestart != null) {
       audioRef.current.currentTime = timestart;
-      audioRef.current
-        .play()
-        .catch((err) => console.error('Failed to play from transcript timestamp', err));
+      audioRef.current.play().catch((err) => console.error('Failed to play', err));
     }
   };
 
   return (
-    <div className='bg-white rounded-3xl shadow-[0_20px_60px_rgba(148,163,184,0.35)] p-5'>
-      <h2 className='text-sm font-semibold text-slate-900 mb-1'>Chat history</h2>
-      <p className='text-xs text-slate-500 mb-4'>
-        Click a timestamp to jump to that moment in the audio.
-      </p>
+    <Card delay={0.4}>
+      <h2 className="text-sm font-semibold text-white mb-1">Chat History</h2>
+      <p className="text-xs text-slate-400 mb-4">Click timestamp to jump to that moment.</p>
 
-      <div className='max-h-72 overflow-y-auto space-y-3 pr-1'>
+      <div className="max-h-72 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
         {transcript && transcript.length > 0 ? (
           transcript.map((m) => (
             <div
@@ -505,54 +626,53 @@ function TranscriptCard({ transcript, audioRef }) {
                 className={
                   'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ' +
                   (m.role === 'user'
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'bg-slate-50 text-slate-900 border border-slate-200 shadow-sm')
+                    ? 'bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-white border border-emerald-500/30'
+                    : 'bg-slate-800/40 text-slate-100 border border-white/5')
                 }
               >
-                <div className='mb-1 flex items-center justify-between gap-2'>
-                  <span className='text-[11px] font-semibold'>
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold">
                     {m.role === 'user' ? (
-                      <span className='text-slate-300'>You</span>
+                      <span className="text-emerald-400">You</span>
                     ) : (
-                      <span className='text-slate-600'>Rehearse.AI</span>
+                      <span className="text-cyan-400">Interviewer</span>
                     )}
                   </span>
                   {m.timestart != null && (
                     <button
-                      type='button'
+                      type="button"
                       onClick={() => handleTimestampClick(m.timestart)}
                       className={
                         'text-[10px] font-medium px-2 py-0.5 rounded-full transition hover:scale-105 cursor-pointer ' +
                         (m.role === 'user'
-                          ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                          : 'bg-slate-200 text-slate-600 hover:bg-slate-300')
+                          ? 'bg-emerald-500/30 text-emerald-300 hover:bg-emerald-500/40'
+                          : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50')
                       }
                     >
                       {formatTime(m.timestart)}
                     </button>
                   )}
                 </div>
-                <p className='whitespace-pre-wrap text-xs'>{m.text}</p>
+                <p className="whitespace-pre-wrap text-xs">{m.text}</p>
               </div>
             </div>
           ))
         ) : (
-          <p className='text-center text-sm text-slate-500 py-8'>
-            No transcript available for this technical interview.
+          <p className="text-center text-sm text-slate-500 py-8">
+            No transcript available for this interview.
           </p>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 
-/* --- Main technical results page --- */
-
+/* --- Main Technical Results Page --- */
 export default function TechnicalResultsPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { sessionId: urlSessionId } = useParams();
   const audioRef = useRef(null);
-  const [activeId, setActiveId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [feedbackData, setFeedbackData] = useState(null);
   const [error, setError] = useState(null);
@@ -560,20 +680,24 @@ export default function TechnicalResultsPage() {
   useEffect(() => {
     const state = location.state || {};
     console.log('[technical-results] location.state:', state);
+    console.log('[technical-results] urlSessionId:', urlSessionId);
 
-    // If the interview page sent us data, build a raw object from it
-    const rawFromState =
-      state.raw ||
-      (state.feedback || state.transcript || state.audio
-        ? {
-          feedback: state.feedback,
-          transcript: state.transcript,
-          audio: state.audio,
-        }
-        : null);
+    // If the interview page sent us feedback data directly, use it
+    if (state.feedback) {
+      console.log('[technical-results] Using feedback from state:', state.feedback);
+      const transformed = transformFeedbackData(state.feedback);
+      console.log('[technical-results] Transformed data:', transformed);
+      if (transformed) {
+        setFeedbackData(transformed);
+        setIsLoading(false);
+        return;
+      }
+    }
 
-    // 1) If we were navigated with state from the interview page, use that
+    // If we have raw data with feedback, transcript, audio
+    const rawFromState = state.raw;
     if (rawFromState) {
+      console.log('[technical-results] Using raw data from state');
       const transformed = transformFeedbackData(rawFromState);
       if (transformed) {
         setFeedbackData(transformed);
@@ -584,118 +708,109 @@ export default function TechnicalResultsPage() {
 
     // 2) Dev mode: local sample
     if (USE_LOCAL_SAMPLE) {
-      const transformed = transformFeedbackData(SAMPLE_FEEDBACK);
-      setFeedbackData(transformed);
+      // TODO: Add sample data for new schema
       setIsLoading(false);
       return;
     }
 
-    // 3) Fallback: call n8n webhook directly ...
+    // 3) Fetch from API only if we don't have feedback in state
     const fetchFeedback = async () => {
       try {
-        await new Promise((res) => setTimeout(res, 5000));
+        await new Promise((res) => setTimeout(res, 2000));
 
-        const response = await fetch(TECHNICAL_API_URL, {
-          method: 'POST',
+        // Get session ID from URL param or localStorage
+        const sessionId = urlSessionId || localStorage.getItem('currentTechnicalSessionId');
+
+        if (!sessionId) {
+          throw new Error('No session ID found. Please start a new technical interview.');
+        }
+
+        // Check if feedback already exists in the database
+        const checkFeedbackResponse = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
-          body: JSON.stringify({
-            feedback: true,
-          }),
         });
 
-        const responseText = await response.text();
-        console.log(
-          '[technical-results] Webhook response:',
-          responseText,
-          'Status:',
-          response.status
-        );
-
-        if (!response.ok) {
-          const errorMsg = responseText || response.statusText;
-          console.error('[technical-results] Webhook error response:', errorMsg);
-          throw new Error(`Webhook request failed: ${errorMsg}`);
+        if (!checkFeedbackResponse.ok) {
+          throw new Error('Failed to fetch session data');
         }
 
-        if (!responseText) {
-          throw new Error('Webhook returned empty response');
+        const sessionData = await checkFeedbackResponse.json();
+        console.log('[technical-results] Session data from DB:', sessionData);
+        console.log('[technical-results] Feedback field:', sessionData.feedback);
+
+        // If feedback already exists in the database, use it
+        if (sessionData.feedback) {
+          console.log('Found existing feedback in database');
+          console.log('[technical-results] Feedback structure keys:', Object.keys(sessionData.feedback));
+          console.log('[technical-results] Is Array?', Array.isArray(sessionData.feedback));
+          console.log('[technical-results] Raw feedback:', JSON.stringify(sessionData.feedback).slice(0, 500));
+          const transformed = transformFeedbackData(sessionData.feedback);
+          console.log('[technical-results] Transformed result keys:', transformed ? Object.keys(transformed) : null);
+          console.log('[technical-results] Transformed outcome:', transformed?.outcome);
+          console.log('[technical-results] Transformed overall:', transformed?.overall);
+          console.log('[technical-results] Transformed dimensions count:', transformed?.dimensions?.length);
+          if (transformed) {
+            console.log('[technical-results] Calling setFeedbackData with transformed data');
+            setFeedbackData(transformed);
+            setIsLoading(false);
+            return;
+          }
         }
 
-        const feedback = JSON.parse(responseText);
-
-        const transformed = transformFeedbackData(feedback);
-        if (transformed) {
-          setFeedbackData(transformed);
-          localStorage.setItem('technicalInterviewFeedback', JSON.stringify(feedback));
-          localStorage.removeItem('technicalInterviewError');
-        } else {
-          setError('Invalid feedback data received - missing required fields');
-        }
+        throw new Error('No feedback available yet. Please wait for the interview to be processed.');
       } catch (err) {
         console.error('[technical-results] Error fetching feedback:', err);
-        setError(
-          err?.message || 'Failed to process technical interview feedback. Please try again.'
-        );
-        localStorage.setItem('technicalInterviewError', err?.message || 'error');
+        setError(err?.message || 'Failed to load technical interview feedback.');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchFeedback();
-  }, [location.state]);
+  }, [location.state, urlSessionId]);
 
   if (isLoading) {
+    console.log('[technical-results] Still loading...');
     return <LoadingPage />;
   }
 
   if (error || !feedbackData) {
+    console.log('[technical-results] Error state - error:', error, 'feedbackData:', feedbackData);
     return (
-      <div className='min-h-screen bg-slate-100 flex items-center justify-center px-4 py-10'>
-        <div className='w-full max-w-md text-center'>
-          <div className='mb-6'>
-            <div className='inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-4'>
-              <svg
-                className='h-8 w-8 text-red-600'
-                fill='none'
-                viewBox='0 0 24 24'
-                strokeWidth='1.5'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  d='M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z'
-                />
-              </svg>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md text-center">
+          <div className="mb-6">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20 border border-red-500/30 mb-4">
+              <XCircle className="h-8 w-8 text-red-400" />
             </div>
-            <h1 className='text-2xl font-bold text-slate-900 mb-2'>
-              {error || 'Failed to load technical feedback'}
+            <h1 className="text-2xl font-bold text-white mb-2">
+              {error || 'Failed to load feedback'}
             </h1>
-            <p className='text-slate-600'>
-              We couldn&apos;t find feedback for this technical session. Try running a new
-              interview.
+            <p className="text-slate-400">
+              We couldn't find feedback for this technical session.
             </p>
           </div>
 
-          <div className='flex flex-col gap-3'>
+          <div className="flex flex-col gap-3">
             <button
-              type='button'
+              type="button"
               onClick={() => {
                 localStorage.removeItem('technicalInterviewFeedback');
                 localStorage.removeItem('technicalInterviewError');
                 window.location.reload();
               }}
-              className='inline-flex items-center justify-center rounded-full bg-slate-900 text-slate-50 px-5 py-2.5 text-sm font-medium hover:bg-slate-800 shadow-sm'
+              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-5 py-2.5 text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25"
             >
               Retry
             </button>
             <button
-              type='button'
+              type="button"
               onClick={() => navigate('/technical')}
-              className='inline-flex items-center justify-center rounded-full border border-slate-300 text-slate-900 px-5 py-2.5 text-sm font-medium hover:bg-slate-50'
+              className="inline-flex items-center justify-center rounded-full border border-white/10 text-white px-5 py-2.5 text-sm font-medium hover:bg-white/5"
             >
               Start new technical interview
             </button>
@@ -705,172 +820,407 @@ export default function TechnicalResultsPage() {
     );
   }
 
-  const {
-    metrics,
-    transcript,
-    overallFeedback,
-    audio,
-    candidateAnswer,
-    starFeedback,
-    rephrasedAnswer,
-  } = feedbackData;
+  const { meta, outcome, overall, dimensions, debuggingNarrative, codeAssessment, actionPlan, ui, transcript, audio } = feedbackData;
 
-  const hasMetrics = metrics && metrics.length > 0;
-  const overall = hasMetrics
-    ? (metrics.reduce((acc, c) => acc + c.score, 0) / metrics.length).toFixed(1)
-    : null;
+  // Debug: Log what's being rendered
+  console.log('=== RENDER TIME DEBUG ===');
+  console.log('feedbackData keys:', Object.keys(feedbackData));
+  console.log('outcome:', outcome);
+  console.log('overall:', overall);
+  console.log('dimensions:', dimensions);
+  console.log('ui:', ui);
+  console.log('transcript:', transcript);
+  console.log('audio:', audio);
+  console.log('=========================');
 
   return (
-    <div className='min-h-screen bg-slate-100 flex items-center justify-center px-4 py-10'>
-      <div className='w-full max-w-6xl space-y-6'>
-        {/* Header */}
-        <div>
-          <h1 className='text-2xl md:text-3xl font-bold tracking-tight text-slate-900'>
-            Technical interview summary
-          </h1>
-          <p className='mt-1 text-sm text-slate-500'>
-            Here&apos;s how your coding interview went across key skills, plus a quick replay and
-            transcript.
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30 overflow-hidden relative">
+      {/* Ambient Background */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-cyan-500/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[35%] h-[35%] bg-purple-500/10 rounded-full blur-[120px]" />
+      </div>
 
-        {/* Overall feedback banner */}
-        {overallFeedback && (
-          <div className='bg-violet-50 border border-violet-200 rounded-2xl p-5'>
-            <h3 className='text-sm font-semibold text-slate-900 mb-2'>Overall feedback</h3>
-            <p className='text-sm text-slate-700 whitespace-pre-wrap'>{overallFeedback}</p>
-          </div>
-        )}
-
-        {/* Overall + radar */}
-        <div className='bg-white rounded-3xl shadow-[0_20px_60px_rgba(148,163,184,0.35)] p-6 md:p-7 flex flex-col md:flex-row gap-6 items-center md:items-stretch'>
-          <div className='flex-1 flex flex-col justify-between'>
-            <div className='mb-4'>
-              {overall && (
-                <div className='inline-flex items-center gap-2 rounded-full bg-slate-900 text-slate-50 px-3 py-1 text-xs font-medium shadow-sm'>
-                  <span className='inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-slate-900'>
-                    {overall}
-                  </span>
-                  <span>Overall score / 10</span>
-                </div>
-              )}
-              <h2 className='mt-4 text-base font-semibold text-slate-900'>
-                Profile across technical skills
-              </h2>
-              <p className='mt-2 text-xs text-slate-500'>
-                Hover a point or card to highlight that skill.
-              </p>
-            </div>
-
-            {hasMetrics && (
-              <div className='grid grid-cols-2 gap-2 text-[11px] text-slate-500'>
-                {metrics.slice(0, 4).map((cat) => {
-                  const id = cat.id || cat.name;
-                  return (
-                    <button
-                      key={id}
-                      type='button'
-                      className={
-                        'flex items-center justify-between rounded-xl px-2 py-1 border text-left transition ' +
-                        (activeId === id
-                          ? 'border-slate-400 bg-slate-50'
-                          : 'border-transparent bg-slate-100')
-                      }
-                      onMouseEnter={() => setActiveId(id)}
-                      onMouseLeave={() => setActiveId(null)}
-                    >
-                      <span className='truncate'>{cat.label || cat.name}</span>
-                      <span className='ml-2 font-semibold text-slate-700'>
-                        {cat.score.toFixed(1)}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className='flex-1'>
-            <RadarChart categories={metrics || []} activeId={activeId} onHover={setActiveId} />
-          </div>
-        </div>
-
-        {/* Skill breakdown cards */}
-        {hasMetrics && (
-          <section className='space-y-2'>
-            <div className='flex items-center justify-between'>
-              <p className='text-sm font-semibold text-slate-900'>Skill breakdown</p>
-              <p className='text-xs text-slate-500'>
-                Green = strong · Yellow = mixed · Red = needs work
-              </p>
-            </div>
-            <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
-              {metrics.map((cat) => {
-                const id = cat.id || cat.name;
-                return (
-                  <MetricCard
-                    key={id}
-                    category={cat}
-                    active={activeId === id}
-                    onHover={setActiveId}
-                  />
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* Audio + transcript */}
-        {(audio || transcript) && (
-          <div className='grid gap-4 md:grid-cols-2'>
-            {audio && <AudioPlayer audio={audio} audioRef={audioRef} />}
-            <TranscriptCard transcript={transcript} audioRef={audioRef} />
-          </div>
-        )}
-
-        {/* STAR / code-answer sections */}
-        {(candidateAnswer || starFeedback || rephrasedAnswer) && (
-          <section className='grid gap-4 md:grid-cols-2'>
-            {candidateAnswer && (
-              <div className='bg-white rounded-3xl border border-slate-100 shadow-[0_20px_60px_rgba(148,163,184,0.35)] p-5'>
-                <h3 className='text-sm font-semibold text-slate-900 mb-2'>Your answer</h3>
-                <p className='text-sm text-slate-700 whitespace-pre-wrap leading-relaxed'>
-                  {candidateAnswer}
-                </p>
-              </div>
-            )}
-
-            {starFeedback && (
-              <div className='bg-white rounded-3xl border border-slate-100 shadow-[0_20px_60px_rgba(148,163,184,0.35)] p-5'>
-                <h3 className='text-sm font-semibold text-slate-900 mb-2'>Feedback on structure</h3>
-                <p className='text-sm text-slate-700 whitespace-pre-wrap leading-relaxed'>
-                  {starFeedback}
-                </p>
-              </div>
-            )}
-
-            {rephrasedAnswer && (
-              <div className='bg-white rounded-3xl border border-slate-100 shadow-[0_20px_60px_rgba(148,163,184,0.35)] p-5 md:col-span-2'>
-                <h3 className='text-sm font-semibold text-slate-900 mb-2'>
-                  Cleaner version you can reuse
-                </h3>
-                <p className='text-sm text-slate-700 whitespace-pre-wrap leading-relaxed'>
-                  {rephrasedAnswer}
-                </p>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Retry button */}
-        <div className='pt-3 flex justify-center'>
-          <button
-            type='button'
-            onClick={() => navigate('/')}
-            className='inline-flex items-center justify-center rounded-full bg-slate-900 text-slate-50 px-5 py-2.5 text-sm font-medium hover:bg-slate-800 shadow-sm'
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-6xl space-y-6">
+          {/* Header with Score and Verdict */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            Run another mock interview
-          </button>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+                  Technical Interview Results
+                </h1>
+                <p className="mt-2 text-sm text-slate-400">
+                  {meta?.questionTitle || 'Comprehensive analysis of your coding interview performance'}
+                </p>
+                {meta?.language && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <FileCode className="w-4 h-4 text-cyan-400" />
+                    <span className="text-xs text-slate-400">{meta.language}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-4">
+                {overall?.score != null && (
+                  <div className="text-center">
+                    <div className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
+                      {overall.score}/10
+                    </div>
+                    <div className="text-xs text-slate-400 mt-1">Overall Score</div>
+                  </div>
+                )}
+                {overall?.hireSignal && <HireSignalBadge signal={overall.hireSignal} />}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Outcome Card */}
+          {outcome && (
+            <Card delay={0.1}>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <OutcomeBadge solved={outcome.solved} />
+                  {outcome.assistanceLevel && (
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                      <Lightbulb className="w-4 h-4 text-amber-400" />
+                      <span>Assistance: <strong>{outcome.assistanceLevel}</strong></span>
+                    </div>
+                  )}
+                </div>
+                {outcome.passSummary && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Target className="w-4 h-4 text-emerald-400" />
+                    <span className="text-slate-300">
+                      {typeof outcome.passSummary === 'string' 
+                        ? outcome.passSummary
+                        : typeof outcome.passSummary === 'object'
+                          ? (outcome.passSummary.summary || 
+                             outcome.passSummary.text ||
+                             `${outcome.passSummary.passed ?? outcome.passSummary.passedCount ?? '?'}/${outcome.passSummary.total ?? outcome.passSummary.totalCount ?? '?'} tests passed`)
+                          : String(outcome.passSummary)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {/* Overall Summary */}
+          {overall?.summary && (
+            <Card delay={0.15}>
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30">
+                  <TrendingUp className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold text-white">Overall Assessment</h3>
+                    {overall.confidence && (
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        overall.confidence === 'high' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                        overall.confidence === 'medium' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                        'bg-red-500/20 text-red-400 border border-red-500/30'
+                      }`}>
+                        {overall.confidence} confidence
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed">{overall.summary}</p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* UI Summary - Top Strengths and Improvements */}
+          {ui && (ui.topStrengths?.length > 0 || ui.topImprovements?.length > 0) && (
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Strengths */}
+              {ui.topStrengths?.length > 0 && (
+                <Card delay={0.2}>
+                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    Top Strengths
+                  </h2>
+                  <ul className="space-y-3">
+                    {ui.topStrengths.map((strength, idx) => {
+                      const strengthText = typeof strength === 'string' ? strength : (strength.text || JSON.stringify(strength));
+                      return (
+                        <motion.li
+                          key={idx}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.25 + 0.05 * idx }}
+                          className="flex items-start gap-2 text-sm text-slate-300 bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3"
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
+                          <span>{strengthText}</span>
+                        </motion.li>
+                      );
+                    })}
+                  </ul>
+                </Card>
+              )}
+
+              {/* Improvements */}
+              {ui.topImprovements?.length > 0 && (
+                <Card delay={0.25}>
+                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-amber-400" />
+                    Areas to Improve
+                  </h2>
+                  <ul className="space-y-3">
+                    {ui.topImprovements.map((improvement, idx) => {
+                      const improvementText = typeof improvement === 'string' ? improvement : (improvement.text || JSON.stringify(improvement));
+                      return (
+                        <motion.li
+                          key={idx}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.3 + 0.05 * idx }}
+                          className="flex items-start gap-2 text-sm text-slate-300 bg-amber-500/5 border border-amber-500/20 rounded-lg p-3"
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
+                          <span>{improvementText}</span>
+                        </motion.li>
+                      );
+                    })}
+                  </ul>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* Dimension Scores */}
+          {dimensions && dimensions.length > 0 && (
+            <CollapsibleSection title="Skill Breakdown" icon={Target} defaultOpen={true} delay={0.3}>
+              <div className="grid gap-4 md:grid-cols-2">
+                {dimensions.filter(d => d && typeof d === 'object').map((dimension, idx) => (
+                  <DimensionCard key={dimension.dimension || dimension.name || idx} dimension={dimension} index={idx} />
+                ))}
+              </div>
+            </CollapsibleSection>
+          )}
+
+          {/* Debugging Narrative */}
+          {debuggingNarrative && (
+            <CollapsibleSection title="Debugging Journey" icon={Bug} delay={0.35}>
+              <div className="space-y-4">
+                {debuggingNarrative.timeline && debuggingNarrative.timeline.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-cyan-400" />
+                      Timeline
+                    </h4>
+                    {debuggingNarrative.timeline.map((event, idx) => {
+                      const eventText = typeof event === 'string' ? event : (event.event || event.text || JSON.stringify(event));
+                      const eventTime = typeof event === 'object' ? event.time : null;
+                      return (
+                        <div key={idx} className="flex items-start gap-3 text-sm">
+                          <div className="flex-shrink-0 w-8 text-xs text-slate-500 font-mono">{eventTime || `${idx + 1}.`}</div>
+                          <div className="flex-1 text-slate-300">{eventText}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {(debuggingNarrative.description || debuggingNarrative.summary) && (
+                  <p className="text-sm text-slate-300 mt-4">{debuggingNarrative.description || debuggingNarrative.summary}</p>
+                )}
+                {debuggingNarrative.goodPracticesObserved && debuggingNarrative.goodPracticesObserved.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-semibold text-emerald-400 mb-2">Good Practices</h4>
+                    <ul className="space-y-1">
+                      {debuggingNarrative.goodPracticesObserved.map((practice, idx) => {
+                        const practiceText = typeof practice === 'string' ? practice : (practice.text || JSON.stringify(practice));
+                        return (
+                          <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400 mt-0.5 flex-shrink-0" />
+                            {practiceText}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+                {debuggingNarrative.issuesObserved && debuggingNarrative.issuesObserved.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-semibold text-amber-400 mb-2">Areas for Improvement</h4>
+                    <ul className="space-y-1">
+                      {debuggingNarrative.issuesObserved.map((issue, idx) => {
+                        const issueText = typeof issue === 'string' ? issue : (issue.text || JSON.stringify(issue));
+                        const severityColor = issue?.severity === 'high' ? 'text-red-400' : 'text-amber-400';
+                        return (
+                          <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
+                            <AlertTriangle className={`w-3 h-3 ${severityColor} mt-0.5 flex-shrink-0`} />
+                            {issueText}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </CollapsibleSection>
+          )}
+
+          {/* Code Assessment */}
+          {codeAssessment && (
+            <CollapsibleSection title="Code Assessment" icon={Code2} delay={0.4}>
+              {/* Notes/Overview */}
+              {codeAssessment.notes && (
+                <p className="text-sm text-slate-300 mb-4">{codeAssessment.notes}</p>
+              )}
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Positives */}
+                {codeAssessment.positives && codeAssessment.positives.length > 0 && (
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-emerald-500/20">
+                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      Strengths
+                    </h4>
+                    <ul className="space-y-2">
+                      {codeAssessment.positives.map((item, idx) => {
+                        const itemText = typeof item === 'string' ? item : (item.text || item.description || JSON.stringify(item));
+                        return (
+                          <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
+                            <span className="text-emerald-400">•</span>
+                            {itemText}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Risks */}
+                {codeAssessment.risks && codeAssessment.risks.length > 0 && (
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-amber-500/20">
+                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-400" />
+                      Risks / Areas to Improve
+                    </h4>
+                    <ul className="space-y-2">
+                      {codeAssessment.risks.map((item, idx) => {
+                        const itemText = typeof item === 'string' ? item : (item.text || item.description || JSON.stringify(item));
+                        return (
+                          <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
+                            <span className="text-amber-400">•</span>
+                            {itemText}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Legacy fields for backward compatibility */}
+                {codeAssessment.correctness && (
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                    <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      Correctness
+                    </h4>
+                    <p className="text-xs text-slate-300">{codeAssessment.correctness}</p>
+                  </div>
+                )}
+                {codeAssessment.efficiency && (
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                    <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-amber-400" />
+                      Efficiency
+                    </h4>
+                    <p className="text-xs text-slate-300">{codeAssessment.efficiency}</p>
+                  </div>
+                )}
+                {codeAssessment.style && (
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                    <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                      <FileCode className="w-4 h-4 text-cyan-400" />
+                      Code Style
+                    </h4>
+                    <p className="text-xs text-slate-300">{codeAssessment.style}</p>
+                  </div>
+                )}
+                {codeAssessment.edgeCases && (
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                    <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                      <Brain className="w-4 h-4 text-purple-400" />
+                      Edge Cases
+                    </h4>
+                    <p className="text-xs text-slate-300">{codeAssessment.edgeCases}</p>
+                  </div>
+                )}
+              </div>
+              {codeAssessment.overallNote && (
+                <p className="text-sm text-slate-300 mt-4 italic">{codeAssessment.overallNote}</p>
+              )}
+            </CollapsibleSection>
+          )}
+
+          {/* Action Plan */}
+          {actionPlan && actionPlan.length > 0 && (
+            <CollapsibleSection title="Action Plan" icon={Lightbulb} defaultOpen={true} delay={0.45}>
+              <div className="space-y-3">
+                {actionPlan.map((item, idx) => (
+                  <ActionPlanItem key={idx} item={item} index={idx} />
+                ))}
+              </div>
+            </CollapsibleSection>
+          )}
+
+          {/* Verdict Card */}
+          {(ui?.verdict || ui?.oneLineVerdict) && (
+            <Card delay={0.5}>
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30">
+                  <Award className="w-5 h-5 text-purple-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-white mb-2">Final Verdict</h3>
+                  <p className="text-sm text-slate-300 leading-relaxed">{ui.verdict || ui.oneLineVerdict}</p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Audio and Transcript */}
+          {(audio || (transcript && transcript.length > 0)) && (
+            <div className="grid gap-4 md:grid-cols-2">
+              {audio && <AudioPlayer audio={audio} audioRef={audioRef} />}
+              {transcript && transcript.length > 0 && (
+                <TranscriptCard transcript={transcript} audioRef={audioRef} />
+              )}
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            className="pt-3 flex justify-center gap-4"
+          >
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="inline-flex items-center justify-center rounded-full border border-white/10 text-white px-6 py-3 text-sm font-medium hover:bg-white/5 transition-all"
+            >
+              Back to Dashboard
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/technical')}
+              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-6 py-3 text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
+            >
+              Try Another Problem
+            </button>
+          </motion.div>
         </div>
       </div>
     </div>

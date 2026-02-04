@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MonacoEditor from 'react-monaco-editor';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '../ui/Modal.jsx';
 import { ArrowLeft, Play, RotateCcw, Check, X, ChevronDown, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useConversation } from '@elevenlabs/react';
 import ParticleOrb from '../ui/particle-orb.jsx';
+import { LiveWaveform } from '../ui/live-waveform.jsx';
 
 /**
  * TechnicalInterviewPage - Redesigned for Phase 3
@@ -30,13 +31,18 @@ const Card = ({ children, className = '', delay = 0 }) => (
 
 const TechnicalInterviewPage = () => {
   const navigate = useNavigate();
+  const { sessionId: urlSessionId } = useParams();
+  // Generate a temp session ID if not provided in URL
+  const sessionId = urlSessionId || `tech_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const pendingUpdatesRef = useRef([]);
   const hasStartedSessionRef = useRef(false);
+  const hasSentInitialContextRef = useRef(false);
   const codeRef = useRef('');
   const languageRef = useRef('javascript');
   const questionRef = useRef(null);
   const testResultsRef = useRef(null);
   const AGENT_ID = import.meta.env.VITE_TECHNICAL_INTERVIEW_AGENT_ID || 'agent_6601kc3hn3b8fbv9p4hpskza0qgm';
+  const N8N_WEBHOOK_URL = 'https://aolin12138.app.n8n.cloud/webhook/technical-feedback';
 
   // Question and code state
   const [question, setQuestion] = useState(null);
@@ -44,41 +50,76 @@ const TechnicalInterviewPage = () => {
   const [language, setLanguage] = useState('javascript');
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [ending, setEnding] = useState(false);
   const [testResults, setTestResults] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState(null);
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [panelOpen, setPanelOpen] = useState(true);
   const [interviewStarted, setInterviewStarted] = useState(false);
+  const [startTime, setStartTime] = useState(null); // Track when interview started
 
   const conversation = useConversation({
-    agentId: AGENT_ID,
     overrides: {
       agent: {
         firstMessage: "Hello! I'm your technical interviewer. I'm here to help you work through this coding problem. Feel free to ask questions or discuss your approach as you work through the solution.",
       },
     },
     clientTools: {
-      getEditorState: () => {
-        return JSON.stringify({
+      // Tool name must match EXACTLY what's configured in ElevenLabs UI
+      // Make sure to create a Client Tool named "getEditorState" in your agent's Tools section
+      getEditorState: async () => {
+        const state = {
           code: codeRef.current,
           language: languageRef.current,
           question: questionRef.current,
           testResults: testResultsRef.current,
           timestamp: new Date().toISOString(),
-        });
+        };
+        console.log('getEditorState called by agent:', state);
+        return JSON.stringify(state);
       },
     },
     onConnect: () => {
-      while (pendingUpdatesRef.current.length > 0) {
-        const update = pendingUpdatesRef.current.shift();
-        if (update) {
-          conversation.sendContextualUpdate(update);
-        }
+      console.log('Agent connected successfully');
+      
+      // Only send initial context once
+      if (hasSentInitialContextRef.current) {
+        console.log('Initial context already sent, skipping');
+        return;
       }
+      hasSentInitialContextRef.current = true;
+      
+      // Send initial context with question metadata
+      const initialContext = JSON.stringify({
+        event: 'onSessionStart',
+        timestamp: new Date().toISOString(),
+        question: questionRef.current,
+        language: languageRef.current,
+        code: codeRef.current,
+      });
+      
+      // Use a short delay to ensure connection is fully ready
+      setTimeout(() => {
+        try {
+          conversation.sendContextualUpdate(initialContext);
+          console.log('Initial context sent to agent:', initialContext);
+          
+          // Clear any pending updates (they're now redundant)
+          pendingUpdatesRef.current = [];
+        } catch (err) {
+          console.error('Error sending initial context:', err);
+        }
+      }, 500);
+    },
+    onDisconnect: () => {
+      console.log('Agent disconnected');
     },
     onError: (error) => {
       console.error('Technical interview conversation error:', error);
+    },
+    onUnhandledClientToolCall: (toolCall) => {
+      console.warn('Unhandled client tool call:', toolCall);
     },
   });
 
@@ -160,12 +201,12 @@ const TechnicalInterviewPage = () => {
         ? data.boilerplate[language]
         : '// Write your solution here\n';
       setCode(initialCode);
-
-      sendAgentUpdate('onSessionStart', {
-        question: data,
-        language,
-        code: initialCode,
-      });
+      
+      // Start timing the interview from when question loads
+      setStartTime(Date.now());
+      
+      // Note: Initial context is sent in onConnect when agent connects
+      // No need to queue it here as onConnect reads from refs directly
     } catch (err) {
       setError(err.message);
       console.error('Error fetching question:', err);
@@ -273,6 +314,137 @@ const TechnicalInterviewPage = () => {
   const handleBack = () => {
     if (window.confirm('Leave the technical interview?')) {
       navigate('/dashboard');
+    }
+  };
+
+  const handleEndInterview = async () => {
+    if (!window.confirm('End the technical interview? Your code will be submitted for final evaluation.')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setEnding(true);
+      console.log('Ending interview, running final code execution...');
+
+      // Run code one final time
+      let finalResults = testResults;
+      if (question && code) {
+        try {
+          const response = await fetch('http://localhost:3000/api/code/run', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              questionId: question.id,
+              code,
+              language,
+            }),
+          });
+
+          if (response.ok) {
+            finalResults = await response.json();
+            setTestResults(finalResults);
+            console.log('Final test results:', finalResults);
+          }
+        } catch (runErr) {
+          console.error('Error running final code:', runErr);
+          // Continue with existing results if final run fails
+        }
+      }
+
+      // TESTING: Use hardcoded conversation ID for now
+      // TODO: Replace with actual conversation ID when ready for production
+      const testConversationId = 'conv_5601kgkbete3f1zb22pv6hrf1qa7';
+      const conversationId = testConversationId; // conversation.getId ? conversation.getId() : null;
+      console.log('Using conversation ID:', conversationId);
+
+      // Build execution summary
+      const executionSummary = {
+        conversationId,
+        questionId: question?.id,
+        questionTitle: question?.title,
+        difficulty: question?.difficulty,
+        language,
+        code,
+        timestamp: new Date().toISOString(),
+        results: {
+          success: finalResults?.success || false,
+          visibleTests: {
+            passed: finalResults?.visiblePassedTests || 0,
+            total: finalResults?.totalVisibleTests || 0,
+            details: finalResults?.visibleTestResults?.map((result, idx) => ({
+              testNumber: idx + 1,
+              name: result.name || `Test ${idx + 1}`,
+              tags: result.tags || [],
+              passed: result.passed,
+              expected: result.expected,
+              actual: result.actual,
+              error: result.error || null,
+            })) || [],
+          },
+          hiddenTests: {
+            passed: finalResults?.hiddenPassedTests || 0,
+            total: finalResults?.totalHiddenTests || 0,
+            details: finalResults?.hiddenTestResults?.map((result, idx) => ({
+              testNumber: idx + 1,
+              name: result.name || `Hidden Test ${idx + 1}`,
+              tags: result.tags || [],
+              passed: result.passed,
+              expected: result.expected,
+              actual: result.actual,
+              error: result.error || null,
+            })) || [],
+          },
+          error: finalResults?.error || null,
+          details: finalResults?.details || null,
+        },
+      };
+
+      console.log('Sending execution summary to n8n:', executionSummary);
+
+      // End the conversation session FIRST so agent stops talking immediately
+      if (conversation.status === 'connected') {
+        try {
+          await conversation.endSession();
+          console.log('Conversation session ended');
+        } catch (endErr) {
+          console.error('Error ending conversation session:', endErr);
+        }
+      }
+
+      // Store session ID for results page
+      localStorage.setItem('currentTechnicalSessionId', sessionId);
+
+      // Calculate duration in seconds
+      const endTime = Date.now();
+      const durationSeconds = startTime ? Math.round((endTime - startTime) / 1000) : null;
+      console.log(`Interview duration: ${durationSeconds} seconds`);
+
+      // Navigate to loading page - it will handle the webhook call and redirect to results
+      navigate('/loading', { 
+        state: { 
+          type: 'technical',
+          sessionId,
+          conversationId,
+          executionSummary,
+          duration: durationSeconds,
+          webhookUrl: N8N_WEBHOOK_URL,
+        } 
+      });
+
+    } catch (err) {
+      console.error('Error ending interview:', err);
+      setError('Failed to end interview: ' + err.message);
+    } finally {
+      setEnding(false);
     }
   };
 
@@ -491,7 +663,7 @@ const TechnicalInterviewPage = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleRunCode}
-                    disabled={running}
+                    disabled={running || ending}
                     className="inline-flex items-center justify-center gap-2 px-6 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     <Play className="w-4 h-4" />
@@ -521,6 +693,18 @@ const TechnicalInterviewPage = () => {
                       className="inline-flex items-center justify-center gap-2 px-6 py-2 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-white text-sm font-medium rounded-lg transition-all cursor-pointer"
                     >
                       Start Voice Agent
+                    </motion.button>
+                  )}
+
+                  {interviewStarted && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleEndInterview}
+                      disabled={running || ending}
+                      className="inline-flex items-center justify-center gap-2 px-6 py-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      {ending ? 'Submitting...' : 'End Interview'}
                     </motion.button>
                   )}
                 </div>
@@ -649,6 +833,10 @@ const TechnicalInterviewPage = () => {
                   ? conversation.isSpeaking ? 'Speaking' : 'Listening'
                   : conversation.status === 'connecting' ? 'Connecting' : 'Ready'}
               </p>
+              {/* Live mic waveform visualization */}
+              <div className="w-72 mt-2">
+                <LiveWaveform active={conversation.status === 'connected'} height={32} />
+              </div>
             </div>
           </div>
         </div>

@@ -369,14 +369,16 @@ export default function ResultsPage() {
 
     const fetchFeedback = async () => {
       try {
-        await new Promise(res => setTimeout(res, 5000));
-
-        // Get session ID from URL param or localStorage
+        // Get session ID from URL param or localStorage FIRST before any delay
         const sessionId = urlSessionId || localStorage.getItem('currentSessionId');
 
         if (!sessionId) {
-          throw new Error('No session ID found. Please start a new interview session.');
+          setError('No session ID found. Please start a new interview session.');
+          setIsLoading(false);
+          return;
         }
+
+        await new Promise(res => setTimeout(res, 5000));
 
         // Check if feedback already exists in the database
         const checkFeedbackResponse = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
@@ -401,7 +403,6 @@ export default function ResultsPage() {
           const transformed = transformFeedbackData(sessionData.feedback);
           if (transformed) {
             setFeedbackData(transformed);
-            localStorage.setItem('interviewFeedback', JSON.stringify(sessionData.feedback));
             setIsLoading(false);
             return;
           }
@@ -435,8 +436,6 @@ export default function ResultsPage() {
         const transformed = transformFeedbackData(feedbackData);
         if (transformed) {
           setFeedbackData(transformed);
-          localStorage.setItem('interviewFeedback', JSON.stringify(feedbackData));
-          localStorage.removeItem('interviewError');
 
           // Store feedback in database
           const sessionId = localStorage.getItem('currentSessionId');

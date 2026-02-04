@@ -6,7 +6,7 @@ const router = express.Router();
 // n8n callback to update session after async processing
 router.post('/session/:sessionId/callback', async (req, res) => {
   const { sessionId } = req.params;
-  const { agent_id, interview_plan, interview_prompt, interview_primpot, feedback_prompt, feedback_prompt_final, feedback } = req.body || {};
+  const { agent_id, interview_plan, interview_prompt, interview_primpot, feedback_prompt, feedback_prompt_final, feedback, duration } = req.body || {};
   const interviewPromptValue = interview_prompt || interview_primpot || undefined;
   const feedbackPromptValue = feedback_prompt_final || feedback_prompt || undefined;
 
@@ -25,7 +25,8 @@ router.post('/session/:sessionId/callback', async (req, res) => {
         interviewPlan: interview_plan || undefined,
         interviewPrompt: interviewPromptValue,
         feedbackPrompt: feedbackPromptValue,
-        feedback: feedback || undefined
+        feedback: feedback || undefined,
+        duration: duration || undefined
       }
     });
 

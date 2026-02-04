@@ -12,6 +12,7 @@ import TechnicalInterviewPage from './component/page/TechnicalInterviewPage';
 import BehavioralInterviewPage from './component/page/BehaviouralInterviewPage';
 import ResultsPage from './component/page/ResultsPage';
 import TechnicalResultsPage from './component/page/ResultsTechnicalPage';
+import LoadingPage from './component/page/LoadingPage';
 import { ThemeProvider } from './context/ThemeContext';
 import InterviewSetup from './component/page/InterviewSetup';
 import SessionWaiting from './component/page/SessionWaiting';
@@ -37,12 +38,15 @@ root.render(
           <Route path='/profile' element={<Profile />} />
           <Route path='/dashboard' element={<Dashboard />} />
           <Route path='/setup' element={<InterviewSetup />} />
+          <Route path='/loading' element={<LoadingPage />} />
           <Route path='/interview/session/:sessionId/waiting' element={<SessionWaiting />} />
           <Route path='/technical/:sessionId' element={<TechnicalInterviewPage />} />
           <Route path='/behavioural/:sessionId' element={<BehavioralInterviewPage />} />
           <Route path='/results' element={<ResultsPage />} />
           <Route path='/results/:sessionId' element={<ResultsPage />} />
+          <Route path='/results/technical/:sessionId' element={<TechnicalResultsPage />} />
           <Route path='/results-technical' element={<TechnicalResultsPage />} />
+          <Route path='/results-technical/:sessionId' element={<TechnicalResultsPage />} />
         </Routes>
       </Router>
     </ThemeProvider>
