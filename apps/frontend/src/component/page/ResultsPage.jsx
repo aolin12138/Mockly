@@ -701,11 +701,18 @@ export default function ResultsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
-            className='pt-3 flex justify-center'
+            className='pt-3 flex justify-center gap-4'
           >
             <button
               type='button'
               onClick={() => navigate('/dashboard')}
+              className='inline-flex items-center justify-center rounded-full border border-white/10 text-white px-6 py-3 text-sm font-medium hover:bg-white/5 transition-all'
+            >
+              Back to Dashboard
+            </button>
+            <button
+              type='button'
+              onClick={() => navigate('/interview/behavioural')}
               className='inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-6 py-3 text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all'
             >
               Run another mock interview

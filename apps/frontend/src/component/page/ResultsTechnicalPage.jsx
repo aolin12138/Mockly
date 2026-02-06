@@ -44,7 +44,7 @@ function transformFeedbackData(feedbackData) {
   // If n8n / caller ever returns an array, unwrap first element
   let data = Array.isArray(feedbackData) ? feedbackData[0] : feedbackData;
   console.log('After array unwrap - keys:', Object.keys(data));
-  
+
   // The structure from n8n is: { audio, transcript, feedback: { outcome, overall, ... } }
   // So we need to get the nested feedback object for the actual feedback fields
   const feedback = data.feedback || data;
@@ -57,11 +57,11 @@ function transformFeedbackData(feedbackData) {
   const transcript = data.transcript;
   const transformedTranscript = transcript
     ? transcript.map((msg, index) => ({
-        id: index + 1,
-        role: msg.role === 'agent' || msg.role === 'assistant' ? 'assistant' : 'user',
-        text: msg.text || msg.message || '',
-        timestart: msg.timestart ?? null,
-      }))
+      id: index + 1,
+      role: msg.role === 'agent' || msg.role === 'assistant' ? 'assistant' : 'user',
+      text: msg.text || msg.message || '',
+      timestart: msg.timestart ?? null,
+    }))
     : null;
 
   // Build the result - feedback fields come from the nested feedback object
@@ -77,13 +77,13 @@ function transformFeedbackData(feedbackData) {
     transcript: transformedTranscript,
     audio: data.audio, // audio is at top level
   };
-  
+
   console.log('=== TRANSFORM RESULT ===');
   console.log('dimensions count:', result.dimensions?.length);
   console.log('actionPlan count:', result.actionPlan?.length);
   console.log('First dimension:', result.dimensions?.[0]);
   console.log('First actionPlan:', result.actionPlan?.[0]);
-  
+
   return result;
 }
 
@@ -356,7 +356,7 @@ function OutcomeBadge({ solved }) {
 /* --- Dimension Score Card --- */
 function DimensionCard({ dimension, index }) {
   const [expanded, setExpanded] = useState(false);
-  
+
   // Handle different field name variations
   const score = dimension?.score ?? dimension?.rating ?? 0;
   const percentage = (score / 10) * 100;
@@ -455,7 +455,7 @@ function DimensionCard({ dimension, index }) {
             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {expanded ? 'Hide evidence' : `Show ${evidence.length} evidence points`}
           </button>
-          
+
           {expanded && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -511,7 +511,7 @@ function ActionPlanItem({ item, index }) {
 
   // Handle different field name variations from API
   const title = item.title || item.focus_area || item.focusArea || item.area || 'Action Item';
-  
+
   // Priority can be number (1=high, 2=medium, 3=low) or string
   let priority = 'medium';
   if (typeof item.priority === 'number') {
@@ -519,7 +519,7 @@ function ActionPlanItem({ item, index }) {
   } else if (typeof item.priority === 'string') {
     priority = item.priority.toLowerCase();
   }
-  
+
   const how = item.how || item.recommendation || item.action || item.description || '';
   const why = item.why || '';
   const resources = item.resources || [];
@@ -550,21 +550,21 @@ function ActionPlanItem({ item, index }) {
               {style.label}
             </span>
           </div>
-          
+
           {how && (
             <div className="mb-2">
               <p className="text-xs text-slate-400 font-medium mb-1">How:</p>
               <p className="text-xs text-slate-300">{how}</p>
             </div>
           )}
-          
+
           {why && (
             <div className="mb-2">
               <p className="text-xs text-slate-400 font-medium mb-1">Why:</p>
               <p className="text-xs text-slate-300">{why}</p>
             </div>
           )}
-          
+
           {resources && resources.length > 0 && (
             <div className="mt-2 pt-2 border-t border-white/5">
               <p className="text-xs text-slate-400 font-medium mb-1">Resources:</p>
@@ -896,12 +896,12 @@ export default function TechnicalResultsPage() {
                   <div className="flex items-center gap-2 text-sm">
                     <Target className="w-4 h-4 text-emerald-400" />
                     <span className="text-slate-300">
-                      {typeof outcome.passSummary === 'string' 
+                      {typeof outcome.passSummary === 'string'
                         ? outcome.passSummary
                         : typeof outcome.passSummary === 'object'
-                          ? (outcome.passSummary.summary || 
-                             outcome.passSummary.text ||
-                             `${outcome.passSummary.passed ?? outcome.passSummary.passedCount ?? '?'}/${outcome.passSummary.total ?? outcome.passSummary.totalCount ?? '?'} tests passed`)
+                          ? (outcome.passSummary.summary ||
+                            outcome.passSummary.text ||
+                            `${outcome.passSummary.passed ?? outcome.passSummary.passedCount ?? '?'}/${outcome.passSummary.total ?? outcome.passSummary.totalCount ?? '?'} tests passed`)
                           : String(outcome.passSummary)}
                     </span>
                   </div>
@@ -921,11 +921,10 @@ export default function TechnicalResultsPage() {
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-semibold text-white">Overall Assessment</h3>
                     {overall.confidence && (
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        overall.confidence === 'high' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                        overall.confidence === 'medium' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                        'bg-red-500/20 text-red-400 border border-red-500/30'
-                      }`}>
+                      <span className={`text-xs px-2 py-1 rounded-full ${overall.confidence === 'high' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                          overall.confidence === 'medium' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                            'bg-red-500/20 text-red-400 border border-red-500/30'
+                        }`}>
                         {overall.confidence} confidence
                       </span>
                     )}
@@ -1075,7 +1074,7 @@ export default function TechnicalResultsPage() {
               {codeAssessment.notes && (
                 <p className="text-sm text-slate-300 mb-4">{codeAssessment.notes}</p>
               )}
-              
+
               <div className="grid gap-4 md:grid-cols-2">
                 {/* Positives */}
                 {codeAssessment.positives && codeAssessment.positives.length > 0 && (
@@ -1097,7 +1096,7 @@ export default function TechnicalResultsPage() {
                     </ul>
                   </div>
                 )}
-                
+
                 {/* Risks */}
                 {codeAssessment.risks && codeAssessment.risks.length > 0 && (
                   <div className="bg-slate-800/50 rounded-xl p-4 border border-amber-500/20">
@@ -1118,7 +1117,7 @@ export default function TechnicalResultsPage() {
                     </ul>
                   </div>
                 )}
-                
+
                 {/* Legacy fields for backward compatibility */}
                 {codeAssessment.correctness && (
                   <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">

@@ -82,14 +82,14 @@ const TechnicalInterviewPage = () => {
     },
     onConnect: () => {
       console.log('Agent connected successfully');
-      
+
       // Only send initial context once
       if (hasSentInitialContextRef.current) {
         console.log('Initial context already sent, skipping');
         return;
       }
       hasSentInitialContextRef.current = true;
-      
+
       // Send initial context with question metadata
       const initialContext = JSON.stringify({
         event: 'onSessionStart',
@@ -98,13 +98,13 @@ const TechnicalInterviewPage = () => {
         language: languageRef.current,
         code: codeRef.current,
       });
-      
+
       // Use a short delay to ensure connection is fully ready
       setTimeout(() => {
         try {
           conversation.sendContextualUpdate(initialContext);
           console.log('Initial context sent to agent:', initialContext);
-          
+
           // Clear any pending updates (they're now redundant)
           pendingUpdatesRef.current = [];
         } catch (err) {
@@ -201,10 +201,10 @@ const TechnicalInterviewPage = () => {
         ? data.boilerplate[language]
         : '// Write your solution here\n';
       setCode(initialCode);
-      
+
       // Start timing the interview from when question loads
       setStartTime(Date.now());
-      
+
       // Note: Initial context is sent in onConnect when agent connects
       // No need to queue it here as onConnect reads from refs directly
     } catch (err) {
@@ -429,15 +429,15 @@ const TechnicalInterviewPage = () => {
       console.log(`Interview duration: ${durationSeconds} seconds`);
 
       // Navigate to loading page - it will handle the webhook call and redirect to results
-      navigate('/loading', { 
-        state: { 
+      navigate('/loading', {
+        state: {
           type: 'technical',
           sessionId,
           conversationId,
           executionSummary,
           duration: durationSeconds,
           webhookUrl: N8N_WEBHOOK_URL,
-        } 
+        }
       });
 
     } catch (err) {
