@@ -34,7 +34,7 @@ export function LoadingPage() {
   const processTechnicalFeedback = async (state) => {
     const { executionSummary, webhookUrl, sessionId: stateSessionId, conversationId, duration } = state;
     const token = localStorage.getItem('token');
-    
+
     // Ensure we have a session ID (generate one if not provided)
     let finalSessionId = stateSessionId || `tech_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     console.log('[LoadingPage] Initial session ID:', finalSessionId);
@@ -76,7 +76,7 @@ export function LoadingPage() {
       if (feedbackData) {
         setStatus('Saving Results');
         setSubStatus('Storing your interview session…');
-        
+
         try {
           const saveResponse = await fetch('http://localhost:3000/api/interview/technical/save', {
             method: 'POST',
@@ -113,7 +113,7 @@ export function LoadingPage() {
       const navigateTo = `/results-technical/${finalSessionId}`;
       console.log('[LoadingPage] Navigating to:', navigateTo);
       console.log('[LoadingPage] With state feedback:', feedbackData ? 'present' : 'missing');
-      
+
       navigate(navigateTo, {
         replace: true,
         state: {
@@ -128,7 +128,7 @@ export function LoadingPage() {
       console.error('Error processing feedback:', err);
       setStatus('Error');
       setSubStatus('Something went wrong. Please try again.');
-      
+
       // Still try to navigate even on error
       setTimeout(() => {
         navigate(`/results-technical/${finalSessionId}`, {
@@ -143,12 +143,12 @@ export function LoadingPage() {
     const { sessionId, type, fromInterview } = state;
     // Check if it's a technical interview - handle both 'Technical' and 'technical'
     const isTechnical = type?.toLowerCase() === 'technical' || window.location.pathname.includes('technical');
-    const resultsPath = isTechnical 
-      ? `/results-technical/${sessionId}` 
+    const resultsPath = isTechnical
+      ? `/results-technical/${sessionId}`
       : `/results/${sessionId}`;
-    
+
     console.log('[LoadingPage] navigateToResults - type:', type, 'isTechnical:', isTechnical, 'path:', resultsPath);
-    
+
     setTimeout(() => {
       navigate(resultsPath, { replace: true, state });
     }, 1500);

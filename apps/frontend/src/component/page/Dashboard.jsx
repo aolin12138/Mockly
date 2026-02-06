@@ -328,15 +328,15 @@ const Dashboard = () => {
 
     const parsedRecent = recentThree.map(s => {
       const feedback = normalizeFeedback(s.feedback);
-      
+
       // Determine if technical - first check session.interviewType from DB, then check feedback structure
       const isTechnical = s.interviewType === 'Technical' || (feedback && isTechnicalFeedback(feedback));
-      
+
       // Only process if feedback is valid
       if (!feedback) {
         return { ...s, feedback: null, normalizedDimensions: [], computedScore: null, isPending: true, isTechnical };
       }
-      const normalizedDimensions = isTechnical 
+      const normalizedDimensions = isTechnical
         ? normalizeTechnicalDimensionScores(feedback)
         : normalizeBehaviouralDimensionScores(feedback);
       const computedScore = getScoreFromFeedback(feedback, isTechnical);
@@ -573,10 +573,10 @@ const Dashboard = () => {
                       const feedback = session.feedback || {};
                       const feedbackScore = session.computedScore || 0;
                       const isTechnical = session.isTechnical;
-                      
+
                       // Determine session type and display info based on feedback structure
                       let sessionType, sessionTopic, assessment;
-                      
+
                       if (isTechnical) {
                         // Technical interview feedback
                         sessionType = 'Technical';
