@@ -6,13 +6,16 @@ import {
   Radar,
   PolarGrid,
   PolarAngleAxis,
-  LineChart,
+  PolarRadiusAxis,
+  ComposedChart,
   Line,
+  Bar,
   CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
-  Legend
+  Legend,
+  ReferenceLine
 } from 'recharts';
 import {
   Play,
@@ -30,11 +33,15 @@ import {
   Code2,
   Clock
 } from 'lucide-react';
-import { mockDashboardData } from '../../data/mockDashboardData';
 import { motion } from 'framer-motion';
 
-const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
-  <motion.button
+const MotionButton = motion.button;
+const MotionDiv = motion.div;
+
+const SidebarItem = ({ icon: Icon, label, active, onClick }) => {
+  const IconComponent = Icon;
+  return (
+    <MotionButton
     onClick={onClick}
     whileHover={{ x: 5, backgroundColor: 'rgba(30, 41, 59, 0.5)' }}
     whileTap={{ scale: 0.95 }}
@@ -42,7 +49,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
       }`}
   >
     {active && (
-      <motion.div
+      <MotionDiv
         layoutId="activeTab"
         className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 rounded-xl"
         initial={false}
@@ -50,14 +57,15 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
       />
     )}
     <span className="relative z-10 flex items-center space-x-3">
-      <Icon size={20} className={active ? 'text-emerald-400' : 'text-slate-500 group-hover:text-emerald-300'} />
+      <IconComponent size={20} className={active ? 'text-emerald-400' : 'text-slate-500 group-hover:text-emerald-300'} />
       <span className="font-medium">{label}</span>
     </span>
-  </motion.button>
-);
+  </MotionButton>
+  );
+};
 
 const Card = ({ children, className = '', delay = 0 }) => (
-  <motion.div
+  <MotionDiv
     variants={{
       hidden: { opacity: 0, y: 20 },
       visible: { opacity: 1, y: 0 }
@@ -66,7 +74,7 @@ const Card = ({ children, className = '', delay = 0 }) => (
     className={`relative bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-3xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] overflow-hidden ${className}`}
   >
     {children}
-  </motion.div>
+  </MotionDiv>
 );
 
 const Dashboard = () => {
@@ -74,7 +82,8 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [userData, setUserData] = useState(null);
   const [sessions, setSessions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [historyWindow, setHistoryWindow] = useState('6');
+  const [historyType, setHistoryType] = useState('all');
 
   // Auth guard
   useEffect(() => {
@@ -89,7 +98,6 @@ const Dashboard = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setLoading(false);
         navigate('/login');
         return;
       }
@@ -151,13 +159,15 @@ const Dashboard = () => {
       if (error.message?.includes('Failed to fetch')) {
         console.error('Network error - check if backend is running');
       }
-    } finally {
-      setLoading(false);
     }
   }, [navigate]);
 
   useEffect(() => {
-    fetchUserDataAndSessions();
+    const timer = setTimeout(() => {
+      fetchUserDataAndSessions();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [fetchUserDataAndSessions]);
 
   const stats = useMemo(() => {
@@ -167,7 +177,8 @@ const Dashboard = () => {
         totalInterviews: 0,
         recentSessions: [],
         improvements: [],
-        totalTime: 0
+        totalTime: 0,
+        progressHistory: []
       };
     }
 
@@ -204,7 +215,7 @@ const Dashboard = () => {
       if (typeof feedback === 'string') {
         try {
           feedback = JSON.parse(feedback);
-        } catch (e) {
+        } catch {
           return null;
         }
       }
@@ -326,22 +337,23 @@ const Dashboard = () => {
       }
     };
 
-    const parsedRecent = recentThree.map(s => {
+    const parseSession = (s) => {
       const feedback = normalizeFeedback(s.feedback);
-
-      // Determine if technical - first check session.interviewType from DB, then check feedback structure
       const isTechnical = s.interviewType === 'Technical' || (feedback && isTechnicalFeedback(feedback));
 
-      // Only process if feedback is valid
       if (!feedback) {
         return { ...s, feedback: null, normalizedDimensions: [], computedScore: null, isPending: true, isTechnical };
       }
+
       const normalizedDimensions = isTechnical
         ? normalizeTechnicalDimensionScores(feedback)
         : normalizeBehaviouralDimensionScores(feedback);
       const computedScore = getScoreFromFeedback(feedback, isTechnical);
+
       return { ...s, feedback, normalizedDimensions, computedScore, isPending: false, isTechnical };
-    });
+    };
+
+    const parsedRecent = recentThree.map(parseSession);
 
     // Calculate average only from sessions with valid scores
     const sessionsWithScores = parsedRecent.filter(s => s.computedScore !== null && s.computedScore > 0);
@@ -351,6 +363,16 @@ const Dashboard = () => {
         : 0;
 
     const totalTime = sortedSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+
+    const progressHistoryAll = sortedSessions
+      .map(parseSession)
+      .filter((s) => Number.isFinite(s.computedScore))
+      .map((s) => ({
+        name: new Date(s.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        score: s.computedScore,
+        interviewType: s.interviewType
+      }))
+      .reverse();
 
     // Improvements - handle both behavioural and technical
     const improvements = [];
@@ -396,15 +418,30 @@ const Dashboard = () => {
       totalInterviews: sessions.length,
       recentSessions: parsedRecent,
       improvements: improvements.slice(0, 5),
-      totalTime
+      totalTime,
+      progressHistory: progressHistoryAll
     };
   }, [sessions]);
 
+  const historyWindowSize = historyWindow === '12' ? 12 : 6;
+  const filteredHistory = historyType === 'all'
+    ? stats.progressHistory
+    : stats.progressHistory.filter((item) =>
+      historyType === 'technical'
+        ? item.interviewType === 'Technical'
+        : item.interviewType === 'Behavioural'
+    );
+  const historyDataRaw = filteredHistory.slice(-historyWindowSize);
+  const paddingCount = Math.max(0, historyWindowSize - historyDataRaw.length);
+  const historyData = historyDataRaw.concat(
+    Array.from({ length: paddingCount }, () => ({ name: '', score: null }))
+  );
+  const averageHistoryScore = historyDataRaw.length
+    ? Math.round(historyDataRaw.reduce((sum, item) => sum + (item.score || 0), 0) / historyDataRaw.length)
+    : null;
+
   const displayUserName = userData?.name || userData?.email || 'User';
 
-  const handleStartInterview = () => {
-    navigate('/setup');
-  };
 
   const handleSignOut = () => {
     // Clear authentication data
@@ -531,16 +568,39 @@ const Dashboard = () => {
                   <h2 className="text-xl font-bold text-white flex items-center">
                     <TrendingUp size={24} className="mr-3 text-emerald-400" /> Performance History
                   </h2>
-                  <select className="bg-slate-950/50 border border-white/10 text-slate-400 text-sm rounded-lg px-3 py-1 outline-none focus:border-emerald-500/50">
-                    <option>Last 6 Weeks</option>
-                    <option>Last 3 Months</option>
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={historyType}
+                      onChange={(event) => setHistoryType(event.target.value)}
+                      className="bg-slate-950/50 border border-white/10 text-slate-400 text-sm rounded-lg px-3 py-1 outline-none focus:border-emerald-500/50"
+                    >
+                      <option value="all">All Types</option>
+                      <option value="behavioural">Behavioural</option>
+                      <option value="technical">Technical</option>
+                    </select>
+                    <select
+                      value={historyWindow}
+                      onChange={(event) => setHistoryWindow(event.target.value)}
+                      className="bg-slate-950/50 border border-white/10 text-slate-400 text-sm rounded-lg px-3 py-1 outline-none focus:border-emerald-500/50"
+                    >
+                      <option value="6">Last 6 Sessions</option>
+                      <option value="12">Last 12 Sessions</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={mockDashboardData.progressHistory}>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <ComposedChart data={historyData} margin={{ left: 0, right: 10, top: 10, bottom: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.4} />
-                      <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} dy={10} />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#94a3b8"
+                        tick={{ fontSize: 12 }}
+                        axisLine={false}
+                        tickLine={false}
+                        dy={10}
+                        padding={{ left: 0, right: 0 }}
+                      />
                       <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} dx={-10} domain={[0, 100]} />
                       <Tooltip
                         contentStyle={{
@@ -552,8 +612,18 @@ const Dashboard = () => {
                         }}
                         itemStyle={{ color: '#fff' }}
                       />
+                      {Number.isFinite(averageHistoryScore) && (
+                        <ReferenceLine
+                          y={averageHistoryScore}
+                          stroke="#94a3b8"
+                          strokeDasharray="4 4"
+                          strokeWidth={2}
+                          label={{ value: `Avg ${averageHistoryScore}`, position: 'left', fill: '#cbd5e1', fontSize: 11 }}
+                        />
+                      )}
+                      <Bar dataKey="score" barSize={28} fill="rgba(16,185,129,0.35)" stroke="#10b981" strokeWidth={1} />
                       <Line type="monotone" dataKey="score" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-                    </LineChart>
+                    </ComposedChart>
                   </ResponsiveContainer>
                 </div>
               </Card>
@@ -686,10 +756,11 @@ const Dashboard = () => {
                     <span className="text-xs text-slate-400">Scale: 0-5</span>
                   </div>
                   <div className="h-[330px] w-full flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height={330}>
                       <RadarChart data={stats.recentSessions[0].normalizedDimensions}>
                         <PolarGrid stroke="#334155" opacity={0.4} />
                         <PolarAngleAxis dataKey="label" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#cbd5e1' }} />
+                        <PolarRadiusAxis domain={[0, 5]} tickCount={6} stroke="#64748b" tick={{ fontSize: 10, fill: '#94a3b8' }} />
                         <Radar name="Score" dataKey="score" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.3} domain={[0, 5]} />
                         <Tooltip
                           contentStyle={{

@@ -50,6 +50,8 @@ export default function BehaviouralInterviewPage() {
   const [agentId, setAgentId] = useState('');
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [startTime, setStartTime] = useState(null); // Track when interview started
+  const [hasStarted, setHasStarted] = useState(false);
+  const [hasCompleted, setHasCompleted] = useState(false);
 
   useEffect(() => {
     if (sessionId) {
@@ -62,6 +64,20 @@ export default function BehaviouralInterviewPage() {
 
     const token = localStorage.getItem('token');
     if (!token) return;
+
+    // For temporary sessions, skip database lookup (data is in-memory)
+    if (sessionId.startsWith('temp_')) {
+      // Try to load agentId from callback data stored in sessionStorage
+      const callbackDataStr = sessionStorage.getItem(`callbackData_${sessionId}`);
+      if (callbackDataStr) {
+        const callbackData = JSON.parse(callbackDataStr);
+        if (callbackData.agentId) {
+          setAgentId(callbackData.agentId);
+          localStorage.setItem('currentAgentId', callbackData.agentId);
+        }
+      }
+      return;
+    }
 
     const loadSession = async () => {
       try {
@@ -97,6 +113,7 @@ export default function BehaviouralInterviewPage() {
   const conversation = useConversation({
     onConnect: () => {
       console.log('Agent connected');
+      setHasStarted(true);
     },
     onDisconnect: () => {
       console.log('Agent disconnected');
@@ -117,50 +134,168 @@ export default function BehaviouralInterviewPage() {
     },
   });
 
-  const handleCompleteInterview = async () => {
-    setIsSubmitting(true);
+  const waitForCallbackData = async ({ sessionId, token, maxWaitMs = 120000, intervalMs = 2000 }) => {
+    const deadline = Date.now() + maxWaitMs;
 
+    const trySessionStorage = () => {
+      const raw = sessionStorage.getItem(`callbackData_${sessionId}`);
+      return raw ? JSON.parse(raw) : null;
+    };
+
+    while (Date.now() < deadline) {
+      const stored = trySessionStorage();
+      if (stored?.feedback) {
+        return stored;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}/callback-data`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const { data } = await response.json();
+          if (data) {
+            sessionStorage.setItem(`callbackData_${sessionId}`, JSON.stringify(data));
+            if (data.feedback) {
+              return data;
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to fetch callback data:', error);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+
+    return trySessionStorage();
+  };
+
+  // Workflow: Save feedback and navigate to results
+  const handleSessionEndWorkflow = async () => {
+    setIsSubmitting(true);
     try {
       // Calculate duration in seconds
       const endTime = Date.now();
       const durationSeconds = startTime ? Math.round((endTime - startTime) / 1000) : null;
       console.log(`Behavioural interview duration: ${durationSeconds} seconds`);
 
-      // End the conversation
-      if (conversation.status === 'connected') {
-        await conversation.endSession();
-      }
+      const token = localStorage.getItem('token');
+      const callbackData = sessionId && token
+        ? await waitForCallbackData({ sessionId, token })
+        : null;
+      console.log('[BehaviouralInterviewPage] Callback data:', callbackData);
 
-      // Save duration to the session in the database
-      if (sessionId && durationSeconds) {
+      // For temporary sessions, save to database via /behavioral/save endpoint
+      if (sessionId && sessionId.startsWith('temp_')) {
+        if (!callbackData?.feedback) {
+          setIsSubmitting(false);
+          alert('Feedback is still processing. Please wait a moment and try again.');
+          return;
+        }
         try {
-          const token = localStorage.getItem('token');
-          await fetch(`http://localhost:3000/api/interview/session/${sessionId}/duration`, {
+          const saveResponse = await fetch('http://localhost:3000/api/interview/behavioral/save', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ duration: durationSeconds })
+            body: JSON.stringify({
+              agentId: callbackData?.agentId || null,
+              interviewPlan: callbackData?.interviewPlan || null,
+              interviewPrompt: callbackData?.interviewPrompt || null,
+              feedbackPrompt: callbackData?.feedbackPrompt || null,
+              feedback: callbackData?.feedback || null,
+              duration: durationSeconds
+            })
           });
-          console.log('Duration saved to session');
+          if (saveResponse.ok) {
+            const saveResult = await saveResponse.json();
+            const persistedSessionId = saveResult.sessionId;
+            console.log('[BehaviouralInterviewPage] Session saved to database, ID:', persistedSessionId);
+            navigate(`/results/${persistedSessionId}`, {
+              replace: true,
+              state: {
+                fromInterview: true,
+                company: selectedCompany,
+                candidateCv,
+                duration: durationSeconds,
+                feedback: callbackData.feedback,
+              }
+            });
+          } else {
+            const errorText = await saveResponse.text();
+            console.error('Failed to save session to database:', saveResponse.status, errorText);
+            navigate('/results', {
+              state: {
+                company: selectedCompany,
+                candidateCv,
+                duration: durationSeconds,
+              },
+            });
+          }
         } catch (err) {
-          console.error('Failed to save duration:', err);
+          console.error('Error saving behavioral session:', err);
+          navigate('/results', {
+            state: {
+              company: selectedCompany,
+              candidateCv,
+              duration: durationSeconds,
+            },
+          });
         }
+      } else {
+        navigate('/results', {
+          state: {
+            company: selectedCompany,
+            candidateCv,
+            duration: durationSeconds,
+          },
+        });
       }
-
-      // Navigate to results page – now also pass company + CV via state
-      navigate('/results', {
-        state: {
-          company: selectedCompany,
-          candidateCv,
-          duration: durationSeconds,
-        },
-      });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Button: End conversation only
+  const handleCompleteInterview = async () => {
+    setIsSubmitting(true);
+    try {
+      if (conversation.status === 'connected') {
+        await conversation.endSession();
+      }
+      // Workflow will trigger automatically on session end
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Test button: End call without feedback workflow
+  const handleEndCallOnly = async () => {
+    setIsSubmitting(true);
+    try {
+      if (conversation.status === 'connected') {
+        await conversation.endSession();
+      }
+      // Navigate to dashboard without triggering feedback
+      navigate('/dashboard');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  // Listen for session end and trigger workflow
+  useEffect(() => {
+    if (conversation.status === 'disconnected' && hasStarted && !hasCompleted) {
+      setHasCompleted(true);
+      handleSessionEndWorkflow();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation.status, hasStarted, hasCompleted]);
 
   const handleBackClick = async () => {
     setShowExitWarning(true);
@@ -209,6 +344,7 @@ export default function BehaviouralInterviewPage() {
         agentId: agentId || localStorage.getItem('currentAgentId') || AGENT_ID,
         connectionType: 'webrtc', // Use WebRTC for better quality
       });
+      setHasStarted(true);
     } catch (error) {
       console.error('Failed to start conversation:', error);
       alert('Failed to start the interview. Please check your microphone permissions.');
@@ -375,6 +511,16 @@ export default function BehaviouralInterviewPage() {
                     className='w-full rounded-full bg-emerald-600 text-slate-50 py-2.5 text-sm font-medium shadow-sm hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:ring-offset-2 focus:ring-offset-slate-900'
                   >
                     {isSubmitting ? 'Processing feedback...' : 'Complete interview'}
+                  </button>
+
+                  {/* Test button: End call only, skip feedback workflow */}
+                  <button
+                    type='button'
+                    onClick={handleEndCallOnly}
+                    disabled={isSubmitting}
+                    className='w-full rounded-full bg-slate-600 text-slate-50 py-2.5 text-sm font-medium shadow-sm hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition focus:outline-none focus:ring-2 focus:ring-slate-500/60 focus:ring-offset-2 focus:ring-offset-slate-900'
+                  >
+                    {isSubmitting ? 'Ending call...' : 'End Call Only (Test)'}
                   </button>
                 </>
               )}
