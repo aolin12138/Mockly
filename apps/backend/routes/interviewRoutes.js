@@ -96,7 +96,22 @@ router.post('/session', async (req, res) => {
     console.error(`Webhook error for session ${tempSessionId}:`, error.message);
   });
 
-  // Return temp session ID immediately - NO DATABASE SAVE
+  // Persist a pending session so callback data can be stored reliably
+  try {
+    await prisma.session.create({
+      data: {
+        id: tempSessionId,
+        userId: userId,
+        interviewType: 'Behavioural',
+        status: 'pending'
+      }
+    });
+    console.log(`Pending behavioral session created: ${tempSessionId}`);
+  } catch (error) {
+    console.warn(`Failed to create pending session ${tempSessionId}:`, error?.message || error);
+  }
+
+  // Return temp session ID immediately
   res.json({
     sessionId: tempSessionId
   });
@@ -161,6 +176,60 @@ router.post('/technical/save', async (req, res) => {
     });
   } catch (error) {
     console.error('Error saving technical session:', error);
+    res.status(500).json({ error: 'Failed to save session', details: error.message });
+  }
+});
+
+// Save behavioral session with feedback to database
+router.post('/behavioral/save', async (req, res) => {
+  console.log("Request received at /behavioral/save");
+
+  const { agentId, interviewPlan, interviewPrompt, feedbackPrompt, feedback, duration } = req.body;
+  const userId = req.userId; // From authMiddleware
+
+  if (!feedback) {
+    return res.status(400).json({ error: 'No feedback provided' });
+  }
+
+  try {
+    // Create session in database with all callback data
+    const session = await prisma.session.create({
+      data: {
+        userId: userId,
+        interviewType: 'Behavioural',
+        feedback: feedback,
+        agentId: agentId || null,
+        interviewPlan: interviewPlan || null,
+        interviewPrompt: interviewPrompt || null,
+        feedbackPrompt: feedbackPrompt || null,
+        status: 'completed',
+        duration: duration || null, // Duration in seconds
+      }
+    });
+
+    console.log(`Behavioral session saved to database: ${session.id}`);
+    console.log("Session details:", JSON.stringify({ id: session.id, userId, agentId }, null, 2));
+
+    // Create agent record if agent_id is provided and doesn't already exist
+    if (agentId) {
+      const existingAgent = await prisma.agent.findUnique({ where: { id: agentId } });
+      if (!existingAgent) {
+        await prisma.agent.create({
+          data: {
+            id: agentId,
+            userId: userId
+          }
+        });
+        console.log(`Agent created: ${agentId}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      sessionId: session.id
+    });
+  } catch (error) {
+    console.error('Error saving behavioral session:', error);
     res.status(500).json({ error: 'Failed to save session', details: error.message });
   }
 });
@@ -334,6 +403,22 @@ router.post('/session/quick-start', async (req, res) => {
     }).catch(error => {
       console.error(`Webhook error for quick-start session ${tempSessionId}:`, error.message);
     });
+
+    // Persist a pending session for quick-start
+    try {
+      await prisma.session.create({
+        data: {
+          id: tempSessionId,
+          userId: userId,
+          interviewType: 'Behavioural',
+          agentId: agent.id,
+          status: 'pending'
+        }
+      });
+      console.log(`Pending quick-start session created: ${tempSessionId}`);
+    } catch (error) {
+      console.warn(`Failed to create pending quick-start session ${tempSessionId}:`, error?.message || error);
+    }
 
     // Return temp session ID immediately
     res.json({
