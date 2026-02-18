@@ -5,6 +5,7 @@ const require = createRequire(import.meta.url);
 const companyProfiles = require('../prompts/company_profile.json');
 const roleRubrics = require('../prompts/role_rubrics.json');
 import { prisma } from '../prismaClient.js';
+import { registerSessionOwner, clearSessionOwner, seedCallbackData } from './interviewCallbackRoutes.js';
 
 const router = express.Router();
 
@@ -79,9 +80,26 @@ router.post('/session', async (req, res) => {
   interviewConfig.userId = userId;
   interviewConfig.session_id = tempSessionId;
 
+  // Look up the user's most recent agent so n8n can reuse it
+  try {
+    const lastAgent = await prisma.agent.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    });
+    if (lastAgent) {
+      interviewConfig.agent_id = lastAgent.id;
+      console.log(`Attached last agent ID to webhook payload: ${lastAgent.id}`);
+    }
+  } catch (agentErr) {
+    console.warn('Could not look up last agent for webhook:', agentErr?.message);
+  }
+
   console.log("----- SENDING JSON PAYLOAD TO WEBHOOK -----");
   console.log(JSON.stringify(interviewConfig, null, 2));
   console.log("-------------------------------------------");
+
+  // Register temporary session ownership (used by callback route to create Agent record)
+  registerSessionOwner(tempSessionId, userId);
 
   // Fire webhook asynchronously (don't wait for response)
   fetch('http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {
@@ -95,21 +113,6 @@ router.post('/session', async (req, res) => {
   }).catch(error => {
     console.error(`Webhook error for session ${tempSessionId}:`, error.message);
   });
-
-  // Persist a pending session so callback data can be stored reliably
-  try {
-    await prisma.session.create({
-      data: {
-        id: tempSessionId,
-        userId: userId,
-        interviewType: 'Behavioural',
-        status: 'pending'
-      }
-    });
-    console.log(`Pending behavioral session created: ${tempSessionId}`);
-  } catch (error) {
-    console.warn(`Failed to create pending session ${tempSessionId}:`, error?.message || error);
-  }
 
   // Return temp session ID immediately
   res.json({
@@ -184,7 +187,7 @@ router.post('/technical/save', async (req, res) => {
 router.post('/behavioral/save', async (req, res) => {
   console.log("Request received at /behavioral/save");
 
-  const { agentId, interviewPlan, interviewPrompt, feedbackPrompt, feedback, duration } = req.body;
+  const { sourceSessionId, agentId, interviewPlan, interviewPrompt, feedbackPrompt, feedback, duration } = req.body;
   const userId = req.userId; // From authMiddleware
 
   if (!feedback) {
@@ -210,7 +213,8 @@ router.post('/behavioral/save', async (req, res) => {
     console.log(`Behavioral session saved to database: ${session.id}`);
     console.log("Session details:", JSON.stringify({ id: session.id, userId, agentId }, null, 2));
 
-    // Create agent record if agent_id is provided and doesn't already exist
+    // Safety-net: create Agent record if it wasn't already created during the setup callback.
+    // The primary Agent creation happens in interviewCallbackRoutes.js when n8n returns agent_id.
     if (agentId) {
       const existingAgent = await prisma.agent.findUnique({ where: { id: agentId } });
       if (!existingAgent) {
@@ -220,8 +224,12 @@ router.post('/behavioral/save', async (req, res) => {
             userId: userId
           }
         });
-        console.log(`Agent created: ${agentId}`);
+        console.log(`Agent created (fallback): ${agentId}`);
       }
+    }
+
+    if (sourceSessionId) {
+      clearSessionOwner(sourceSessionId);
     }
 
     res.json({
@@ -272,6 +280,12 @@ router.get('/session/:sessionId', async (req, res) => {
 router.post('/session/:sessionId/cancel', async (req, res) => {
   const { sessionId } = req.params;
   const userId = req.userId;
+
+  if (sessionId.startsWith('temp_')) {
+    clearSessionOwner(sessionId);
+    console.log(`Temporary session ${sessionId} cancelled by user ${userId} (no DB row)`);
+    return res.json({ success: true, sessionId });
+  }
 
   try {
     const session = await prisma.session.update({
@@ -341,7 +355,12 @@ router.get('/agent/last', async (req, res) => {
     res.json({
       agent: {
         id: agent.id,
-        name: agent.name
+        name: agent.name,
+        hasPrompts: Boolean(agent.interviewPrompt && agent.feedbackPrompt && agent.interviewPlan),
+        firstMessage: agent.firstMessage || null,
+        interviewPrompt: agent.interviewPrompt || null,
+        feedbackPrompt: agent.feedbackPrompt || null,
+        interviewPlan: agent.interviewPlan || null,
       }
     });
   } catch (error) {
@@ -375,50 +394,24 @@ router.post('/session/quick-start', async (req, res) => {
       return res.status(400).json({ error: 'No previous agent setup found. Please configure a new session.' });
     }
 
+    if (!agent.interviewPrompt || !agent.feedbackPrompt || !agent.interviewPlan) {
+      return res.status(400).json({ error: 'Stored agent prompts are incomplete. Please configure a new session.' });
+    }
+
     console.log(`Quick-start: Using agent ${agent.id} for user ${userId}`);
 
-    // Prepare quick-start config
-    const quickStartConfig = {
-      userId: userId,
-      session_id: tempSessionId,
-      agent_id: agent.id,
-      interview_mode: 'behavioral',
-      quick_start: true,
-      timestamp: new Date().toISOString()
-    };
+    // Register temporary session ownership (used by callback route to create Agent record)
+    registerSessionOwner(tempSessionId, userId);
 
-    console.log("----- QUICK-START SESSION INITIATED -----");
-    console.log(JSON.stringify(quickStartConfig, null, 2));
-    console.log("----------------------------------------");
-
-    // Trigger webhook for quick-start
-    fetch('http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(quickStartConfig)
-    }).then(() => {
-      console.log(`Quick-start webhook triggered for session ${tempSessionId}`);
-    }).catch(error => {
-      console.error(`Webhook error for quick-start session ${tempSessionId}:`, error.message);
+    // Seed callback data directly from stored Agent prompts/plan
+    seedCallbackData(tempSessionId, {
+      agentId: agent.id,
+      interviewPrompt: agent.interviewPrompt,
+      feedbackPrompt: agent.feedbackPrompt,
+      interviewPlan: agent.interviewPlan,
+      ...(agent.firstMessage && { firstMessage: agent.firstMessage }),
+      source: 'quick_start_agent'
     });
-
-    // Persist a pending session for quick-start
-    try {
-      await prisma.session.create({
-        data: {
-          id: tempSessionId,
-          userId: userId,
-          interviewType: 'Behavioural',
-          agentId: agent.id,
-          status: 'pending'
-        }
-      });
-      console.log(`Pending quick-start session created: ${tempSessionId}`);
-    } catch (error) {
-      console.warn(`Failed to create pending quick-start session ${tempSessionId}:`, error?.message || error);
-    }
 
     // Return temp session ID immediately
     res.json({

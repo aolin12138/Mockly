@@ -32,6 +32,11 @@ model Agent {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+  interviewPrompt String? @db.Text
+  feedbackPrompt  String? @db.Text
+  interviewPlan   String? @db.Text
+  firstMessage    String? @db.Text
+  settingsHash    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

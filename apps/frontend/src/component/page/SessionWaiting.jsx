@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ParticleOrb from '../ui/particle-orb.jsx';
@@ -19,6 +19,10 @@ export default function SessionWaiting() {
   const navigate = useNavigate();
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
+  const [callbackData, setCallbackData] = useState(null);
+  const isActiveRef = useRef(true);
+  const pollIntervalRef = useRef(null);
+  const pollCountRef = useRef(0);
   const MotionH2 = motion.h2;
   const MotionDiv = motion.div;
 
@@ -29,6 +33,37 @@ export default function SessionWaiting() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Navigate reactively when callbackData has enough setup info to start the interview
+  useEffect(() => {
+    if (!callbackData || !sessionId) return;
+
+    // Consider setup "ready" if we have an agentId OR interview prompts/plan
+    const isReady = callbackData.agentId || callbackData.interviewPlan || callbackData.interviewPrompt;
+    if (!isReady) {
+      console.log('[SessionWaiting] Callback data received but missing agentId and prompts, waiting…');
+      return;
+    }
+
+    console.log('[SessionWaiting] Setup data ready:', {
+      agentId: callbackData.agentId || 'none',
+      hasInterviewPlan: !!callbackData.interviewPlan,
+      hasInterviewPrompt: !!callbackData.interviewPrompt,
+    });
+
+    // Store callback data in sessionStorage for the interview page
+    sessionStorage.setItem(`callbackData_${sessionId}`, JSON.stringify(callbackData));
+
+    const mode = localStorage.getItem('pendingInterviewMode') || 'behavioral';
+    const routeMap = {
+      'behavioral': 'behavioural',
+      'technical': 'technical',
+      'behavioral_plus_dsa': 'behavioural'
+    };
+    const route = routeMap[mode] || 'behavioural';
+    console.log(`[SessionWaiting] Navigating to /${route}/${sessionId}`);
+    navigate(`/${route}/${sessionId}`);
+  }, [callbackData, sessionId, navigate]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -43,92 +78,79 @@ export default function SessionWaiting() {
     if (sessionId.startsWith('temp_')) {
       localStorage.setItem('currentSessionId', sessionId);
 
-      let isActive = true;
-      let pollCount = 0;
-      const maxPolls = 60; // Max 3 minutes of polling (60 * 3 seconds)
+      // Reset refs for this effect run
+      isActiveRef.current = true;
+      pollCountRef.current = 0;
+
+      const maxPolls = 60; // Soft limit (3 minutes); keep polling after warning
 
       const pollCallbackData = async () => {
-        if (!isActive || pollCount >= maxPolls) {
-          if (pollCount >= maxPolls) {
-            console.warn(`Timeout waiting for callback data for session ${sessionId}`);
-          }
-          return;
+        if (!isActiveRef.current) return;
+        
+        if (pollCountRef.current >= maxPolls) {
+          console.warn(`[SessionWaiting] Soft timeout after ${pollCountRef.current} polls for session ${sessionId}`);
+          setErrorMessage('Setup is taking longer than expected. We are still checking…');
         }
 
-        pollCount++;
+        pollCountRef.current++;
+        console.log(`[SessionWaiting] Poll #${pollCountRef.current} for session ${sessionId}`);
 
         try {
-          const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}/callback-data`, {
+          const url = `http://localhost:3000/api/interview/session/${sessionId}/callback-data`;
+          const response = await fetch(url, {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             }
           });
 
-          if (!isActive) return;
+          console.log(`[SessionWaiting] Response status: ${response.status}`);
+
+          if (!isActiveRef.current) return;
 
           if (response.ok) {
-            const { data } = await response.json();
-            console.log('[SessionWaiting] Callback data received:', data);
+            const result = await response.json();
+            console.log('[SessionWaiting] Callback data received:', result.data);
 
-            // Store callback data in sessionStorage for the interview page
-            if (data) {
-              sessionStorage.setItem(`callbackData_${sessionId}`, JSON.stringify(data));
+            const data = result.data || {};
+
+            // Consider ready if we have agentId OR interview setup data (prompts/plan)
+            const isReady = data.agentId || data.interviewPlan || data.interviewPrompt;
+            if (isReady) {
+              // We have enough setup data — stop polling and navigate
+              isActiveRef.current = false;
+              if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+              }
+              setCallbackData(data);
+              return;
+            } else {
+              // Partial data (no agentId or prompts yet) — keep polling
+              console.log('[SessionWaiting] Callback data not ready yet, continuing to poll…');
             }
-
-            // Navigate to interview
-            const mode = localStorage.getItem('pendingInterviewMode') || 'behavioral';
-            const routeMap = {
-              'behavioral': 'behavioural',
-              'technical': 'technical',
-              'behavioral_plus_dsa': 'behavioural'
-            };
-            const route = routeMap[mode] || 'behavioural';
-            navigate(`/${route}/${sessionId}`);
           } else if (response.status === 404) {
-            // Callback data not yet available, fallback to DB session status
-            const statusResponse = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              }
-            });
-
-            if (!isActive) return;
-
-            if (statusResponse.ok) {
-              const sessionData = await statusResponse.json();
-              if (sessionData.ready) {
-                localStorage.setItem('currentSessionId', sessionId);
-                if (sessionData.agentId) {
-                  localStorage.setItem('currentAgentId', sessionData.agentId);
-                }
-                const mode = localStorage.getItem('pendingInterviewMode') || 'behavioral';
-                const routeMap = {
-                  'behavioral': 'behavioural',
-                  'technical': 'technical',
-                  'behavioral_plus_dsa': 'behavioural'
-                };
-                const route = routeMap[mode] || 'behavioural';
-                navigate(`/${route}/${sessionId}`);
-                return;
-              }
-            }
-
-            console.log('[SessionWaiting] Waiting for callback data...');
+            console.log(`[SessionWaiting] No callback data yet (404), poll #${pollCountRef.current}`);
+          } else {
+            const errorBody = await response.text().catch(() => '');
+            console.warn(`[SessionWaiting] Unexpected response: ${response.status} - ${errorBody}`);
           }
         } catch (error) {
-          if (!isActive) return;
+          if (!isActiveRef.current) return;
           console.error('[SessionWaiting] Error polling callback data:', error);
         }
       };
 
+      // Start polling - first call immediate, then every 3 seconds
       pollCallbackData();
-      const pollInterval = setInterval(pollCallbackData, 3000);
+      pollIntervalRef.current = setInterval(pollCallbackData, 3000);
 
       return () => {
-        isActive = false;
-        clearInterval(pollInterval);
+        isActiveRef.current = false;
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
       };
     }
 
