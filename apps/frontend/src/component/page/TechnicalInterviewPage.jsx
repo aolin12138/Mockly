@@ -41,7 +41,6 @@ const TechnicalInterviewPage = () => {
   const languageRef = useRef('javascript');
   const questionRef = useRef(null);
   const testResultsRef = useRef(null);
-  const conversationIdRef = useRef(null);
   const AGENT_ID = import.meta.env.VITE_TECHNICAL_INTERVIEW_AGENT_ID || 'agent_6601kc3hn3b8fbv9p4hpskza0qgm';
   const N8N_WEBHOOK_URL = 'https://aolin12138.app.n8n.cloud/webhook/technical-feedback';
 
@@ -361,8 +360,10 @@ const TechnicalInterviewPage = () => {
         }
       }
 
-      // Use actual conversation ID captured from startSession
-      const conversationId = conversationIdRef.current;
+      // TESTING: Use hardcoded conversation ID for now
+      // TODO: Replace with actual conversation ID when ready for production
+      const testConversationId = 'conv_5601kgkbete3f1zb22pv6hrf1qa7';
+      const conversationId = testConversationId; // conversation.getId ? conversation.getId() : null;
       console.log('Using conversation ID:', conversationId);
 
       // Build execution summary
@@ -680,20 +681,9 @@ const TechnicalInterviewPage = () => {
                         try {
                           setInterviewStarted(true);
                           hasStartedSessionRef.current = true;
-
-                          // Request microphone permission (required for browser autoplay policy)
-                          await navigator.mediaDevices.getUserMedia({ audio: true });
-
-                          // Start timing the interview
-                          setStartTime(Date.now());
-
-                          // Start the ElevenLabs conversation with WebRTC
-                          const convId = await conversation.startSession({
+                          await conversation.startSession({
                             agentId: AGENT_ID,
-                            connectionType: 'webrtc',
                           });
-                          conversationIdRef.current = convId;
-                          console.log('Technical interview started, conversationId:', convId);
                         } catch (error) {
                           console.error('Failed to start technical interview conversation:', error);
                           setInterviewStarted(false);

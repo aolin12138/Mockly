@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ParticleOrb from '../ui/particle-orb.jsx';
@@ -19,12 +19,6 @@ export default function SessionWaiting() {
   const navigate = useNavigate();
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
-  const [callbackData, setCallbackData] = useState(null);
-  const isActiveRef = useRef(true);
-  const pollIntervalRef = useRef(null);
-  const pollCountRef = useRef(0);
-  const MotionH2 = motion.h2;
-  const MotionDiv = motion.div;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -33,37 +27,6 @@ export default function SessionWaiting() {
 
     return () => clearInterval(interval);
   }, []);
-
-  // Navigate reactively when callbackData has enough setup info to start the interview
-  useEffect(() => {
-    if (!callbackData || !sessionId) return;
-
-    // Consider setup "ready" if we have an agentId OR interview prompts/plan
-    const isReady = callbackData.agentId || callbackData.interviewPlan || callbackData.interviewPrompt;
-    if (!isReady) {
-      console.log('[SessionWaiting] Callback data received but missing agentId and prompts, waiting…');
-      return;
-    }
-
-    console.log('[SessionWaiting] Setup data ready:', {
-      agentId: callbackData.agentId || 'none',
-      hasInterviewPlan: !!callbackData.interviewPlan,
-      hasInterviewPrompt: !!callbackData.interviewPrompt,
-    });
-
-    // Store callback data in sessionStorage for the interview page
-    sessionStorage.setItem(`callbackData_${sessionId}`, JSON.stringify(callbackData));
-
-    const mode = localStorage.getItem('pendingInterviewMode') || 'behavioral';
-    const routeMap = {
-      'behavioral': 'behavioural',
-      'technical': 'technical',
-      'behavioral_plus_dsa': 'behavioural'
-    };
-    const route = routeMap[mode] || 'behavioural';
-    console.log(`[SessionWaiting] Navigating to /${route}/${sessionId}`);
-    navigate(`/${route}/${sessionId}`);
-  }, [callbackData, sessionId, navigate]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -78,79 +41,64 @@ export default function SessionWaiting() {
     if (sessionId.startsWith('temp_')) {
       localStorage.setItem('currentSessionId', sessionId);
 
-      // Reset refs for this effect run
-      isActiveRef.current = true;
-      pollCountRef.current = 0;
-
-      const maxPolls = 60; // Soft limit (3 minutes); keep polling after warning
+      let isActive = true;
+      let pollCount = 0;
+      const maxPolls = 60; // Max 3 minutes of polling (60 * 3 seconds)
 
       const pollCallbackData = async () => {
-        if (!isActiveRef.current) return;
-        
-        if (pollCountRef.current >= maxPolls) {
-          console.warn(`[SessionWaiting] Soft timeout after ${pollCountRef.current} polls for session ${sessionId}`);
-          setErrorMessage('Setup is taking longer than expected. We are still checking…');
+        if (!isActive || pollCount >= maxPolls) {
+          if (pollCount >= maxPolls) {
+            console.warn(`Timeout waiting for callback data for session ${sessionId}`);
+          }
+          return;
         }
 
-        pollCountRef.current++;
-        console.log(`[SessionWaiting] Poll #${pollCountRef.current} for session ${sessionId}`);
+        pollCount++;
 
         try {
-          const url = `http://localhost:3000/api/interview/session/${sessionId}/callback-data`;
-          const response = await fetch(url, {
+          const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}/callback-data`, {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             }
           });
 
-          console.log(`[SessionWaiting] Response status: ${response.status}`);
-
-          if (!isActiveRef.current) return;
+          if (!isActive) return;
 
           if (response.ok) {
-            const result = await response.json();
-            console.log('[SessionWaiting] Callback data received:', result.data);
+            const { data } = await response.json();
+            console.log('[SessionWaiting] Callback data received:', data);
 
-            const data = result.data || {};
-
-            // Consider ready if we have agentId OR interview setup data (prompts/plan)
-            const isReady = data.agentId || data.interviewPlan || data.interviewPrompt;
-            if (isReady) {
-              // We have enough setup data — stop polling and navigate
-              isActiveRef.current = false;
-              if (pollIntervalRef.current) {
-                clearInterval(pollIntervalRef.current);
-                pollIntervalRef.current = null;
-              }
-              setCallbackData(data);
-              return;
-            } else {
-              // Partial data (no agentId or prompts yet) — keep polling
-              console.log('[SessionWaiting] Callback data not ready yet, continuing to poll…');
+            // Store callback data in sessionStorage for the interview page
+            if (data) {
+              sessionStorage.setItem(`callbackData_${sessionId}`, JSON.stringify(data));
             }
+
+            // Navigate to interview
+            const mode = localStorage.getItem('pendingInterviewMode') || 'behavioral';
+            const routeMap = {
+              'behavioral': 'behavioural',
+              'technical': 'technical',
+              'behavioral_plus_dsa': 'behavioural'
+            };
+            const route = routeMap[mode] || 'behavioural';
+            navigate(`/${route}/${sessionId}`);
           } else if (response.status === 404) {
-            console.log(`[SessionWaiting] No callback data yet (404), poll #${pollCountRef.current}`);
-          } else {
-            const errorBody = await response.text().catch(() => '');
-            console.warn(`[SessionWaiting] Unexpected response: ${response.status} - ${errorBody}`);
+            // Callback data not yet available, continue polling
+            console.log('[SessionWaiting] Waiting for callback data...');
           }
         } catch (error) {
-          if (!isActiveRef.current) return;
+          if (!isActive) return;
           console.error('[SessionWaiting] Error polling callback data:', error);
         }
       };
 
-      // Start polling - first call immediate, then every 3 seconds
       pollCallbackData();
-      pollIntervalRef.current = setInterval(pollCallbackData, 3000);
+      const pollInterval = setInterval(pollCallbackData, 3000);
 
       return () => {
-        isActiveRef.current = false;
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current);
-          pollIntervalRef.current = null;
-        }
+        isActive = false;
+        clearInterval(pollInterval);
       };
     }
 
@@ -218,7 +166,7 @@ export default function SessionWaiting() {
 
         <div className="text-center space-y-6 pt-12">
           <AnimatePresence mode="wait">
-            <MotionH2
+            <motion.h2
               key={currentMessageIndex}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -227,21 +175,21 @@ export default function SessionWaiting() {
               className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400"
             >
               {loadingMessages[currentMessageIndex]}
-            </MotionH2>
+            </motion.h2>
           </AnimatePresence>
 
           <div className="flex justify-center space-x-2">
-            <MotionDiv
+            <motion.div
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
               className="w-2 h-2 bg-emerald-400 rounded-full"
             />
-            <MotionDiv
+            <motion.div
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
               className="w-2 h-2 bg-emerald-400 rounded-full"
             />
-            <MotionDiv
+            <motion.div
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
               className="w-2 h-2 bg-emerald-400 rounded-full"
@@ -249,7 +197,7 @@ export default function SessionWaiting() {
           </div>
         </div>
 
-        <MotionDiv
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
@@ -260,7 +208,7 @@ export default function SessionWaiting() {
             <br />
             This typically takes 3–5 minutes. Thank you for your patience!
           </p>
-        </MotionDiv>
+        </motion.div>
 
         {errorMessage && (
           <p className="text-xs text-rose-400 text-center max-w-md">

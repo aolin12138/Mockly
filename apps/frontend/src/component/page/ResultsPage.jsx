@@ -2,8 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Waveform } from '../ui/waveform';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { LoadingSpinner } from './LoadingPage';
+import { useNavigate, useParams } from 'react-router-dom';
+import { LoadingPage } from './LoadingPage';
 import { SAMPLE_FEEDBACK } from './constants';
 import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle, TrendingUp, Lightbulb, ArrowRight, Target } from 'lucide-react';
@@ -352,20 +352,14 @@ function DimensionScoresDisplay({ dimensionScores }) {
 /* --- Main Results Page --- */
 export default function ResultsPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { sessionId: urlSessionId } = useParams();
   const audioRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const [feedbackData, setFeedbackData] = useState(null);
   const [error, setError] = useState(null);
-  const hasStartedRef = useRef(false);
 
   // Load feedback data on mount
   useEffect(() => {
-    // Prevent double-call from React StrictMode
-    if (hasStartedRef.current) return;
-    hasStartedRef.current = true;
-
     if (USE_LOCAL_SAMPLE) {
       const transformed = transformFeedbackData(SAMPLE_FEEDBACK);
       setFeedbackData(transformed);
@@ -373,157 +367,107 @@ export default function ResultsPage() {
       return;
     }
 
-    const state = location.state || {};
-    console.log('[ResultsPage] location.state:', state);
-
-    // If feedback was passed via navigation state (from LoadingPage), use it directly
-    if (state.feedback) {
-      console.log('[ResultsPage] Using feedback from navigation state');
-      const transformed = transformFeedbackData(state.feedback);
-      if (transformed) {
-        setFeedbackData(transformed);
-        setIsLoading(false);
-        return;
-      }
-    }
-
     const fetchFeedback = async () => {
-      const token = localStorage.getItem('token');
-      const sessionId = urlSessionId || localStorage.getItem('currentSessionId');
-
-      if (!sessionId) {
-        setError('No session ID found. Please start a new interview session.');
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        // ── 1. Check if feedback already exists in the database ──
-        console.log('[ResultsPage] Checking DB for existing feedback, sessionId:', sessionId);
-        try {
-          const dbResp = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          });
-          if (dbResp.ok) {
-            const sessionData = await dbResp.json();
-            if (sessionData.feedback) {
-              console.log('[ResultsPage] Found existing feedback in DB');
-              const transformed = transformFeedbackData(sessionData.feedback);
-              if (transformed) {
-                setFeedbackData(transformed);
-                setIsLoading(false);
-                return;
-              }
-            }
-          }
-        } catch (dbErr) {
-          console.warn('[ResultsPage] DB check failed (may be temp session):', dbErr);
+        // Get session ID from URL param or localStorage FIRST before any delay
+        const sessionId = urlSessionId || localStorage.getItem('currentSessionId');
+
+        if (!sessionId) {
+          setError('No session ID found. Please start a new interview session.');
+          setIsLoading(false);
+          return;
         }
 
-        // ── 2. No feedback in DB — fetch setup data from in-memory callback store ──
-        console.log('[ResultsPage] No feedback in DB, fetching setup data from memory...');
-        let setupData = null;
-        try {
-          const setupResp = await fetch(
-            `http://localhost:3000/api/interview/session/${sessionId}/callback-data`,
-            { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } }
-          );
-          if (setupResp.ok) {
-            const result = await setupResp.json();
-            setupData = result.data || null;
-            console.log('[ResultsPage] Setup data from memory:', setupData);
-          }
-        } catch (setupErr) {
-          console.warn('[ResultsPage] Could not fetch setup data:', setupErr);
+        await new Promise(res => setTimeout(res, 5000));
+
+        // Check if feedback already exists in the database
+        const checkFeedbackResponse = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+        });
+
+        if (!checkFeedbackResponse.ok) {
+          throw new Error('Failed to fetch session data');
         }
 
-        // Also try the last Agent record for any stored prompts
-        let dbAgentId = null;
-        let dbPrompts = {};
-        try {
-          const agentResp = await fetch('http://localhost:3000/api/interview/agent/last', {
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          });
-          if (agentResp.ok) {
-            const agentResult = await agentResp.json();
-            const agent = agentResult.agent || agentResult;
-            dbAgentId = agent.id || null;
-            dbPrompts = {
-              interviewPlan: agent.interviewPlan || null,
-              interviewPrompt: agent.interviewPrompt || null,
-              feedbackPrompt: agent.feedbackPrompt || null,
-            };
+        const sessionData = await checkFeedbackResponse.json();
+        const feedbackPrompt = sessionData.feedbackPrompt;
+        const agentId = sessionData.agentId;
+
+        // If feedback already exists in the database, use it
+        if (sessionData.feedback) {
+          console.log('Found existing feedback in database, using cached feedback');
+          const transformed = transformFeedbackData(sessionData.feedback);
+          if (transformed) {
+            setFeedbackData(transformed);
+            setIsLoading(false);
+            return;
           }
-        } catch (_) { /* ignore */ }
+        }
 
-        const resolvedAgentId = setupData?.agentId || dbAgentId || localStorage.getItem('currentAgentId') || null;
-        const mergedData = {
-          agentId: resolvedAgentId,
-          interviewPlan: setupData?.interviewPlan || dbPrompts.interviewPlan || null,
-          interviewPrompt: setupData?.interviewPrompt || dbPrompts.interviewPrompt || null,
-          feedbackPrompt: setupData?.feedbackPrompt || dbPrompts.feedbackPrompt || null,
-        };
+        // Only generate new feedback if we have the required data and no existing feedback
+        if (!feedbackPrompt || !agentId) {
+          throw new Error('Session data incomplete. Cannot generate feedback.');
+        }
 
-        // ── 3. Call n8n feedback webhook with full payload ──
-        console.log('[ResultsPage] Calling feedback webhook with payload:', mergedData);
-        const webhookPayload = {
-          sessionId,
-          agentId: mergedData.agentId,
-          interviewPlan: mergedData.interviewPlan,
-          interviewPrompt: mergedData.interviewPrompt,
-          feedbackPrompt: mergedData.feedbackPrompt,
-        };
-
+        // Send feedback request to N8N webhook
         const response = await fetch(N8N_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookPayload),
+          body: JSON.stringify({
+            agent_id: agentId,
+            feedback_agent_prompt: feedbackPrompt
+          }),
         });
 
-        if (!response.ok) {
-          const errText = await response.text();
-          throw new Error(`Webhook request failed (${response.status}): ${errText || response.statusText}`);
+        const responseText = await response.text();
+        console.log('Webhook response:', responseText, 'Status:', response.status); if (!response.ok) {
+          throw new Error(`Webhook request failed: ${responseText || response.statusText}`);
         }
 
-        const responseText = await response.text();
         if (!responseText) {
           throw new Error('Webhook returned empty response');
         }
 
-        const webhookFeedback = JSON.parse(responseText);
-        console.log('[ResultsPage] Feedback from webhook:', webhookFeedback);
+        const feedbackData = JSON.parse(responseText);
+        const transformed = transformFeedbackData(feedbackData);
+        if (transformed) {
+          setFeedbackData(transformed);
 
-        const transformed = transformFeedbackData(webhookFeedback);
-        if (!transformed) {
-          throw new Error('Invalid feedback data received — missing required fields');
-        }
+          // Store feedback in database
+          const sessionId = localStorage.getItem('currentSessionId');
+          if (sessionId) {
+            try {
+              const saveFeedbackResponse = await fetch(`http://localhost:3000/api/interview/session/${sessionId}/callback`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                  feedback: feedbackData.feedback || feedbackData,
+                  feedback_prompt: feedbackPrompt
+                }),
+              });
 
-        setFeedbackData(transformed);
-
-        // ── 4. Save feedback to database ──
-        try {
-          const saveResp = await fetch('http://localhost:3000/api/interview/behavioral/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({
-              sourceSessionId: sessionId,
-              agentId: mergedData.agentId,
-              interviewPlan: mergedData.interviewPlan,
-              interviewPrompt: mergedData.interviewPrompt,
-              feedbackPrompt: mergedData.feedbackPrompt,
-              feedback: webhookFeedback,
-            }),
-          });
-          if (saveResp.ok) {
-            console.log('[ResultsPage] Feedback saved to DB');
-          } else {
-            console.error('[ResultsPage] Failed to save feedback:', await saveResp.text());
+              if (!saveFeedbackResponse.ok) {
+                console.error('Failed to save feedback to database:', await saveFeedbackResponse.text());
+              } else {
+                console.log('Feedback successfully saved to database');
+              }
+            } catch (saveError) {
+              console.error('Error saving feedback to database:', saveError);
+              // Don't throw - we still want to show the feedback even if saving fails
+            }
           }
-        } catch (saveErr) {
-          console.error('[ResultsPage] Error saving feedback:', saveErr);
+        } else {
+          setError('Invalid feedback data received - missing required fields');
         }
       } catch (error) {
-        console.error('[ResultsPage] Error in fetchFeedback:', error);
+        console.error('Error fetching feedback:', error);
         setError(error.message || 'Failed to process interview feedback. Please try again.');
       } finally {
         setIsLoading(false);
@@ -531,10 +475,10 @@ export default function ResultsPage() {
     };
 
     fetchFeedback();
-  }, [location.state, urlSessionId]);
+  }, []);
 
   if (isLoading) {
-    return <LoadingSpinner status="Loading Results" subStatus="Fetching your interview feedback…" />;
+    return <LoadingPage />;
   }
 
   if (error || !feedbackData) {
