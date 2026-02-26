@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LiveWaveform } from '../ui/live-waveform.jsx';
 import { Phone, PhoneOff, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -48,14 +48,8 @@ export default function BehaviouralInterviewPage() {
   const [testState, setTestState] = useState('idle'); // Test state for orb
   const [useTestMode, setUseTestMode] = useState(false); // Toggle between test and real
   const [agentId, setAgentId] = useState('');
-  const [firstMessage, setFirstMessage] = useState('');
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [startTime, setStartTime] = useState(null); // Track when interview started
-  const [hasStarted, setHasStarted] = useState(false);
-  const [hasCompleted, setHasCompleted] = useState(false);
-  const hasStartedRef = useRef(false);
-  const hasCompletedRef = useRef(false);
-  const startTimeRef = useRef(null);
 
   useEffect(() => {
     if (sessionId) {
@@ -71,16 +65,13 @@ export default function BehaviouralInterviewPage() {
 
     // For temporary sessions, skip database lookup (data is in-memory)
     if (sessionId.startsWith('temp_')) {
-      // Try to load agentId + firstMessage from callback data stored in sessionStorage
+      // Try to load agentId from callback data stored in sessionStorage
       const callbackDataStr = sessionStorage.getItem(`callbackData_${sessionId}`);
       if (callbackDataStr) {
         const callbackData = JSON.parse(callbackDataStr);
         if (callbackData.agentId) {
           setAgentId(callbackData.agentId);
           localStorage.setItem('currentAgentId', callbackData.agentId);
-        }
-        if (callbackData.firstMessage) {
-          setFirstMessage(callbackData.firstMessage);
         }
       }
       return;
@@ -120,17 +111,9 @@ export default function BehaviouralInterviewPage() {
   const conversation = useConversation({
     onConnect: () => {
       console.log('Agent connected');
-      setHasStarted(true);
-      hasStartedRef.current = true;
     },
     onDisconnect: () => {
       console.log('Agent disconnected');
-      // Trigger end-of-session workflow via refs (avoids stale closure issues)
-      if (hasStartedRef.current && !hasCompletedRef.current) {
-        hasCompletedRef.current = true;
-        setHasCompleted(true);
-        handleSessionEndWorkflow();
-      }
     },
     onMessage: (message) => {
       console.log('Message received:', message);
@@ -148,42 +131,107 @@ export default function BehaviouralInterviewPage() {
     },
   });
 
-  // Keep refs in sync with state
-  useEffect(() => { hasStartedRef.current = hasStarted; }, [hasStarted]);
-  useEffect(() => { hasCompletedRef.current = hasCompleted; }, [hasCompleted]);
-  useEffect(() => { startTimeRef.current = startTime; }, [startTime]);
-
-  // Workflow: Navigate to loading page which handles feedback polling and saving
-  const handleSessionEndWorkflow = useCallback(async () => {
+  // Workflow: Save feedback and navigate to results
+  const handleSessionEndWorkflow = async () => {
     setIsSubmitting(true);
     try {
       // Calculate duration in seconds
       const endTime = Date.now();
-      const durationSeconds = startTimeRef.current ? Math.round((endTime - startTimeRef.current) / 1000) : null;
+      const durationSeconds = startTime ? Math.round((endTime - startTime) / 1000) : null;
       console.log(`Behavioural interview duration: ${durationSeconds} seconds`);
 
-      // Navigate to LoadingPage — it will handle polling, saving, and redirecting
-      navigate('/loading', {
-        state: {
-          type: 'behavioural',
-          sessionId,
-          duration: durationSeconds,
-          agentId: agentId || localStorage.getItem('currentAgentId') || AGENT_ID,
-        },
-      });
-    } catch (err) {
-      console.error('Error in handleSessionEndWorkflow:', err);
-      // Fallback: still try to navigate to loading
-      navigate('/loading', {
-        state: {
-          type: 'behavioural',
-          sessionId,
-        },
-      });
+      const token = localStorage.getItem('token');
+      // Retrieve callback data from sessionStorage
+      const callbackDataStr = sessionStorage.getItem(`callbackData_${sessionId}`);
+      const callbackData = callbackDataStr ? JSON.parse(callbackDataStr) : {};
+      console.log('[BehaviouralInterviewPage] Callback data:', callbackData);
+
+      // For temporary sessions, save to database via /behavioral/save endpoint
+      if (sessionId && sessionId.startsWith('temp_')) {
+        try {
+          const saveResponse = await fetch('http://localhost:3000/api/interview/behavioral/save', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              agentId: callbackData.agentId || null,
+              interviewPlan: callbackData.interviewPlan || null,
+              interviewPrompt: callbackData.interviewPrompt || null,
+              feedbackPrompt: callbackData.feedbackPrompt || null,
+              feedback: callbackData.feedback || null,
+              duration: durationSeconds
+            })
+          });
+          if (saveResponse.ok) {
+            const saveResult = await saveResponse.json();
+            const persistedSessionId = saveResult.sessionId;
+            console.log('[BehaviouralInterviewPage] Session saved to database, ID:', persistedSessionId);
+            navigate(`/results/${persistedSessionId}`, {
+              replace: true,
+              state: {
+                fromInterview: true,
+                company: selectedCompany,
+                candidateCv,
+                duration: durationSeconds,
+                feedback: callbackData.feedback,
+              }
+            });
+          } else {
+            const errorText = await saveResponse.text();
+            console.error('Failed to save session to database:', saveResponse.status, errorText);
+            navigate('/results', {
+              state: {
+                company: selectedCompany,
+                candidateCv,
+                duration: durationSeconds,
+              },
+            });
+          }
+        } catch (err) {
+          console.error('Error saving behavioral session:', err);
+          navigate('/results', {
+            state: {
+              company: selectedCompany,
+              candidateCv,
+              duration: durationSeconds,
+            },
+          });
+        }
+      } else {
+        // Non-temp session: update the existing session with duration and feedback
+        try {
+          await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              duration: durationSeconds,
+              feedback: callbackData.feedback || null
+            })
+          });
+          console.log('[BehaviouralInterviewPage] Session updated with duration and feedback');
+        } catch (err) {
+          console.error('Error updating session duration:', err);
+        }
+        navigate(`/results/${sessionId}`, {
+          replace: true,
+          state: {
+            fromInterview: true,
+            company: selectedCompany,
+            candidateCv,
+            duration: durationSeconds,
+            feedback: callbackData.feedback,
+          },
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
-  }, [sessionId, agentId, navigate]);
+  };
 
   // Button: End conversation only
   const handleCompleteInterview = async () => {
@@ -211,6 +259,14 @@ export default function BehaviouralInterviewPage() {
       setIsSubmitting(false);
     }
   };
+  // Listen for session end and trigger workflow
+  useEffect(() => {
+    if (conversation.status === 'disconnected') {
+      handleSessionEndWorkflow();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation.status]);
+
   const handleBackClick = async () => {
     setShowExitWarning(true);
   };
@@ -253,20 +309,11 @@ export default function BehaviouralInterviewPage() {
       // Start timing the interview
       setStartTime(Date.now());
 
-      // Start the ElevenLabs conversation with optional first message override from n8n
-      const sessionConfig = {
+      // Start the ElevenLabs conversation
+      await conversation.startSession({
         agentId: agentId || localStorage.getItem('currentAgentId') || AGENT_ID,
         connectionType: 'webrtc', // Use WebRTC for better quality
-      };
-      if (firstMessage) {
-        sessionConfig.overrides = {
-          agent: {
-            firstMessage,
-          },
-        };
-      }
-      await conversation.startSession(sessionConfig);
-      setHasStarted(true);
+      });
     } catch (error) {
       console.error('Failed to start conversation:', error);
       alert('Failed to start the interview. Please check your microphone permissions.');

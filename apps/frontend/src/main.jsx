@@ -16,6 +16,7 @@ import LoadingPage from './component/page/LoadingPage';
 import { ThemeProvider } from './context/ThemeContext';
 import InterviewSetup from './component/page/InterviewSetup';
 import SessionWaiting from './component/page/SessionWaiting';
+import HistoryPage from './component/page/HistoryPage';
 
 import './index.css';
 
@@ -37,6 +38,7 @@ root.render(
           <Route path='/register' element={<Register />} />
           <Route path='/profile' element={<Profile />} />
           <Route path='/dashboard' element={<Dashboard />} />
+          <Route path='/history' element={<HistoryPage />} />
           <Route path='/setup' element={<InterviewSetup />} />
           <Route path='/loading' element={<LoadingPage />} />
           <Route path='/interview/session/:sessionId/waiting' element={<SessionWaiting />} />

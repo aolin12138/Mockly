@@ -5,9 +5,84 @@ const require = createRequire(import.meta.url);
 const companyProfiles = require('../prompts/company_profile.json');
 const roleRubrics = require('../prompts/role_rubrics.json');
 import { prisma } from '../prismaClient.js';
-import { registerSessionOwner, clearSessionOwner, seedCallbackData } from './interviewCallbackRoutes.js';
 
 const router = express.Router();
+
+// Helper: unwrap feedback from array/nested structure
+// Feedback can be stored as: { ... }, [{ feedback: { ... }, audio, transcript }], or a JSON string
+const unwrapFeedback = (raw) => {
+  let fb = raw;
+  if (typeof fb === 'string') {
+    try { fb = JSON.parse(fb); } catch (e) { return {}; }
+  }
+  if (Array.isArray(fb)) {
+    if (fb.length === 0) return {};
+    fb = fb[0];
+  }
+  // Unwrap nested { feedback: { ... }, audio, transcript } structure
+  if (fb && typeof fb === 'object' && fb.feedback && typeof fb.feedback === 'object') {
+    fb = fb.feedback;
+  }
+  return fb || {};
+};
+
+// GET: Paginated and sorted interview history for user
+router.get('/user/interviews', async (req, res) => {
+  const userId = req.userId;
+  const limit = Math.max(1, Math.min(Number(req.query.limit) || 10, 50));
+  const offset = Math.max(0, Number(req.query.offset) || 0);
+  const sortBy = req.query.sortBy || 'time';
+  const sortDir = req.query.sortDir === 'asc' ? 'asc' : 'desc';
+
+  // All sort fields now map to DB columns
+  const sortColumnMap = { score: 'score', duration: 'duration', time: 'createdAt' };
+  const orderByColumn = sortColumnMap[sortBy] || 'createdAt';
+
+  try {
+    const mapSession = (session) => {
+      let score = session.score || 0;
+      let topic = '';
+      let assessment = '';
+      const feedback = unwrapFeedback(session.feedback);
+      const interviewType = session.interviewType || 'Interview';
+      const duration = session.duration || 0;
+      const createdAt = session.createdAt;
+      if (interviewType === 'Technical') {
+        // If score column is empty, fall back to computing from feedback
+        if (!score) {
+          score = feedback?.outcome?.score || feedback?.overall?.score || 0;
+          if (score <= 10) score = Math.round(score * 10);
+        }
+        topic = feedback?.meta?.questionTitle || feedback?.outcome?.verdict || 'Technical Interview';
+        assessment = feedback?.overall?.summary || feedback?.outcome?.summary || 'Technical interview session completed.';
+      } else {
+        if (!score) {
+          score = feedback?.overall_score || feedback?.overallScore || feedback?.score || 0;
+          if (score <= 5) score = Math.round(score * 20);
+          else if (score <= 10) score = Math.round(score * 10);
+        }
+        topic = feedback?.position_title || 'Interview';
+        assessment = feedback?.overall_assessment?.summary || 'Interview session completed.';
+      }
+      return { id: session.id, interviewType, topic, assessment, score, duration, createdAt };
+    };
+
+    const sessions = await prisma.session.findMany({
+      where: { userId },
+      orderBy: { [orderByColumn]: sortDir },
+      skip: offset,
+      take: limit
+    });
+    const interviews = sessions.map(mapSession);
+    const totalCount = await prisma.session.count({ where: { userId } });
+
+    const hasMore = offset + limit < totalCount;
+    res.json({ interviews, hasMore });
+  } catch (error) {
+    console.error('Error fetching interview history:', error);
+    res.status(500).json({ error: 'Failed to fetch interview history', details: error.message });
+  }
+});
 
 // Init interview endpoint (just for logging/setup for now)
 router.post('/init', (req, res) => {
@@ -80,26 +155,9 @@ router.post('/session', async (req, res) => {
   interviewConfig.userId = userId;
   interviewConfig.session_id = tempSessionId;
 
-  // Look up the user's most recent agent so n8n can reuse it
-  try {
-    const lastAgent = await prisma.agent.findFirst({
-      where: { userId },
-      orderBy: { createdAt: 'desc' }
-    });
-    if (lastAgent) {
-      interviewConfig.agent_id = lastAgent.id;
-      console.log(`Attached last agent ID to webhook payload: ${lastAgent.id}`);
-    }
-  } catch (agentErr) {
-    console.warn('Could not look up last agent for webhook:', agentErr?.message);
-  }
-
   console.log("----- SENDING JSON PAYLOAD TO WEBHOOK -----");
   console.log(JSON.stringify(interviewConfig, null, 2));
   console.log("-------------------------------------------");
-
-  // Register temporary session ownership (used by callback route to create Agent record)
-  registerSessionOwner(tempSessionId, userId);
 
   // Fire webhook asynchronously (don't wait for response)
   fetch('http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {
@@ -114,7 +172,7 @@ router.post('/session', async (req, res) => {
     console.error(`Webhook error for session ${tempSessionId}:`, error.message);
   });
 
-  // Return temp session ID immediately
+  // Return temp session ID immediately - NO DATABASE SAVE
   res.json({
     sessionId: tempSessionId
   });
@@ -155,6 +213,11 @@ router.post('/technical/save', async (req, res) => {
     return res.status(400).json({ error: 'No feedback provided' });
   }
 
+  // Extract and normalise score from feedback JSON
+  const parsedFeedback = unwrapFeedback(feedback);
+  let score = parsedFeedback?.outcome?.score || parsedFeedback?.overall?.score || 0;
+  if (score <= 10) score = Math.round(score * 10);
+
   try {
     // Create session in database with feedback
     const session = await prisma.session.create({
@@ -165,6 +228,7 @@ router.post('/technical/save', async (req, res) => {
         agentId: conversationId || null,
         status: 'completed',
         duration: duration || null, // Duration in seconds
+        score: score || null,
         // Store execution summary in interviewPlan field (repurposed for technical)
         interviewPlan: executionSummary ? JSON.stringify(executionSummary) : null,
       }
@@ -187,12 +251,18 @@ router.post('/technical/save', async (req, res) => {
 router.post('/behavioral/save', async (req, res) => {
   console.log("Request received at /behavioral/save");
 
-  const { sourceSessionId, agentId, interviewPlan, interviewPrompt, feedbackPrompt, feedback, duration } = req.body;
+  const { agentId, interviewPlan, interviewPrompt, feedbackPrompt, feedback, duration } = req.body;
   const userId = req.userId; // From authMiddleware
 
   if (!feedback) {
     return res.status(400).json({ error: 'No feedback provided' });
   }
+
+  // Extract and normalise score from feedback JSON
+  const parsedFeedback = unwrapFeedback(feedback);
+  let score = parsedFeedback?.overall_score || parsedFeedback?.overallScore || parsedFeedback?.score || 0;
+  if (score <= 5) score = Math.round(score * 20);
+  else if (score <= 10) score = Math.round(score * 10);
 
   try {
     // Create session in database with all callback data
@@ -207,14 +277,14 @@ router.post('/behavioral/save', async (req, res) => {
         feedbackPrompt: feedbackPrompt || null,
         status: 'completed',
         duration: duration || null, // Duration in seconds
+        score: score || null,
       }
     });
 
     console.log(`Behavioral session saved to database: ${session.id}`);
     console.log("Session details:", JSON.stringify({ id: session.id, userId, agentId }, null, 2));
 
-    // Safety-net: create Agent record if it wasn't already created during the setup callback.
-    // The primary Agent creation happens in interviewCallbackRoutes.js when n8n returns agent_id.
+    // Create agent record if agent_id is provided and doesn't already exist
     if (agentId) {
       const existingAgent = await prisma.agent.findUnique({ where: { id: agentId } });
       if (!existingAgent) {
@@ -224,12 +294,8 @@ router.post('/behavioral/save', async (req, res) => {
             userId: userId
           }
         });
-        console.log(`Agent created (fallback): ${agentId}`);
+        console.log(`Agent created: ${agentId}`);
       }
-    }
-
-    if (sourceSessionId) {
-      clearSessionOwner(sourceSessionId);
     }
 
     res.json({
@@ -239,6 +305,53 @@ router.post('/behavioral/save', async (req, res) => {
   } catch (error) {
     console.error('Error saving behavioral session:', error);
     res.status(500).json({ error: 'Failed to save session', details: error.message });
+  }
+});
+
+// PATCH: Update session with duration and/or feedback after interview ends
+router.patch('/session/:sessionId', async (req, res) => {
+  const { sessionId } = req.params;
+  const userId = req.userId;
+  const { duration, feedback } = req.body;
+
+  try {
+    const session = await prisma.session.findFirst({
+      where: { id: sessionId, userId }
+    });
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const updateData = {};
+    if (duration != null) updateData.duration = duration;
+    if (feedback != null) {
+      updateData.feedback = feedback;
+      updateData.status = 'completed';
+      // Extract and persist score
+      const parsedFeedback = unwrapFeedback(feedback);
+      const isTechnical = session.interviewType === 'Technical';
+      let score = 0;
+      if (isTechnical) {
+        score = parsedFeedback?.outcome?.score || parsedFeedback?.overall?.score || 0;
+        if (score <= 10) score = Math.round(score * 10);
+      } else {
+        score = parsedFeedback?.overall_score || parsedFeedback?.overallScore || parsedFeedback?.score || 0;
+        if (score <= 5) score = Math.round(score * 20);
+        else if (score <= 10) score = Math.round(score * 10);
+      }
+      if (score > 0) updateData.score = score;
+    }
+
+    const updated = await prisma.session.update({
+      where: { id: sessionId },
+      data: updateData
+    });
+
+    console.log(`Session ${sessionId} updated:`, Object.keys(updateData).join(', '));
+    res.json({ success: true, sessionId: updated.id });
+  } catch (error) {
+    console.error('Error updating session:', error);
+    res.status(500).json({ error: 'Failed to update session', details: error.message });
   }
 });
 
@@ -280,12 +393,6 @@ router.get('/session/:sessionId', async (req, res) => {
 router.post('/session/:sessionId/cancel', async (req, res) => {
   const { sessionId } = req.params;
   const userId = req.userId;
-
-  if (sessionId.startsWith('temp_')) {
-    clearSessionOwner(sessionId);
-    console.log(`Temporary session ${sessionId} cancelled by user ${userId} (no DB row)`);
-    return res.json({ success: true, sessionId });
-  }
 
   try {
     const session = await prisma.session.update({
@@ -355,12 +462,7 @@ router.get('/agent/last', async (req, res) => {
     res.json({
       agent: {
         id: agent.id,
-        name: agent.name,
-        hasPrompts: Boolean(agent.interviewPrompt && agent.feedbackPrompt && agent.interviewPlan),
-        firstMessage: agent.firstMessage || null,
-        interviewPrompt: agent.interviewPrompt || null,
-        feedbackPrompt: agent.feedbackPrompt || null,
-        interviewPlan: agent.interviewPlan || null,
+        name: agent.name
       }
     });
   } catch (error) {
@@ -394,23 +496,33 @@ router.post('/session/quick-start', async (req, res) => {
       return res.status(400).json({ error: 'No previous agent setup found. Please configure a new session.' });
     }
 
-    if (!agent.interviewPrompt || !agent.feedbackPrompt || !agent.interviewPlan) {
-      return res.status(400).json({ error: 'Stored agent prompts are incomplete. Please configure a new session.' });
-    }
-
     console.log(`Quick-start: Using agent ${agent.id} for user ${userId}`);
 
-    // Register temporary session ownership (used by callback route to create Agent record)
-    registerSessionOwner(tempSessionId, userId);
+    // Prepare quick-start config
+    const quickStartConfig = {
+      userId: userId,
+      session_id: tempSessionId,
+      agent_id: agent.id,
+      interview_mode: 'behavioral',
+      quick_start: true,
+      timestamp: new Date().toISOString()
+    };
 
-    // Seed callback data directly from stored Agent prompts/plan
-    seedCallbackData(tempSessionId, {
-      agentId: agent.id,
-      interviewPrompt: agent.interviewPrompt,
-      feedbackPrompt: agent.feedbackPrompt,
-      interviewPlan: agent.interviewPlan,
-      ...(agent.firstMessage && { firstMessage: agent.firstMessage }),
-      source: 'quick_start_agent'
+    console.log("----- QUICK-START SESSION INITIATED -----");
+    console.log(JSON.stringify(quickStartConfig, null, 2));
+    console.log("----------------------------------------");
+
+    // Trigger webhook for quick-start
+    fetch('http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(quickStartConfig)
+    }).then(() => {
+      console.log(`Quick-start webhook triggered for session ${tempSessionId}`);
+    }).catch(error => {
+      console.error(`Webhook error for quick-start session ${tempSessionId}:`, error.message);
     });
 
     // Return temp session ID immediately

@@ -42,25 +42,25 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }) => {
   const IconComponent = Icon;
   return (
     <MotionButton
-    onClick={onClick}
-    whileHover={{ x: 5, backgroundColor: 'rgba(30, 41, 59, 0.5)' }}
-    whileTap={{ scale: 0.95 }}
-    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors duration-200 group relative overflow-hidden cursor-pointer ${active ? 'text-emerald-400' : 'text-slate-400'
-      }`}
-  >
-    {active && (
-      <MotionDiv
-        layoutId="activeTab"
-        className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 rounded-xl"
-        initial={false}
-        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      />
-    )}
-    <span className="relative z-10 flex items-center space-x-3">
-      <IconComponent size={20} className={active ? 'text-emerald-400' : 'text-slate-500 group-hover:text-emerald-300'} />
-      <span className="font-medium">{label}</span>
-    </span>
-  </MotionButton>
+      onClick={onClick}
+      whileHover={{ x: 5, backgroundColor: 'rgba(30, 41, 59, 0.5)' }}
+      whileTap={{ scale: 0.95 }}
+      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors duration-200 group relative overflow-hidden cursor-pointer ${active ? 'text-emerald-400' : 'text-slate-400'
+        }`}
+    >
+      {active && (
+        <MotionDiv
+          layoutId="activeTab"
+          className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 rounded-xl"
+          initial={false}
+          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        />
+      )}
+      <span className="relative z-10 flex items-center space-x-3">
+        <IconComponent size={20} className={active ? 'text-emerald-400' : 'text-slate-500 group-hover:text-emerald-300'} />
+        <span className="font-medium">{label}</span>
+      </span>
+    </MotionButton>
   );
 };
 
@@ -484,7 +484,7 @@ const Dashboard = () => {
 
         <nav className="space-y-2 flex-1">
           <SidebarItem icon={LayoutDashboard} label="Overview" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
-          <SidebarItem icon={History} label="History" active={activeTab === 'history'} onClick={() => setActiveTab('history')} />
+          <SidebarItem icon={History} label="History" active={activeTab === 'history'} onClick={() => navigate('/history')} />
           <SidebarItem icon={TrendingUp} label="Analytics" active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} />
           <SidebarItem icon={BookOpen} label="Improve" active={activeTab === 'improve'} onClick={() => setActiveTab('improve')} />
         </nav>
@@ -634,7 +634,7 @@ const Dashboard = () => {
                   <h2 className="text-xl font-bold text-white flex items-center">
                     <History size={24} className="mr-3 text-purple-400" /> Recent Sessions
                   </h2>
-                  <button className="text-sm text-slate-400 hover:text-white transition-colors">View all history</button>
+                  <button onClick={() => navigate('/history')} className="text-sm text-slate-400 hover:text-white transition-colors cursor-pointer">View all history</button>
                 </div>
 
                 <div className="space-y-4">
@@ -672,42 +672,53 @@ const Dashboard = () => {
                         <div
                           key={session.id}
                           onClick={handleSessionClick}
-                          className="p-4 rounded-2xl bg-slate-800/20 border border-white/5 hover:bg-slate-800/40 hover:border-emerald-500/30 transition-all cursor-pointer group"
+                          className="p-5 rounded-2xl bg-slate-900/40 backdrop-blur-xl border border-white/5 hover:bg-slate-800/50 hover:border-emerald-500/30 transition-all cursor-pointer group"
                         >
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center space-x-4">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isTechnical ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800/50 text-slate-300'}`}>
-                                {isTechnical ? <Code2 size={18} /> : sessionType === 'Behavioral' ? <User size={18} /> : <LayoutDashboard size={18} />}
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${isTechnical ? 'bg-cyan-500/15 text-cyan-400 shadow-cyan-500/10' : 'bg-purple-500/15 text-purple-400 shadow-purple-500/10'}`}>
+                                {isTechnical ? <Code2 size={18} /> : <User size={18} />}
                               </div>
                               <div>
                                 <h4 className="text-base font-bold text-slate-200 group-hover:text-white transition-colors">{sessionTopic}</h4>
-                                <p className="text-xs text-slate-500">
-                                  {sessionType} • {new Date(session.createdAt).toLocaleDateString()}
-                                  {session.duration ? ` • ${Math.floor(session.duration / 60)}m ${session.duration % 60}s` : ''}
-                                </p>
+                                <div className="flex items-center gap-3 mt-0.5">
+                                  <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${isTechnical ? 'bg-cyan-500/10 text-cyan-400' : 'bg-purple-500/10 text-purple-400'}`}>
+                                    {sessionType}
+                                  </span>
+                                  <span className="text-xs text-slate-600 flex items-center gap-1">
+                                    <Clock size={11} />
+                                    {new Date(session.createdAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  </span>
+                                  {session.duration > 0 && (
+                                    <span className="text-xs text-slate-600">
+                                      {Math.floor(session.duration / 60)}m {session.duration % 60}s
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <div className="text-right">
                               {session.isPending ? (
-                                <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
                                   Pending
                                 </span>
                               ) : (
                                 <span
-                                  className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${feedbackScore >= 80
-                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${feedbackScore >= 80
+                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                     : feedbackScore >= 60
-                                      ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-                                      : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                      ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                      : 'bg-red-500/10 text-red-400 border-red-500/20'
                                     }`}
                                 >
-                                  {feedbackScore} Score
+                                  <Award size={12} />
+                                  {feedbackScore}
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          <p className="text-sm text-slate-400 pl-14 pr-4 line-clamp-2 leading-relaxed">{assessment}</p>
+                          <p className="text-sm text-slate-500 pl-14 pr-4 line-clamp-2 leading-relaxed group-hover:text-slate-400 transition-colors">{assessment}</p>
                         </div>
                       );
                     })
