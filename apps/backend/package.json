@@ -1,0 +1,31 @@
+{
+  "name": "mockly-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "db:migrate": "npx prisma migrate deploy",
+    "db:seed": "node prisma/seed.js",
+    "db:generate": "npx prisma generate",
+    "postinstall": "npx prisma generate"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.3.0",
+    "@prisma/client": "^7.2.0",
+    "axios": "^1.13.4",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.17.2"
+  },
+  "devDependencies": {
+    "prisma": "^7.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
