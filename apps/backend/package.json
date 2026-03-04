@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
+    "start:prod": "npx prisma migrate deploy && node server.js",
     "dev": "node server.js",
     "db:migrate": "npx prisma migrate deploy",
     "db:seed": "node prisma/seed.js",
