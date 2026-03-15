@@ -37,68 +37,54 @@ export default function SessionWaiting() {
       return;
     }
 
-    // For temporary sessions (format: temp_*), poll for callback data then go to interview
+    // For temporary sessions (format: temp_*), use SSE to wait for n8n callback
     if (sessionId.startsWith('temp_')) {
       localStorage.setItem('currentSessionId', sessionId);
 
       let isActive = true;
-      let pollCount = 0;
-      const maxPolls = 60; // Max 3 minutes of polling (60 * 3 seconds)
 
-      const pollCallbackData = async () => {
-        if (!isActive || pollCount >= maxPolls) {
-          if (pollCount >= maxPolls) {
-            console.warn(`Timeout waiting for callback data for session ${sessionId}`);
-          }
-          return;
-        }
+      // Open SSE connection — backend will push data the instant n8n calls back
+      const evtSource = new EventSource(
+        `http://localhost:3000/api/interview/session/${sessionId}/stream`
+      );
 
-        pollCount++;
+      evtSource.addEventListener('connected', () => {
+        console.log('[SessionWaiting] SSE connected, waiting for n8n callback...');
+      });
+
+      evtSource.addEventListener('callback-data', (event) => {
+        if (!isActive) return;
 
         try {
-          const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}/callback-data`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          });
+          const data = JSON.parse(event.data);
+          console.log('[SessionWaiting] Callback data received via SSE:', data);
 
-          if (!isActive) return;
+          // Store callback data in sessionStorage for the interview page
+          sessionStorage.setItem(`callbackData_${sessionId}`, JSON.stringify(data));
 
-          if (response.ok) {
-            const { data } = await response.json();
-            console.log('[SessionWaiting] Callback data received:', data);
-
-            // Store callback data in sessionStorage for the interview page
-            if (data) {
-              sessionStorage.setItem(`callbackData_${sessionId}`, JSON.stringify(data));
-            }
-
-            // Navigate to interview
-            const mode = localStorage.getItem('pendingInterviewMode') || 'behavioral';
-            const routeMap = {
-              'behavioral': 'behavioural',
-              'technical': 'technical',
-              'behavioral_plus_dsa': 'behavioural'
-            };
-            const route = routeMap[mode] || 'behavioural';
-            navigate(`/${route}/${sessionId}`);
-          } else if (response.status === 404) {
-            // Callback data not yet available, continue polling
-            console.log('[SessionWaiting] Waiting for callback data...');
-          }
-        } catch (error) {
-          if (!isActive) return;
-          console.error('[SessionWaiting] Error polling callback data:', error);
+          // Navigate to interview
+          const mode = localStorage.getItem('pendingInterviewMode') || 'behavioral';
+          const routeMap = {
+            'behavioral': 'behavioural',
+            'technical': 'technical',
+            'behavioral_plus_dsa': 'behavioural'
+          };
+          const route = routeMap[mode] || 'behavioural';
+          navigate(`/${route}/${sessionId}`);
+        } catch (err) {
+          console.error('[SessionWaiting] Error parsing SSE data:', err);
         }
-      };
+      });
 
-      pollCallbackData();
-      const pollInterval = setInterval(pollCallbackData, 3000);
+      evtSource.onerror = (err) => {
+        if (!isActive) return;
+        console.warn('[SessionWaiting] SSE connection error, will auto-reconnect:', err);
+        // EventSource auto-reconnects by default — no manual retry needed
+      };
 
       return () => {
         isActive = false;
-        clearInterval(pollInterval);
+        evtSource.close();
       };
     }
 
