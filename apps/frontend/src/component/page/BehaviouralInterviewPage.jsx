@@ -52,6 +52,7 @@ export default function BehaviouralInterviewPage() {
   const [agentId, setAgentId] = useState('');
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [startTime, setStartTime] = useState(null); // Track when interview started
+  const [hasConnected, setHasConnected] = useState(false); // Track if call ever connected
 
   useEffect(() => {
     if (sessionId) {
@@ -262,12 +263,13 @@ export default function BehaviouralInterviewPage() {
     }
   };
   // Listen for session end and trigger workflow
+  // Only trigger after the call has actually connected and then disconnected
   useEffect(() => {
-    if (conversation.status === 'disconnected') {
+    if (hasConnected && conversation.status === 'disconnected') {
       handleSessionEndWorkflow();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversation.status]);
+  }, [conversation.status, hasConnected]);
 
   const handleBackClick = async () => {
     setShowExitWarning(true);
@@ -310,6 +312,7 @@ export default function BehaviouralInterviewPage() {
 
       // Start timing the interview
       setStartTime(Date.now());
+      setHasConnected(true);
 
       // Start the ElevenLabs conversation
       await conversation.startSession({

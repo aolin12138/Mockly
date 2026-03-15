@@ -2,10 +2,56 @@ import express from 'express';
 
 const router = express.Router();
 
-// In-memory store for session callback data (temporary until session is saved to DB)
-const sessionCallbackStore = new Map();
+// --- SSE-based approach: no polling needed ---
+// Maps sessionId -> { res: SSE response object } for waiting clients
+const sseClients = new Map();
+// Fallback store: if n8n callback arrives before the frontend connects via SSE
+const callbackDataStore = new Map();
 
-// n8n callback to store session data in memory (NO DATABASE WRITES)
+// SSE endpoint: frontend connects here and waits for n8n callback data
+router.get('/session/:sessionId/stream', (req, res) => {
+  const { sessionId } = req.params;
+
+  console.log(`📡 SSE client connected for session ${sessionId}`);
+
+  // Set SSE headers
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+  });
+
+  // Send initial heartbeat so the client knows the connection is alive
+  res.write('event: connected\ndata: {}\n\n');
+
+  // Check if callback data already arrived before SSE connected (race condition)
+  const existingData = callbackDataStore.get(sessionId);
+  if (existingData) {
+    console.log(`⚡ Callback data already exists for session ${sessionId}, sending immediately`);
+    res.write(`event: callback-data\ndata: ${JSON.stringify(existingData)}\n\n`);
+    callbackDataStore.delete(sessionId);
+    res.end();
+    return;
+  }
+
+  // Register this client to receive the callback when it arrives
+  sseClients.set(sessionId, res);
+
+  // Keep-alive ping every 15 seconds to prevent proxy/browser timeout
+  const keepAlive = setInterval(() => {
+    res.write(':keepalive\n\n');
+  }, 15000);
+
+  // Cleanup when client disconnects
+  req.on('close', () => {
+    console.log(`📡 SSE client disconnected for session ${sessionId}`);
+    clearInterval(keepAlive);
+    sseClients.delete(sessionId);
+  });
+});
+
+// n8n callback: store data and push to waiting SSE client instantly
 router.post('/session/:sessionId/callback', async (req, res) => {
   const { sessionId } = req.params;
   const { agent_id, interview_plan, interview_prompt, interview_primpot, feedback_prompt, feedback_prompt_final, feedback, duration } = req.body || {};
@@ -13,14 +59,13 @@ router.post('/session/:sessionId/callback', async (req, res) => {
   const feedbackPromptValue = feedback_prompt_final || feedback_prompt || undefined;
 
   console.log('🔔 Callback received for sessionId:', sessionId);
-  console.log('📦 Callback payload:', JSON.stringify(req.body, null, 2));
+  console.log('📦 Callback payload keys:', Object.keys(req.body || {}));
 
   try {
     if (!sessionId) {
       return res.status(400).json({ error: 'Missing sessionId' });
     }
 
-    // Store callback data in memory (no database write)
     const callbackData = {
       agentId: agent_id,
       interviewPlan: interview_plan,
@@ -31,37 +76,23 @@ router.post('/session/:sessionId/callback', async (req, res) => {
       receivedAt: new Date().toISOString()
     };
 
-    sessionCallbackStore.set(sessionId, callbackData);
-    console.log(`Callback data stored in memory for session ${sessionId}`);
+    // If an SSE client is waiting, push the data immediately
+    const sseClient = sseClients.get(sessionId);
+    if (sseClient) {
+      console.log(`🚀 Pushing callback data to SSE client for session ${sessionId}`);
+      sseClient.write(`event: callback-data\ndata: ${JSON.stringify(callbackData)}\n\n`);
+      sseClient.end();
+      sseClients.delete(sessionId);
+    } else {
+      // No SSE client yet — store for when they connect
+      console.log(`💾 No SSE client yet for session ${sessionId}, storing data for later`);
+      callbackDataStore.set(sessionId, callbackData);
+    }
 
-    res.json({ success: true, message: 'Callback data received and stored' });
+    res.json({ success: true, message: 'Callback data received and delivered' });
   } catch (error) {
     console.error('Error processing callback:', error);
     res.status(500).json({ error: 'Failed to process callback', details: error.message });
-  }
-});
-
-// GET endpoint to retrieve stored callback data
-router.get('/session/:sessionId/callback-data', async (req, res) => {
-  const { sessionId } = req.params;
-
-  console.log(`🔍 Callback data requested for sessionId: ${sessionId}`);
-
-  try {
-    if (!sessionId) {
-      return res.status(400).json({ error: 'Missing sessionId' });
-    }
-
-    const callbackData = sessionCallbackStore.get(sessionId);
-
-    if (!callbackData) {
-      return res.status(404).json({ error: 'No callback data found for this session' });
-    }
-
-    res.json({ data: callbackData });
-  } catch (error) {
-    console.error('Error retrieving callback data:', error);
-    res.status(500).json({ error: 'Failed to retrieve callback data', details: error.message });
   }
 });
 

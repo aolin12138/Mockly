@@ -91,13 +91,6 @@ export const ToastProvider = ({ children }) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const toast = useCallback({
-    success: (message, opts = {}) => addToast({ type: 'success', message, ...opts }),
-    error: (message, opts = {}) => addToast({ type: 'error', message, ...opts }),
-    warning: (message, opts = {}) => addToast({ type: 'warning', message, ...opts }),
-    info: (message, opts = {}) => addToast({ type: 'info', message, ...opts }),
-  }, [addToast]);
-
   // Make toast callable as toast.success(), toast.error(), etc.
   const toastApi = useCallback(
     Object.assign(

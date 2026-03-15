@@ -55,10 +55,16 @@ router.get('/elevenlabs/status', async (req, res) => {
       const client = new ElevenLabsClient({ apiKey });
       const subscription = await client.user.subscription.get();
 
+      // Debug: log the subscription object keys to verify property names
+      console.log('📊 ElevenLabs subscription keys:', Object.keys(subscription));
+      console.log('📊 character_count:', subscription.character_count, '| characterCount:', subscription.characterCount);
+      console.log('📊 character_limit:', subscription.character_limit, '| characterLimit:', subscription.characterLimit);
+
       // Determine billing window for minutes_used query
       const nowMs = Date.now();
-      const nextResetUnix = subscription.next_character_count_reset_unix; // unix seconds
-      const billingPeriod = subscription.billing_period || 'monthly_period';
+      // Handle both camelCase (SDK) and snake_case (raw API) property names
+      const nextResetUnix = subscription.next_character_count_reset_unix ?? subscription.nextCharacterCountResetUnix; // unix seconds
+      const billingPeriod = subscription.billing_period ?? subscription.billingPeriod ?? 'monthly_period';
 
       // Estimate start of current billing period
       let periodMs = 30 * 24 * 60 * 60 * 1000; // default 30 days
@@ -97,6 +103,11 @@ router.get('/elevenlabs/status', async (req, res) => {
       // Average mock interview is ~20–30 min, use 25 min as estimate
       const estimatedSessions = Math.floor(minutesRemaining / 25);
 
+      // Handle both camelCase (SDK) and snake_case (raw API) property names
+      const charCount = subscription.character_count ?? subscription.characterCount ?? 0;
+      const charLimit = subscription.character_limit ?? subscription.characterLimit ?? 0;
+      const billingPeriodVal = subscription.billing_period ?? subscription.billingPeriod ?? 'monthly_period';
+
       // Update lastUsedAt
       await prisma.elevenLabsIntegration.update({
         where: { userId },
@@ -108,8 +119,8 @@ router.get('/elevenlabs/status', async (req, res) => {
         last4: integration.apiKeyLast4,
         verifiedAt: integration.verifiedAt,
         tier,
-        characterCount: subscription.character_count,
-        characterLimit: subscription.character_limit,
+        characterCount: charCount,
+        characterLimit: charLimit,
         minutesUsed: Math.round(minutesUsed * 10) / 10,
         minutesLimit,
         minutesRemaining: Math.round(minutesRemaining * 10) / 10,
@@ -190,8 +201,8 @@ router.post('/elevenlabs/connect', async (req, res) => {
       last4,
       verifiedAt: now,
       tier: subscription.tier,
-      characterCount: subscription.character_count,
-      characterLimit: subscription.character_limit
+      characterCount: subscription.character_count ?? subscription.characterCount ?? 0,
+      characterLimit: subscription.character_limit ?? subscription.characterLimit ?? 0
     });
   } catch (error) {
     console.error('Error storing ElevenLabs integration:', error);

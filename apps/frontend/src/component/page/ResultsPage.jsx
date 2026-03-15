@@ -378,6 +378,27 @@ export default function ResultsPage() {
           return;
         }
 
+        // If this is a temp session, it hasn't been saved to DB yet — use sessionStorage
+        if (sessionId.startsWith('temp_')) {
+          const callbackDataStr = sessionStorage.getItem(`callbackData_${sessionId}`);
+          if (callbackDataStr) {
+            const callbackData = JSON.parse(callbackDataStr);
+            if (callbackData.feedback) {
+              console.log('Using feedback from sessionStorage for temp session');
+              const transformed = transformFeedbackData(callbackData.feedback);
+              if (transformed) {
+                setFeedbackData(transformed);
+                setIsLoading(false);
+                return;
+              }
+            }
+          }
+          // No feedback for this temp session — redirect to dashboard
+          console.warn('No feedback for temp session, redirecting to dashboard');
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+
         await new Promise(res => setTimeout(res, 5000));
 
         // Check if feedback already exists in the database

@@ -546,6 +546,15 @@ router.post('/session/quick-start', async (req, res) => {
 
     console.log(`Quick-start: Using agent ${agent.id} for user ${userId}`);
 
+    // Resolve ElevenLabs API key (user's own key or demo)
+    let elevenLabsKey;
+    try {
+      const resolved = await resolveElevenLabsKey(userId, 'behavioral');
+      elevenLabsKey = resolved.apiKey;
+    } catch (err) {
+      return res.status(403).json({ error: err.message });
+    }
+
     // Prepare quick-start config
     const quickStartConfig = {
       userId: userId,
@@ -559,15 +568,6 @@ router.post('/session/quick-start', async (req, res) => {
     console.log("----- QUICK-START SESSION INITIATED -----");
     console.log(JSON.stringify(quickStartConfig, null, 2));
     console.log("----------------------------------------");
-
-    // Resolve ElevenLabs API key (user's own key or demo)
-    let elevenLabsKey;
-    try {
-      const resolved = await resolveElevenLabsKey(userId, 'behavioral');
-      elevenLabsKey = resolved.apiKey;
-    } catch (err) {
-      return res.status(403).json({ error: err.message });
-    }
 
     // Trigger webhook for quick-start
     fetch('http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {

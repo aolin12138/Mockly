@@ -634,616 +634,594 @@ const Dashboard = () => {
           </motion.header>
 
           <AnimatePresence mode="wait">
-          {activeTab === 'overview' && (
-          <motion.div key="overview" className="flex flex-col xl:flex-row gap-8" variants={containerVariants} initial="hidden" animate="visible" exit={{ opacity: 0, transition: { duration: 0.15 } }}>
-            {/* Left column */}
-            <motion.div className="flex-1 space-y-8" variants={containerVariants}>
-              {/* Stats Row */}
-              <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" variants={containerVariants}>
-                <Card className="group">
-                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <Award size={100} />
-                  </div>
-                  <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Average Score</h3>
-                  <div className="flex items-end space-x-3">
-                    <p className="text-5xl font-bold text-white">{stats.averageScore}</p>
-                    <span className="text-lg text-emerald-400 font-medium mb-1.5">/100</span>
-                  </div>
-                </Card>
-
-                <Card className="group">
-                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <Activity size={100} />
-                  </div>
-                  <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Total Practice Time</h3>
-                  <div className="flex items-end space-x-3">
-                    {stats.totalTime >= 3600 ? (
-                      <>
-                        <p className="text-5xl font-bold text-white">{Math.floor(stats.totalTime / 3600)}</p>
-                        <span className="text-lg text-slate-500 font-medium mb-1.5">hr {Math.floor((stats.totalTime % 3600) / 60)}m</span>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-5xl font-bold text-white">{Math.floor(stats.totalTime / 60)}</p>
-                        <span className="text-lg text-slate-500 font-medium mb-1.5">mins</span>
-                      </>
-                    )}
-                  </div>
-                </Card>
-
-                <Card className="group">
-                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <History size={100} />
-                  </div>
-                  <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Sessions</h3>
-                  <div className="flex items-end space-x-3">
-                    <p className="text-5xl font-bold text-white">{stats.totalInterviews}</p>
-                    <span className="text-lg text-slate-500 font-medium mb-1.5">total</span>
-                  </div>
-                </Card>
-
-                {/* BYOK Status Card */}
-                <Card className="group cursor-pointer" onClick={() => setActiveTab('settings')}>
-                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <Key size={100} />
-                  </div>
-                  {byokLoading ? (
-                    <>
-                      <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">ElevenLabs</h3>
-                      <div className="flex items-center space-x-2">
-                        <Spinner size={16} className="text-slate-500" />
-                        <span className="text-slate-500">Loading...</span>
+            {activeTab === 'overview' && (
+              <motion.div key="overview" className="flex flex-col xl:flex-row gap-8" variants={containerVariants} initial="hidden" animate="visible" exit={{ opacity: 0, transition: { duration: 0.15 } }}>
+                {/* Left column */}
+                <motion.div className="flex-1 space-y-8" variants={containerVariants}>
+                  {/* Stats Row */}
+                  <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" variants={containerVariants}>
+                    <Card className="group">
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Award size={100} />
                       </div>
-                    </>
-                  ) : elevenLabsStatus?.connected ? (
-                    <>
-                      <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider flex items-center gap-2">
-                        ElevenLabs
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      </h3>
-                      <div className="flex items-end space-x-2 mb-3">
-                        <span className="text-sm font-semibold text-emerald-400 uppercase px-2 py-0.5 rounded-md bg-emerald-500/10">
-                          {elevenLabsStatus.tier || 'Connected'}
-                        </span>
+                      <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Average Score</h3>
+                      <div className="flex items-end space-x-3">
+                        <p className="text-5xl font-bold text-white">{stats.averageScore}</p>
+                        <span className="text-lg text-emerald-400 font-medium mb-1.5">/100</span>
                       </div>
-                      {elevenLabsStatus.minutesLimit > 0 && (
-                        <div>
-                          <div className="flex justify-between text-xs text-slate-500 mb-1">
-                            <span>{elevenLabsStatus.minutesUsed ?? 0} min used</span>
-                            <span>{elevenLabsStatus.minutesLimit} min limit</span>
+                    </Card>
+
+                    <Card className="group">
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Activity size={100} />
+                      </div>
+                      <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Total Practice Time</h3>
+                      <div className="flex items-end space-x-3">
+                        {stats.totalTime >= 3600 ? (
+                          <>
+                            <p className="text-5xl font-bold text-white">{Math.floor(stats.totalTime / 3600)}</p>
+                            <span className="text-lg text-slate-500 font-medium mb-1.5">hr {Math.floor((stats.totalTime % 3600) / 60)}m</span>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-5xl font-bold text-white">{Math.floor(stats.totalTime / 60)}</p>
+                            <span className="text-lg text-slate-500 font-medium mb-1.5">mins</span>
+                          </>
+                        )}
+                      </div>
+                    </Card>
+
+                    <Card className="group">
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <History size={100} />
+                      </div>
+                      <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Sessions</h3>
+                      <div className="flex items-end space-x-3">
+                        <p className="text-5xl font-bold text-white">{stats.totalInterviews}</p>
+                        <span className="text-lg text-slate-500 font-medium mb-1.5">total</span>
+                      </div>
+                    </Card>
+
+                    {/* BYOK Status Card */}
+                    <Card className="group cursor-pointer" onClick={() => setActiveTab('settings')}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Key size={100} />
+                      </div>
+                      {byokLoading ? (
+                        <>
+                          <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">ElevenLabs</h3>
+                          <div className="flex items-center space-x-2">
+                            <Spinner size={16} className="text-slate-500" />
+                            <span className="text-slate-500">Loading...</span>
                           </div>
-                          <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${
-                                ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.9
-                                  ? 'bg-red-500'
-                                  : ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.7
-                                    ? 'bg-yellow-500'
-                                    : 'bg-emerald-500'
-                              }`}
-                              style={{ width: `${Math.min(100, ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) * 100)}%` }}
-                            />
+                        </>
+                      ) : elevenLabsStatus?.connected ? (
+                        <>
+                          <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider flex items-center gap-2">
+                            ElevenLabs
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          </h3>
+                          <div className="flex items-end space-x-2 mb-3">
+                            <span className="text-sm font-semibold text-emerald-400 uppercase px-2 py-0.5 rounded-md bg-emerald-500/10">
+                              {elevenLabsStatus.tier || 'Connected'}
+                            </span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1">
-                            ~{elevenLabsStatus.estimatedSessions ?? 0} sessions remaining
-                          </p>
-                        </div>
-                      )}
-                      {elevenLabsStatus.error && (
-                        <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
-                          <AlertTriangle size={12} /> {elevenLabsStatus.error}
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider flex items-center gap-2">
-                        ElevenLabs
-                        <span className="w-2 h-2 rounded-full bg-yellow-400" />
-                      </h3>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <AlertTriangle size={18} className="text-yellow-400" />
-                        <span className="text-yellow-400 font-semibold text-sm">Not Verified</span>
-                      </div>
-                      <p className="text-xs text-slate-500">Connect your API key to start interviews</p>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setActiveTab('settings'); }}
-                        className="mt-3 w-full py-2 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:from-emerald-500/30 hover:to-cyan-500/30 transition-all cursor-pointer"
-                      >
-                        Get Verified →
-                      </button>
-                    </>
-                  )}
-                </Card>
-              </motion.div>
-
-              {/* Performance Chart */}
-              <Card className="h-[400px]">
-                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-xl font-bold text-white flex items-center">
-                    <TrendingUp size={24} className="mr-3 text-emerald-400" /> Performance History
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={historyType}
-                      onChange={(event) => setHistoryType(event.target.value)}
-                      className="bg-slate-950/50 border border-white/10 text-slate-400 text-sm rounded-lg px-3 py-1 outline-none focus:border-emerald-500/50"
-                    >
-                      <option value="all">All Types</option>
-                      <option value="behavioural">Behavioural</option>
-                      <option value="technical">Technical</option>
-                    </select>
-                    <select
-                      value={historyWindow}
-                      onChange={(event) => setHistoryWindow(event.target.value)}
-                      className="bg-slate-950/50 border border-white/10 text-slate-400 text-sm rounded-lg px-3 py-1 outline-none focus:border-emerald-500/50"
-                    >
-                      <option value="6">Last 6 Sessions</option>
-                      <option value="12">Last 12 Sessions</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <ComposedChart data={historyData} margin={{ left: 0, right: 10, top: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.4} />
-                      <XAxis
-                        dataKey="name"
-                        stroke="#94a3b8"
-                        tick={{ fontSize: 12 }}
-                        axisLine={false}
-                        tickLine={false}
-                        dy={10}
-                        padding={{ left: 0, right: 0 }}
-                      />
-                      <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} dx={-10} domain={[0, 100]} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                          backdropFilter: 'blur(10px)',
-                          borderColor: 'rgba(255,255,255,0.1)',
-                          borderRadius: '12px',
-                          color: '#fff'
-                        }}
-                        itemStyle={{ color: '#fff' }}
-                      />
-                      {Number.isFinite(averageHistoryScore) && (
-                        <ReferenceLine
-                          y={averageHistoryScore}
-                          stroke="#94a3b8"
-                          strokeDasharray="4 4"
-                          strokeWidth={2}
-                          label={{ value: `Avg ${averageHistoryScore}`, position: 'left', fill: '#cbd5e1', fontSize: 11 }}
-                        />
-                      )}
-                      <Bar dataKey="score" barSize={28} fill="rgba(16,185,129,0.35)" stroke="#10b981" strokeWidth={1} />
-                      <Line type="monotone" dataKey="score" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-
-              {/* Recent Sessions */}
-              <Card>
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-white flex items-center">
-                    <History size={24} className="mr-3 text-purple-400" /> Recent Sessions
-                  </h2>
-                  <button onClick={() => navigate('/history')} className="text-sm text-slate-400 hover:text-white transition-colors cursor-pointer">View all history</button>
-                </div>
-
-                <div className="space-y-4">
-                  {stats.recentSessions.length > 0 ? (
-                    stats.recentSessions.map(session => {
-                      const feedback = session.feedback || {};
-                      const feedbackScore = session.computedScore || 0;
-                      const isTechnical = session.isTechnical;
-
-                      // Determine session type and display info based on feedback structure
-                      let sessionType, sessionTopic, assessment;
-
-                      if (isTechnical) {
-                        // Technical interview feedback
-                        sessionType = 'Technical';
-                        sessionTopic = feedback?.meta?.questionTitle || feedback?.outcome?.verdict || 'Technical Interview';
-                        assessment = feedback?.overall?.summary || feedback?.outcome?.summary || 'Technical interview session completed.';
-                      } else {
-                        // Behavioural interview feedback
-                        sessionType = feedback?.interview_type || 'Behavioral';
-                        sessionTopic = feedback?.position_title || 'Interview';
-                        assessment = feedback?.overall_assessment?.summary || 'Interview session completed.';
-                      }
-
-                      // Navigate to correct results page based on type
-                      const handleSessionClick = () => {
-                        if (isTechnical) {
-                          navigate(`/results/technical/${session.id}`);
-                        } else {
-                          navigate(`/results/${session.id}`);
-                        }
-                      };
-
-                      return (
-                        <div
-                          key={session.id}
-                          onClick={handleSessionClick}
-                          className="p-5 rounded-2xl bg-slate-900/40 backdrop-blur-xl border border-white/5 hover:bg-slate-800/50 hover:border-emerald-500/30 transition-all cursor-pointer group"
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center space-x-4">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${isTechnical ? 'bg-cyan-500/15 text-cyan-400 shadow-cyan-500/10' : 'bg-purple-500/15 text-purple-400 shadow-purple-500/10'}`}>
-                                {isTechnical ? <Code2 size={18} /> : <User size={18} />}
+                          {elevenLabsStatus.minutesLimit > 0 && (
+                            <div>
+                              <div className="flex justify-between text-xs text-slate-500 mb-1">
+                                <span>{elevenLabsStatus.minutesUsed ?? 0} min used</span>
+                                <span>{elevenLabsStatus.minutesLimit} min limit</span>
                               </div>
-                              <div>
-                                <h4 className="text-base font-bold text-slate-200 group-hover:text-white transition-colors">{sessionTopic}</h4>
-                                <div className="flex items-center gap-3 mt-0.5">
-                                  <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${isTechnical ? 'bg-cyan-500/10 text-cyan-400' : 'bg-purple-500/10 text-purple-400'}`}>
-                                    {sessionType}
-                                  </span>
-                                  <span className="text-xs text-slate-600 flex items-center gap-1">
-                                    <Clock size={11} />
-                                    {new Date(session.createdAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                  </span>
-                                  {session.duration > 0 && (
-                                    <span className="text-xs text-slate-600">
-                                      {Math.floor(session.duration / 60)}m {session.duration % 60}s
+                              <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.9
+                                    ? 'bg-red-500'
+                                    : ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.7
+                                      ? 'bg-yellow-500'
+                                      : 'bg-emerald-500'
+                                    }`}
+                                  style={{ width: `${Math.min(100, ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) * 100)}%` }}
+                                />
+                              </div>
+                              <p className="text-xs text-slate-500 mt-1">
+                                ~{elevenLabsStatus.estimatedSessions ?? 0} sessions remaining
+                              </p>
+                            </div>
+                          )}
+                          {elevenLabsStatus.error && (
+                            <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
+                              <AlertTriangle size={12} /> {elevenLabsStatus.error}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider flex items-center gap-2">
+                            ElevenLabs
+                            <span className="w-2 h-2 rounded-full bg-yellow-400" />
+                          </h3>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <AlertTriangle size={18} className="text-yellow-400" />
+                            <span className="text-yellow-400 font-semibold text-sm">Not Verified</span>
+                          </div>
+                          <p className="text-xs text-slate-500">Connect your API key to start interviews</p>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setActiveTab('settings'); }}
+                            className="mt-3 w-full py-2 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:from-emerald-500/30 hover:to-cyan-500/30 transition-all cursor-pointer"
+                          >
+                            Get Verified →
+                          </button>
+                        </>
+                      )}
+                    </Card>
+                  </motion.div>
+
+                  {/* Performance Chart */}
+                  <Card className="h-[400px]">
+                    <div className="flex justify-between items-center mb-8">
+                      <h2 className="text-xl font-bold text-white flex items-center">
+                        <TrendingUp size={24} className="mr-3 text-emerald-400" /> Performance History
+                      </h2>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={historyType}
+                          onChange={(event) => setHistoryType(event.target.value)}
+                          className="bg-slate-950/50 border border-white/10 text-slate-400 text-sm rounded-lg px-3 py-1 outline-none focus:border-emerald-500/50"
+                        >
+                          <option value="all">All Types</option>
+                          <option value="behavioural">Behavioural</option>
+                          <option value="technical">Technical</option>
+                        </select>
+                        <select
+                          value={historyWindow}
+                          onChange={(event) => setHistoryWindow(event.target.value)}
+                          className="bg-slate-950/50 border border-white/10 text-slate-400 text-sm rounded-lg px-3 py-1 outline-none focus:border-emerald-500/50"
+                        >
+                          <option value="6">Last 6 Sessions</option>
+                          <option value="12">Last 12 Sessions</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height={300}>
+                        <ComposedChart data={historyData} margin={{ left: 0, right: 10, top: 10, bottom: 10 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.4} />
+                          <XAxis
+                            dataKey="name"
+                            stroke="#94a3b8"
+                            tick={{ fontSize: 12 }}
+                            axisLine={false}
+                            tickLine={false}
+                            dy={10}
+                            padding={{ left: 0, right: 0 }}
+                          />
+                          <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} dx={-10} domain={[0, 100]} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                              backdropFilter: 'blur(10px)',
+                              borderColor: 'rgba(255,255,255,0.1)',
+                              borderRadius: '12px',
+                              color: '#fff'
+                            }}
+                            itemStyle={{ color: '#fff' }}
+                          />
+                          {Number.isFinite(averageHistoryScore) && (
+                            <ReferenceLine
+                              y={averageHistoryScore}
+                              stroke="#94a3b8"
+                              strokeDasharray="4 4"
+                              strokeWidth={2}
+                              label={{ value: `Avg ${averageHistoryScore}`, position: 'left', fill: '#cbd5e1', fontSize: 11 }}
+                            />
+                          )}
+                          <Bar dataKey="score" barSize={28} fill="rgba(16,185,129,0.35)" stroke="#10b981" strokeWidth={1} />
+                          <Line type="monotone" dataKey="score" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+
+                  {/* Recent Sessions */}
+                  <Card>
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl font-bold text-white flex items-center">
+                        <History size={24} className="mr-3 text-purple-400" /> Recent Sessions
+                      </h2>
+                      <button onClick={() => navigate('/history')} className="text-sm text-slate-400 hover:text-white transition-colors cursor-pointer">View all history</button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {stats.recentSessions.length > 0 ? (
+                        stats.recentSessions.map(session => {
+                          const feedback = session.feedback || {};
+                          const feedbackScore = session.computedScore || 0;
+                          const isTechnical = session.isTechnical;
+
+                          // Determine session type and display info based on feedback structure
+                          let sessionType, sessionTopic, assessment;
+
+                          if (isTechnical) {
+                            // Technical interview feedback
+                            sessionType = 'Technical';
+                            sessionTopic = feedback?.meta?.questionTitle || feedback?.outcome?.verdict || 'Technical Interview';
+                            assessment = feedback?.overall?.summary || feedback?.outcome?.summary || 'Technical interview session completed.';
+                          } else {
+                            // Behavioural interview feedback
+                            sessionType = feedback?.interview_type || 'Behavioral';
+                            sessionTopic = feedback?.position_title || 'Interview';
+                            assessment = feedback?.overall_assessment?.summary || 'Interview session completed.';
+                          }
+
+                          // Navigate to correct results page based on type
+                          const handleSessionClick = () => {
+                            if (isTechnical) {
+                              navigate(`/results/technical/${session.id}`);
+                            } else {
+                              navigate(`/results/${session.id}`);
+                            }
+                          };
+
+                          return (
+                            <div
+                              key={session.id}
+                              onClick={handleSessionClick}
+                              className="p-5 rounded-2xl bg-slate-900/40 backdrop-blur-xl border border-white/5 hover:bg-slate-800/50 hover:border-emerald-500/30 transition-all cursor-pointer group"
+                            >
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center space-x-4">
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${isTechnical ? 'bg-cyan-500/15 text-cyan-400 shadow-cyan-500/10' : 'bg-purple-500/15 text-purple-400 shadow-purple-500/10'}`}>
+                                    {isTechnical ? <Code2 size={18} /> : <User size={18} />}
+                                  </div>
+                                  <div>
+                                    <h4 className="text-base font-bold text-slate-200 group-hover:text-white transition-colors">{sessionTopic}</h4>
+                                    <div className="flex items-center gap-3 mt-0.5">
+                                      <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${isTechnical ? 'bg-cyan-500/10 text-cyan-400' : 'bg-purple-500/10 text-purple-400'}`}>
+                                        {sessionType}
+                                      </span>
+                                      <span className="text-xs text-slate-600 flex items-center gap-1">
+                                        <Clock size={11} />
+                                        {new Date(session.createdAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                      </span>
+                                      {session.duration > 0 && (
+                                        <span className="text-xs text-slate-600">
+                                          {Math.floor(session.duration / 60)}m {session.duration % 60}s
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  {session.isPending ? (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                                      Pending
+                                    </span>
+                                  ) : (
+                                    <span
+                                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${feedbackScore >= 80
+                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                        : feedbackScore >= 60
+                                          ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                          : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                        }`}
+                                    >
+                                      <Award size={12} />
+                                      {feedbackScore}
                                     </span>
                                   )}
                                 </div>
                               </div>
+
+                              <p className="text-sm text-slate-500 pl-14 pr-4 line-clamp-2 leading-relaxed group-hover:text-slate-400 transition-colors">{assessment}</p>
                             </div>
-                            <div className="text-right">
-                              {session.isPending ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
-                                  Pending
-                                </span>
-                              ) : (
-                                <span
-                                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${feedbackScore >= 80
-                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                    : feedbackScore >= 60
-                                      ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                                      : 'bg-red-500/10 text-red-400 border-red-500/20'
-                                    }`}
-                                >
-                                  <Award size={12} />
-                                  {feedbackScore}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          <p className="text-sm text-slate-500 pl-14 pr-4 line-clamp-2 leading-relaxed group-hover:text-slate-400 transition-colors">{assessment}</p>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-8">
+                          <p className="text-slate-400">No sessions yet. Start your first interview!</p>
                         </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-slate-400">No sessions yet. Start your first interview!</p>
+                      )}
                     </div>
-                  )}
-                </div>
-              </Card>
-            </motion.div>
+                  </Card>
+                </motion.div>
 
-            {/* Right column */}
-            <motion.div className="w-full xl:w-[400px] space-y-8" variants={containerVariants}>
-              {/* Start Interview CTA */}
-              <motion.button
-                variants={{ hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1 } }}
-                transition={{ duration: 0.5 }}
-                onClick={() => navigate('/setup')}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full relative overflow-hidden rounded-2xl p-1 group shadow-[0_0_40px_-10px_rgba(16,185,129,0.3)] mb-2 cursor-pointer"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 animate-gradient-xy" />
-                <div className="relative bg-slate-900/90 rounded-xl p-6 flex items-center justify-between border border-white/10 backdrop-blur-xl group-hover:bg-slate-900/80 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-full flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform">
-                      <Play size={24} className="text-white fill-current ml-1" />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-lg font-bold text-white">Start New Interview</h3>
-                      <p className="text-xs text-emerald-200">Mock up a fresh session</p>
-                    </div>
-                  </div>
-                  <ChevronRight size={24} className="text-slate-400 group-hover:text-white transition-colors group-hover:translate-x-1" />
-                </div>
-              </motion.button>
-
-              {/* Latest Performance Radar Chart */}
-              {stats.recentSessions.length > 0 && stats.recentSessions[0]?.normalizedDimensions?.length > 0 ? (
-                <Card className="h-[420px]">
-                  <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-xl font-bold text-white flex items-center">
-                      <Award size={24} className="mr-3 text-cyan-400" /> Latest Performance
-                    </h2>
-                    <span className="text-xs text-slate-400">Scale: 0-5</span>
-                  </div>
-                  <div className="h-[330px] w-full flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height={330}>
-                      <RadarChart data={stats.recentSessions[0].normalizedDimensions}>
-                        <PolarGrid stroke="#334155" opacity={0.4} />
-                        <PolarAngleAxis dataKey="label" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#cbd5e1' }} />
-                        <PolarRadiusAxis domain={[0, 5]} tickCount={6} stroke="#64748b" tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                        <Radar name="Score" dataKey="score" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.3} domain={[0, 5]} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                            backdropFilter: 'blur(10px)',
-                            borderColor: 'rgba(255,255,255,0.1)',
-                            borderRadius: '12px',
-                            color: '#fff'
-                          }}
-                          itemStyle={{ color: '#06b6d4' }}
-                          formatter={(value, name, props) => {
-                            const originalScore = props.payload?.originalScore;
-                            if (originalScore !== undefined) {
-                              return [`${value.toFixed(1)} / 5 (${originalScore}/100)`, name];
-                            }
-                            return [`${value.toFixed(0)}%`, name];
-                          }}
-                        />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </Card>
-              ) : (
-                <Card>
-                  <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-                    <Award size={24} className="mr-3 text-cyan-400" /> Latest Performance
-                  </h2>
-                  <div className="text-sm text-slate-400">No dimension scores yet for the latest session.</div>
-                </Card>
-              )}
-
-              {/* Focus Areas */}
-              <Card>
-                <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-                  <BookOpen size={24} className="mr-3 text-orange-400" /> Focus Areas
-                </h2>
-
-                <div className="space-y-3">
-                  {stats.improvements && stats.improvements.length > 0 ? (
-                    stats.improvements.map(item => (
-                      <div
-                        key={item.id}
-                        className="flex items-start p-4 rounded-xl border border-white/5 bg-slate-800/10 hover:bg-slate-800/30 transition-colors group"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center mb-1">
-                            <span className="w-2 h-2 rounded-full mr-2 bg-yellow-400" />
-                            <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">{item.category}</span>
-                          </div>
-                          <p className="text-sm text-slate-200 font-medium group-hover:text-white transition-colors">{item.task}</p>
-                        </div>
-                        <button className="p-2 hover:bg-white/10 rounded-lg text-slate-500 hover:text-emerald-400 transition-colors -mr-2">
-                          <ChevronRight size={18} />
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-slate-400">No improvement areas yet. Keep practicing!</p>
-                    </div>
-                  )}
-
-                  <button className="w-full mt-2 py-3 rounded-xl border border-dashed border-slate-700 text-slate-400 text-sm font-medium hover:bg-slate-800/50 hover:text-white hover:border-slate-500 transition-all flex items-center justify-center">
-                    + Add Custom Goal
-                  </button>
-                </div>
-              </Card>
-            </motion.div>
-          </motion.div>
-          )}
-
-          {/* Settings Panel - shown when settings tab is active */}
-          {activeTab === 'settings' && (
-            <motion.div
-              key="settings"
-              initial="hidden"
-              animate="visible"
-              exit={{ opacity: 0, transition: { duration: 0.15 } }}
-              variants={{
-                hidden: { opacity: 0, y: 10 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut', staggerChildren: 0.08 } }
-              }}
-              className="mt-8"
-            >
-              <Card>
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-bold text-white flex items-center">
-                    <Shield size={28} className="mr-3 text-emerald-400" /> ElevenLabs Integration
-                  </h2>
-                  <button
-                    onClick={fetchElevenLabsStatus}
-                    className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
-                    title="Refresh status"
+                {/* Right column */}
+                <motion.div className="w-full xl:w-[400px] space-y-8" variants={containerVariants}>
+                  {/* Start Interview CTA */}
+                  <motion.button
+                    variants={{ hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1 } }}
+                    transition={{ duration: 0.5 }}
+                    onClick={() => navigate('/setup')}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full relative overflow-hidden rounded-2xl p-1 group shadow-[0_0_40px_-10px_rgba(16,185,129,0.3)] mb-2 cursor-pointer"
                   >
-                    {byokLoading ? <Spinner size={18} /> : <RefreshCw size={18} />}
-                  </button>
-                </div>
-
-                {byokLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Spinner size={24} className="text-emerald-400 mr-3" />
-                    <span className="text-slate-400">Loading integration status...</span>
-                  </div>
-                ) : elevenLabsStatus?.connected ? (
-                  /* Connected State */
-                  <div className="space-y-6">
-                    {/* Connection Info */}
-                    <div className="p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
-                            <CheckCircle size={20} className="text-emerald-400" />
-                          </div>
-                          <div>
-                            <h3 className="text-white font-semibold">Connected</h3>
-                            <p className="text-xs text-slate-500">
-                              Key ending in ••••{elevenLabsStatus.last4} · Verified {new Date(elevenLabsStatus.verifiedAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })}
-                            </p>
-                          </div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 animate-gradient-xy" />
+                    <div className="relative bg-slate-900/90 rounded-xl p-6 flex items-center justify-between border border-white/10 backdrop-blur-xl group-hover:bg-slate-900/80 transition-colors">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-full flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform">
+                          <Play size={24} className="text-white fill-current ml-1" />
                         </div>
-                        <span className="text-sm font-semibold text-emerald-400 uppercase px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                          {elevenLabsStatus.tier || 'Active'}
-                        </span>
+                        <div className="text-left">
+                          <h3 className="text-lg font-bold text-white">Start New Interview</h3>
+                          <p className="text-xs text-emerald-200">Mock up a fresh session</p>
+                        </div>
                       </div>
+                      <ChevronRight size={24} className="text-slate-400 group-hover:text-white transition-colors group-hover:translate-x-1" />
+                    </div>
+                  </motion.button>
 
-                      {/* Agent Minutes Usage */}
-                      {elevenLabsStatus.minutesLimit > 0 && (
-                        <div className="mt-4 space-y-4">
-                          <div>
-                            <div className="flex justify-between text-sm mb-2">
-                              <span className="text-slate-400">Agent Minutes</span>
-                              <span className="text-white font-medium">
-                                {elevenLabsStatus.minutesUsed ?? 0} / {elevenLabsStatus.minutesLimit} min
-                              </span>
+                  {/* Latest Performance Radar Chart */}
+                  {stats.recentSessions.length > 0 && stats.recentSessions[0]?.normalizedDimensions?.length > 0 ? (
+                    <Card className="h-[420px]">
+                      <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-xl font-bold text-white flex items-center">
+                          <Award size={24} className="mr-3 text-cyan-400" /> Latest Performance
+                        </h2>
+                        <span className="text-xs text-slate-400">Scale: 0-5</span>
+                      </div>
+                      <div className="h-[330px] w-full flex items-center justify-center">
+                        <ResponsiveContainer width="100%" height={330}>
+                          <RadarChart data={stats.recentSessions[0].normalizedDimensions}>
+                            <PolarGrid stroke="#334155" opacity={0.4} />
+                            <PolarAngleAxis dataKey="label" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#cbd5e1' }} />
+                            <PolarRadiusAxis domain={[0, 5]} tickCount={6} stroke="#64748b" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                            <Radar name="Score" dataKey="score" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.3} domain={[0, 5]} />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                                backdropFilter: 'blur(10px)',
+                                borderColor: 'rgba(255,255,255,0.1)',
+                                borderRadius: '12px',
+                                color: '#fff'
+                              }}
+                              itemStyle={{ color: '#06b6d4' }}
+                              formatter={(value, name, props) => {
+                                const originalScore = props.payload?.originalScore;
+                                if (originalScore !== undefined) {
+                                  return [`${value.toFixed(1)} / 5 (${originalScore}/100)`, name];
+                                }
+                                return [`${value.toFixed(0)}%`, name];
+                              }}
+                            />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </Card>
+                  ) : (
+                    <Card>
+                      <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+                        <Award size={24} className="mr-3 text-cyan-400" /> Latest Performance
+                      </h2>
+                      <div className="text-sm text-slate-400">No dimension scores yet for the latest session.</div>
+                    </Card>
+                  )}
+
+                  {/* Focus Areas */}
+                  <Card>
+                    <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+                      <BookOpen size={24} className="mr-3 text-orange-400" /> Focus Areas
+                    </h2>
+
+                    <div className="space-y-3">
+                      {stats.improvements && stats.improvements.length > 0 ? (
+                        stats.improvements.map(item => (
+                          <div
+                            key={item.id}
+                            className="flex items-start p-4 rounded-xl border border-white/5 bg-slate-800/10 hover:bg-slate-800/30 transition-colors group"
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center mb-1">
+                                <span className="w-2 h-2 rounded-full mr-2 bg-yellow-400" />
+                                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">{item.category}</span>
+                              </div>
+                              <p className="text-sm text-slate-200 font-medium group-hover:text-white transition-colors">{item.task}</p>
                             </div>
-                            <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all duration-500 ${
-                                  ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.9
+                            <button className="p-2 hover:bg-white/10 rounded-lg text-slate-500 hover:text-emerald-400 transition-colors -mr-2">
+                              <ChevronRight size={18} />
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8">
+                          <p className="text-slate-400">No improvement areas yet. Keep practicing!</p>
+                        </div>
+                      )}
+
+                      <button className="w-full mt-2 py-3 rounded-xl border border-dashed border-slate-700 text-slate-400 text-sm font-medium hover:bg-slate-800/50 hover:text-white hover:border-slate-500 transition-all flex items-center justify-center">
+                        + Add Custom Goal
+                      </button>
+                    </div>
+                  </Card>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {/* Settings Panel - shown when settings tab is active */}
+            {activeTab === 'settings' && (
+              <motion.div
+                key="settings"
+                initial="hidden"
+                animate="visible"
+                exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                variants={{
+                  hidden: { opacity: 0, y: 10 },
+                  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut', staggerChildren: 0.08 } }
+                }}
+                className="mt-8"
+              >
+                <Card>
+                  <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-2xl font-bold text-white flex items-center">
+                      <Shield size={28} className="mr-3 text-emerald-400" /> ElevenLabs Integration
+                    </h2>
+                    <button
+                      onClick={fetchElevenLabsStatus}
+                      className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                      title="Refresh status"
+                    >
+                      {byokLoading ? <Spinner size={18} /> : <RefreshCw size={18} />}
+                    </button>
+                  </div>
+
+                  {byokLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Spinner size={24} className="text-emerald-400 mr-3" />
+                      <span className="text-slate-400">Loading integration status...</span>
+                    </div>
+                  ) : elevenLabsStatus?.connected ? (
+                    /* Connected State */
+                    <div className="space-y-6">
+                      {/* Connection Info */}
+                      <div className="p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                              <CheckCircle size={20} className="text-emerald-400" />
+                            </div>
+                            <div>
+                              <h3 className="text-white font-semibold">Connected</h3>
+                              <p className="text-xs text-slate-500">
+                                Key ending in ••••{elevenLabsStatus.last4} · Verified {new Date(elevenLabsStatus.verifiedAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-sm font-semibold text-emerald-400 uppercase px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                            {elevenLabsStatus.tier || 'Active'}
+                          </span>
+                        </div>
+
+                        {/* Agent Minutes Usage */}
+                        {elevenLabsStatus.minutesLimit > 0 && (
+                          <div className="mt-4 space-y-4">
+                            <div>
+                              <div className="flex justify-between text-sm mb-2">
+                                <span className="text-slate-400">Agent Minutes</span>
+                                <span className="text-white font-medium">
+                                  {elevenLabsStatus.minutesUsed ?? 0} / {elevenLabsStatus.minutesLimit} min
+                                </span>
+                              </div>
+                              <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-500 ${((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.9
                                     ? 'bg-gradient-to-r from-red-500 to-red-400'
                                     : ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.7
                                       ? 'bg-gradient-to-r from-yellow-500 to-yellow-400'
                                       : 'bg-gradient-to-r from-emerald-500 to-cyan-500'
-                                }`}
-                                style={{ width: `${Math.min(100, ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) * 100)}%` }}
-                              />
+                                    }`}
+                                  style={{ width: `${Math.min(100, ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) * 100)}%` }}
+                                />
+                              </div>
+                              <div className="flex justify-between text-xs text-slate-500 mt-1">
+                                <span>{Math.round(((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) * 100)}% used</span>
+                                <span>{elevenLabsStatus.minutesRemaining ?? 0} min remaining</span>
+                              </div>
                             </div>
-                            <div className="flex justify-between text-xs text-slate-500 mt-1">
-                              <span>{Math.round(((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) * 100)}% used</span>
-                              <span>{elevenLabsStatus.minutesRemaining ?? 0} min remaining</span>
-                            </div>
-                          </div>
 
-                          {/* Estimated Sessions + Reset */}
-                          <div className="flex gap-4">
-                            <div className="flex-1 p-3 rounded-xl bg-slate-800/40 border border-white/5">
-                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Est. Sessions Left</p>
-                              <p className="text-2xl font-bold text-white">{elevenLabsStatus.estimatedSessions ?? 0}</p>
-                              <p className="text-xs text-slate-500">~25 min each</p>
-                            </div>
-                            {elevenLabsStatus.nextResetUnix && (
-                              <div className="flex-1 p-3 rounded-xl bg-slate-800/40 border border-white/5">
-                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Resets On</p>
-                                <p className="text-lg font-bold text-white">
-                                  {new Date(elevenLabsStatus.nextResetUnix * 1000).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' })}
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                  {Math.max(0, Math.ceil((elevenLabsStatus.nextResetUnix * 1000 - Date.now()) / (1000 * 60 * 60 * 24)))} days left
-                                </p>
+                            {/* Character / Token Usage */}
+                            {(elevenLabsStatus.characterCount != null || elevenLabsStatus.characterLimit != null) && (
+                              <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                  <span className="text-slate-400">Characters (Tokens)</span>
+                                  <span className="text-white font-medium">
+                                    {(elevenLabsStatus.characterCount ?? 0).toLocaleString()} / {(elevenLabsStatus.characterLimit ?? 0).toLocaleString()}
+                                  </span>
+                                </div>
+                                {elevenLabsStatus.characterLimit > 0 && (
+                                  <>
+                                    <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full transition-all duration-500 ${((elevenLabsStatus.characterCount || 0) / elevenLabsStatus.characterLimit) > 0.9
+                                          ? 'bg-gradient-to-r from-red-500 to-red-400'
+                                          : ((elevenLabsStatus.characterCount || 0) / elevenLabsStatus.characterLimit) > 0.7
+                                            ? 'bg-gradient-to-r from-yellow-500 to-yellow-400'
+                                            : 'bg-gradient-to-r from-cyan-500 to-blue-500'
+                                          }`}
+                                        style={{ width: `${Math.min(100, ((elevenLabsStatus.characterCount || 0) / elevenLabsStatus.characterLimit) * 100)}%` }}
+                                      />
+                                    </div>
+                                    <div className="flex justify-between text-xs text-slate-500 mt-1">
+                                      <span>{Math.round(((elevenLabsStatus.characterCount || 0) / elevenLabsStatus.characterLimit) * 100)}% used</span>
+                                      <span>{(Math.max(0, (elevenLabsStatus.characterLimit || 0) - (elevenLabsStatus.characterCount || 0))).toLocaleString()} remaining</span>
+                                    </div>
+                                  </>
+                                )}
                               </div>
                             )}
+
+                            {/* Estimated Sessions + Reset */}
+                            <div className="flex gap-4">
+                              <div className="flex-1 p-3 rounded-xl bg-slate-800/40 border border-white/5">
+                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Est. Sessions Left</p>
+                                <p className="text-2xl font-bold text-white">{elevenLabsStatus.estimatedSessions ?? 0}</p>
+                                <p className="text-xs text-slate-500">~25 min each</p>
+                              </div>
+                              {elevenLabsStatus.nextResetUnix && (
+                                <div className="flex-1 p-3 rounded-xl bg-slate-800/40 border border-white/5">
+                                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Resets On</p>
+                                  <p className="text-lg font-bold text-white">
+                                    {new Date(elevenLabsStatus.nextResetUnix * 1000).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' })}
+                                  </p>
+                                  <p className="text-xs text-slate-500">
+                                    {Math.max(0, Math.ceil((elevenLabsStatus.nextResetUnix * 1000 - Date.now()) / (1000 * 60 * 60 * 24)))} days left
+                                  </p>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {elevenLabsStatus.error && (
-                        <div className="mt-4 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center gap-2">
-                          <AlertTriangle size={16} className="text-yellow-400 flex-shrink-0" />
-                          <p className="text-sm text-yellow-400">{elevenLabsStatus.error}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => { setShowReplaceInput(!showReplaceInput); setConnectError(''); setConnectSuccess(''); }}
-                        className="flex-1 py-3 rounded-xl border border-white/10 text-slate-300 text-sm font-medium hover:bg-slate-800/50 hover:text-white transition-all cursor-pointer flex items-center justify-center gap-2"
-                      >
-                        <Key size={16} /> Replace Key
-                      </button>
-                      <button
-                        onClick={handleDisconnect}
-                        className="flex-1 py-3 rounded-xl border border-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/10 transition-all cursor-pointer flex items-center justify-center gap-2"
-                      >
-                        <XCircle size={16} /> Disconnect
-                      </button>
-                    </div>
-
-                    {/* Replace Key Input */}
-                    {showReplaceInput && (
-                      <div className="p-5 rounded-2xl bg-slate-800/30 border border-white/5 space-y-4">
-                        <h4 className="text-white font-medium">Replace API Key</h4>
-                        <p className="text-xs text-slate-500">Enter your new ElevenLabs API key. The old key will be overwritten.</p>
-                        <div className="flex gap-3">
-                          <input
-                            type="password"
-                            value={connectKey}
-                            onChange={(e) => setConnectKey(e.target.value)}
-                            placeholder="Paste your new ElevenLabs API key"
-                            className="flex-1 bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/50 transition-colors"
-                            onKeyDown={(e) => e.key === 'Enter' && handleConnectKey()}
-                          />
-                          <button
-                            onClick={handleConnectKey}
-                            disabled={connectLoading}
-                            className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-semibold hover:from-emerald-600 hover:to-cyan-600 transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
-                          >
-                            {connectLoading ? <Spinner size={16} /> : <CheckCircle size={16} />}
-                            {connectLoading ? 'Verifying...' : 'Verify & Save'}
-                          </button>
-                        </div>
+                        {elevenLabsStatus.error && (
+                          <div className="mt-4 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center gap-2">
+                            <AlertTriangle size={16} className="text-yellow-400 flex-shrink-0" />
+                            <p className="text-sm text-yellow-400">{elevenLabsStatus.error}</p>
+                          </div>
+                        )}
                       </div>
-                    )}
 
-                    {/* Status Messages */}
-                    {connectError && (
-                      <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2">
-                        <XCircle size={16} className="text-red-400 flex-shrink-0" />
-                        <p className="text-sm text-red-400">{connectError}</p>
-                      </div>
-                    )}
-                    {connectSuccess && (
-                      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
-                        <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
-                        <p className="text-sm text-emerald-400">{connectSuccess}</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Not Connected State */
-                  <div className="space-y-6">
-                    {/* Warning Banner */}
-                    <div className="p-5 rounded-2xl bg-yellow-500/5 border border-yellow-500/20">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-yellow-500/15 flex items-center justify-center">
-                          <AlertTriangle size={20} className="text-yellow-400" />
-                        </div>
-                        <div>
-                          <h3 className="text-white font-semibold">ElevenLabs Not Connected</h3>
-                          <p className="text-xs text-slate-500">Connect your API key to use voice-powered interviews</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Connect Form */}
-                    <div className="p-5 rounded-2xl bg-slate-800/30 border border-white/5 space-y-4">
-                      <h4 className="text-white font-medium flex items-center gap-2"><Key size={18} className="text-emerald-400" /> Connect Your API Key</h4>
+                      {/* Actions */}
                       <div className="flex gap-3">
-                        <input
-                          type="password"
-                          value={connectKey}
-                          onChange={(e) => setConnectKey(e.target.value)}
-                          placeholder="Paste your ElevenLabs API key"
-                          className="flex-1 bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/50 transition-colors"
-                          onKeyDown={(e) => e.key === 'Enter' && handleConnectKey()}
-                        />
                         <button
-                          onClick={handleConnectKey}
-                          disabled={connectLoading}
-                          className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-semibold hover:from-emerald-600 hover:to-cyan-600 transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                          onClick={() => { setShowReplaceInput(!showReplaceInput); setConnectError(''); setConnectSuccess(''); }}
+                          className="flex-1 py-3 rounded-xl border border-white/10 text-slate-300 text-sm font-medium hover:bg-slate-800/50 hover:text-white transition-all cursor-pointer flex items-center justify-center gap-2"
                         >
-                          {connectLoading ? <Spinner size={16} /> : <Shield size={16} />}
-                          {connectLoading ? 'Verifying...' : 'Verify & Save'}
+                          <Key size={16} /> Replace Key
+                        </button>
+                        <button
+                          onClick={handleDisconnect}
+                          className="flex-1 py-3 rounded-xl border border-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/10 transition-all cursor-pointer flex items-center justify-center gap-2"
+                        >
+                          <XCircle size={16} /> Disconnect
                         </button>
                       </div>
 
+                      {/* Replace Key Input */}
+                      {showReplaceInput && (
+                        <div className="p-5 rounded-2xl bg-slate-800/30 border border-white/5 space-y-4">
+                          <h4 className="text-white font-medium">Replace API Key</h4>
+                          <p className="text-xs text-slate-500">Enter your new ElevenLabs API key. The old key will be overwritten.</p>
+                          <div className="flex gap-3">
+                            <input
+                              type="password"
+                              value={connectKey}
+                              onChange={(e) => setConnectKey(e.target.value)}
+                              placeholder="Paste your new ElevenLabs API key"
+                              className="flex-1 bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/50 transition-colors"
+                              onKeyDown={(e) => e.key === 'Enter' && handleConnectKey()}
+                            />
+                            <button
+                              onClick={handleConnectKey}
+                              disabled={connectLoading}
+                              className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-semibold hover:from-emerald-600 hover:to-cyan-600 transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                            >
+                              {connectLoading ? <Spinner size={16} /> : <CheckCircle size={16} />}
+                              {connectLoading ? 'Verifying...' : 'Verify & Save'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Status Messages */}
                       {connectError && (
                         <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2">
                           <XCircle size={16} className="text-red-400 flex-shrink-0" />
@@ -1257,45 +1235,96 @@ const Dashboard = () => {
                         </div>
                       )}
                     </div>
-
-                    {/* Tutorial Steps */}
-                    <div className="p-5 rounded-2xl bg-slate-800/30 border border-white/5">
-                      <h4 className="text-white font-medium mb-4 flex items-center gap-2">
-                        <BookOpen size={18} className="text-cyan-400" /> How to Get Your API Key
-                      </h4>
-                      <div className="space-y-3">
-                        {[
-                          { step: 1, text: 'Create an ElevenLabs account', link: 'https://elevenlabs.io' },
-                          { step: 2, text: 'Click the "Developers" button at the bottom of the left navbar' },
-                          { step: 3, text: 'Click "Create API Key"' },
-                          { step: 4, text: 'Copy the generated key' },
-                          { step: 5, text: 'Paste it above and click "Verify & Save"' }
-                        ].map((item) => (
-                          <div key={item.step} className="flex items-center gap-3">
-                            <span className="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 flex-shrink-0">
-                              {item.step}
-                            </span>
-                            <span className="text-sm text-slate-400">{item.text}</span>
-                            {item.link && (
-                              <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300">
-                                <ExternalLink size={14} />
-                              </a>
-                            )}
+                  ) : (
+                    /* Not Connected State */
+                    <div className="space-y-6">
+                      {/* Warning Banner */}
+                      <div className="p-5 rounded-2xl bg-yellow-500/5 border border-yellow-500/20">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-xl bg-yellow-500/15 flex items-center justify-center">
+                            <AlertTriangle size={20} className="text-yellow-400" />
                           </div>
-                        ))}
+                          <div>
+                            <h3 className="text-white font-semibold">ElevenLabs Not Connected</h3>
+                            <p className="text-xs text-slate-500">Connect your API key to use voice-powered interviews</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="mt-4 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/10">
-                        <p className="text-xs text-yellow-400 flex items-start gap-2">
-                          <Shield size={14} className="flex-shrink-0 mt-0.5" />
-                          Treat your API key like a password. It's encrypted at rest and never stored in your browser. You can revoke it anytime from your ElevenLabs dashboard.
-                        </p>
+
+                      {/* Connect Form */}
+                      <div className="p-5 rounded-2xl bg-slate-800/30 border border-white/5 space-y-4">
+                        <h4 className="text-white font-medium flex items-center gap-2"><Key size={18} className="text-emerald-400" /> Connect Your API Key</h4>
+                        <div className="flex gap-3">
+                          <input
+                            type="password"
+                            value={connectKey}
+                            onChange={(e) => setConnectKey(e.target.value)}
+                            placeholder="Paste your ElevenLabs API key"
+                            className="flex-1 bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/50 transition-colors"
+                            onKeyDown={(e) => e.key === 'Enter' && handleConnectKey()}
+                          />
+                          <button
+                            onClick={handleConnectKey}
+                            disabled={connectLoading}
+                            className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-semibold hover:from-emerald-600 hover:to-cyan-600 transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                          >
+                            {connectLoading ? <Spinner size={16} /> : <Shield size={16} />}
+                            {connectLoading ? 'Verifying...' : 'Verify & Save'}
+                          </button>
+                        </div>
+
+                        {connectError && (
+                          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2">
+                            <XCircle size={16} className="text-red-400 flex-shrink-0" />
+                            <p className="text-sm text-red-400">{connectError}</p>
+                          </div>
+                        )}
+                        {connectSuccess && (
+                          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
+                            <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
+                            <p className="text-sm text-emerald-400">{connectSuccess}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Tutorial Steps */}
+                      <div className="p-5 rounded-2xl bg-slate-800/30 border border-white/5">
+                        <h4 className="text-white font-medium mb-4 flex items-center gap-2">
+                          <BookOpen size={18} className="text-cyan-400" /> How to Get Your API Key
+                        </h4>
+                        <div className="space-y-3">
+                          {[
+                            { step: 1, text: 'Create an ElevenLabs account', link: 'https://elevenlabs.io' },
+                            { step: 2, text: 'Click the "Developers" button at the bottom of the left navbar' },
+                            { step: 3, text: 'Click "Create API Key"' },
+                            { step: 4, text: 'Copy the generated key' },
+                            { step: 5, text: 'Paste it above and click "Verify & Save"' }
+                          ].map((item) => (
+                            <div key={item.step} className="flex items-center gap-3">
+                              <span className="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 flex-shrink-0">
+                                {item.step}
+                              </span>
+                              <span className="text-sm text-slate-400">{item.text}</span>
+                              {item.link && (
+                                <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300">
+                                  <ExternalLink size={14} />
+                                </a>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/10">
+                          <p className="text-xs text-yellow-400 flex items-start gap-2">
+                            <Shield size={14} className="flex-shrink-0 mt-0.5" />
+                            Treat your API key like a password. It's encrypted at rest and never stored in your browser. You can revoke it anytime from your ElevenLabs dashboard.
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </Card>
-            </motion.div>
-          )}
+                  )}
+                </Card>
+              </motion.div>
+            )}
           </AnimatePresence>
         </motion.div>
       </main>
