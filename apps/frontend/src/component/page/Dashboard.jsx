@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ResponsiveContainer,
   RadarChart,
@@ -31,12 +31,32 @@ import {
   User,
   Activity,
   Code2,
-  Clock
+  Clock,
+  Key,
+  Shield,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+  Eye,
+  EyeOff,
+  ExternalLink
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../ui/Toast';
 
 const MotionButton = motion.button;
 const MotionDiv = motion.div;
+
+const Spinner = ({ size = 16, className = '' }) => (
+  <motion.span
+    animate={{ rotate: 360 }}
+    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+    className={`inline-flex ${className}`}
+  >
+    <RefreshCw size={size} />
+  </motion.span>
+);
 
 const SidebarItem = ({ icon: Icon, label, active, onClick }) => {
   const IconComponent = Icon;
@@ -79,11 +99,23 @@ const Card = ({ children, className = '', delay = 0 }) => (
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams] = useSearchParams();
+  const toast = useToast();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [userData, setUserData] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [historyWindow, setHistoryWindow] = useState('6');
   const [historyType, setHistoryType] = useState('all');
+
+  // BYOK state
+  const [elevenLabsStatus, setElevenLabsStatus] = useState(null); // null = loading, object = loaded
+  const [byokLoading, setByokLoading] = useState(true);
+  const [connectKey, setConnectKey] = useState('');
+  const [connectLoading, setConnectLoading] = useState(false);
+  const [connectError, setConnectError] = useState('');
+  const [connectSuccess, setConnectSuccess] = useState('');
+  const [showReplaceInput, setShowReplaceInput] = useState(false);
+  const [showKeyInput, setShowKeyInput] = useState(false);
 
   // Auth guard
   useEffect(() => {
@@ -162,13 +194,100 @@ const Dashboard = () => {
     }
   }, [navigate]);
 
+  // Fetch ElevenLabs integration status
+  const fetchElevenLabsStatus = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      setByokLoading(true);
+      const response = await fetch('http://localhost:3000/api/integrations/elevenlabs/status', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setElevenLabsStatus(data);
+      }
+    } catch (error) {
+      console.error('Error fetching ElevenLabs status:', error);
+      setElevenLabsStatus({ connected: false });
+    } finally {
+      setByokLoading(false);
+    }
+  }, []);
+
+  // Connect ElevenLabs API key
+  const handleConnectKey = async () => {
+    if (!connectKey.trim()) {
+      toast.error('Please enter an API key');
+      return;
+    }
+    setConnectLoading(true);
+    setConnectError('');
+    setConnectSuccess('');
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3000/api/integrations/elevenlabs/connect', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ apiKey: connectKey.trim() })
+      });
+      const data = await response.json();
+      if (data.ok) {
+        toast.success('API key verified and connected!', { title: 'Connected' });
+        setConnectKey('');
+        setShowReplaceInput(false);
+        setShowKeyInput(false);
+        setConnectSuccess('');
+        setConnectError('');
+        await fetchElevenLabsStatus();
+      } else {
+        toast.error(data.message || 'Failed to verify API key');
+        setConnectError(data.message || 'Failed to verify API key');
+      }
+    } catch (error) {
+      toast.error('Network error — please try again');
+      setConnectError('Network error — please try again');
+    } finally {
+      setConnectLoading(false);
+    }
+  };
+
+  // Disconnect ElevenLabs API key
+  const handleDisconnect = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch('http://localhost:3000/api/integrations/elevenlabs', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      setElevenLabsStatus({ connected: false });
+      setConnectSuccess('');
+      setConnectError('');
+      setShowReplaceInput(false);
+      toast.success('API key disconnected', { title: 'Disconnected' });
+    } catch (error) {
+      console.error('Error disconnecting:', error);
+      toast.error('Failed to disconnect — please try again');
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchUserDataAndSessions();
+      fetchElevenLabsStatus();
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [fetchUserDataAndSessions]);
+  }, [fetchUserDataAndSessions, fetchElevenLabsStatus]);
 
   const stats = useMemo(() => {
     if (!sessions.length) {
@@ -490,7 +609,7 @@ const Dashboard = () => {
         </nav>
 
         <div className="pt-6 border-t border-slate-800/60 space-y-2">
-          <SidebarItem icon={Settings} label="Settings" onClick={() => setActiveTab('settings')} />
+          <SidebarItem icon={Key} label="API Key" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
           <SidebarItem icon={LogOut} label="Sign Out" onClick={handleSignOut} />
         </div>
       </aside>
@@ -514,11 +633,13 @@ const Dashboard = () => {
             </div>
           </motion.header>
 
-          <motion.div className="flex flex-col xl:flex-row gap-8" variants={containerVariants}>
+          <AnimatePresence mode="wait">
+          {activeTab === 'overview' && (
+          <motion.div key="overview" className="flex flex-col xl:flex-row gap-8" variants={containerVariants} initial="hidden" animate="visible" exit={{ opacity: 0, transition: { duration: 0.15 } }}>
             {/* Left column */}
             <motion.div className="flex-1 space-y-8" variants={containerVariants}>
               {/* Stats Row */}
-              <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-6" variants={containerVariants}>
+              <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" variants={containerVariants}>
                 <Card className="group">
                   <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                     <Award size={100} />
@@ -559,6 +680,80 @@ const Dashboard = () => {
                     <p className="text-5xl font-bold text-white">{stats.totalInterviews}</p>
                     <span className="text-lg text-slate-500 font-medium mb-1.5">total</span>
                   </div>
+                </Card>
+
+                {/* BYOK Status Card */}
+                <Card className="group cursor-pointer" onClick={() => setActiveTab('settings')}>
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <Key size={100} />
+                  </div>
+                  {byokLoading ? (
+                    <>
+                      <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">ElevenLabs</h3>
+                      <div className="flex items-center space-x-2">
+                        <Spinner size={16} className="text-slate-500" />
+                        <span className="text-slate-500">Loading...</span>
+                      </div>
+                    </>
+                  ) : elevenLabsStatus?.connected ? (
+                    <>
+                      <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider flex items-center gap-2">
+                        ElevenLabs
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      </h3>
+                      <div className="flex items-end space-x-2 mb-3">
+                        <span className="text-sm font-semibold text-emerald-400 uppercase px-2 py-0.5 rounded-md bg-emerald-500/10">
+                          {elevenLabsStatus.tier || 'Connected'}
+                        </span>
+                      </div>
+                      {elevenLabsStatus.minutesLimit > 0 && (
+                        <div>
+                          <div className="flex justify-between text-xs text-slate-500 mb-1">
+                            <span>{elevenLabsStatus.minutesUsed ?? 0} min used</span>
+                            <span>{elevenLabsStatus.minutesLimit} min limit</span>
+                          </div>
+                          <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.9
+                                  ? 'bg-red-500'
+                                  : ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.7
+                                    ? 'bg-yellow-500'
+                                    : 'bg-emerald-500'
+                              }`}
+                              style={{ width: `${Math.min(100, ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) * 100)}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1">
+                            ~{elevenLabsStatus.estimatedSessions ?? 0} sessions remaining
+                          </p>
+                        </div>
+                      )}
+                      {elevenLabsStatus.error && (
+                        <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
+                          <AlertTriangle size={12} /> {elevenLabsStatus.error}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider flex items-center gap-2">
+                        ElevenLabs
+                        <span className="w-2 h-2 rounded-full bg-yellow-400" />
+                      </h3>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <AlertTriangle size={18} className="text-yellow-400" />
+                        <span className="text-yellow-400 font-semibold text-sm">Not Verified</span>
+                      </div>
+                      <p className="text-xs text-slate-500">Connect your API key to start interviews</p>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setActiveTab('settings'); }}
+                        className="mt-3 w-full py-2 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:from-emerald-500/30 hover:to-cyan-500/30 transition-all cursor-pointer"
+                      >
+                        Get Verified →
+                      </button>
+                    </>
+                  )}
                 </Card>
               </motion.div>
 
@@ -841,6 +1036,267 @@ const Dashboard = () => {
               </Card>
             </motion.div>
           </motion.div>
+          )}
+
+          {/* Settings Panel - shown when settings tab is active */}
+          {activeTab === 'settings' && (
+            <motion.div
+              key="settings"
+              initial="hidden"
+              animate="visible"
+              exit={{ opacity: 0, transition: { duration: 0.15 } }}
+              variants={{
+                hidden: { opacity: 0, y: 10 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut', staggerChildren: 0.08 } }
+              }}
+              className="mt-8"
+            >
+              <Card>
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-bold text-white flex items-center">
+                    <Shield size={28} className="mr-3 text-emerald-400" /> ElevenLabs Integration
+                  </h2>
+                  <button
+                    onClick={fetchElevenLabsStatus}
+                    className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                    title="Refresh status"
+                  >
+                    {byokLoading ? <Spinner size={18} /> : <RefreshCw size={18} />}
+                  </button>
+                </div>
+
+                {byokLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Spinner size={24} className="text-emerald-400 mr-3" />
+                    <span className="text-slate-400">Loading integration status...</span>
+                  </div>
+                ) : elevenLabsStatus?.connected ? (
+                  /* Connected State */
+                  <div className="space-y-6">
+                    {/* Connection Info */}
+                    <div className="p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                            <CheckCircle size={20} className="text-emerald-400" />
+                          </div>
+                          <div>
+                            <h3 className="text-white font-semibold">Connected</h3>
+                            <p className="text-xs text-slate-500">
+                              Key ending in ••••{elevenLabsStatus.last4} · Verified {new Date(elevenLabsStatus.verifiedAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-sm font-semibold text-emerald-400 uppercase px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                          {elevenLabsStatus.tier || 'Active'}
+                        </span>
+                      </div>
+
+                      {/* Agent Minutes Usage */}
+                      {elevenLabsStatus.minutesLimit > 0 && (
+                        <div className="mt-4 space-y-4">
+                          <div>
+                            <div className="flex justify-between text-sm mb-2">
+                              <span className="text-slate-400">Agent Minutes</span>
+                              <span className="text-white font-medium">
+                                {elevenLabsStatus.minutesUsed ?? 0} / {elevenLabsStatus.minutesLimit} min
+                              </span>
+                            </div>
+                            <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.9
+                                    ? 'bg-gradient-to-r from-red-500 to-red-400'
+                                    : ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.7
+                                      ? 'bg-gradient-to-r from-yellow-500 to-yellow-400'
+                                      : 'bg-gradient-to-r from-emerald-500 to-cyan-500'
+                                }`}
+                                style={{ width: `${Math.min(100, ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) * 100)}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between text-xs text-slate-500 mt-1">
+                              <span>{Math.round(((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) * 100)}% used</span>
+                              <span>{elevenLabsStatus.minutesRemaining ?? 0} min remaining</span>
+                            </div>
+                          </div>
+
+                          {/* Estimated Sessions + Reset */}
+                          <div className="flex gap-4">
+                            <div className="flex-1 p-3 rounded-xl bg-slate-800/40 border border-white/5">
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Est. Sessions Left</p>
+                              <p className="text-2xl font-bold text-white">{elevenLabsStatus.estimatedSessions ?? 0}</p>
+                              <p className="text-xs text-slate-500">~25 min each</p>
+                            </div>
+                            {elevenLabsStatus.nextResetUnix && (
+                              <div className="flex-1 p-3 rounded-xl bg-slate-800/40 border border-white/5">
+                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Resets On</p>
+                                <p className="text-lg font-bold text-white">
+                                  {new Date(elevenLabsStatus.nextResetUnix * 1000).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' })}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  {Math.max(0, Math.ceil((elevenLabsStatus.nextResetUnix * 1000 - Date.now()) / (1000 * 60 * 60 * 24)))} days left
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {elevenLabsStatus.error && (
+                        <div className="mt-4 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center gap-2">
+                          <AlertTriangle size={16} className="text-yellow-400 flex-shrink-0" />
+                          <p className="text-sm text-yellow-400">{elevenLabsStatus.error}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => { setShowReplaceInput(!showReplaceInput); setConnectError(''); setConnectSuccess(''); }}
+                        className="flex-1 py-3 rounded-xl border border-white/10 text-slate-300 text-sm font-medium hover:bg-slate-800/50 hover:text-white transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <Key size={16} /> Replace Key
+                      </button>
+                      <button
+                        onClick={handleDisconnect}
+                        className="flex-1 py-3 rounded-xl border border-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/10 transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <XCircle size={16} /> Disconnect
+                      </button>
+                    </div>
+
+                    {/* Replace Key Input */}
+                    {showReplaceInput && (
+                      <div className="p-5 rounded-2xl bg-slate-800/30 border border-white/5 space-y-4">
+                        <h4 className="text-white font-medium">Replace API Key</h4>
+                        <p className="text-xs text-slate-500">Enter your new ElevenLabs API key. The old key will be overwritten.</p>
+                        <div className="flex gap-3">
+                          <input
+                            type="password"
+                            value={connectKey}
+                            onChange={(e) => setConnectKey(e.target.value)}
+                            placeholder="Paste your new ElevenLabs API key"
+                            className="flex-1 bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/50 transition-colors"
+                            onKeyDown={(e) => e.key === 'Enter' && handleConnectKey()}
+                          />
+                          <button
+                            onClick={handleConnectKey}
+                            disabled={connectLoading}
+                            className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-semibold hover:from-emerald-600 hover:to-cyan-600 transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                          >
+                            {connectLoading ? <Spinner size={16} /> : <CheckCircle size={16} />}
+                            {connectLoading ? 'Verifying...' : 'Verify & Save'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Status Messages */}
+                    {connectError && (
+                      <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2">
+                        <XCircle size={16} className="text-red-400 flex-shrink-0" />
+                        <p className="text-sm text-red-400">{connectError}</p>
+                      </div>
+                    )}
+                    {connectSuccess && (
+                      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
+                        <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
+                        <p className="text-sm text-emerald-400">{connectSuccess}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Not Connected State */
+                  <div className="space-y-6">
+                    {/* Warning Banner */}
+                    <div className="p-5 rounded-2xl bg-yellow-500/5 border border-yellow-500/20">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-yellow-500/15 flex items-center justify-center">
+                          <AlertTriangle size={20} className="text-yellow-400" />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-semibold">ElevenLabs Not Connected</h3>
+                          <p className="text-xs text-slate-500">Connect your API key to use voice-powered interviews</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Connect Form */}
+                    <div className="p-5 rounded-2xl bg-slate-800/30 border border-white/5 space-y-4">
+                      <h4 className="text-white font-medium flex items-center gap-2"><Key size={18} className="text-emerald-400" /> Connect Your API Key</h4>
+                      <div className="flex gap-3">
+                        <input
+                          type="password"
+                          value={connectKey}
+                          onChange={(e) => setConnectKey(e.target.value)}
+                          placeholder="Paste your ElevenLabs API key"
+                          className="flex-1 bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/50 transition-colors"
+                          onKeyDown={(e) => e.key === 'Enter' && handleConnectKey()}
+                        />
+                        <button
+                          onClick={handleConnectKey}
+                          disabled={connectLoading}
+                          className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-semibold hover:from-emerald-600 hover:to-cyan-600 transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                        >
+                          {connectLoading ? <Spinner size={16} /> : <Shield size={16} />}
+                          {connectLoading ? 'Verifying...' : 'Verify & Save'}
+                        </button>
+                      </div>
+
+                      {connectError && (
+                        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2">
+                          <XCircle size={16} className="text-red-400 flex-shrink-0" />
+                          <p className="text-sm text-red-400">{connectError}</p>
+                        </div>
+                      )}
+                      {connectSuccess && (
+                        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
+                          <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
+                          <p className="text-sm text-emerald-400">{connectSuccess}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Tutorial Steps */}
+                    <div className="p-5 rounded-2xl bg-slate-800/30 border border-white/5">
+                      <h4 className="text-white font-medium mb-4 flex items-center gap-2">
+                        <BookOpen size={18} className="text-cyan-400" /> How to Get Your API Key
+                      </h4>
+                      <div className="space-y-3">
+                        {[
+                          { step: 1, text: 'Create an ElevenLabs account', link: 'https://elevenlabs.io' },
+                          { step: 2, text: 'Click the "Developers" button at the bottom of the left navbar' },
+                          { step: 3, text: 'Click "Create API Key"' },
+                          { step: 4, text: 'Copy the generated key' },
+                          { step: 5, text: 'Paste it above and click "Verify & Save"' }
+                        ].map((item) => (
+                          <div key={item.step} className="flex items-center gap-3">
+                            <span className="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 flex-shrink-0">
+                              {item.step}
+                            </span>
+                            <span className="text-sm text-slate-400">{item.text}</span>
+                            {item.link && (
+                              <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300">
+                                <ExternalLink size={14} />
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-4 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/10">
+                        <p className="text-xs text-yellow-400 flex items-start gap-2">
+                          <Shield size={14} className="flex-shrink-0 mt-0.5" />
+                          Treat your API key like a password. It's encrypted at rest and never stored in your browser. You can revoke it anytime from your ElevenLabs dashboard.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            </motion.div>
+          )}
+          </AnimatePresence>
         </motion.div>
       </main>
     </div>

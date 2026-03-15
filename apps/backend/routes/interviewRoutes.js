@@ -5,6 +5,40 @@ const require = createRequire(import.meta.url);
 const companyProfiles = require('../prompts/company_profile.json');
 const roleRubrics = require('../prompts/role_rubrics.json');
 import { prisma } from '../prismaClient.js';
+import { decrypt } from '../lib/encryption.js';
+
+/**
+ * Helper: Resolve the ElevenLabs API key for a user.
+ * - If user has an ElevenLabsIntegration row → decrypt and return their key.
+ * - If not, and it's a behavioural session with demo credits → decrement credit, return platform key.
+ * - Otherwise → throw with a user-facing message.
+ */
+async function resolveElevenLabsKey(userId, interviewMode) {
+  const integration = await prisma.elevenLabsIntegration.findUnique({ where: { userId } });
+
+  if (integration) {
+    const apiKey = decrypt(integration.apiKeyCiphertext, integration.apiKeyIv, integration.apiKeyTag);
+    await prisma.elevenLabsIntegration.update({ where: { userId }, data: { lastUsedAt: new Date() } });
+    return { apiKey, isDemo: false };
+  }
+
+  // No integration — check demo eligibility
+  const isBehavioural = interviewMode === 'behavioral' || interviewMode === 'behavioural';
+  if (isBehavioural) {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { demoBehaviouralCredits: true } });
+    if (user && user.demoBehaviouralCredits > 0) {
+      await prisma.user.update({ where: { id: userId }, data: { demoBehaviouralCredits: { decrement: 1 } } });
+      // Use platform key for demo session
+      const platformKey = process.env.ELEVENLABS_PLATFORM_KEY;
+      if (!platformKey) {
+        throw new Error('Platform ElevenLabs key not configured');
+      }
+      return { apiKey: platformKey, isDemo: true };
+    }
+  }
+
+  throw new Error('ElevenLabs API key required. Please connect your key in Settings.');
+}
 
 const router = express.Router();
 
@@ -159,11 +193,25 @@ router.post('/session', async (req, res) => {
   console.log(JSON.stringify(interviewConfig, null, 2));
   console.log("-------------------------------------------");
 
+  // Resolve ElevenLabs API key (user's own key or demo)
+  let elevenLabsKey;
+  try {
+    const interviewMode = interviewConfig.session?.interview_mode || 'behavioral';
+    const resolved = await resolveElevenLabsKey(userId, interviewMode);
+    elevenLabsKey = resolved.apiKey;
+    if (resolved.isDemo) {
+      console.log(`Using demo platform key for session ${tempSessionId}`);
+    }
+  } catch (err) {
+    return res.status(403).json({ error: err.message });
+  }
+
   // Fire webhook asynchronously (don't wait for response)
   fetch('http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-ELEVENLABS-KEY': elevenLabsKey
     },
     body: JSON.stringify(interviewConfig)
   }).then(() => {
@@ -512,11 +560,21 @@ router.post('/session/quick-start', async (req, res) => {
     console.log(JSON.stringify(quickStartConfig, null, 2));
     console.log("----------------------------------------");
 
+    // Resolve ElevenLabs API key (user's own key or demo)
+    let elevenLabsKey;
+    try {
+      const resolved = await resolveElevenLabsKey(userId, 'behavioral');
+      elevenLabsKey = resolved.apiKey;
+    } catch (err) {
+      return res.status(403).json({ error: err.message });
+    }
+
     // Trigger webhook for quick-start
     fetch('http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-ELEVENLABS-KEY': elevenLabsKey
       },
       body: JSON.stringify(quickStartConfig)
     }).then(() => {

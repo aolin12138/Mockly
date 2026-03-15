@@ -7,6 +7,7 @@ import interviewCallbackRoutes from './routes/interviewCallbackRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import technicalRoutes from './routes/technicalRoutes.js';
 import codeRunRoutes from './routes/codeRunRoutes.js';
+import integrationRoutes from './routes/integrationRoutes.js';
 import authMiddleware from './middleware/authMiddleware.js';
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/interview', interviewCallbackRoutes);
 app.use('/api/interview', authMiddleware, interviewRoutes);
 app.use('/api/user', authMiddleware, userRoutes);
+app.use('/api/integrations', authMiddleware, integrationRoutes);
 app.use('/api/questions', technicalRoutes);
 app.use('/api/code', codeRunRoutes);
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../ui/Toast';
 import Modal from '../ui/Modal.jsx';
 import {
   ChevronRight,
@@ -18,7 +19,9 @@ import {
   Upload,
   Brain,
   ShieldAlert,
-  GraduationCap
+  GraduationCap,
+  AlertTriangle,
+  Key
 } from 'lucide-react';
 
 const InputField = ({ label, value, onChange, placeholder, type = "text", textarea = false }) => (
@@ -128,11 +131,14 @@ const FileUpload = ({ file, onFileSelect }) => {
 
 const InterviewSetup = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [step, setStep] = useState(1);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastAgent, setLastAgent] = useState(null);
   const [loadingAgent, setLoadingAgent] = useState(true);
+  const [byokStatus, setByokStatus] = useState(null);
+  const [sessionError, setSessionError] = useState('');
   const [formData, setFormData] = useState({
     session: {
       interview_mode: "behavioral",
@@ -203,6 +209,27 @@ const InterviewSetup = () => {
     fetchLastAgent();
   }, []);
 
+  // Fetch BYOK status
+  useEffect(() => {
+    const fetchByokStatus = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const response = await fetch('http://localhost:3000/api/integrations/elevenlabs/status', {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setByokStatus(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch BYOK status:', error);
+        setByokStatus({ connected: false });
+      }
+    };
+    fetchByokStatus();
+  }, []);
+
   const getTotalSteps = () => {
     if (formData.session.interview_mode === 'technical') {
       return 2; // Step 1 (config) + Step 2 (focus areas)
@@ -233,6 +260,10 @@ const InterviewSetup = () => {
       });
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 403) {
+          setSessionError(errorData.error || 'ElevenLabs API key required. Please connect your key in Dashboard Settings.');
+        }
         setIsSubmitting(false);
         return;
       }
@@ -271,7 +302,7 @@ const InterviewSetup = () => {
 
       if (!token) {
         console.error("No authentication token found. Please log in.");
-        alert("Please log in to start an interview");
+        toast.error('Please log in to start an interview');
         navigate('/login');
         return;
       }
@@ -301,6 +332,13 @@ const InterviewSetup = () => {
         if (response.status === 401) {
           setShowConfirmModal(false);
           navigate('/login');
+          return;
+        }
+
+        if (response.status === 403) {
+          setShowConfirmModal(false);
+          setSessionError(errorData.error || 'ElevenLabs API key required. Please connect your key in Dashboard Settings.');
+          toast.warning('API key required — connect your ElevenLabs key in the Dashboard', { title: 'Access Denied' });
           return;
         }
 
@@ -746,6 +784,38 @@ const InterviewSetup = () => {
             )}
 
           </AnimatePresence>
+
+          {/* BYOK Demo Warning */}
+          {byokStatus && !byokStatus.connected && (
+            <div className="mt-6 p-4 rounded-2xl bg-yellow-500/5 border border-yellow-500/20 flex items-start gap-3">
+              <AlertTriangle size={20} className="text-yellow-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-yellow-300">ElevenLabs Not Connected</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  You have <span className="text-yellow-400 font-bold">1 free demo session</span> for behavioural interviews.
+                  Starting a session will use your demo credit. Connect your own API key in
+                  <button onClick={() => navigate('/dashboard')} className="text-emerald-400 hover:text-emerald-300 underline ml-1 cursor-pointer">Dashboard Settings</button> for unlimited sessions.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Session Error (e.g. 403 no key / no demo credits) */}
+          {sessionError && (
+            <div className="mt-4 p-4 rounded-2xl bg-red-500/5 border border-red-500/20 flex items-start gap-3">
+              <Key size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-red-300">Cannot Start Session</p>
+                <p className="text-xs text-slate-400 mt-1">{sessionError}</p>
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="mt-2 text-xs text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
+                >
+                  Go to Dashboard Settings to connect your API key →
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Footer Controls */}
           <div className="mt-10 flex justify-between items-center pt-6 border-t border-white/5">
