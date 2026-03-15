@@ -5,6 +5,7 @@ import { LiveWaveform } from '../ui/live-waveform.jsx';
 import { Phone, PhoneOff, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useConversation } from '@elevenlabs/react';
+import { useToast } from '../ui/Toast';
 import Modal from '../ui/Modal.jsx';
 import ParticleOrb from '../ui/particle-orb.jsx';
 import gradientBackground from '../../assets/gradient_background.png';
@@ -44,6 +45,7 @@ const N8N_WEBHOOK_URL = 'https://aolin12138.app.n8n.cloud/webhook/feedback';
 export default function BehaviouralInterviewPage() {
   const navigate = useNavigate();
   const { sessionId } = useParams();
+  const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testState, setTestState] = useState('idle'); // Test state for orb
   const [useTestMode, setUseTestMode] = useState(false); // Toggle between test and real
@@ -316,7 +318,7 @@ export default function BehaviouralInterviewPage() {
       });
     } catch (error) {
       console.error('Failed to start conversation:', error);
-      alert('Failed to start the interview. Please check your microphone permissions.');
+      toast.error('Failed to start the interview. Please check your microphone permissions.', { title: 'Microphone Error' });
     }
   };
 

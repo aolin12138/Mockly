@@ -14,6 +14,7 @@ import ResultsPage from './component/page/ResultsPage';
 import TechnicalResultsPage from './component/page/ResultsTechnicalPage';
 import LoadingPage from './component/page/LoadingPage';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './component/ui/Toast';
 import InterviewSetup from './component/page/InterviewSetup';
 import SessionWaiting from './component/page/SessionWaiting';
 import HistoryPage from './component/page/HistoryPage';
@@ -31,6 +32,7 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <ThemeProvider>
+      <ToastProvider>
       <Router>
         <Routes>
           <Route path='/' element={<Home />} />
@@ -51,6 +53,7 @@ root.render(
           <Route path='/results-technical/:sessionId' element={<TechnicalResultsPage />} />
         </Routes>
       </Router>
+      </ToastProvider>
     </ThemeProvider>
   </React.StrictMode>
 );

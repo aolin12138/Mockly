@@ -12,7 +12,7 @@ import {
   Clock,
   Award,
   Search,
-  Settings,
+  Key,
   LogOut,
   TrendingUp,
   BookOpen
@@ -103,9 +103,8 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
     onClick={onClick}
     whileHover={{ x: 5, backgroundColor: 'rgba(30, 41, 59, 0.5)' }}
     whileTap={{ scale: 0.95 }}
-    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors duration-200 group relative overflow-hidden cursor-pointer ${
-      active ? 'text-emerald-400' : 'text-slate-400'
-    }`}
+    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors duration-200 group relative overflow-hidden cursor-pointer ${active ? 'text-emerald-400' : 'text-slate-400'
+      }`}
   >
     {active && (
       <MotionDiv
@@ -244,13 +243,13 @@ const HistoryPage = () => {
 
         <nav className="space-y-2 flex-1">
           <SidebarItem icon={LayoutDashboard} label="Overview" onClick={() => navigate('/dashboard')} />
-          <SidebarItem icon={History} label="History" active onClick={() => {}} />
+          <SidebarItem icon={History} label="History" active onClick={() => { }} />
           <SidebarItem icon={TrendingUp} label="Analytics" onClick={() => navigate('/dashboard')} />
           <SidebarItem icon={BookOpen} label="Improve" onClick={() => navigate('/dashboard')} />
         </nav>
 
         <div className="pt-6 border-t border-slate-800/60 space-y-2">
-          <SidebarItem icon={Settings} label="Settings" onClick={() => {}} />
+          <SidebarItem icon={Key} label="API Key" onClick={() => navigate('/dashboard?tab=settings')} />
           <SidebarItem icon={LogOut} label="Sign Out" onClick={handleSignOut} />
         </div>
       </aside>
@@ -300,11 +299,10 @@ const HistoryPage = () => {
                   onClick={() => handleSortChange(opt.value)}
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
-                  className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                    sortBy === opt.value
+                  className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${sortBy === opt.value
                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                       : 'text-slate-400 hover:text-white border border-transparent'
-                  }`}
+                    }`}
                 >
                   {opt.label}
                 </MotionButton>
@@ -406,11 +404,10 @@ const HistoryPage = () => {
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-4">
                             <div
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
-                                isTechnical
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${isTechnical
                                   ? 'bg-cyan-500/15 text-cyan-400 shadow-cyan-500/10'
                                   : 'bg-purple-500/15 text-purple-400 shadow-purple-500/10'
-                              }`}
+                                }`}
                             >
                               {isTechnical ? <Code2 size={18} /> : <User size={18} />}
                             </div>
@@ -420,11 +417,10 @@ const HistoryPage = () => {
                               </h4>
                               <div className="flex items-center gap-3 mt-0.5">
                                 <span
-                                  className={`text-xs font-medium px-2 py-0.5 rounded-md ${
-                                    isTechnical
+                                  className={`text-xs font-medium px-2 py-0.5 rounded-md ${isTechnical
                                       ? 'bg-cyan-500/10 text-cyan-400'
                                       : 'bg-purple-500/10 text-purple-400'
-                                  }`}
+                                    }`}
                                 >
                                   {interview.interviewType}
                                 </span>
