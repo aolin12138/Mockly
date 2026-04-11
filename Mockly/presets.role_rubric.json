@@ -2,12 +2,7 @@
   "behavioral_intern": {
     "interview": {
       "mode": "behavioral",
-      "probe_domains": [
-        "teamwork",
-        "learning_agility",
-        "initiative",
-        "communication"
-      ],
+      "probe_domains": ["teamwork", "learning_agility", "initiative", "communication"],
       "depth_preference": "breadth"
     },
     "seniority_default": "intern",
@@ -32,13 +27,7 @@
   "behavioral_junior": {
     "interview": {
       "mode": "behavioral",
-      "probe_domains": [
-        "ownership",
-        "collaboration",
-        "problem_solving",
-        "communication",
-        "growth_mindset"
-      ],
+      "probe_domains": ["ownership", "collaboration", "problem_solving", "communication", "growth_mindset"],
       "depth_preference": "breadth"
     },
     "seniority_default": "junior",
@@ -63,13 +52,7 @@
   "behavioral_mid": {
     "interview": {
       "mode": "behavioral",
-      "probe_domains": [
-        "ownership",
-        "cross_functional_collaboration",
-        "conflict_resolution",
-        "technical_decision_making",
-        "impact_delivery"
-      ],
+      "probe_domains": ["ownership", "cross_functional_collaboration", "conflict_resolution", "technical_decision_making", "impact_delivery"],
       "depth_preference": "balanced"
     },
     "seniority_default": "mid",
@@ -94,13 +77,7 @@
   "behavioral_senior": {
     "interview": {
       "mode": "behavioral",
-      "probe_domains": [
-        "strategic_influence",
-        "cross_functional_leadership",
-        "ambiguity_navigation",
-        "impact_at_scale",
-        "people_development"
-      ],
+      "probe_domains": ["strategic_influence", "cross_functional_leadership", "ambiguity_navigation", "impact_at_scale", "people_development"],
       "depth_preference": "depth"
     },
     "seniority_default": "senior",
@@ -125,13 +102,7 @@
   "behavioral_staff": {
     "interview": {
       "mode": "behavioral",
-      "probe_domains": [
-        "org_level_impact",
-        "strategic_alignment",
-        "executive_communication",
-        "multi_team_leadership",
-        "culture_and_standards"
-      ],
+      "probe_domains": ["org_level_impact", "strategic_alignment", "executive_communication", "multi_team_leadership", "culture_and_standards"],
       "depth_preference": "depth"
     },
     "seniority_default": "staff",
@@ -156,12 +127,7 @@
   "technical_intern": {
     "interview": {
       "mode": "technical",
-      "probe_domains": [
-        "data_structures",
-        "algorithms",
-        "basic_system_concepts",
-        "code_quality"
-      ],
+      "probe_domains": ["data_structures", "algorithms", "basic_system_concepts", "code_quality"],
       "depth_preference": "breadth",
       "difficulty_band": "easy to medium"
     },
@@ -187,13 +153,7 @@
   "technical_junior": {
     "interview": {
       "mode": "technical",
-      "probe_domains": [
-        "data_structures",
-        "algorithms",
-        "debugging",
-        "code_quality",
-        "basic_system_design"
-      ],
+      "probe_domains": ["data_structures", "algorithms", "debugging", "code_quality", "basic_system_design"],
       "depth_preference": "balanced",
       "difficulty_band": "medium"
     },
@@ -219,13 +179,7 @@
   "technical_mid": {
     "interview": {
       "mode": "technical",
-      "probe_domains": [
-        "algorithms",
-        "system_design",
-        "code_quality",
-        "debugging",
-        "api_design"
-      ],
+      "probe_domains": ["algorithms", "system_design", "code_quality", "debugging", "api_design"],
       "depth_preference": "balanced",
       "difficulty_band": "medium to hard"
     },
@@ -251,13 +205,7 @@
   "technical_senior": {
     "interview": {
       "mode": "technical",
-      "probe_domains": [
-        "system_design",
-        "distributed_systems",
-        "scalability",
-        "api_design",
-        "code_architecture"
-      ],
+      "probe_domains": ["system_design", "distributed_systems", "scalability", "api_design", "code_architecture"],
       "depth_preference": "depth",
       "difficulty_band": "hard"
     },
@@ -283,12 +231,7 @@
   "mixed_intern": {
     "interview": {
       "mode": "mixed",
-      "probe_domains": [
-        "teamwork",
-        "basic_problem_solving",
-        "learning_agility",
-        "communication"
-      ],
+      "probe_domains": ["teamwork", "basic_problem_solving", "learning_agility", "communication"],
       "depth_preference": "breadth"
     },
     "seniority_default": "intern",
@@ -310,13 +253,7 @@
   "mixed_junior": {
     "interview": {
       "mode": "mixed",
-      "probe_domains": [
-        "ownership",
-        "collaboration",
-        "technical_problem_solving",
-        "communication",
-        "growth_mindset"
-      ],
+      "probe_domains": ["ownership", "collaboration", "technical_problem_solving", "communication", "growth_mindset"],
       "depth_preference": "balanced"
     },
     "seniority_default": "junior",
@@ -338,12 +275,7 @@
   "mixed_senior": {
     "interview": {
       "mode": "mixed",
-      "probe_domains": [
-        "strategic_influence",
-        "technical_decision_making",
-        "cross_functional_leadership",
-        "impact_delivery"
-      ],
+      "probe_domains": ["strategic_influence", "technical_decision_making", "cross_functional_leadership", "impact_delivery"],
       "depth_preference": "depth"
     },
     "seniority_default": "senior",
@@ -365,12 +297,7 @@
   "system_design_mid": {
     "interview": {
       "mode": "system_design",
-      "probe_domains": [
-        "api_design",
-        "database_design",
-        "basic_scalability",
-        "service_decomposition"
-      ],
+      "probe_domains": ["api_design", "database_design", "basic_scalability", "service_decomposition"],
       "depth_preference": "balanced",
       "difficulty_band": "medium"
     },
@@ -394,13 +321,7 @@
   "system_design_senior": {
     "interview": {
       "mode": "system_design",
-      "probe_domains": [
-        "distributed_systems",
-        "scalability",
-        "fault_tolerance",
-        "data_consistency",
-        "api_design"
-      ],
+      "probe_domains": ["distributed_systems", "scalability", "fault_tolerance", "data_consistency", "api_design"],
       "depth_preference": "depth",
       "difficulty_band": "hard"
     },
@@ -424,13 +345,7 @@
   "system_design_staff": {
     "interview": {
       "mode": "system_design",
-      "probe_domains": [
-        "org_level_architecture",
-        "multi_system_integration",
-        "strategic_tradeoffs",
-        "operational_maturity",
-        "platform_thinking"
-      ],
+      "probe_domains": ["org_level_architecture", "multi_system_integration", "strategic_tradeoffs", "operational_maturity", "platform_thinking"],
       "depth_preference": "depth",
       "difficulty_band": "very hard"
     },

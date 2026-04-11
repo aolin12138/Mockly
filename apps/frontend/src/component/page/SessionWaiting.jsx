@@ -3,26 +3,38 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ParticleOrb from '../ui/particle-orb.jsx';
 
-const loadingMessages = [
-  'Preparing your interview...',
-  'Feeding the prompt...',
-  'Processing your requirements...',
-  'Setting up the desk...',
-  'Analyzing your profile...',
-  'Crafting personalized questions...',
-  'Configuring the AI agent...',
-  'Almost ready...'
+const fallbackLoadingMessages = [
+  'Preparing your interview setup...',
+  'Generating interview prompts...',
+  'Configuring your agent...',
+  'Finalizing your session...'
 ];
 
 export default function SessionWaiting() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
-  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [currentMessage, setCurrentMessage] = useState(fallbackLoadingMessages[0]);
+  const [recentMessages, setRecentMessages] = useState([fallbackLoadingMessages[0]]);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const pushStatusMessage = (message) => {
+    if (!message) return;
+    setCurrentMessage(message);
+    setRecentMessages((prev) => {
+      if (prev[prev.length - 1] === message) return prev;
+      const next = [...prev, message];
+      return next.slice(-4);
+    });
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+      setCurrentMessage((prev) => {
+        const currentIdx = fallbackLoadingMessages.indexOf(prev);
+        if (currentIdx === -1) return prev;
+        const next = fallbackLoadingMessages[(currentIdx + 1) % fallbackLoadingMessages.length];
+        return next;
+      });
     }, 5000);
 
     return () => clearInterval(interval);
@@ -50,6 +62,19 @@ export default function SessionWaiting() {
 
       evtSource.addEventListener('connected', () => {
         console.log('[SessionWaiting] SSE connected, waiting for n8n callback...');
+        pushStatusMessage('Connected. Starting setup...');
+      });
+
+      evtSource.addEventListener('progress-update', (event) => {
+        if (!isActive) return;
+        try {
+          const data = JSON.parse(event.data);
+          if (data?.message) {
+            pushStatusMessage(data.message);
+          }
+        } catch (err) {
+          console.warn('[SessionWaiting] Failed to parse progress update:', err);
+        }
       });
 
       evtSource.addEventListener('callback-data', (event) => {
@@ -63,11 +88,11 @@ export default function SessionWaiting() {
           sessionStorage.setItem(`callbackData_${sessionId}`, JSON.stringify(data));
 
           // Navigate to interview
+          pushStatusMessage('Session ready. Launching interview...');
           const mode = localStorage.getItem('pendingInterviewMode') || 'behavioral';
           const routeMap = {
             'behavioral': 'behavioural',
-            'technical': 'technical',
-            'behavioral_plus_dsa': 'behavioural'
+            'technical': 'technical'
           };
           const route = routeMap[mode] || 'behavioural';
           navigate(`/${route}/${sessionId}`);
@@ -117,8 +142,7 @@ export default function SessionWaiting() {
           const mode = localStorage.getItem('pendingInterviewMode') || 'behavioral';
           const routeMap = {
             'behavioral': 'behavioural',
-            'technical': 'technical',
-            'behavioral_plus_dsa': 'behavioural'
+            'technical': 'technical'
           };
           const route = routeMap[mode] || 'behavioural';
           navigate(`/${route}/${sessionId}`);
@@ -153,16 +177,24 @@ export default function SessionWaiting() {
         <div className="text-center space-y-6 pt-12">
           <AnimatePresence mode="wait">
             <motion.h2
-              key={currentMessageIndex}
+              key={currentMessage}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
               className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400"
             >
-              {loadingMessages[currentMessageIndex]}
+              {currentMessage}
             </motion.h2>
           </AnimatePresence>
+
+          <div className="space-y-1">
+            {recentMessages.map((message, index) => (
+              <p key={`${message}-${index}`} className="text-xs text-slate-500 text-center">
+                {message}
+              </p>
+            ))}
+          </div>
 
           <div className="flex justify-center space-x-2">
             <motion.div
