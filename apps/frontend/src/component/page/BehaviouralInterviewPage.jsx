@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { LiveWaveform } from '../ui/live-waveform.jsx';
 import { Phone, PhoneOff, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -53,6 +53,10 @@ export default function BehaviouralInterviewPage() {
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [startTime, setStartTime] = useState(null); // Track when interview started
   const [hasConnected, setHasConnected] = useState(false); // Track if call ever connected
+  const [sessionEndedIntentionally, setSessionEndedIntentionally] = useState(false); // Track if user ended session
+  const [isConnecting, setIsConnecting] = useState(false); // Track connection in progress
+  const [showDisconnectWarning, setShowDisconnectWarning] = useState(false); // Show warning on unexpected disconnect
+  const workflowTriggeredRef = useRef(false); // Prevent duplicate workflow triggers
 
   useEffect(() => {
     if (sessionId) {
@@ -114,9 +118,17 @@ export default function BehaviouralInterviewPage() {
   const conversation = useConversation({
     onConnect: () => {
       console.log('Agent connected');
+      setHasConnected(true);
+      setIsConnecting(false);
     },
     onDisconnect: () => {
-      console.log('Agent disconnected');
+      console.log('Agent disconnected, intentional:', sessionEndedIntentionally);
+      setIsConnecting(false);
+      // If disconnected unexpectedly (not by user action), show warning
+      if (hasConnected && !sessionEndedIntentionally && !workflowTriggeredRef.current) {
+        console.warn('Unexpected disconnect detected');
+        setShowDisconnectWarning(true);
+      }
     },
     onMessage: (message) => {
       console.log('Message received:', message);
@@ -128,8 +140,10 @@ export default function BehaviouralInterviewPage() {
     },
     onError: (error) => {
       console.error('Conversation error:', error);
+      setIsConnecting(false);
       if (error?.message?.includes('data channel') || error?.message?.includes('RTCError')) {
         console.warn('Connection unstable - attempting to recover');
+        // Don't trigger session end on connection errors
       }
     },
   });
@@ -263,13 +277,19 @@ export default function BehaviouralInterviewPage() {
     }
   };
   // Listen for session end and trigger workflow
-  // Only trigger after the call has actually connected and then disconnected
+  // Only trigger after the call has actually connected and then disconnected intentionally
   useEffect(() => {
-    if (hasConnected && conversation.status === 'disconnected') {
+    if (hasConnected && sessionEndedIntentionally && conversation.status === 'disconnected') {
+      // Guard against duplicate triggers
+      if (workflowTriggeredRef.current) {
+        console.log('Workflow already triggered, skipping');
+        return;
+      }
+      workflowTriggeredRef.current = true;
       handleSessionEndWorkflow();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversation.status, hasConnected]);
+  }, [conversation.status, hasConnected, sessionEndedIntentionally]);
 
   const handleBackClick = async () => {
     setShowExitWarning(true);
@@ -312,7 +332,8 @@ export default function BehaviouralInterviewPage() {
 
       // Start timing the interview
       setStartTime(Date.now());
-      setHasConnected(true);
+      setIsConnecting(true);
+      // Note: hasConnected is now set in the onConnect callback
 
       // Start the ElevenLabs conversation
       await conversation.startSession({
@@ -321,15 +342,46 @@ export default function BehaviouralInterviewPage() {
       });
     } catch (error) {
       console.error('Failed to start conversation:', error);
+      setIsConnecting(false);
       toast.error('Failed to start the interview. Please check your microphone permissions.', { title: 'Microphone Error' });
     }
   };
 
   const handleEndCall = async () => {
     try {
+      setSessionEndedIntentionally(true); // Mark that user intentionally ended the session
       await conversation.endSession();
     } catch (error) {
       console.error('Failed to end conversation:', error);
+      setSessionEndedIntentionally(false); // Reset on error
+    }
+  };
+
+  // Handle reconnection after unexpected disconnect
+  const handleReconnect = async () => {
+    setShowDisconnectWarning(false);
+    try {
+      setIsConnecting(true);
+      await conversation.startSession({
+        agentId: agentId || localStorage.getItem('currentAgentId') || AGENT_ID,
+        connectionType: 'webrtc',
+      });
+      toast.success('Reconnected successfully!', { title: 'Connection Restored' });
+    } catch (error) {
+      console.error('Failed to reconnect:', error);
+      setIsConnecting(false);
+      toast.error('Failed to reconnect. Please try again.', { title: 'Reconnection Failed' });
+    }
+  };
+
+  // Handle ending session after unexpected disconnect
+  const handleEndAfterDisconnect = () => {
+    setShowDisconnectWarning(false);
+    setSessionEndedIntentionally(true);
+    // Trigger the workflow manually since we're already disconnected
+    if (!workflowTriggeredRef.current) {
+      workflowTriggeredRef.current = true;
+      handleSessionEndWorkflow();
     }
   };
 
@@ -391,8 +443,8 @@ export default function BehaviouralInterviewPage() {
 
             <div className='text-center'>
               <p className='text-sm font-medium text-slate-300'>
-                {conversation.status === 'disconnected' && 'Ready to start your interview'}
-                {conversation.status === 'connecting' && 'Connecting to your interviewer...'}
+                {conversation.status === 'disconnected' && !isConnecting && 'Ready to start your interview'}
+                {(conversation.status === 'connecting' || isConnecting) && 'Connecting to your interviewer...'}
                 {conversation.status === 'connected' &&
                   (conversation.isSpeaking ? 'Interviewer is speaking...' : 'Listening to you...')}
               </p>
@@ -459,12 +511,12 @@ export default function BehaviouralInterviewPage() {
                 <button
                   type='button'
                   onClick={handleStartCall}
-                  disabled={conversation.status === 'connecting'}
+                  disabled={conversation.status === 'connecting' || isConnecting}
                   className='w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm font-medium text-slate-100 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg'
                 >
                   <Phone className='h-5 w-5' />
                   <span>
-                    {conversation.status === 'connecting' ? 'Connecting...' : 'Call Interviewer'}
+                    {(conversation.status === 'connecting' || isConnecting) ? 'Connecting...' : 'Call Interviewer'}
                   </span>
                 </button>
               ) : (
@@ -520,6 +572,27 @@ export default function BehaviouralInterviewPage() {
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
             <p className="text-amber-100">You can start a new interview session from the dashboard.</p>
           </div>
+        </div>
+      </Modal>
+
+      {/* Unexpected Disconnect Warning Modal */}
+      <Modal
+        isOpen={showDisconnectWarning}
+        onClose={() => setShowDisconnectWarning(false)}
+        title="⚠️ Connection Lost"
+        type="warning"
+        primaryButtonText="Reconnect"
+        secondaryButtonText="End Interview"
+        onPrimaryClick={handleReconnect}
+        onSecondaryClick={handleEndAfterDisconnect}
+        showCloseButton={false}
+      >
+        <div className="space-y-3 text-slate-300 text-sm">
+          <p>Your connection to the interviewer was <span className="text-amber-200 font-semibold">unexpectedly lost</span>.</p>
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+            <p className="text-slate-200">Would you like to reconnect and continue, or end the interview now?</p>
+          </div>
+          <p className="text-xs text-slate-400">If you end now, your progress will be saved and you'll receive feedback.</p>
         </div>
       </Modal>
     </div>

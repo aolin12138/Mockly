@@ -1,0 +1,60 @@
+{
+  "session": {
+    "mode": "practice",
+    "duration_min": 30
+  },
+  "candidate": {
+    "cv_available": true,
+    "cv_text": "Sarah Chen\nSoftware Engineer → Product Manager\n\nExperience\n\nProduct Manager, Growth — Stripe (2022–present)\n- Led redesign of the merchant onboarding flow, reducing time-to-first-payment from 14 days to 3 days for SMB customers\n- Shipped a risk-scoring feature used by fraud ops team, reducing manual review queue by 40%\n- Partnered with 3 engineering teams and legal to navigate PCI compliance changes; launched on schedule across 12 markets\n- Managed a portfolio of 6 concurrent initiatives; defined quarterly OKRs for a team of 11\n\nSoftware Engineer, Platform — Atlassian (2019–2022)\n- Designed and owned the Jira notification routing service, processing 200M events/day\n- Reduced p99 latency from 1.2s to 180ms through async processing and queue redesign\n- Led a 4-person team through a 6-month deprecation of a legacy routing pipeline; zero downtime migration\n- Mentored 2 junior engineers; one promoted to mid within 18 months\n\nSoftware Engineer — Canva (2017–2019)\n- Built the export pipeline for design-to-PDF rendering; reduced export failure rate from 12% to 0.8%\n- Part of the team that scaled infrastructure from 5M to 30M users during hypergrowth phase\n\nEducation\nBachelor of Computer Science, University of Sydney, 2017\n\nSkills: Python, Go, SQL, product strategy, roadmap management, stakeholder communication, data analysis",
+    "practice_context": {
+      "focus_areas": ["ownership", "cross_functional_collaboration"],
+      "prior_interview_experience": "some"
+    }
+  },
+  "role": {
+    "title": "Senior Product Manager",
+    "context": "Growth team at a Series B fintech building embedded payments infrastructure for marketplaces",
+    "seniority": "senior",
+    "stage": "behavioral",
+    "company_preset": "faang"
+  },
+  "interview": {
+    "mode": "behavioral",
+    "probe_domains": ["strategic_influence", "cross_functional_leadership", "ambiguity_navigation", "impact_at_scale", "people_development"],
+    "depth_preference": "depth"
+  },
+  "company_profile": {
+    "tone": "professional and rigorous",
+    "behavioral_style": "structured; expects STAR answers with quantified impact, systems-level thinking, and clear articulation of personal contribution vs. team contribution",
+    "tempo": "brisk — moves quickly if answer is shallow; slows down to probe when something interesting surfaces",
+    "base_rigor": "high — expects precise language, measurable outcomes, and clear disambiguation of individual vs. team work",
+    "hint_tolerance": "very low — never offers hints; silence after a weak answer is expected",
+    "followup_style": "drill-down — follows a single thread to its depth before moving on; probes for edge cases and tradeoffs",
+    "notes": "FAANG-style behavioral interviews operate on Leadership Principles or equivalent frameworks. Expects candidates to own their narrative, quantify impact, and demonstrate comfort with ambiguity. Shallow answers will surface follow-ups that feel uncomfortable."
+  },
+  "role_rubric": {
+    "interview": {
+      "mode": "behavioral",
+      "probe_domains": ["strategic_influence", "cross_functional_leadership", "ambiguity_navigation", "impact_at_scale", "people_development"],
+      "depth_preference": "depth"
+    },
+    "seniority_default": "senior",
+    "evaluation": {
+      "signals": [
+        "Has shaped direction, not just executed against it",
+        "Drives outcomes across teams or functions",
+        "Comfortable navigating ambiguity and making calls without full information",
+        "Demonstrates investment in others' growth (mentorship, unblocking, sponsorship)",
+        "Impact is systemic — changes processes, norms, or culture, not just delivers projects"
+      ],
+      "red_flags": [
+        "Impact is still described at the individual-contribution level",
+        "No examples of influencing upward or across without formal authority",
+        "Struggles to describe ambiguous or underdefined situations they navigated",
+        "People development is absent from their narrative",
+        "Overly credits team for everything — ownership is unclear"
+      ],
+      "seniority_note": "6+ years expected. Senior candidates should demonstrate leverage — their work makes other people and systems more effective. Look for multiplier behaviours: mentorship, cross-functional influence, process improvement, and strategic input."
+    }
+  }
+}

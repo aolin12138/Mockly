@@ -69,3 +69,5 @@ coverage/
 *.pem
 *.key
 *.crt
+
+claude/

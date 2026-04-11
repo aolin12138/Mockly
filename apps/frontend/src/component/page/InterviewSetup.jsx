@@ -7,19 +7,11 @@ import {
   ChevronRight,
   ChevronLeft,
   ArrowLeft,
-  Briefcase,
   User,
-  Clock,
-  Languages,
-  Target,
-  FileText,
   CheckCircle,
   Code,
   Zap,
   Upload,
-  Brain,
-  ShieldAlert,
-  GraduationCap,
   AlertTriangle,
   Key
 } from 'lucide-react';
@@ -43,6 +35,24 @@ const InputField = ({ label, value, onChange, placeholder, type = "text", textar
         className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all"
       />
     )}
+  </div>
+);
+
+const Toggle = ({ label, checked, onChange, helperText }) => (
+  <div className="space-y-2">
+    <div className="flex items-center justify-between bg-slate-800/40 border border-white/10 rounded-xl px-4 py-3">
+      <div>
+        <p className="text-sm font-medium text-slate-200">{label}</p>
+        {helperText && <p className="text-xs text-slate-500 mt-0.5">{helperText}</p>}
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        className={`w-12 h-7 rounded-full p-1 transition-all ${checked ? 'bg-emerald-500' : 'bg-slate-700'}`}
+      >
+        <div className={`w-5 h-5 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+      </button>
+    </div>
   </div>
 );
 
@@ -119,11 +129,11 @@ const FileUpload = ({ file, onFileSelect }) => {
               <p className="text-sm text-slate-400">
                 <span className="font-semibold text-emerald-400">Click to upload CV</span> or drag and drop
               </p>
-              <p className="text-xs text-slate-600 mt-1">PDF, DOCX (MAX. 10MB)</p>
+              <p className="text-xs text-slate-600 mt-1">PDF only (MAX. 10MB)</p>
             </>
           )}
         </div>
-        <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleChange} />
+        <input type="file" className="hidden" accept="application/pdf,.pdf" onChange={handleChange} />
       </label>
     </div>
   );
@@ -139,31 +149,41 @@ const InterviewSetup = () => {
   const [loadingAgent, setLoadingAgent] = useState(true);
   const [byokStatus, setByokStatus] = useState(null);
   const [sessionError, setSessionError] = useState('');
+  const [setupWarnings, setSetupWarnings] = useState([]);
   const [formData, setFormData] = useState({
     session: {
-      interview_mode: "behavioral",
+      mode: "practice",
       duration_min: 30,
-      language: "en",
-      difficulty: "medium",
-      preferred_coding_language: "javascript",
-      technical_focus_areas: []
-    },
-    target: {
-      company_preset: "general_tech",
-      role_title: "",
-      seniority: "grad",
-      focus_areas: [],
-      preferred_languages: [],
-      job_description_text: "",
-      job_url: ""
+      language: "en"
     },
     candidate: {
+      cv_available: false,
       cv_file: null,
-      self_strengths: [],
-      self_weaknesses: [],
-      goals: [],
-      anxieties: "",
-      prior_interview_experience: "some"
+      cv_structured: {
+        name: "",
+        current_role: "",
+        experience_years: 0,
+        companies: [{ name: "", role: "", years: 0 }],
+        key_skills: [],
+        notable_projects: [{ name: "", description: "", tech: [] }],
+        education: ""
+      },
+      practice_context: {
+        focus_areas: [],
+        prior_interview_experience: "none"
+      }
+    },
+    role: {
+      title: "",
+      context: "",
+      seniority: "junior",
+      stage: "behavioral",
+      company_preset: "general_tech",
+    },
+    interview: {
+      mode: "behavioral",
+      probe_domains: [],
+      depth_preference: "balanced"
     }
   });
 
@@ -175,6 +195,112 @@ const InterviewSetup = () => {
         [field]: value
       }
     }));
+  };
+
+  const updateNestedField = (section, parentField, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [parentField]: {
+          ...prev[section][parentField],
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  const updateArrayItem = (section, parentField, arrayField, index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [parentField]: {
+          ...prev[section][parentField],
+          [arrayField]: prev[section][parentField][arrayField].map((item, i) => (
+            i === index ? { ...item, [field]: value } : item
+          ))
+        }
+      }
+    }));
+  };
+
+  const addArrayItem = (section, parentField, arrayField, newItem) => {
+    setFormData(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [parentField]: {
+          ...prev[section][parentField],
+          [arrayField]: [...prev[section][parentField][arrayField], newItem]
+        }
+      }
+    }));
+  };
+
+  const removeArrayItem = (section, parentField, arrayField, index) => {
+    setFormData(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [parentField]: {
+          ...prev[section][parentField],
+          [arrayField]: prev[section][parentField][arrayField].filter((_, i) => i !== index)
+        }
+      }
+    }));
+  };
+
+  const toggleProbeDomain = (domain) => {
+    if (formData.interview.probe_domains.includes(domain)) {
+      updateField('interview', 'probe_domains', formData.interview.probe_domains.filter(d => d !== domain));
+      return;
+    }
+    updateField('interview', 'probe_domains', [...formData.interview.probe_domains, domain]);
+  };
+
+  const buildSubmissionPayload = () => {
+    return {
+      agent_id: lastAgent?.id || '',
+      session: {
+        mode: formData.session.mode || 'practice',
+        duration_min: Number(formData.session.duration_min) || 30,
+        language: formData.session.language || 'en'
+      },
+      candidate: {
+        ...formData.candidate,
+        practice_context: {
+          focus_areas: formData.candidate.practice_context?.focus_areas || [],
+          prior_interview_experience: formData.candidate.practice_context?.prior_interview_experience || 'none'
+        }
+      },
+      role: {
+        title: (formData.role.title || (formData.interview.mode === 'technical' ? 'Technical Interview' : '')).trim(),
+        context: (formData.role.context || '').trim(),
+        seniority: formData.role.seniority,
+        stage: formData.role.stage,
+        company_preset: formData.role.company_preset || 'general_tech'
+      },
+      interview: {
+        mode: formData.interview.mode,
+        probe_domains: Array.isArray(formData.interview.probe_domains) ? formData.interview.probe_domains : [],
+        depth_preference: formData.interview.depth_preference || 'balanced'
+      }
+    };
+  };
+
+  const getRecommendedWarnings = (payload) => {
+    const warnings = [];
+
+    if (payload.interview?.mode === 'behavioral' && !payload.role?.context) {
+      warnings.push('Add role context for significantly better question quality.');
+    }
+
+    if (!Array.isArray(payload.interview?.probe_domains) || payload.interview.probe_domains.length === 0) {
+      warnings.push('Add probe domains for more targeted questions. If empty, role rubric defaults will be used.');
+    }
+
+    return warnings;
   };
 
   // Fetch last agent on component mount
@@ -230,12 +356,7 @@ const InterviewSetup = () => {
     fetchByokStatus();
   }, []);
 
-  const getTotalSteps = () => {
-    if (formData.session.interview_mode === 'technical') {
-      return 2; // Step 1 (config) + Step 2 (focus areas)
-    }
-    return 3; // Step 1 (config) + Step 2 (target) + Step 3 (profile)
-  };
+  const getTotalSteps = () => 3;
 
   const nextStep = () => setStep(prev => Math.min(prev + 1, getTotalSteps()));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
@@ -289,6 +410,14 @@ const InterviewSetup = () => {
   };
 
   const handleSubmit = async () => {
+    const payload = buildSubmissionPayload();
+
+    const warnings = getRecommendedWarnings(payload);
+    setSetupWarnings(warnings);
+    if (warnings.length > 0) {
+      toast.warning(warnings[0], { title: 'Recommended input missing' });
+    }
+
     // First time: show confirmation modal
     setShowConfirmModal(true);
   };
@@ -309,7 +438,10 @@ const InterviewSetup = () => {
 
       console.log("Using Token:", token);
 
-      const endpoint = formData.session.interview_mode === 'technical'
+      const payload = buildSubmissionPayload();
+      const isTechnicalOnly = payload.interview.mode === 'technical';
+
+      const endpoint = isTechnicalOnly
         ? 'http://localhost:3000/api/interview/technical/session'
         : 'http://localhost:3000/api/interview/session';
 
@@ -320,7 +452,7 @@ const InterviewSetup = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
         // No timeout - wait indefinitely
       });
 
@@ -359,11 +491,15 @@ const InterviewSetup = () => {
           return;
         }
 
-        localStorage.setItem('pendingInterviewMode', formData.session.interview_mode);
+        localStorage.setItem('pendingInterviewMode', payload.interview.mode);
 
-        // Technical: store config and go straight to editor, Behavioral: go to waiting
-        if (formData.session.interview_mode === 'technical') {
-          localStorage.setItem('technicalSessionConfig', JSON.stringify(formData.session));
+        if (isTechnicalOnly) {
+          localStorage.setItem('technicalSessionConfig', JSON.stringify({
+            interview_mode: 'technical',
+            duration_min: payload.session.duration_min,
+            technical_focus_areas: payload.interview.probe_domains,
+            preferred_coding_language: 'javascript'
+          }));
           navigate(`/technical/${sessionId}`);
         } else {
           navigate(`/interview/session/${sessionId}/waiting`);
@@ -377,9 +513,9 @@ const InterviewSetup = () => {
   };
 
   const steps = [
-    { title: "Session", icon: Clock },
-    { title: "Target", icon: Target },
-    { title: "Profile", icon: User }
+    { title: "Type" },
+    { title: "Role & Focus" },
+    { title: "Candidate" }
   ];
 
   return (
@@ -448,7 +584,7 @@ const InterviewSetup = () => {
         <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 md:p-12 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] relative overflow-hidden">
           <AnimatePresence mode="wait">
 
-            {/* STEP 1: SESSION SETTINGS */}
+            {/* STEP 1: INTERVIEW TYPE FIRST */}
             {step === 1 && (
               <motion.div
                 key="step1"
@@ -458,141 +594,110 @@ const InterviewSetup = () => {
                 className="space-y-8"
               >
                 <div>
-                  <h2 className="text-3xl font-bold text-white mb-2">Session Configuration</h2>
-                  <p className="text-slate-400">Customize the parameters of your mock interview.</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Choose Interview Type</h2>
+                  <p className="text-slate-400">Start by selecting whether this session is behavioral or technical.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <label className="text-sm font-medium text-slate-400 mb-2 block">Interview Mode</label>
+                    <label className="text-sm font-medium text-slate-400 mb-2 block">Interview Type</label>
                     <div className="space-y-3">
-                      <SelectButton
-                        active={formData.session.interview_mode === 'behavioral'}
-                        onClick={() => updateField('session', 'interview_mode', 'behavioral')}
-                        icon={User}
-                      >
-                        Behavioral
-                      </SelectButton>
-                      <SelectButton
-                        active={formData.session.interview_mode === 'technical'}
-                        onClick={() => updateField('session', 'interview_mode', 'technical')}
-                        icon={Code}
-                      >
-                        Technical
-                      </SelectButton>
-                      <SelectButton
-                        active={formData.session.interview_mode === 'behavioral_plus_dsa'}
-                        onClick={() => updateField('session', 'interview_mode', 'behavioral_plus_dsa')}
-                        icon={Code}
-                      >
-                        Behavioral + DSA
-                      </SelectButton>
+                      {[
+                        { id: 'behavioral', label: 'Behavioral', icon: User },
+                        { id: 'technical', label: 'Technical', icon: Code }
+                      ].map((modeOption) => (
+                        <SelectButton
+                          key={modeOption.id}
+                          active={formData.interview.mode === modeOption.id}
+                          onClick={() => updateField('interview', 'mode', modeOption.id)}
+                          icon={modeOption.icon}
+                        >
+                          {modeOption.label}
+                        </SelectButton>
+                      ))}
                     </div>
                   </div>
 
-                  {/* BEHAVIORAL CONFIG */}
-                  {formData.session.interview_mode !== 'technical' && (
-                    <div className="space-y-6">
-                      <div>
-                        <label className="text-sm font-medium text-slate-400 mb-2 block">Duration</label>
-                        <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
-                          {[15, 30, 45, 60].map(mins => (
-                            <button
-                              key={mins}
-                              onClick={() => updateField('session', 'duration_min', mins)}
-                              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${formData.session.duration_min === mins
-                                ? 'bg-slate-700 text-white shadow-sm'
-                                : 'text-slate-500 hover:text-slate-300'
-                                }`}
-                            >
-                              {mins}m
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium text-slate-400 mb-2 block">Language</label>
-                        <select
-                          value={formData.session.language}
-                          onChange={(e) => updateField('session', 'language', e.target.value)}
-                          className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-100 outline-none focus:border-emerald-500/50 appearance-none"
-                        >
-                          <option value="en">English (US)</option>
-                          <option value="es">Spanish</option>
-                          <option value="fr">French</option>
-                          <option value="de">German</option>
-                          <option value="zh">Chinese (Mandarin)</option>
-                        </select>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-sm font-medium text-slate-400 mb-2 block">Session Type</label>
+                      <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
+                        {['practice', 'real'].map(mode => (
+                          <button
+                            key={mode}
+                            onClick={() => updateField('session', 'mode', mode)}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${formData.session.mode === mode
+                              ? 'bg-slate-700 text-white shadow-sm'
+                              : 'text-slate-500 hover:text-slate-300'
+                              }`}
+                          >
+                            {mode}
+                          </button>
+                        ))}
                       </div>
                     </div>
-                  )}
 
-                  {/* TECHNICAL CONFIG */}
-                  {formData.session.interview_mode === 'technical' && (
-                    <div className="space-y-6">
-                      <div>
-                        <label className="text-sm font-medium text-slate-400 mb-2 block">Difficulty</label>
-                        <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
-                          {['easy', 'medium', 'hard'].map(level => (
-                            <button
-                              key={level}
-                              onClick={() => updateField('session', 'difficulty', level)}
-                              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${formData.session.difficulty === level
-                                ? 'bg-slate-700 text-white shadow-sm'
-                                : 'text-slate-500 hover:text-slate-300'
-                                }`}
-                            >
-                              {level}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium text-slate-400 mb-2 block">Preferred Language</label>
-                        <div className="space-y-2">
-                          {['javascript', 'python', 'java'].map(lang => (
-                            <SelectButton
-                              key={lang}
-                              active={formData.session.preferred_coding_language === lang}
-                              onClick={() => updateField('session', 'preferred_coding_language', lang)}
-                            >
-                              {lang.charAt(0).toUpperCase() + lang.slice(1)}
-                            </SelectButton>
-                          ))}
-                        </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-400 mb-2 block">Duration</label>
+                      <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
+                        {[15, 30, 45, 60].map(mins => (
+                          <button
+                            key={mins}
+                            onClick={() => updateField('session', 'duration_min', mins)}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${formData.session.duration_min === mins
+                              ? 'bg-slate-700 text-white shadow-sm'
+                              : 'text-slate-500 hover:text-slate-300'
+                              }`}
+                          >
+                            {mins}m
+                          </button>
+                        ))}
                       </div>
                     </div>
-                  )}
+
+                    <div>
+                      <label className="text-sm font-medium text-slate-400 mb-2 block">Conversation Language</label>
+                      <select
+                        value={formData.session.language}
+                        onChange={(e) => updateField('session', 'language', e.target.value)}
+                        className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-100 outline-none focus:border-emerald-500/50 appearance-none"
+                      >
+                        <option value="en">English (US)</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="zh">Chinese (Mandarin)</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
 
-            {/* STEP 2: TARGET ROLE - ONLY FOR BEHAVIORAL */}
-            {step === 2 && formData.session.interview_mode !== 'technical' && (
+            {/* STEP 2A: ROLE FOR BEHAVIORAL */}
+            {step === 2 && formData.interview.mode === 'behavioral' && (
               <motion.div
-                key="step2"
+                key="step2-role"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-8"
               >
                 <div>
-                  <h2 className="text-3xl font-bold text-white mb-2">Target Role</h2>
-                  <p className="text-slate-400">Tell us what you're aiming for.</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Role Context</h2>
+                  <p className="text-slate-400">Define the role and hiring environment for this simulation.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-400">Target Company</label>
+                      <label className="text-sm font-medium text-slate-400">Company Preset</label>
                       <div className="grid grid-cols-2 gap-3">
-                        {['general_tech', 'finance', 'quant', 'startup'].map(type => (
+                        {['general_tech', 'faang', 'startup', 'finance', 'consulting'].map(type => (
                           <SelectButton
                             key={type}
-                            active={formData.target.company_preset === type}
-                            onClick={() => updateField('target', 'company_preset', type)}
+                            active={formData.role.company_preset === type}
+                            onClick={() => updateField('role', 'company_preset', type)}
                           >
                             <span className="capitalize">{type.replace('_', ' ')}</span>
                           </SelectButton>
@@ -603,18 +708,18 @@ const InterviewSetup = () => {
                     <InputField
                       label="Role Title"
                       placeholder="e.g. Senior Frontend Engineer"
-                      value={formData.target.role_title}
-                      onChange={(e) => updateField('target', 'role_title', e.target.value)}
+                      value={formData.role.title}
+                      onChange={(e) => updateField('role', 'title', e.target.value)}
                     />
 
                     <div>
                       <label className="text-sm font-medium text-slate-400 mb-2 block">Seniority</label>
                       <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
-                        {['intern', 'grad', 'senior'].map(level => (
+                        {['intern', 'junior', 'mid', 'senior', 'staff', 'lead'].map(level => (
                           <button
                             key={level}
-                            onClick={() => updateField('target', 'seniority', level)}
-                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${formData.target.seniority === level
+                            onClick={() => updateField('role', 'seniority', level)}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${formData.role.seniority === level
                               ? 'bg-slate-700 text-white shadow-sm'
                               : 'text-slate-500 hover:text-slate-300'
                               }`}
@@ -627,71 +732,106 @@ const InterviewSetup = () => {
                   </div>
 
                   <div className="space-y-6">
-                    <TagInput
-                      label="Focus Areas"
-                      tags={formData.target.focus_areas}
-                      onAdd={(tag) => updateField('target', 'focus_areas', [...formData.target.focus_areas, tag])}
-                      onRemove={(tag) => updateField('target', 'focus_areas', formData.target.focus_areas.filter(t => t !== tag))}
-                      placeholder="Type & Enter (e.g. System Design)"
-                    />
-
-                    <TagInput
-                      label="Preferred Languages"
-                      tags={formData.target.preferred_languages}
-                      onAdd={(tag) => updateField('target', 'preferred_languages', [...formData.target.preferred_languages, tag])}
-                      onRemove={(tag) => updateField('target', 'preferred_languages', formData.target.preferred_languages.filter(t => t !== tag))}
-                      placeholder="e.g. Python, Java"
-                    />
+                    <div>
+                      <label className="text-sm font-medium text-slate-400 mb-2 block">Interview Stage</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['hr_screen', 'behavioral', 'system_design', 'final_loop'].map(stage => (
+                          <SelectButton
+                            key={stage}
+                            active={formData.role.stage === stage}
+                            onClick={() => updateField('role', 'stage', stage)}
+                          >
+                            <span className="capitalize text-xs">{stage.replace('_', ' ')}</span>
+                          </SelectButton>
+                        ))}
+                      </div>
+                    </div>
 
                     <InputField
-                      label="Job Description (Optional)"
-                      placeholder="Paste key responsibilities..."
-                      value={formData.target.job_description_text}
-                      onChange={(e) => updateField('target', 'job_description_text', e.target.value)}
+                      label="Role Context"
+                      placeholder="Team goals, product area, role responsibilities, interview constraints..."
+                      value={formData.role.context}
+                      onChange={(e) => updateField('role', 'context', e.target.value)}
                       textarea
                     />
+                    {!formData.role.context.trim() && (
+                      <p className="text-xs text-amber-300">Recommended: add 1-2 sentences of role context for better question quality.</p>
+                    )}
 
-                    <InputField
-                      label="Job Posting URL (Optional)"
-                      placeholder="https://..."
-                      value={formData.target.job_url}
-                      onChange={(e) => updateField('target', 'job_url', e.target.value)}
+                    <TagInput
+                      label="Probe Domains (Recommended)"
+                      tags={formData.interview.probe_domains}
+                      onAdd={(tag) => updateField('interview', 'probe_domains', [...formData.interview.probe_domains, tag])}
+                      onRemove={(tag) => updateField('interview', 'probe_domains', formData.interview.probe_domains.filter(t => t !== tag))}
+                      placeholder="e.g. leadership, ambiguity handling, cross-team communication"
                     />
+                    {formData.interview.probe_domains.length === 0 && (
+                      <p className="text-xs text-amber-300">Recommended: add probe domains; if left empty, rubric defaults are used.</p>
+                    )}
                   </div>
                 </div>
               </motion.div>
             )}
 
-            {/* STEP 2B: TECH FOCUS AREAS - ONLY FOR TECHNICAL */}
-            {step === 2 && formData.session.interview_mode === 'technical' && (
+            {/* STEP 2B: CODING FOCUS FOR TECHNICAL */}
+            {step === 2 && formData.interview.mode === 'technical' && (
               <motion.div
-                key="step2-tech"
+                key="step2-technical"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-8"
               >
                 <div>
-                  <h2 className="text-3xl font-bold text-white mb-2">Focus Areas</h2>
-                  <p className="text-slate-400">Select topics you want to focus on.</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Coding Focus Areas</h2>
+                  <p className="text-slate-400">Pick the coding patterns you want to practice.</p>
                 </div>
 
-                <div className="space-y-6">
-                  <TagInput
-                    label="Focus Areas"
-                    tags={formData.session.technical_focus_areas || []}
-                    onAdd={(tag) => updateField('session', 'technical_focus_areas', [...(formData.session.technical_focus_areas || []), tag])}
-                    onRemove={(tag) => updateField('session', 'technical_focus_areas', (formData.session.technical_focus_areas || []).filter(t => t !== tag))}
-                    placeholder="e.g. Arrays, Strings, Dynamic Programming, Graphs"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-sm font-medium text-slate-400 mb-2 block">Common Patterns</label>
+                      <div className="space-y-2">
+                        {[
+                          'array_two_pointers',
+                          'hashing_pattern',
+                          'sliding_window',
+                          'stack_queue',
+                          'tree_pattern',
+                          'graph_pattern',
+                          'dynamic_programming'
+                        ].map(pattern => (
+                          <SelectButton
+                            key={pattern}
+                            active={formData.interview.probe_domains.includes(pattern)}
+                            onClick={() => toggleProbeDomain(pattern)}
+                            icon={Code}
+                          >
+                            <span className="capitalize">{pattern.replaceAll('_', ' ')}</span>
+                          </SelectButton>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <div className="space-y-6">
+                    <TagInput
+                      label="Custom Coding Areas"
+                      tags={formData.interview.probe_domains}
+                      onAdd={(tag) => updateField('interview', 'probe_domains', [...formData.interview.probe_domains, tag])}
+                      onRemove={(tag) => updateField('interview', 'probe_domains', formData.interview.probe_domains.filter(t => t !== tag))}
+                      placeholder="e.g. heaps, bit manipulation, recursion"
+                    />
+                  </div>
                 </div>
               </motion.div>
             )}
 
-            {/* STEP 3: CANDIDATE PROFILE - ONLY FOR BEHAVIORAL */}
-            {step === 3 && formData.session.interview_mode !== 'technical' && (
+            {/* STEP 3: CANDIDATE */}
+            {step === 3 && (
               <motion.div
-                key="step3"
+                key="step3-candidate"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -699,76 +839,200 @@ const InterviewSetup = () => {
               >
                 <div>
                   <h2 className="text-3xl font-bold text-white mb-2">Candidate Profile</h2>
-                  <p className="text-slate-400">Help us personalize the challenge to you.</p>
+                  <p className="text-slate-400">Uploading your CV is highly recommended for better personalization. If you skip CV upload, please fill in as many candidate details as possible for a more comprehensive interview experience.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-6">
-                    <div>
-                      <label className="text-sm font-medium text-slate-400 mb-2 block">Resume / CV</label>
-                      <FileUpload
-                        file={formData.candidate.cv_file}
-                        onFileSelect={(file) => {
-                          const reader = new FileReader();
-                          reader.onload = () => {
-                            // Extract base64 data without the data URI prefix
-                            const dataUrl = reader.result;
-                            const base64Data = dataUrl.split(';base64,').pop();
+                    <Toggle
+                      label="CV Available"
+                      helperText="Highly recommended. CV context helps generate more tailored prompts and feedback."
+                      checked={formData.candidate.cv_available}
+                      onChange={(val) => updateField('candidate', 'cv_available', val)}
+                    />
 
-                            updateField('candidate', 'cv_file', {
-                              name: file.name,
-                              type: file.type,
-                              size: file.size,
-                              content: base64Data // Pure base64 string without prefix
-                            });
-                          };
-                          reader.readAsDataURL(file);
-                        }}
-                      />
-                    </div>
+                    {formData.candidate.cv_available && (
+                      <div>
+                        <label className="text-sm font-medium text-slate-400 mb-2 block">CV Upload (Optional)</label>
+                        <FileUpload
+                          file={formData.candidate.cv_file}
+                          onFileSelect={(file) => {
+                            const isPdf =
+                              (file.type || '').toLowerCase() === 'application/pdf' ||
+                              (file.name || '').toLowerCase().endsWith('.pdf');
 
-                    <TagInput
-                      label="Your Strengths"
-                      tags={formData.candidate.self_strengths}
-                      onAdd={(tag) => updateField('candidate', 'self_strengths', [...formData.candidate.self_strengths, tag])}
-                      onRemove={(tag) => updateField('candidate', 'self_strengths', formData.candidate.self_strengths.filter(t => t !== tag))}
-                      placeholder="e.g. Communication, SQL"
+                            if (!isPdf) {
+                              toast.error('Only PDF CV files are supported.');
+                              return;
+                            }
+
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              const dataUrl = reader.result;
+                              const base64Data = dataUrl.split(';base64,').pop();
+
+                              updateField('candidate', 'cv_file', {
+                                name: file.name,
+                                type: file.type,
+                                size: file.size,
+                                content: base64Data
+                              });
+                              updateField('candidate', 'cv_available', true);
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    <InputField
+                      label="Candidate Name"
+                      placeholder="e.g. Alex Lee"
+                      value={formData.candidate.cv_structured.name}
+                      onChange={(e) => updateNestedField('candidate', 'cv_structured', 'name', e.target.value)}
+                    />
+
+                    <InputField
+                      label="Current Role"
+                      placeholder="e.g. Software Engineer"
+                      value={formData.candidate.cv_structured.current_role}
+                      onChange={(e) => updateNestedField('candidate', 'cv_structured', 'current_role', e.target.value)}
+                    />
+
+                    <InputField
+                      label="Years of Experience"
+                      type="number"
+                      placeholder="0"
+                      value={formData.candidate.cv_structured.experience_years}
+                      onChange={(e) => updateNestedField('candidate', 'cv_structured', 'experience_years', Number(e.target.value) || 0)}
                     />
 
                     <TagInput
-                      label="Your Weaknesses"
-                      tags={formData.candidate.self_weaknesses}
-                      onAdd={(tag) => updateField('candidate', 'self_weaknesses', [...formData.candidate.self_weaknesses, tag])}
-                      onRemove={(tag) => updateField('candidate', 'self_weaknesses', formData.candidate.self_weaknesses.filter(t => t !== tag))}
-                      placeholder="e.g. DP, Graphs"
+                      label="Key Skills"
+                      tags={formData.candidate.cv_structured.key_skills}
+                      onAdd={(tag) => updateNestedField('candidate', 'cv_structured', 'key_skills', [...formData.candidate.cv_structured.key_skills, tag])}
+                      onRemove={(tag) => updateNestedField('candidate', 'cv_structured', 'key_skills', formData.candidate.cv_structured.key_skills.filter(t => t !== tag))}
+                      placeholder="e.g. React, SQL, AWS"
+                    />
+
+                    <InputField
+                      label="Education"
+                      placeholder="e.g. BSc Computer Science, University of Auckland"
+                      value={formData.candidate.cv_structured.education}
+                      onChange={(e) => updateNestedField('candidate', 'cv_structured', 'education', e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-6">
-                    <InputField
-                      label="Interview Anxiety"
-                      placeholder="What makes you nervous?"
-                      value={formData.candidate.anxieties}
-                      onChange={(e) => updateField('candidate', 'anxieties', e.target.value)}
-                      textarea
-                    />
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-slate-400">Companies</label>
+                        <button
+                          type="button"
+                          onClick={() => addArrayItem('candidate', 'cv_structured', 'companies', { name: '', role: '', years: 0 })}
+                          className="text-xs text-emerald-400 hover:text-emerald-300"
+                        >
+                          + Add company
+                        </button>
+                      </div>
 
-                    <TagInput
-                      label="Session Goals"
-                      tags={formData.candidate.goals}
-                      onAdd={(tag) => updateField('candidate', 'goals', [...formData.candidate.goals, tag])}
-                      onRemove={(tag) => updateField('candidate', 'goals', formData.candidate.goals.filter(t => t !== tag))}
-                      placeholder="e.g. Concise answers"
-                    />
+                      {formData.candidate.cv_structured.companies.map((company, index) => (
+                        <div key={`company-${index}`} className="bg-slate-800/40 border border-white/10 rounded-xl p-3 space-y-3">
+                          <InputField
+                            label="Company Name"
+                            placeholder="e.g. Xero"
+                            value={company.name}
+                            onChange={(e) => updateArrayItem('candidate', 'cv_structured', 'companies', index, 'name', e.target.value)}
+                          />
+                          <InputField
+                            label="Role"
+                            placeholder="e.g. Full Stack Engineer"
+                            value={company.role}
+                            onChange={(e) => updateArrayItem('candidate', 'cv_structured', 'companies', index, 'role', e.target.value)}
+                          />
+                          <InputField
+                            label="Years"
+                            type="number"
+                            placeholder="0"
+                            value={company.years}
+                            onChange={(e) => updateArrayItem('candidate', 'cv_structured', 'companies', index, 'years', Number(e.target.value) || 0)}
+                          />
+                          {formData.candidate.cv_structured.companies.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeArrayItem('candidate', 'cv_structured', 'companies', index)}
+                              className="text-xs text-red-400 hover:text-red-300"
+                            >
+                              Remove company
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-slate-400">Notable Projects</label>
+                        <button
+                          type="button"
+                          onClick={() => addArrayItem('candidate', 'cv_structured', 'notable_projects', { name: '', description: '', tech: [] })}
+                          className="text-xs text-emerald-400 hover:text-emerald-300"
+                        >
+                          + Add project
+                        </button>
+                      </div>
+
+                      {formData.candidate.cv_structured.notable_projects.map((project, index) => (
+                        <div key={`project-${index}`} className="bg-slate-800/40 border border-white/10 rounded-xl p-3 space-y-3">
+                          <InputField
+                            label="Project Name"
+                            placeholder="e.g. Candidate Ranking Engine"
+                            value={project.name}
+                            onChange={(e) => updateArrayItem('candidate', 'cv_structured', 'notable_projects', index, 'name', e.target.value)}
+                          />
+                          <InputField
+                            label="Description"
+                            placeholder="What did you build and why?"
+                            value={project.description}
+                            onChange={(e) => updateArrayItem('candidate', 'cv_structured', 'notable_projects', index, 'description', e.target.value)}
+                            textarea
+                          />
+                          <TagInput
+                            label="Tech Stack"
+                            tags={project.tech}
+                            onAdd={(tag) => updateArrayItem('candidate', 'cv_structured', 'notable_projects', index, 'tech', [...project.tech, tag])}
+                            onRemove={(tag) => updateArrayItem('candidate', 'cv_structured', 'notable_projects', index, 'tech', project.tech.filter(t => t !== tag))}
+                            placeholder="e.g. Node.js, Postgres"
+                          />
+                          {formData.candidate.cv_structured.notable_projects.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeArrayItem('candidate', 'cv_structured', 'notable_projects', index)}
+                              className="text-xs text-red-400 hover:text-red-300"
+                            >
+                              Remove project
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                  <TagInput
+                    label="Practice Focus Areas"
+                    tags={formData.candidate.practice_context.focus_areas}
+                    onAdd={(tag) => updateNestedField('candidate', 'practice_context', 'focus_areas', [...formData.candidate.practice_context.focus_areas, tag])}
+                    onRemove={(tag) => updateNestedField('candidate', 'practice_context', 'focus_areas', formData.candidate.practice_context.focus_areas.filter(t => t !== tag))}
+                    placeholder="e.g. confidence, communication, problem framing"
+                  />
 
                     <div>
-                      <label className="text-sm font-medium text-slate-400 mb-2 block">Prior Experience</label>
+                      <label className="text-sm font-medium text-slate-400 mb-2 block">Prior Interview Experience</label>
                       <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
-                        {['none', 'some', 'lots'].map(level => (
+                        {['none', 'some', 'experienced'].map(level => (
                           <button
                             key={level}
-                            onClick={() => updateField('candidate', 'prior_interview_experience', level)}
-                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${formData.candidate.prior_interview_experience === level
+                            onClick={() => updateNestedField('candidate', 'practice_context', 'prior_interview_experience', level)}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${formData.candidate.practice_context.prior_interview_experience === level
                               ? 'bg-slate-700 text-white shadow-sm'
                               : 'text-slate-500 hover:text-slate-300'
                               }`}
@@ -868,20 +1132,25 @@ const InterviewSetup = () => {
           <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
             <p className="font-semibold text-white mb-2">📋 Please Verify Your Settings:</p>
             <ul className="space-y-1 ml-2">
-              <li>✓ Interview Mode: <span className="text-emerald-400 font-medium capitalize">{formData.session.interview_mode.replace('_', ' ')}</span></li>
-              {formData.session.interview_mode === 'technical' ? (
-                <>
-                  <li>✓ Difficulty: <span className="text-emerald-400 font-medium capitalize">{formData.session.difficulty}</span></li>
-                  <li>✓ Language: <span className="text-emerald-400 font-medium capitalize">{formData.session.preferred_coding_language}</span></li>
-                </>
-              ) : (
-                <>
-                  <li>✓ Duration: <span className="text-emerald-400 font-medium">{formData.session.duration_min} minutes</span></li>
-                  <li>✓ Role: <span className="text-emerald-400 font-medium">{formData.target.role_title || 'Not specified'}</span></li>
-                </>
-              )}
+              <li>✓ Session Mode: <span className="text-emerald-400 font-medium capitalize">{formData.session.mode}</span></li>
+              <li>✓ Interview Mode: <span className="text-emerald-400 font-medium capitalize">{formData.interview.mode.replace('_', ' ')}</span></li>
+              <li>✓ Duration: <span className="text-emerald-400 font-medium">{formData.session.duration_min} minutes</span></li>
+              <li>✓ Role: <span className="text-emerald-400 font-medium">{formData.role.title || 'Not specified'}</span></li>
+              <li>✓ Stage: <span className="text-emerald-400 font-medium capitalize">{formData.role.stage.replace('_', ' ')}</span></li>
+              <li>✓ Probe Domains: <span className="text-emerald-400 font-medium">{formData.interview.probe_domains.length || 0}</span></li>
             </ul>
           </div>
+
+          {setupWarnings.length > 0 && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+              <p className="font-semibold text-amber-200 mb-1">Recommended Improvements</p>
+              <ul className="space-y-1 text-amber-100">
+                {setupWarnings.map((warning, index) => (
+                  <li key={`setup-warning-${index}`}>• {warning}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
             <p className="font-semibold text-amber-200 mb-1">⚠️ Important:</p>
