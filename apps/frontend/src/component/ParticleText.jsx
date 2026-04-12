@@ -1,13 +1,18 @@
 import React, { useRef, useEffect } from 'react';
 
-export default function ParticleText({ scrollProgress = 0 }) {
+export default function ParticleText({ scrollProgress = 0, globeOffset = { x: 0.5, y: 0.42 }, theme = 'dark' }) {
   const canvasRef = useRef();
   const scrollProgressRef = useRef(0);
+  const themeRef = useRef(theme);
 
-  // Update scroll progress ref
+  // Update refs
   useEffect(() => {
     scrollProgressRef.current = scrollProgress;
   }, [scrollProgress]);
+
+  useEffect(() => {
+    themeRef.current = theme;
+  }, [theme]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -15,7 +20,7 @@ export default function ParticleText({ scrollProgress = 0 }) {
     const dpr = window.devicePixelRatio || 1;
 
     // Dynamic size variables
-    let width, height, centerX, centerY, earthRadius;
+    let width, height, centerX, centerY, globeCenterX, globeCenterY, earthRadius;
     let rotationY = 0; // Horizontal rotation
     let rotationX = 0.3; // Tilt angle
 
@@ -289,9 +294,16 @@ export default function ParticleText({ scrollProgress = 0 }) {
 
       width = canvas.offsetWidth;
       height = canvas.offsetHeight;
-      centerX = width / 2;
+      centerX = width / 2; // Used for MOCKLY text
       centerY = height * 0.42;
-      earthRadius = Math.min(width, height) * 0.22;
+
+      // Globe center - offset to right on desktop, centered on mobile
+      const effectiveOffsetX = width < 768 ? 0.5 : globeOffset.x;
+      const effectiveOffsetY = width < 768 ? 0.42 : globeOffset.y;
+      globeCenterX = width * effectiveOffsetX;
+      globeCenterY = height * effectiveOffsetY;
+
+      earthRadius = Math.min(width, height) * (width < 768 ? 0.22 : 0.24);
 
       // Update company orbit radii
       companies.forEach((company) => {
@@ -302,11 +314,11 @@ export default function ParticleText({ scrollProgress = 0 }) {
       generateTextParticles();
     };
 
-    // Draw 3D sphere point
+    // Draw 3D sphere point (uses globe center, not text center)
     function draw3DPoint(x, y, z, size, color) {
       const scale = 1 / (1 + z * 0.003); // Perspective scaling
-      const screenX = centerX + x * scale;
-      const screenY = centerY + y * scale;
+      const screenX = globeCenterX + x * scale;
+      const screenY = globeCenterY + y * scale;
       const pointSize = Math.max(0.1, size * scale); // Ensure positive radius
 
       if (z > -earthRadius * 2 && pointSize > 0) { // Only draw if in front and size is positive
@@ -480,8 +492,11 @@ export default function ParticleText({ scrollProgress = 0 }) {
 
           const rotated = rotate3D(x, y, z, rotationX, rotationY);
 
-          // Different colors for land and ocean - more vibrant
-          const color = particle.isLand ? '#52D452' : '#2E7DD2';
+          // Different colors for land and ocean - theme-aware
+          const isDark = themeRef.current === 'dark';
+          const color = particle.isLand
+            ? (isDark ? '#52D452' : '#22C55E')
+            : (isDark ? '#2E7DD2' : '#3B82F6');
           const size = particle.isLand ? 2 : 1.5;
 
           draw3DPoint(rotated.x, rotated.y, rotated.z, size, color);
@@ -511,8 +526,8 @@ export default function ParticleText({ scrollProgress = 0 }) {
           const hitZ = radius * Math.sin(company.angleY) * Math.cos(company.inclination);
           const hitRotated = rotate3D(hitX, hitY, hitZ, rotationX, rotationY);
           const hitScale = 1 / (1 + hitRotated.z * 0.003);
-          const hitScreenX = centerX + hitRotated.x * hitScale;
-          const hitScreenY = centerY + hitRotated.y * hitScale;
+          const hitScreenX = globeCenterX + hitRotated.x * hitScale;
+          const hitScreenY = globeCenterY + hitRotated.y * hitScale;
 
           // Check hover state (if in front hemisphere and close to mouse)
           let isHovered = false;
@@ -542,8 +557,8 @@ export default function ParticleText({ scrollProgress = 0 }) {
 
           // Calculate screen position and scale for logo (with expansion)
           const scale = 1 / (1 + rotated.z * 0.003);
-          const screenX = centerX + rotated.x * scale;
-          const screenY = centerY + rotated.y * scale;
+          const screenX = globeCenterX + rotated.x * scale;
+          const screenY = globeCenterY + rotated.y * scale;
 
           // Calculate trail position without expansion (fixed orbit)
           const trailRadius = company.orbitRadius; // Use original orbit radius
@@ -552,8 +567,8 @@ export default function ParticleText({ scrollProgress = 0 }) {
           const trailZ = trailRadius * Math.sin(company.angleY) * Math.cos(company.inclination);
           const trailRotated = rotate3D(trailX, trailY, trailZ, rotationX, rotationY);
           const trailScale = 1 / (1 + trailRotated.z * 0.003);
-          const trailScreenX = centerX + trailRotated.x * trailScale;
-          const trailScreenY = centerY + trailRotated.y * trailScale;
+          const trailScreenX = globeCenterX + trailRotated.x * trailScale;
+          const trailScreenY = globeCenterY + trailRotated.y * trailScale;
 
           // Add trail position (without expansion) only if moving
           if (!isHovered) {
@@ -625,8 +640,8 @@ export default function ParticleText({ scrollProgress = 0 }) {
                 ctx.shadowBlur = 4;
                 ctx.lineWidth = 3;
 
-                ctx.fillStyle = 'white';
-                ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillStyle = themeRef.current === 'dark' ? 'white' : '#0f172a';
+                ctx.strokeStyle = themeRef.current === 'dark' ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
                 ctx.strokeText(company.name, screenX, screenY - logoSize / 2 - 8);
                 ctx.fillText(company.name, screenX, screenY - logoSize / 2 - 8);
 
@@ -718,8 +733,10 @@ export default function ParticleText({ scrollProgress = 0 }) {
           p.x += p.vx;
           p.y += p.vy;
 
-          // Render particle
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          // Render particle - theme-aware color
+          ctx.fillStyle = themeRef.current === 'dark'
+            ? 'rgba(255, 255, 255, 0.9)'
+            : 'rgba(15, 23, 42, 0.85)';
           ctx.beginPath();
           ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
           ctx.fill();

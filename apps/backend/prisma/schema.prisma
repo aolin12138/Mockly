@@ -45,6 +45,7 @@ model Session {
   id               String        @id @default(uuid())
   userId           String
   user             User          @relation(fields: [userId], references: [id])
+  conversationId   String?
   agentId          String?
   interviewType    InterviewType @default(Behavioural)
   feedbackPrompt   String?       @db.Text
@@ -90,4 +91,3 @@ model ElevenLabsIntegration {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
-

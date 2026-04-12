@@ -7,3 +7,11 @@ Content-Type: application/json
 {
   "xi-api-key": "sk_ada28399027c5d8f9841ad2bb4fb3e1f4de3b41592a31aaa"
 }
+
+###
+POST http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639
+Content-Type: application/json
+
+{
+  "xi-api-key": "sk_ada28399027c5d8f9841ad2bb4fb3e1f4de3b41592a31a"
+}

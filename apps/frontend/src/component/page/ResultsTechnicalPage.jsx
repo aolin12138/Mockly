@@ -45,7 +45,8 @@ function transformFeedbackData(feedbackData) {
   let data = Array.isArray(feedbackData) ? feedbackData[0] : feedbackData;
   console.log('After array unwrap - keys:', Object.keys(data));
 
-  // The structure from n8n is: { audio, transcript, feedback: { outcome, overall, ... } }
+  // The structure from workflow can be:
+  // { feedback, call_duration_secs, transcripts, audio } or { audio, transcript, feedback }
   // So we need to get the nested feedback object for the actual feedback fields
   const feedback = data.feedback || data;
   console.log('Feedback object keys:', Object.keys(feedback));
@@ -53,8 +54,12 @@ function transformFeedbackData(feedbackData) {
   console.log('Feedback.actionPlan:', feedback.actionPlan);
   console.log('Feedback.outcome:', feedback.outcome);
 
-  // Handle transcript - at top level of data
-  const transcript = data.transcript;
+  // Handle transcript(s) - top-level can be transcript or transcripts
+  const transcript = Array.isArray(data.transcripts)
+    ? data.transcripts
+    : Array.isArray(data.transcript)
+      ? data.transcript
+      : [];
   const transformedTranscript = transcript
     ? transcript.map((msg, index) => ({
       id: index + 1,
@@ -75,7 +80,8 @@ function transformFeedbackData(feedbackData) {
     actionPlan: feedback.actionPlan || feedback.action_plan || feedback.nextSteps || [],
     ui: feedback.ui || {},
     transcript: transformedTranscript,
-    audio: data.audio, // audio is at top level
+    audio: data.audio || null, // expects { type, base64 }
+    callDurationSecs: Number(data.call_duration_secs ?? data.callDurationSecs ?? 0) || null,
   };
 
   console.log('=== TRANSFORM RESULT ===');
@@ -674,8 +680,34 @@ export default function TechnicalResultsPage() {
   const { sessionId: urlSessionId } = useParams();
   const audioRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [feedbackData, setFeedbackData] = useState(null);
   const [error, setError] = useState(null);
+
+  const generateFeedbackForSession = async (sessionId, token) => {
+    const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}/generate-technical-feedback`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    const rawText = await response.text();
+    if (!response.ok) {
+      throw new Error(rawText || 'Failed to generate technical feedback');
+    }
+
+    const parsed = rawText ? JSON.parse(rawText) : {};
+    const rawFeedback = parsed.feedback || parsed;
+    const transformed = transformFeedbackData(rawFeedback);
+
+    if (!transformed) {
+      throw new Error('Generated feedback is invalid. Please try again.');
+    }
+
+    return transformed;
+  };
 
   useEffect(() => {
     const state = location.state || {};
@@ -761,7 +793,13 @@ export default function TechnicalResultsPage() {
           }
         }
 
-        throw new Error('No feedback available yet. Please wait for the interview to be processed.');
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No auth token found. Please log in again.');
+        }
+
+        const generated = await generateFeedbackForSession(sessionId, token);
+        setFeedbackData(generated);
       } catch (err) {
         console.error('[technical-results] Error fetching feedback:', err);
         setError(err?.message || 'Failed to load technical interview feedback.');
@@ -772,6 +810,35 @@ export default function TechnicalResultsPage() {
 
     fetchFeedback();
   }, [location.state, urlSessionId]);
+
+  const handleRetryGeneration = async () => {
+    const sessionId = urlSessionId || localStorage.getItem('currentTechnicalSessionId');
+    const token = localStorage.getItem('token');
+
+    if (!sessionId) {
+      setError('No session ID found. Please start a new technical interview.');
+      return;
+    }
+
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+
+    try {
+      const transformed = await generateFeedbackForSession(sessionId, token);
+      setFeedbackData(transformed);
+      setError(null);
+    } catch (err) {
+      console.error('[technical-results] Retry generation failed:', err);
+      setError(err?.message || 'Failed to generate technical feedback.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   if (isLoading) {
     console.log('[technical-results] Still loading...');
@@ -798,14 +865,11 @@ export default function TechnicalResultsPage() {
           <div className="flex flex-col gap-3">
             <button
               type="button"
-              onClick={() => {
-                localStorage.removeItem('technicalInterviewFeedback');
-                localStorage.removeItem('technicalInterviewError');
-                window.location.reload();
-              }}
+              onClick={handleRetryGeneration}
+              disabled={isGenerating}
               className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-5 py-2.5 text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25"
             >
-              Retry
+              {isGenerating ? 'Generating feedback...' : 'Retry feedback generation'}
             </button>
             <button
               type="button"

@@ -153,7 +153,7 @@ const InterviewSetup = () => {
   const [formData, setFormData] = useState({
     session: {
       mode: "practice",
-      duration_min: 30,
+      duration_min: 15,
       language: "en"
     },
     candidate: {
@@ -260,11 +260,20 @@ const InterviewSetup = () => {
   };
 
   const buildSubmissionPayload = () => {
+    let localUserId = null;
+    try {
+      const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+      localUserId = localUser?.id || null;
+    } catch {
+      localUserId = null;
+    }
+
     return {
       agent_id: lastAgent?.id || '',
+      userId: localUserId,
       session: {
         mode: formData.session.mode || 'practice',
-        duration_min: Number(formData.session.duration_min) || 30,
+        duration_min: Math.max(15, Number(formData.session.duration_min) || 15),
         language: formData.session.language || 'en'
       },
       candidate: {
@@ -358,6 +367,10 @@ const InterviewSetup = () => {
 
   const getTotalSteps = () => 3;
 
+  const selectedDurationMin = Number(formData.session.duration_min) || 15;
+  const estimatedRemainingMin = Number(byokStatus?.minutesRemaining ?? 0);
+  const mayEndEarly = byokStatus?.connected && Number.isFinite(estimatedRemainingMin) && estimatedRemainingMin > 0 && selectedDurationMin > estimatedRemainingMin;
+
   const nextStep = () => setStep(prev => Math.min(prev + 1, getTotalSteps()));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
@@ -377,7 +390,17 @@ const InterviewSetup = () => {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        }
+        },
+        body: JSON.stringify({
+          userId: (() => {
+            try {
+              const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+              return localUser?.id || null;
+            } catch {
+              return null;
+            }
+          })()
+        })
       });
 
       if (!response.ok) {
@@ -492,6 +515,7 @@ const InterviewSetup = () => {
         }
 
         localStorage.setItem('pendingInterviewMode', payload.interview.mode);
+        localStorage.setItem('interviewDurationMin', String(Math.max(15, Number(payload.session.duration_min) || 15)));
 
         if (isTechnicalOnly) {
           localStorage.setItem('technicalSessionConfig', JSON.stringify({
@@ -640,7 +664,7 @@ const InterviewSetup = () => {
                     <div>
                       <label className="text-sm font-medium text-slate-400 mb-2 block">Duration</label>
                       <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
-                        {[15, 30, 45, 60].map(mins => (
+                        {[15, 30, 45].map(mins => (
                           <button
                             key={mins}
                             onClick={() => updateField('session', 'duration_min', mins)}
@@ -653,6 +677,11 @@ const InterviewSetup = () => {
                           </button>
                         ))}
                       </div>
+                      {mayEndEarly && (
+                        <p className="mt-2 text-xs text-amber-300">
+                          Estimated credits may only support about {Math.round(estimatedRemainingMin)} min right now, so this session could end early.
+                        </p>
+                      )}
                     </div>
 
                     <div>

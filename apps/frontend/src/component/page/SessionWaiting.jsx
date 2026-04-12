@@ -16,6 +16,8 @@ export default function SessionWaiting() {
   const [currentMessage, setCurrentMessage] = useState(fallbackLoadingMessages[0]);
   const [recentMessages, setRecentMessages] = useState([fallbackLoadingMessages[0]]);
   const [errorMessage, setErrorMessage] = useState('');
+  const [setupError, setSetupError] = useState(null);
+  const [isRetryingSetup, setIsRetryingSetup] = useState(false);
 
   const pushStatusMessage = (message) => {
     if (!message) return;
@@ -86,6 +88,11 @@ export default function SessionWaiting() {
 
           // Store callback data in sessionStorage for the interview page
           sessionStorage.setItem(`callbackData_${sessionId}`, JSON.stringify(data));
+          if (data?.persistedSessionId) {
+            localStorage.setItem('currentPersistedSessionId', data.persistedSessionId);
+            localStorage.setItem('currentSessionId', data.persistedSessionId);
+          }
+          setSetupError(null);
 
           // Navigate to interview
           pushStatusMessage('Session ready. Launching interview...');
@@ -98,6 +105,28 @@ export default function SessionWaiting() {
           navigate(`/${route}/${sessionId}`);
         } catch (err) {
           console.error('[SessionWaiting] Error parsing SSE data:', err);
+        }
+      });
+
+      evtSource.addEventListener('setup-error', (event) => {
+        if (!isActive) return;
+
+        try {
+          const data = JSON.parse(event.data);
+          const message = data?.message || 'Agent setup failed. Please retry or go back to dashboard.';
+          setSetupError({
+            message,
+            retryable: Boolean(data?.retryable)
+          });
+          setErrorMessage(message);
+          pushStatusMessage('Setup failed. Waiting for your action.');
+        } catch (err) {
+          console.error('[SessionWaiting] Error parsing setup-error event:', err);
+          setSetupError({
+            message: 'Agent setup failed. Please retry or go back to dashboard.',
+            retryable: true
+          });
+          setErrorMessage('Agent setup failed. Please retry or go back to dashboard.');
         }
       });
 
@@ -161,6 +190,41 @@ export default function SessionWaiting() {
       clearInterval(pollInterval);
     };
   }, [sessionId, navigate]);
+
+  const handleRetrySetup = async () => {
+    if (!sessionId || isRetryingSetup) return;
+
+    setIsRetryingSetup(true);
+    setErrorMessage('');
+    setSetupError(null);
+    pushStatusMessage('Retrying agent setup...');
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}/retry-agent-setup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const message = errorData?.details || errorData?.error || 'Retry failed. Please try again.';
+        setSetupError({ message, retryable: true });
+        setErrorMessage(message);
+      }
+    } catch (error) {
+      const message = error?.message || 'Network error while retrying setup.';
+      setSetupError({ message, retryable: true });
+      setErrorMessage(message);
+    } finally {
+      setIsRetryingSetup(false);
+    }
+  };
+
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6 font-sans overflow-hidden relative">
@@ -232,6 +296,31 @@ export default function SessionWaiting() {
           <p className="text-xs text-rose-400 text-center max-w-md">
             {errorMessage}
           </p>
+        )}
+
+        {setupError && (
+          <div className="w-full max-w-md rounded-xl border border-rose-500/30 bg-rose-900/20 p-4 space-y-3">
+            <p className="text-sm text-rose-100 text-center">{setupError.message}</p>
+            <div className="flex items-center justify-center gap-3">
+              {setupError.retryable && (
+                <button
+                  type="button"
+                  onClick={handleRetrySetup}
+                  disabled={isRetryingSetup}
+                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium transition"
+                >
+                  {isRetryingSetup ? 'Retrying...' : 'Retry setup'}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleBackToDashboard}
+                className="px-4 py-2 rounded-lg border border-slate-500/60 bg-slate-800/60 hover:bg-slate-700/70 text-slate-100 text-sm font-medium transition"
+              >
+                Back to dashboard
+              </button>
+            </div>
+          </div>
         )}
 
         <p className="text-xs text-slate-500 text-center max-w-md">

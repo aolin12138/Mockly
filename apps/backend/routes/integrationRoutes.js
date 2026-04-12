@@ -60,53 +60,21 @@ router.get('/elevenlabs/status', async (req, res) => {
       console.log('📊 character_count:', subscription.character_count, '| characterCount:', subscription.characterCount);
       console.log('📊 character_limit:', subscription.character_limit, '| characterLimit:', subscription.characterLimit);
 
-      // Determine billing window for minutes_used query
-      const nowMs = Date.now();
-      // Handle both camelCase (SDK) and snake_case (raw API) property names
-      const nextResetUnix = subscription.next_character_count_reset_unix ?? subscription.nextCharacterCountResetUnix; // unix seconds
-      const billingPeriod = subscription.billing_period ?? subscription.billingPeriod ?? 'monthly_period';
+      const nextResetUnix = subscription.next_character_count_reset_unix ?? subscription.nextCharacterCountResetUnix;
 
-      // Estimate start of current billing period
-      let periodMs = 30 * 24 * 60 * 60 * 1000; // default 30 days
-      if (billingPeriod === '3_month_period') periodMs = 90 * 24 * 60 * 60 * 1000;
-      else if (billingPeriod === '6_month_period') periodMs = 180 * 24 * 60 * 60 * 1000;
-      else if (billingPeriod === 'annual_period') periodMs = 365 * 24 * 60 * 60 * 1000;
+      const charCount = Number(subscription.character_count ?? subscription.characterCount ?? 0);
+      const charLimit = Number(subscription.character_limit ?? subscription.characterLimit ?? 0);
 
-      const resetMs = nextResetUnix ? nextResetUnix * 1000 : nowMs + periodMs;
-      const startMs = resetMs - periodMs;
-
-      // Fetch cumulative minutes_used in current billing period
-      let minutesUsed = 0;
-      try {
-        const usage = await client.usage.get({
-          startUnix: Math.max(0, Math.floor(startMs)),
-          endUnix: Math.floor(nowMs),
-          metric: 'minutes_used',
-          aggregationInterval: 'cumulative',
-        });
-        // Sum all values across all breakdown keys
-        if (usage.usage) {
-          for (const values of Object.values(usage.usage)) {
-            if (Array.isArray(values)) {
-              for (const v of values) minutesUsed += (v || 0);
-            }
-          }
-        }
-      } catch (usageErr) {
-        console.warn('Failed to fetch minutes usage:', usageErr.message);
-        // Not fatal — we'll show subscription data without minutes
-      }
-
+      // Estimate minutes from consumed credits (chars). 14,000 credits ~= 35 mins => 400 chars per minute.
+      const CREDITS_PER_MINUTE = 400;
       const tier = subscription.tier;
-      const minutesLimit = TIER_MINUTES[tier] || TIER_MINUTES.free;
+      const minutesUsed = charCount > 0 ? (charCount / CREDITS_PER_MINUTE) : 0;
+      const tierMinutesLimit = TIER_MINUTES[tier] || TIER_MINUTES.free;
+      const characterMinutesLimit = charLimit > 0 ? (charLimit / CREDITS_PER_MINUTE) : 0;
+      const minutesLimit = Math.max(tierMinutesLimit, characterMinutesLimit);
       const minutesRemaining = Math.max(0, minutesLimit - minutesUsed);
       // Average mock interview is ~20–30 min, use 25 min as estimate
       const estimatedSessions = Math.floor(minutesRemaining / 25);
-
-      // Handle both camelCase (SDK) and snake_case (raw API) property names
-      const charCount = subscription.character_count ?? subscription.characterCount ?? 0;
-      const charLimit = subscription.character_limit ?? subscription.characterLimit ?? 0;
-      const billingPeriodVal = subscription.billing_period ?? subscription.billingPeriod ?? 'monthly_period';
 
       // Update lastUsedAt
       await prisma.elevenLabsIntegration.update({

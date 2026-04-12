@@ -11,37 +11,187 @@ const router = express.Router();
 const sseClients = new Map();
 // Fallback store: if n8n callback arrives before the frontend connects via SSE
 const callbackDataStore = new Map();
+// Retry context store when agent setup fails (in-memory)
+const pendingAgentSetupStore = new Map();
+// Map temp session IDs to persisted DB session IDs (in-memory)
+const tempSessionToPersistedSessionId = new Map();
 
 const AGENT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
+const ELEVENLABS_CONVAI_BASE_URL = 'https://api.elevenlabs.io/v1/convai';
+const CREDIT_TOOL_NAME = 'getCreditStatus';
+
+const CREDIT_TOOL_WARNING_MESSAGE = 'Credit-aware wrap-up may be unavailable for this session. If your remaining credits are low, the interview could end abruptly.';
+
+const buildCreditToolConfig = () => ({
+  type: 'client',
+  name: CREDIT_TOOL_NAME,
+  description: 'Check remaining ElevenLabs credits and estimated minutes for this user session.',
+  expects_response: true,
+  parameters: {
+    type: 'object',
+    properties: {},
+    required: []
+  }
+});
+
+const normalizeToolList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.tools)) return payload.tools;
+  if (Array.isArray(payload?.data)) return payload.data;
+  return [];
+};
+
+const findMatchingCreditTool = (tools) => {
+  return tools.find((tool) => {
+    const cfg = tool?.tool_config || {};
+    return cfg.type === 'client' && cfg.name === CREDIT_TOOL_NAME;
+  }) || null;
+};
+
+async function elevenLabsRequest(apiKey, path, options = {}) {
+  const response = await fetch(`${ELEVENLABS_CONVAI_BASE_URL}${path}`, {
+    method: options.method || 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'xi-api-key': apiKey,
+      ...(options.headers || {})
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined
+  });
+
+  const raw = await response.text();
+  let data = null;
+  if (raw && raw.trim()) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      data = null;
+    }
+  }
+
+  if (!response.ok) {
+    const err = new Error(raw || `${options.method || 'GET'} ${path} failed with ${response.status}`);
+    err.status = response.status;
+    throw err;
+  }
+
+  return data;
+}
+
+async function ensureCreditToolAttachedForAgent({ userId, agentId }) {
+  try {
+    console.log('[credit_tool_check_start]', JSON.stringify({ userId, agentId }));
+
+    const keyResolution = await resolveElevenLabsKey(userId);
+    const apiKey = keyResolution.apiKey;
+
+    const agent = await elevenLabsRequest(apiKey, `/agents/${agentId}`);
+    const existingPrompt = agent?.conversation_config?.agent?.prompt || {};
+    const { tools: _legacyTools, tool_ids: _existingToolIds, ...promptWithoutTools } = existingPrompt;
+    const existingToolIds = agent?.conversation_config?.agent?.prompt?.tool_ids;
+    const mergedToolIds = Array.isArray(existingToolIds) ? [...existingToolIds] : [];
+
+    const allToolsPayload = await elevenLabsRequest(apiKey, '/tools');
+    const allTools = normalizeToolList(allToolsPayload);
+
+    let creditTool = findMatchingCreditTool(allTools);
+    if (!creditTool) {
+      const createdTool = await elevenLabsRequest(apiKey, '/tools', {
+        method: 'POST',
+        body: {
+          tool_config: buildCreditToolConfig()
+        }
+      });
+      creditTool = createdTool;
+      console.log('[credit_tool_created]', JSON.stringify({ userId, agentId, toolId: creditTool?.id || null }));
+    } else {
+      console.log('[credit_tool_found]', JSON.stringify({ userId, agentId, toolId: creditTool.id }));
+    }
+
+    const toolId = creditTool?.id;
+    if (!toolId) {
+      throw new Error('Credit tool ID missing after lookup/create');
+    }
+
+    if (!mergedToolIds.includes(toolId)) {
+      mergedToolIds.push(toolId);
+      await elevenLabsRequest(apiKey, `/agents/${agentId}`, {
+        method: 'PATCH',
+        body: {
+          conversation_config: {
+            agent: {
+              prompt: {
+                ...promptWithoutTools,
+                tool_ids: mergedToolIds
+              }
+            }
+          }
+        }
+      });
+      console.log('[credit_tool_attached]', JSON.stringify({ userId, agentId, toolId }));
+    }
+
+    return { toolReady: true, toolId };
+  } catch (error) {
+    console.error('[credit_tool_soft_fail]', JSON.stringify({
+      userId,
+      agentId,
+      message: error?.message || 'Unknown error'
+    }));
+    return {
+      toolReady: false,
+      toolWarning: CREDIT_TOOL_WARNING_MESSAGE
+    };
+  }
+}
+
+async function ensurePersistedBehavioralSession({
+  tempSessionId,
+  userId,
+  agentId,
+  interviewPlan,
+  interviewPrompt,
+  feedbackPrompt
+}) {
+  const existingId = tempSessionToPersistedSessionId.get(tempSessionId);
+  if (existingId) {
+    return existingId;
+  }
+
+  const session = await prisma.session.create({
+    data: {
+      userId,
+      interviewType: 'Behavioural',
+      agentId: agentId || null,
+      interviewPlan: interviewPlan || null,
+      interviewPrompt: interviewPrompt || null,
+      feedbackPrompt: feedbackPrompt || null,
+      feedback: null,
+      status: 'not_started'
+    }
+  });
+
+  tempSessionToPersistedSessionId.set(tempSessionId, session.id);
+  return session.id;
+}
 
 /**
  * Resolve ElevenLabs API key for a user (from their integration or platform key for demo)
  */
 async function resolveElevenLabsKey(userId) {
   if (!userId) {
-    return { apiKey: null, source: 'no_user' };
+    throw new Error('Missing userId for ElevenLabs key resolution');
   }
 
   const integration = await prisma.elevenLabsIntegration.findUnique({ where: { userId } });
-  if (integration) {
-    const apiKey = decrypt(integration.apiKeyCiphertext, integration.apiKeyIv, integration.apiKeyTag);
-    await prisma.elevenLabsIntegration.update({ where: { userId }, data: { lastUsedAt: new Date() } });
-    return { apiKey, source: 'user' };
+  if (!integration) {
+    throw new Error(`No ElevenLabs integration found for user ${userId}`);
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { demoBehaviouralCredits: true }
-  });
+  const apiKey = decrypt(integration.apiKeyCiphertext, integration.apiKeyIv, integration.apiKeyTag);
+  await prisma.elevenLabsIntegration.update({ where: { userId }, data: { lastUsedAt: new Date() } });
 
-  if (user && user.demoBehaviouralCredits > 0) {
-    const platformKey = process.env.ELEVENLABS_PLATFORM_KEY;
-    if (platformKey) {
-      return { apiKey: platformKey, source: 'demo' };
-    }
-  }
-
-  return { apiKey: null, source: 'none' };
+  return { apiKey, source: 'user' };
 }
 
 const emitProgressUpdate = (sessionId, message, stage = 'info') => {
@@ -57,6 +207,101 @@ const emitProgressUpdate = (sessionId, message, stage = 'info') => {
   if (sseClient) {
     sseClient.write(`event: progress-update\ndata: ${JSON.stringify(progress)}\n\n`);
   }
+};
+
+const deliverSseEvent = (sessionId, eventName, payload, closeConnection = false) => {
+  const sseClient = sseClients.get(sessionId);
+  if (sseClient) {
+    sseClient.write(`event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`);
+    if (closeConnection) {
+      sseClient.end();
+      sseClients.delete(sessionId);
+      deleteSessionProgress(sessionId);
+    }
+    return;
+  }
+
+  callbackDataStore.set(sessionId, {
+    event: eventName,
+    payload,
+    closeConnection
+  });
+};
+
+const triggerAgentSetupWorkflow = async ({
+  sessionId,
+  callbackUserId,
+  callbackAgentId,
+  interviewPromptValue,
+  feedbackPromptValue,
+  firstMessageValue,
+  cvValue
+}) => {
+  const keyResolution = await resolveElevenLabsKey(callbackUserId);
+  const elevenLabsKey = keyResolution.apiKey;
+  console.log('🔑 Resolved ElevenLabs key source:', keyResolution.source, '| user:', callbackUserId || 'unknown', '| key exists:', !!elevenLabsKey);
+
+  const agentSetupPayload = {
+    interview_prompt: interviewPromptValue,
+    feedback_prompt: feedbackPromptValue,
+    first_message: firstMessageValue,
+    session_id: sessionId,
+    cv: cvValue,
+    agent_id: callbackAgentId || ''
+  };
+
+  console.log('🔧 Agent setup payload:', JSON.stringify({
+    interview_prompt: !!interviewPromptValue,
+    feedback_prompt: !!feedbackPromptValue,
+    first_message: !!firstMessageValue,
+    session_id: sessionId,
+    cv: !!cvValue,
+    agent_id: callbackAgentId || ''
+  }));
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-ELEVENLABS-KEY': elevenLabsKey
+  };
+
+  const agentSetupResponse = await fetch(AGENT_SETUP_WEBHOOK_URL, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(agentSetupPayload)
+  });
+
+  if (!agentSetupResponse.ok) {
+    throw new Error(`Agent setup workflow failed with status ${agentSetupResponse.status}`);
+  }
+
+  const agentSetupRaw = await agentSetupResponse.text();
+  if (!agentSetupRaw || !agentSetupRaw.trim()) {
+    throw new Error('Agent setup workflow returned an empty body');
+  }
+
+  let agentSetupResult;
+  try {
+    agentSetupResult = JSON.parse(agentSetupRaw);
+  } catch {
+    throw new Error('Agent setup workflow returned non-JSON body');
+  }
+
+  const normalizedResult = Array.isArray(agentSetupResult)
+    ? (agentSetupResult[0] || {})
+    : agentSetupResult;
+
+  const resolvedAgentId =
+    normalizedResult.agent_id ||
+    normalizedResult.agentId ||
+    normalizedResult.data?.agent_id ||
+    normalizedResult.data?.agentId ||
+    null;
+
+  if (!resolvedAgentId) {
+    throw new Error('Agent setup workflow did not return agent_id');
+  }
+
+  return resolvedAgentId;
 };
 
 // SSE endpoint: frontend connects here and waits for n8n callback data
@@ -85,10 +330,14 @@ router.get('/session/:sessionId/stream', (req, res) => {
   const existingData = callbackDataStore.get(sessionId);
   if (existingData) {
     console.log(`⚡ Callback data already exists for session ${sessionId}, sending immediately`);
-    res.write(`event: callback-data\ndata: ${JSON.stringify(existingData)}\n\n`);
+    const eventName = existingData.event || 'callback-data';
+    const eventPayload = existingData.payload || existingData;
+    res.write(`event: ${eventName}\ndata: ${JSON.stringify(eventPayload)}\n\n`);
     callbackDataStore.delete(sessionId);
-    res.end();
-    return;
+    if (existingData.closeConnection !== false) {
+      res.end();
+      return;
+    }
   }
 
   // Register this client to receive the callback when it arrives
@@ -110,32 +359,20 @@ router.get('/session/:sessionId/stream', (req, res) => {
 // n8n callback: store data and push to waiting SSE client instantly
 router.post('/session/:sessionId/callback', async (req, res) => {
   const { sessionId } = req.params;
-  const {
-    agent_id,
-    agentId,
-    userId,
-    user_id,
-    interview_plan,
-    interview_prompt,
-    interview_primpot,
-    feedback_prompt,
-    feedback_prompt_final,
-    firstMessage,
-    first_message,
-    feedback,
-    duration,
-    cv,
-    candidate_cv
-  } = req.body || {};
-  let callbackAgentId = agent_id || agentId || null;
-  const callbackUserId = userId || user_id || getSessionOwner(sessionId) || null;
-  const interviewPromptValue = interview_prompt || interview_primpot || undefined;
-  const feedbackPromptValue = feedback_prompt_final || feedback_prompt || undefined;
-  const firstMessageValue = firstMessage || first_message || undefined;
-  const cvValue = cv || candidate_cv || undefined;
+  const rawBody = req.body || {};
+  const rootBody = Array.isArray(rawBody) ? (rawBody[0] || {}) : rawBody;
+  const dataBody = rootBody?.data && typeof rootBody.data === 'object' ? rootBody.data : {};
+  const payloadBody = { ...dataBody, ...rootBody };
+
+  let callbackAgentId = payloadBody.agent_id || payloadBody.agentId || null;
+  let callbackUserId = payloadBody.userId || payloadBody.user_id || getSessionOwner(sessionId) || null;
+  const interviewPromptValue = payloadBody.interview_prompt || payloadBody.interview_primpot || undefined;
+  const feedbackPromptValue = payloadBody.feedback_prompt_final || payloadBody.feedback_prompt || undefined;
+  const firstMessageValue = payloadBody.first_message || payloadBody.firstMessage || undefined;
+  const cvValue = payloadBody.cv || payloadBody.candidate_cv || undefined;
 
   console.log('🔔 Callback received for sessionId:', sessionId);
-  console.log('📦 Callback payload keys:', Object.keys(req.body || {}));
+  console.log('📦 Callback payload keys:', Object.keys(payloadBody || {}));
   console.log('📦 agent_id from callback:', callbackAgentId, '| interview_prompt exists:', !!interviewPromptValue);
   console.log('📦 cv exists:', !!cvValue, '| cv length:', cvValue?.length || 0);
 
@@ -144,8 +381,8 @@ router.post('/session/:sessionId/callback', async (req, res) => {
       return res.status(400).json({ error: 'Missing sessionId' });
     }
 
-    // Prompt workflow does not return agent_id; resolve from DB user association first.
-    if (callbackUserId) {
+    // Resolve agent_id from DB only when callback did not provide one.
+    if (!callbackAgentId && callbackUserId) {
       const existingAgent = await prisma.agent.findFirst({
         where: { userId: callbackUserId },
         orderBy: { createdAt: 'desc' },
@@ -155,19 +392,36 @@ router.post('/session/:sessionId/callback', async (req, res) => {
         callbackAgentId = existingAgent.id;
         console.log('🔎 Resolved existing agent_id from DB for user:', callbackUserId, '| agent_id:', callbackAgentId);
       } else {
-        callbackAgentId = null;
-        console.log('🔎 No existing agent_id found in DB for user:', callbackUserId);
+        console.log('🔎 No existing agent_id found in DB for user:', callbackUserId, '| using empty agent_id for workflow');
       }
+    } else if (callbackAgentId) {
+      console.log('🔎 Using agent_id from callback payload:', callbackAgentId);
+    }
+
+    // If callback has no userId, try resolving from agent ownership as a fallback.
+    if (!callbackUserId && callbackAgentId) {
+      const ownerAgent = await prisma.agent.findUnique({
+        where: { id: callbackAgentId },
+        select: { userId: true }
+      });
+      if (ownerAgent?.userId) {
+        callbackUserId = ownerAgent.userId;
+        console.log('🔎 Resolved callback userId from agent ownership:', callbackUserId);
+      }
+    }
+
+    if (!callbackUserId) {
+      throw new Error('Missing userId for ElevenLabs key resolution. Session owner context is unavailable.');
     }
 
     const callbackData = {
       agentId: callbackAgentId,
-      interviewPlan: interview_plan,
+      interviewPlan: payloadBody.interview_plan,
       interviewPrompt: interviewPromptValue,
       feedbackPrompt: feedbackPromptValue,
       firstMessage: firstMessageValue,
-      feedback: feedback,
-      duration: duration,
+      feedback: payloadBody.feedback,
+      duration: payloadBody.duration,
       receivedAt: new Date().toISOString()
     };
 
@@ -177,61 +431,69 @@ router.post('/session/:sessionId/callback', async (req, res) => {
     console.log('🔧 Calling:', AGENT_SETUP_WEBHOOK_URL);
     emitProgressUpdate(sessionId, 'Configuring your agent...', 'agent_setup');
 
-    // Resolve ElevenLabs API key for this user (or platform fallback) for agent setup.
-    const keyResolution = await resolveElevenLabsKey(callbackUserId);
-    const elevenLabsKey = keyResolution.apiKey;
-    console.log('🔑 Resolved ElevenLabs key source:', keyResolution.source, '| user:', callbackUserId || 'unknown', '| key exists:', !!elevenLabsKey);
-
-    const agentSetupPayload = {
-      interview_prompt: interviewPromptValue,
-      feedback_prompt: feedbackPromptValue,
-      first_message: firstMessageValue,
-      session_id: sessionId,
-      cv: cvValue,
-      agent_id: callbackAgentId || ''  // Always send agent_id field; empty lets workflow create one
-    };
-
-    console.log('🔧 Agent setup payload:', JSON.stringify({
-      interview_prompt: !!interviewPromptValue,
-      feedback_prompt: !!feedbackPromptValue,
-      first_message: !!firstMessageValue,
-      session_id: sessionId,
-      cv: !!cvValue,
-      agent_id: callbackAgentId || ''
-    }));
-
-    const headers = { 'Content-Type': 'application/json' };
-    if (elevenLabsKey) {
-      headers['X-ELEVENLABS-KEY'] = elevenLabsKey;
-    } else {
-      console.warn('⚠️ No ElevenLabs key resolved for agent setup workflow.');
-    }
-
-    const agentSetupResponse = await fetch(AGENT_SETUP_WEBHOOK_URL, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(agentSetupPayload)
+    pendingAgentSetupStore.set(sessionId, {
+      callbackUserId,
+      callbackDataBase: {
+        interviewPlan: payloadBody.interview_plan,
+        interviewPrompt: interviewPromptValue,
+        feedbackPrompt: feedbackPromptValue,
+        firstMessage: firstMessageValue,
+        feedback: payloadBody.feedback,
+        duration: payloadBody.duration
+      },
+      setupContext: {
+        sessionId,
+        callbackUserId,
+        callbackAgentId,
+        interviewPromptValue,
+        feedbackPromptValue,
+        firstMessageValue,
+        cvValue
+      }
     });
 
-    if (!agentSetupResponse.ok) {
-      throw new Error(`Agent setup workflow failed with status ${agentSetupResponse.status}`);
-    }
+    const resolvedAgentId = await triggerAgentSetupWorkflow({
+      sessionId,
+      callbackUserId,
+      callbackAgentId,
+      interviewPromptValue,
+      feedbackPromptValue,
+      firstMessageValue,
+      cvValue
+    });
 
-    const agentSetupResult = await agentSetupResponse.json().catch(() => ({}));
-    const resolvedAgentId =
-      agentSetupResult.agent_id ||
-      agentSetupResult.agentId ||
-      agentSetupResult.data?.agent_id ||
-      agentSetupResult.data?.agentId ||
-      callbackAgentId ||
-      null;
-
-    if (!resolvedAgentId) {
-      throw new Error('Agent setup workflow did not return agent_id');
-    }
+    const creditToolState = callbackUserId
+      ? await ensureCreditToolAttachedForAgent({
+          userId: callbackUserId,
+          agentId: resolvedAgentId
+        })
+      : {
+          toolReady: false,
+          toolWarning: CREDIT_TOOL_WARNING_MESSAGE
+        };
 
     callbackAgentId = resolvedAgentId;
     callbackData.agentId = callbackAgentId;
+
+    try {
+      const persistedSessionId = await ensurePersistedBehavioralSession({
+        tempSessionId: sessionId,
+        userId: callbackUserId,
+        agentId: callbackAgentId,
+        interviewPlan: callbackData.interviewPlan,
+        interviewPrompt: callbackData.interviewPrompt,
+        feedbackPrompt: callbackData.feedbackPrompt
+      });
+      callbackData.persistedSessionId = persistedSessionId;
+      callbackData.sessionId = persistedSessionId;
+    } catch (persistError) {
+      console.warn('[callback] Failed to pre-persist behavioral session:', persistError?.message || persistError);
+      callbackData.persistedSessionId = null;
+    }
+
+    callbackData.toolReady = Boolean(creditToolState?.toolReady);
+    callbackData.toolWarning = creditToolState?.toolReady ? null : (creditToolState?.toolWarning || CREDIT_TOOL_WARNING_MESSAGE);
+    pendingAgentSetupStore.delete(sessionId);
     emitProgressUpdate(sessionId, 'Agent configured. Finalizing your session...', 'finalizing');
 
     // Persist agent as soon as n8n returns it for the first time.
@@ -243,30 +505,99 @@ router.post('/session/:sessionId/callback', async (req, res) => {
       });
       console.log(`💾 Persisted callback agent_id ${callbackAgentId} for user ${callbackUserId}`);
       deleteSessionOwner(sessionId);
+      tempSessionToPersistedSessionId.delete(sessionId);
       emitProgressUpdate(sessionId, 'Session is ready. Launching your interview...', 'ready');
     } else if (callbackAgentId) {
       console.warn(`⚠️ Received agent_id ${callbackAgentId} but no userId in callback body; skipping immediate persistence.`);
     }
 
-    // If an SSE client is waiting, push the data immediately
-    const sseClient = sseClients.get(sessionId);
-    if (sseClient) {
-      console.log(`🚀 Pushing callback data to SSE client for session ${sessionId}`);
-      sseClient.write(`event: callback-data\ndata: ${JSON.stringify(callbackData)}\n\n`);
-      sseClient.end();
-      sseClients.delete(sessionId);
-      deleteSessionProgress(sessionId);
-    } else {
-      // No SSE client yet — store for when they connect
-      console.log(`💾 No SSE client yet for session ${sessionId}, storing data for later`);
-      callbackDataStore.set(sessionId, callbackData);
-    }
+    console.log(`🚀 Delivering callback data for session ${sessionId}`);
+    deliverSseEvent(sessionId, 'callback-data', callbackData, true);
 
     res.json({ success: true, message: 'Callback data received and delivered' });
   } catch (error) {
     console.error('Error processing callback:', error);
+    const retryable = pendingAgentSetupStore.has(sessionId);
     emitProgressUpdate(sessionId, 'Setup hit an issue, retrying steps...', 'error');
+    deliverSseEvent(sessionId, 'setup-error', {
+      message: error.message || 'Agent setup failed',
+      retryable,
+      stage: 'agent_setup'
+    }, false);
     res.status(500).json({ error: 'Failed to process callback', details: error.message });
+  }
+});
+
+router.post('/session/:sessionId/retry-agent-setup', async (req, res) => {
+  const { sessionId } = req.params;
+  const retryContext = pendingAgentSetupStore.get(sessionId);
+
+  if (!retryContext) {
+    return res.status(404).json({ error: 'No retry context found for this session.' });
+  }
+
+  try {
+    emitProgressUpdate(sessionId, 'Retrying agent setup...', 'agent_setup_retry');
+
+    const resolvedAgentId = await triggerAgentSetupWorkflow(retryContext.setupContext);
+    const creditToolState = retryContext.callbackUserId
+      ? await ensureCreditToolAttachedForAgent({
+          userId: retryContext.callbackUserId,
+          agentId: resolvedAgentId
+        })
+      : {
+          toolReady: false,
+          toolWarning: CREDIT_TOOL_WARNING_MESSAGE
+        };
+
+    const callbackData = {
+      ...retryContext.callbackDataBase,
+      agentId: resolvedAgentId,
+      toolReady: Boolean(creditToolState?.toolReady),
+      toolWarning: creditToolState?.toolReady ? null : (creditToolState?.toolWarning || CREDIT_TOOL_WARNING_MESSAGE),
+      receivedAt: new Date().toISOString()
+    };
+
+    try {
+      const persistedSessionId = await ensurePersistedBehavioralSession({
+        tempSessionId: sessionId,
+        userId: retryContext.callbackUserId,
+        agentId: resolvedAgentId,
+        interviewPlan: callbackData.interviewPlan,
+        interviewPrompt: callbackData.interviewPrompt,
+        feedbackPrompt: callbackData.feedbackPrompt
+      });
+      callbackData.persistedSessionId = persistedSessionId;
+      callbackData.sessionId = persistedSessionId;
+    } catch (persistError) {
+      console.warn('[retry] Failed to pre-persist behavioral session:', persistError?.message || persistError);
+      callbackData.persistedSessionId = null;
+    }
+
+    if (resolvedAgentId && retryContext.callbackUserId) {
+      await prisma.agent.upsert({
+        where: { id: resolvedAgentId },
+        update: { userId: retryContext.callbackUserId },
+        create: { id: resolvedAgentId, userId: retryContext.callbackUserId }
+      });
+      deleteSessionOwner(sessionId);
+      tempSessionToPersistedSessionId.delete(sessionId);
+    }
+
+    pendingAgentSetupStore.delete(sessionId);
+    emitProgressUpdate(sessionId, 'Session is ready. Launching your interview...', 'ready');
+    deliverSseEvent(sessionId, 'callback-data', callbackData, true);
+
+    return res.json({ success: true, agentId: resolvedAgentId });
+  } catch (error) {
+    console.error('Retry agent setup failed:', error);
+    emitProgressUpdate(sessionId, 'Retry failed. Please try again or return to dashboard.', 'error');
+    deliverSseEvent(sessionId, 'setup-error', {
+      message: error.message || 'Retry failed',
+      retryable: true,
+      stage: 'agent_setup_retry'
+    }, false);
+    return res.status(500).json({ error: 'Retry failed', details: error.message });
   }
 });
 

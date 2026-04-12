@@ -459,9 +459,23 @@ const Dashboard = () => {
     const parseSession = (s) => {
       const feedback = normalizeFeedback(s.feedback);
       const isTechnical = s.interviewType === 'Technical' || (feedback && isTechnicalFeedback(feedback));
+      const sessionStatus = (s.status || (feedback ? 'completed' : 'pending')).toLowerCase();
+      const isPending = sessionStatus === 'pending';
+      const isCancelled = sessionStatus === 'cancelled';
+      const isIncomplete = sessionStatus === 'incomplete';
 
       if (!feedback) {
-        return { ...s, feedback: null, normalizedDimensions: [], computedScore: null, isPending: true, isTechnical };
+        return {
+          ...s,
+          feedback: null,
+          normalizedDimensions: [],
+          computedScore: null,
+          isPending,
+          isCancelled,
+          isIncomplete,
+          sessionStatus,
+          isTechnical
+        };
       }
 
       const normalizedDimensions = isTechnical
@@ -469,7 +483,7 @@ const Dashboard = () => {
         : normalizeBehaviouralDimensionScores(feedback);
       const computedScore = getScoreFromFeedback(feedback, isTechnical);
 
-      return { ...s, feedback, normalizedDimensions, computedScore, isPending: false, isTechnical };
+      return { ...s, feedback, normalizedDimensions, computedScore, isPending, isCancelled, isIncomplete, sessionStatus, isTechnical };
     };
 
     const parsedRecent = recentThree.map(parseSession);
@@ -845,12 +859,20 @@ const Dashboard = () => {
                             // Technical interview feedback
                             sessionType = 'Technical';
                             sessionTopic = feedback?.meta?.questionTitle || feedback?.outcome?.verdict || 'Technical Interview';
-                            assessment = feedback?.overall?.summary || feedback?.outcome?.summary || 'Technical interview session completed.';
+                            assessment = session.sessionStatus === 'incomplete'
+                              ? 'Session ended too early to generate a complete assessment.'
+                              : session.sessionStatus === 'pending'
+                                ? 'Feedback is still being prepared.'
+                                : feedback?.overall?.summary || feedback?.outcome?.summary || 'Technical interview session completed.';
                           } else {
                             // Behavioural interview feedback
                             sessionType = feedback?.interview_type || 'Behavioral';
                             sessionTopic = feedback?.position_title || 'Interview';
-                            assessment = feedback?.overall_assessment?.summary || 'Interview session completed.';
+                            assessment = session.sessionStatus === 'incomplete'
+                              ? 'Session ended too early to generate a complete assessment.'
+                              : session.sessionStatus === 'pending'
+                                ? 'Feedback is still being prepared.'
+                                : feedback?.overall_assessment?.summary || 'Interview session completed.';
                           }
 
                           // Navigate to correct results page based on type
@@ -892,22 +914,35 @@ const Dashboard = () => {
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  {session.isPending ? (
+                                  {session.sessionStatus === 'incomplete' ? (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                                      Incomplete
+                                    </span>
+                                  ) : session.isCancelled ? (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                      Cancelled
+                                    </span>
+                                  ) : session.isPending ? (
                                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
                                       Pending
                                     </span>
                                   ) : (
-                                    <span
-                                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${feedbackScore >= 80
-                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                        : feedbackScore >= 60
-                                          ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                                          : 'bg-red-500/10 text-red-400 border-red-500/20'
-                                        }`}
-                                    >
-                                      <Award size={12} />
-                                      {feedbackScore}
-                                    </span>
+                                    <div className="inline-flex items-center gap-2">
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        Completed
+                                      </span>
+                                      <span
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${feedbackScore >= 80
+                                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                          : feedbackScore >= 60
+                                            ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                          }`}
+                                      >
+                                        <Award size={12} />
+                                        {feedbackScore}
+                                      </span>
+                                    </div>
                                   )}
                                 </div>
                               </div>

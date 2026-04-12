@@ -24,6 +24,7 @@ function getStoredCv() {
 
 /* ---------- ElevenLabs Agent Config ---------- */
 const AGENT_ID = import.meta.env.VITE_GOOGLE_AGENT_ID || 'agent_0901kbyh4704effth28z4q9f684p';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 /* ---------- Company Color Themes (two-color, original orb style) ---------- */
 const COMPANY_COLORS = {
@@ -36,9 +37,6 @@ const COMPANY_COLORS = {
   Tesla: ['#2792DC', '#9CE6E6'],
   default: ['#2792DC', '#9CE6E6'],
 };
-
-/* ---------- N8N Webhook Config (still here if you need it later) ---------- */
-const N8N_WEBHOOK_URL = 'https://aolin12138.app.n8n.cloud/webhook/feedback';
 
 /* ---------- Interview page with ElevenLabs Agent ---------- */
 
@@ -56,11 +54,55 @@ export default function BehaviouralInterviewPage() {
   const [sessionEndedIntentionally, setSessionEndedIntentionally] = useState(false); // Track if user ended session
   const [isConnecting, setIsConnecting] = useState(false); // Track connection in progress
   const [showDisconnectWarning, setShowDisconnectWarning] = useState(false); // Show warning on unexpected disconnect
+  const [creditToolWarning, setCreditToolWarning] = useState('');
+  const [persistedSessionId, setPersistedSessionId] = useState(localStorage.getItem('currentPersistedSessionId') || null);
   const workflowTriggeredRef = useRef(false); // Prevent duplicate workflow triggers
+  const showDevControls = import.meta.env.DEV && import.meta.env.VITE_ENABLE_INTERVIEW_TEST_MODE === 'true';
+  const selectedDurationMin = Math.max(15, Number(localStorage.getItem('interviewDurationMin')) || 15);
+
+  const fetchCreditStatus = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return {
+        credits_remaining: null,
+        eta_min_remaining: null,
+        low_credit: false,
+        critical_credit: false,
+        recommended_check_turns: 5,
+      };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/integrations/elevenlabs/status`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch credit status (${response.status})`);
+    }
+
+    const data = await response.json();
+    const creditsRemaining = Math.max(0, Number(data.characterLimit || 0) - Number(data.characterCount || 0));
+    const etaMinRemaining = Number(data.minutesRemaining || 0);
+
+    return {
+      credits_remaining: creditsRemaining,
+      eta_min_remaining: Math.round(etaMinRemaining * 10) / 10,
+      low_credit: creditsRemaining <= 20000,
+      critical_credit: creditsRemaining <= 2000,
+      recommended_check_turns: creditsRemaining <= 5000 ? 1 : creditsRemaining <= 20000 ? 2 : 5,
+    };
+  };
 
   useEffect(() => {
     if (sessionId) {
       localStorage.setItem('currentSessionId', sessionId);
+      if (!sessionId.startsWith('temp_')) {
+        localStorage.setItem('currentPersistedSessionId', sessionId);
+        setPersistedSessionId(sessionId);
+      }
     }
   }, [sessionId]);
 
@@ -80,13 +122,20 @@ export default function BehaviouralInterviewPage() {
           setAgentId(callbackData.agentId);
           localStorage.setItem('currentAgentId', callbackData.agentId);
         }
+        if (callbackData.persistedSessionId) {
+          setPersistedSessionId(callbackData.persistedSessionId);
+          localStorage.setItem('currentPersistedSessionId', callbackData.persistedSessionId);
+        }
+        if (callbackData.toolReady === false && callbackData.toolWarning) {
+          setCreditToolWarning(callbackData.toolWarning);
+        }
       }
       return;
     }
 
     const loadSession = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -98,6 +147,9 @@ export default function BehaviouralInterviewPage() {
         if (data?.agentId) {
           setAgentId(data.agentId);
           localStorage.setItem('currentAgentId', data.agentId);
+        }
+        if (data?.toolReady === false && data?.toolWarning) {
+          setCreditToolWarning(data.toolWarning);
         }
       } catch (error) {
         console.error('Failed to load session agentId:', error);
@@ -116,6 +168,25 @@ export default function BehaviouralInterviewPage() {
 
   // ElevenLabs conversation hook
   const conversation = useConversation({
+    clientTools: {
+      getCreditStatus: async () => {
+        try {
+          const status = await fetchCreditStatus();
+          console.log('[behavioural] getCreditStatus tool response:', status);
+          return status;
+        } catch (error) {
+          console.error('[behavioural] getCreditStatus tool failed:', error);
+          return {
+            credits_remaining: null,
+            eta_min_remaining: null,
+            low_credit: false,
+            critical_credit: false,
+            recommended_check_turns: 5,
+            error: 'credit_status_unavailable'
+          };
+        }
+      }
+    },
     onConnect: () => {
       console.log('Agent connected');
       setHasConnected(true);
@@ -148,103 +219,93 @@ export default function BehaviouralInterviewPage() {
     },
   });
 
+  const ensureStartablePlatformSessionId = async () => {
+    const token = localStorage.getItem('token');
+    const baseSessionId = persistedSessionId || localStorage.getItem('currentPersistedSessionId') || sessionId;
+
+    if (!token || !baseSessionId || baseSessionId.startsWith('temp_')) {
+      return baseSessionId;
+    }
+
+    const sessionResponse = await fetch(`${API_BASE_URL}/api/interview/session/${baseSessionId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!sessionResponse.ok) {
+      return baseSessionId;
+    }
+
+    const sessionData = await sessionResponse.json();
+    if (!sessionData?.conversationId) {
+      return baseSessionId;
+    }
+
+    const spawnResponse = await fetch(`${API_BASE_URL}/api/interview/session/${baseSessionId}/spawn-reconnect-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!spawnResponse.ok) {
+      return baseSessionId;
+    }
+
+    const spawned = await spawnResponse.json();
+    const newSessionId = spawned?.sessionId || baseSessionId;
+    setPersistedSessionId(newSessionId);
+    localStorage.setItem('currentPersistedSessionId', newSessionId);
+    localStorage.setItem('currentSessionId', newSessionId);
+    return newSessionId;
+  };
+
+  const linkConversationToSession = async (platformSessionId, elevenConversationId) => {
+    const token = localStorage.getItem('token');
+    if (!token || !platformSessionId || !elevenConversationId || platformSessionId.startsWith('temp_')) {
+      return;
+    }
+
+    await fetch(`${API_BASE_URL}/api/interview/session/${platformSessionId}/link-conversation`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        conversationId: elevenConversationId
+      })
+    });
+  };
+
   // Workflow: Save feedback and navigate to results
   const handleSessionEndWorkflow = async () => {
     setIsSubmitting(true);
     try {
-      // Calculate duration in seconds
       const endTime = Date.now();
       const durationSeconds = startTime ? Math.round((endTime - startTime) / 1000) : null;
       console.log(`Behavioural interview duration: ${durationSeconds} seconds`);
 
-      const token = localStorage.getItem('token');
-      // Retrieve callback data from sessionStorage
-      const callbackDataStr = sessionStorage.getItem(`callbackData_${sessionId}`);
-      const callbackData = callbackDataStr ? JSON.parse(callbackDataStr) : {};
-      console.log('[BehaviouralInterviewPage] Callback data:', callbackData);
+      const finalSessionId = persistedSessionId || localStorage.getItem('currentPersistedSessionId') || sessionId;
 
-      // For temporary sessions, save to database via /behavioral/save endpoint
-      if (sessionId && sessionId.startsWith('temp_')) {
-        try {
-          const saveResponse = await fetch('http://localhost:3000/api/interview/behavioral/save', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              agentId: callbackData.agentId || null,
-              interviewPlan: callbackData.interviewPlan || null,
-              interviewPrompt: callbackData.interviewPrompt || null,
-              feedbackPrompt: callbackData.feedbackPrompt || null,
-              feedback: callbackData.feedback || null,
-              duration: durationSeconds
-            })
-          });
-          if (saveResponse.ok) {
-            const saveResult = await saveResponse.json();
-            const persistedSessionId = saveResult.sessionId;
-            console.log('[BehaviouralInterviewPage] Session saved to database, ID:', persistedSessionId);
-            navigate(`/results/${persistedSessionId}`, {
-              replace: true,
-              state: {
-                fromInterview: true,
-                company: selectedCompany,
-                candidateCv,
-                duration: durationSeconds,
-                feedback: callbackData.feedback,
-              }
-            });
-          } else {
-            const errorText = await saveResponse.text();
-            console.error('Failed to save session to database:', saveResponse.status, errorText);
-            navigate('/results', {
-              state: {
-                company: selectedCompany,
-                candidateCv,
-                duration: durationSeconds,
-              },
-            });
-          }
-        } catch (err) {
-          console.error('Error saving behavioral session:', err);
-          navigate('/results', {
-            state: {
-              company: selectedCompany,
-              candidateCv,
-              duration: durationSeconds,
-            },
-          });
+      navigate('/loading', {
+        replace: true,
+        state: {
+          type: 'behavioral',
+          sessionId: finalSessionId,
+          duration: durationSeconds,
+          company: selectedCompany,
+          candidateCv,
         }
-      } else {
-        // Non-temp session: update the existing session with duration and feedback
-        try {
-          await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              duration: durationSeconds,
-              feedback: callbackData.feedback || null
-            })
-          });
-          console.log('[BehaviouralInterviewPage] Session updated with duration and feedback');
-        } catch (err) {
-          console.error('Error updating session duration:', err);
-        }
-        navigate(`/results/${sessionId}`, {
-          replace: true,
-          state: {
-            fromInterview: true,
-            company: selectedCompany,
-            candidateCv,
-            duration: durationSeconds,
-            feedback: callbackData.feedback,
-          },
-        });
-      }
+      });
+    } catch (error) {
+      console.error('Session end workflow failed:', error);
+      workflowTriggeredRef.current = false;
+      setSessionEndedIntentionally(false);
+      toast.error(error?.message || 'Failed to process interview completion.', { title: 'Workflow Error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -254,10 +315,19 @@ export default function BehaviouralInterviewPage() {
   const handleCompleteInterview = async () => {
     setIsSubmitting(true);
     try {
+      setSessionEndedIntentionally(true);
       if (conversation.status === 'connected') {
         await conversation.endSession();
+      } else if (!workflowTriggeredRef.current) {
+        workflowTriggeredRef.current = true;
+        await handleSessionEndWorkflow();
       }
       // Workflow will trigger automatically on session end
+    } catch (error) {
+      console.error('Failed to complete interview:', error);
+      setSessionEndedIntentionally(false);
+      workflowTriggeredRef.current = false;
+      toast.error('Failed to complete interview. Please try again.', { title: 'Completion Error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -299,7 +369,7 @@ export default function BehaviouralInterviewPage() {
     setShowExitWarning(false);
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:3000/api/interview/session/${sessionId}/cancel`, {
+      await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}/cancel`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -335,11 +405,32 @@ export default function BehaviouralInterviewPage() {
       setIsConnecting(true);
       // Note: hasConnected is now set in the onConnect callback
 
+      const creditStatus = await fetchCreditStatus().catch(() => ({
+        credits_remaining: null,
+        eta_min_remaining: null,
+      }));
+
+      const activeSessionId = await ensureStartablePlatformSessionId();
+
       // Start the ElevenLabs conversation
-      await conversation.startSession({
+      const callSession = await conversation.startSession({
         agentId: agentId || localStorage.getItem('currentAgentId') || AGENT_ID,
         connectionType: 'webrtc', // Use WebRTC for better quality
+        dynamicVariables: {
+          session_id: activeSessionId || localStorage.getItem('currentSessionId') || null,
+          mode: 'behavioral',
+          selected_duration_min: selectedDurationMin,
+          eta_min_initial: creditStatus.eta_min_remaining,
+          credits_remaining_initial: creditStatus.credits_remaining,
+          low_threshold: 20000,
+          critical_threshold: 2000,
+        }
       });
+
+      const elevenConversationId = callSession?.getId?.() || null;
+      if (elevenConversationId) {
+        await linkConversationToSession(activeSessionId, elevenConversationId);
+      }
     } catch (error) {
       console.error('Failed to start conversation:', error);
       setIsConnecting(false);
@@ -362,10 +453,28 @@ export default function BehaviouralInterviewPage() {
     setShowDisconnectWarning(false);
     try {
       setIsConnecting(true);
-      await conversation.startSession({
+      const creditStatus = await fetchCreditStatus().catch(() => ({
+        credits_remaining: null,
+        eta_min_remaining: null,
+      }));
+      const activeSessionId = await ensureStartablePlatformSessionId();
+      const callSession = await conversation.startSession({
         agentId: agentId || localStorage.getItem('currentAgentId') || AGENT_ID,
         connectionType: 'webrtc',
+        dynamicVariables: {
+          session_id: activeSessionId || localStorage.getItem('currentSessionId') || null,
+          mode: 'behavioral',
+          selected_duration_min: selectedDurationMin,
+          eta_min_initial: creditStatus.eta_min_remaining,
+          credits_remaining_initial: creditStatus.credits_remaining,
+          low_threshold: 20000,
+          critical_threshold: 2000,
+        }
       });
+      const elevenConversationId = callSession?.getId?.() || null;
+      if (elevenConversationId) {
+        await linkConversationToSession(activeSessionId, elevenConversationId);
+      }
       toast.success('Reconnected successfully!', { title: 'Connection Restored' });
     } catch (error) {
       console.error('Failed to reconnect:', error);
@@ -415,6 +524,11 @@ export default function BehaviouralInterviewPage() {
             Start a live mock interview with our AI agent. Speak naturally and get real-time
             feedback through voice conversation.
           </p>
+          {creditToolWarning && (
+            <div className="mt-4 mx-auto max-w-2xl rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-left text-sm text-amber-200">
+              {creditToolWarning}
+            </div>
+          )}
         </div>
 
         {/* Main Card */}
@@ -450,61 +564,62 @@ export default function BehaviouralInterviewPage() {
               </p>
             </div>
 
-            {/* Test Mode Controls */}
-            <div className='w-full max-w-md bg-slate-800/50 rounded-lg p-4 border border-slate-700'>
-              <div className='flex items-center justify-between mb-3'>
-                <span className='text-sm font-medium text-slate-300'>Test Mode</span>
-                <button
-                  onClick={() => setUseTestMode(!useTestMode)}
-                  className={`px-3 py-1 rounded text-xs font-medium transition ${useTestMode
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                    }`}
-                >
-                  {useTestMode ? 'ON' : 'OFF'}
-                </button>
-              </div>
-              {useTestMode && (
-                <div className='flex gap-2'>
+            {showDevControls && (
+              <div className='w-full max-w-md bg-slate-800/50 rounded-lg p-4 border border-slate-700'>
+                <div className='flex items-center justify-between mb-3'>
+                  <span className='text-sm font-medium text-slate-300'>Test Mode</span>
                   <button
-                    onClick={() => setTestState('idle')}
-                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'idle'
+                    onClick={() => setUseTestMode(!useTestMode)}
+                    className={`px-3 py-1 rounded text-xs font-medium transition ${useTestMode
                       ? 'bg-emerald-600 text-white'
                       : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                   >
-                    Idle
-                  </button>
-                  <button
-                    onClick={() => setTestState('listening')}
-                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'listening'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                      }`}
-                  >
-                    Listening
-                  </button>
-                  <button
-                    onClick={() => setTestState('speaking')}
-                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'speaking'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                      }`}
-                  >
-                    Speaking
-                  </button>
-                  <button
-                    onClick={() => setTestState('thinking')}
-                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'thinking'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                      }`}
-                  >
-                    Thinking
+                    {useTestMode ? 'ON' : 'OFF'}
                   </button>
                 </div>
-              )}
-            </div>
+                {useTestMode && (
+                  <div className='flex gap-2'>
+                    <button
+                      onClick={() => setTestState('idle')}
+                      className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'idle'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        }`}
+                    >
+                      Idle
+                    </button>
+                    <button
+                      onClick={() => setTestState('listening')}
+                      className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'listening'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        }`}
+                    >
+                      Listening
+                    </button>
+                    <button
+                      onClick={() => setTestState('speaking')}
+                      className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'speaking'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        }`}
+                    >
+                      Speaking
+                    </button>
+                    <button
+                      onClick={() => setTestState('thinking')}
+                      className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'thinking'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        }`}
+                    >
+                      Thinking
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className='flex flex-col gap-3 items-center w-full max-w-md'>
               {!isConnected ? (
@@ -539,15 +654,16 @@ export default function BehaviouralInterviewPage() {
                     {isSubmitting ? 'Processing feedback...' : 'Complete interview'}
                   </button>
 
-                  {/* Test button: End call only, skip feedback workflow */}
-                  <button
-                    type='button'
-                    onClick={handleEndCallOnly}
-                    disabled={isSubmitting}
-                    className='w-full rounded-full bg-slate-600 text-slate-50 py-2.5 text-sm font-medium shadow-sm hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition focus:outline-none focus:ring-2 focus:ring-slate-500/60 focus:ring-offset-2 focus:ring-offset-slate-900'
-                  >
-                    {isSubmitting ? 'Ending call...' : 'End Call Only (Test)'}
-                  </button>
+                  {showDevControls && (
+                    <button
+                      type='button'
+                      onClick={handleEndCallOnly}
+                      disabled={isSubmitting}
+                      className='w-full rounded-full bg-slate-600 text-slate-50 py-2.5 text-sm font-medium shadow-sm hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition focus:outline-none focus:ring-2 focus:ring-slate-500/60 focus:ring-offset-2 focus:ring-offset-slate-900'
+                    >
+                      {isSubmitting ? 'Ending call...' : 'End Call Only (Test)'}
+                    </button>
+                  )}
                 </>
               )}
             </div>

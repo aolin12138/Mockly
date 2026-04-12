@@ -26,15 +26,17 @@ import StrengthsImprovements from '../results/StrengthsImprovements';
 import CvAlignmentSection from '../results/CvAlignmentSection';
 import NextStepsList from '../results/NextStepsList';
 
-/* --- N8N Webhook Config --- */
-const N8N_WEBHOOK_URL = 'https://aolin12138.app.n8n.cloud/webhook/feedback';
-const USE_LOCAL_SAMPLE = true;
+const USE_LOCAL_SAMPLE = false;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 /* --- Transform the new feedback schema --- */
 function transformFeedbackData(feedbackData) {
   if (!feedbackData) return null;
 
   let data = Array.isArray(feedbackData) ? feedbackData[0] : feedbackData;
+  if (data?.data && typeof data.data === 'object') {
+    data = { ...data.data, ...data };
+  }
   const feedback = data.feedback || data;
   const transcript = data.transcript;
   const audio = data.audio;
@@ -157,7 +159,7 @@ export default function ResultsPage() {
         await new Promise((res) => setTimeout(res, 5000));
 
         // Check database for existing feedback
-        const checkResponse = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
+        const checkResponse = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -168,8 +170,8 @@ export default function ResultsPage() {
         if (!checkResponse.ok) throw new Error('Failed to fetch session data');
 
         const sessionData = await checkResponse.json();
-        const feedbackPrompt = sessionData.feedbackPrompt;
-        const agentId = sessionData.agentId;
+        const feedbackPrompt = sessionData.feedbackPrompt || sessionData.feedback_prompt;
+        const agentId = sessionData.agentId || sessionData.agent_id;
 
         // Use cached feedback if available
         if (sessionData.feedback) {
@@ -185,13 +187,17 @@ export default function ResultsPage() {
           throw new Error('Session data incomplete. Cannot generate feedback.');
         }
 
-        // Generate feedback via N8N webhook
-        const response = await fetch(N8N_WEBHOOK_URL, {
+        // Generate feedback via backend route using the saved session id
+        const response = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}/generate-feedback`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
           body: JSON.stringify({
             agent_id: agentId,
             feedback_agent_prompt: feedbackPrompt,
+            feedback_prompt: feedbackPrompt,
           }),
         });
 
@@ -199,31 +205,14 @@ export default function ResultsPage() {
         if (!response.ok) throw new Error(`Webhook request failed: ${responseText || response.statusText}`);
         if (!responseText) throw new Error('Webhook returned empty response');
 
-        const rawFeedback = JSON.parse(responseText);
+        const generationResult = JSON.parse(responseText);
+        const rawFeedback = generationResult.feedback || generationResult;
         const transformed = transformFeedbackData(rawFeedback);
 
         if (transformed) {
           setFeedbackData(transformed);
 
-          // Save to database
-          const currentSessionId = localStorage.getItem('currentSessionId');
-          if (currentSessionId) {
-            try {
-              await fetch(`http://localhost:3000/api/interview/session/${currentSessionId}/callback`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-                body: JSON.stringify({
-                  feedback: rawFeedback.feedback || rawFeedback,
-                  feedback_prompt: feedbackPrompt,
-                }),
-              });
-            } catch (saveError) {
-              console.error('Error saving feedback to database:', saveError);
-            }
-          }
+          // Session is already updated by backend generate-feedback route
         } else {
           setError('Invalid feedback data received — missing required fields');
         }
