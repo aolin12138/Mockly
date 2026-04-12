@@ -7,24 +7,24 @@ export const staggerContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.3, // Delay between each child animation
-      delayChildren: 0.2,
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
     },
   },
 };
 
 // Standard vertical slide-up fade-in variant
 export const fadeInUp = {
-  hidden: { 
-    opacity: 0, 
-    y: 40, // Reduced distance slightly for subtler motion
+  hidden: {
+    opacity: 0,
+    y: 24,
   },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: {
-      duration: 1.0, // Slower duration
-      ease: [0.22, 1, 0.36, 1], // Custom bezier for natural ease-out
+      duration: 0.8,
+      ease: [0.22, 1, 0.36, 1],
     },
   },
 };

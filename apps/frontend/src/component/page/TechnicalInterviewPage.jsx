@@ -35,6 +35,7 @@ const TechnicalInterviewPage = () => {
   // Generate a temp session ID if not provided in URL
   const sessionId = urlSessionId || `tech_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const pendingUpdatesRef = useRef([]);
+  const conversationSessionRef = useRef(null);
   const hasStartedSessionRef = useRef(false);
   const hasSentInitialContextRef = useRef(false);
   const codeRef = useRef('');
@@ -43,6 +44,7 @@ const TechnicalInterviewPage = () => {
   const testResultsRef = useRef(null);
   const AGENT_ID = import.meta.env.VITE_TECHNICAL_INTERVIEW_AGENT_ID || 'agent_6601kc3hn3b8fbv9p4hpskza0qgm';
   const N8N_WEBHOOK_URL = 'https://aolin12138.app.n8n.cloud/webhook/technical-feedback';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
   // Question and code state
   const [question, setQuestion] = useState(null);
@@ -58,6 +60,43 @@ const TechnicalInterviewPage = () => {
   const [panelOpen, setPanelOpen] = useState(true);
   const [interviewStarted, setInterviewStarted] = useState(false);
   const [startTime, setStartTime] = useState(null); // Track when interview started
+  const selectedDurationMin = Math.max(15, Number(localStorage.getItem('interviewDurationMin')) || 15);
+
+  const fetchCreditStatus = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return {
+        credits_remaining: null,
+        eta_min_remaining: null,
+        low_credit: false,
+        critical_credit: false,
+        recommended_check_turns: 5,
+      };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/integrations/elevenlabs/status`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch credit status (${response.status})`);
+    }
+
+    const data = await response.json();
+    const creditsRemaining = Math.max(0, Number(data.characterLimit || 0) - Number(data.characterCount || 0));
+    const etaMinRemaining = Number(data.minutesRemaining || 0);
+
+    return {
+      credits_remaining: creditsRemaining,
+      eta_min_remaining: Math.round(etaMinRemaining * 10) / 10,
+      low_credit: creditsRemaining <= 20000,
+      critical_credit: creditsRemaining <= 2000,
+      recommended_check_turns: creditsRemaining <= 5000 ? 1 : creditsRemaining <= 20000 ? 2 : 5,
+    };
+  };
 
   const conversation = useConversation({
     overrides: {
@@ -78,6 +117,23 @@ const TechnicalInterviewPage = () => {
         };
         console.log('getEditorState called by agent:', state);
         return JSON.stringify(state);
+      },
+      getCreditStatus: async () => {
+        try {
+          const status = await fetchCreditStatus();
+          console.log('[technical] getCreditStatus tool response:', status);
+          return status;
+        } catch (error) {
+          console.error('[technical] getCreditStatus tool failed:', error);
+          return {
+            credits_remaining: null,
+            eta_min_remaining: null,
+            low_credit: false,
+            critical_credit: false,
+            recommended_check_turns: 5,
+            error: 'credit_status_unavailable'
+          };
+        }
       },
     },
     onConnect: () => {
@@ -360,10 +416,7 @@ const TechnicalInterviewPage = () => {
         }
       }
 
-      // TESTING: Use hardcoded conversation ID for now
-      // TODO: Replace with actual conversation ID when ready for production
-      const testConversationId = 'conv_5601kgkbete3f1zb22pv6hrf1qa7';
-      const conversationId = testConversationId; // conversation.getId ? conversation.getId() : null;
+      const conversationId = conversationSessionRef.current?.getId?.() || null;
       console.log('Using conversation ID:', conversationId);
 
       // Build execution summary
@@ -681,13 +734,28 @@ const TechnicalInterviewPage = () => {
                         try {
                           setInterviewStarted(true);
                           hasStartedSessionRef.current = true;
-                          await conversation.startSession({
+                          const creditStatus = await fetchCreditStatus().catch(() => ({
+                            credits_remaining: null,
+                            eta_min_remaining: null,
+                          }));
+                          const session = await conversation.startSession({
                             agentId: AGENT_ID,
+                            dynamicVariables: {
+                              session_id: sessionId,
+                              mode: 'technical',
+                              selected_duration_min: selectedDurationMin,
+                              eta_min_initial: creditStatus.eta_min_remaining,
+                              credits_remaining_initial: creditStatus.credits_remaining,
+                              low_threshold: 20000,
+                              critical_threshold: 2000,
+                            }
                           });
+                          conversationSessionRef.current = session || null;
                         } catch (error) {
                           console.error('Failed to start technical interview conversation:', error);
                           setInterviewStarted(false);
                           hasStartedSessionRef.current = false;
+                          conversationSessionRef.current = null;
                         }
                       }}
                       className="inline-flex items-center justify-center gap-2 px-6 py-2 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-white text-sm font-medium rounded-lg transition-all cursor-pointer"

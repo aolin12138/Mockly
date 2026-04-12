@@ -52,6 +52,46 @@ const cardVariants = {
   exit: { opacity: 0, y: -10, transition: { duration: 0.2 } }
 };
 
+const getStatusPill = (status) => {
+  const normalized = (status || '').toLowerCase();
+  if (normalized === 'cancelled') {
+    return {
+      label: 'Cancelled',
+      classes: 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+    };
+  }
+  if (normalized === 'incomplete') {
+    return {
+      label: 'Incomplete',
+      classes: 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+    };
+  }
+  if (normalized === 'pending') {
+    return {
+      label: 'Pending',
+      classes: 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+    };
+  }
+  if (normalized === 'completed') {
+    return {
+      label: 'Completed',
+      classes: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+    };
+  }
+  return {
+    label: normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : 'Unknown',
+    classes: 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+  };
+};
+
+const getScorePill = (score) => ({
+  classes: score >= 80
+    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+    : score >= 60
+      ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+      : 'bg-red-500/10 text-red-400 border-red-500/20'
+});
+
 const fadeInUp = {
   hidden: { opacity: 0, y: 16 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
@@ -210,12 +250,6 @@ const HistoryPage = () => {
   const handleSignOut = () => {
     localStorage.removeItem('token');
     navigate('/');
-  };
-
-  const scoreColor = (score) => {
-    if (score >= 80) return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-    if (score >= 60) return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
-    return 'bg-red-500/10 text-red-400 border-red-500/20';
   };
 
   return (
@@ -381,6 +415,8 @@ const HistoryPage = () => {
                 >
                   {interviews.map((interview) => {
                     const isTechnical = interview.interviewType === 'Technical';
+                    const statusPill = getStatusPill(interview.status);
+                    const scorePill = getScorePill(interview.score || 0);
                     return (
                       <MotionDiv
                         key={interview.id}
@@ -441,14 +477,21 @@ const HistoryPage = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${scoreColor(
-                                interview.score
-                              )}`}
-                            >
-                              <Award size={12} />
-                              {interview.score}
-                            </span>
+                            <div className="inline-flex items-center gap-2">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${statusPill.classes}`}
+                              >
+                                {statusPill.label}
+                              </span>
+                              {statusPill.label === 'Completed' && (
+                                <span
+                                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${scorePill.classes}`}
+                                >
+                                  <Award size={12} />
+                                  {interview.score || 0}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <p className="text-sm text-slate-500 pl-14 pr-4 line-clamp-2 leading-relaxed group-hover:text-slate-400 transition-colors">

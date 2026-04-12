@@ -8,6 +8,9 @@ export function LoadingPage() {
   const [status, setStatus] = useState('Processing Your Feedback');
   const [subStatus, setSubStatus] = useState('Analyzing your interview performance…');
   const hasStartedProcessing = useRef(false);
+  const latestStateRef = useRef(null);
+  const [showRecoveryActions, setShowRecoveryActions] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
   useEffect(() => {
     // Prevent double-call from React StrictMode
@@ -17,6 +20,7 @@ export function LoadingPage() {
     }
 
     const state = location.state || {};
+    latestStateRef.current = state;
     console.log('[LoadingPage] state:', state);
 
     // If we have technical interview data to process (handle both 'Technical' and 'technical')
@@ -24,12 +28,34 @@ export function LoadingPage() {
     if (isTechnicalType && state.executionSummary && state.webhookUrl) {
       hasStartedProcessing.current = true;
       processTechnicalFeedback(state);
+    } else if (state.type?.toLowerCase() === 'behavioral' && state.sessionId) {
+      hasStartedProcessing.current = true;
+      processBehavioralFeedback(state);
     } else if (state.feedback) {
       // Already have feedback, go to results
       hasStartedProcessing.current = true;
       navigateToResults(state);
     }
   }, [location.state]);
+
+  const getCallbackSessionData = (sessionId) => {
+    try {
+      const raw = sessionStorage.getItem(`callbackData_${sessionId}`);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      return {
+        sessionId: data.persistedSessionId || data.sessionId || null,
+        agentId: data.agentId || data.agent_id || localStorage.getItem('currentAgentId') || null,
+        conversationId: data.conversationId || data.conversation_id || null,
+        interviewPlan: data.interviewPlan || data.interview_plan || null,
+        interviewPrompt: data.interviewPrompt || data.interview_prompt || null,
+        feedbackPrompt: data.feedbackPrompt || data.feedback_prompt || data.feedback_prompt_final || null,
+      };
+    } catch (error) {
+      console.warn('[LoadingPage] Failed to parse callback session data:', error);
+      return null;
+    }
+  };
 
   const processTechnicalFeedback = async (state) => {
     const { executionSummary, webhookUrl, sessionId: stateSessionId, conversationId, duration } = state;
@@ -72,41 +98,38 @@ export function LoadingPage() {
         }
       }
 
-      // Save session to database with feedback (even if feedbackData is null)
-      if (feedbackData) {
-        setStatus('Saving Results');
-        setSubStatus('Storing your interview session…');
+      setStatus('Saving Session');
+      setSubStatus(feedbackData ? 'Storing your interview and feedback…' : 'Storing your interview so feedback can be retried later…');
 
-        try {
-          const saveResponse = await fetch('http://localhost:3000/api/interview/technical/save', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              conversationId,
-              executionSummary,
-              feedback: feedbackData,
-              duration, // Duration in seconds
-            }),
-          });
+      try {
+        const saveResponse = await fetch(`${API_BASE_URL}/api/interview/technical/save`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            conversationId,
+            executionSummary,
+            feedback: feedbackData,
+            duration, // Duration in seconds
+          }),
+        });
 
-          if (saveResponse.ok) {
-            const saveResult = await saveResponse.json();
-            finalSessionId = saveResult.sessionId;
-            console.log('[LoadingPage] Session saved to database, new ID:', finalSessionId);
-          } else {
-            const errorText = await saveResponse.text();
-            console.error('Failed to save session to database:', saveResponse.status, errorText);
-          }
-        } catch (saveErr) {
-          console.error('Error saving session:', saveErr);
+        if (saveResponse.ok) {
+          const saveResult = await saveResponse.json();
+          finalSessionId = saveResult.sessionId;
+          console.log('[LoadingPage] Session saved to database, new ID:', finalSessionId);
+        } else {
+          const errorText = await saveResponse.text();
+          console.error('Failed to save session to database:', saveResponse.status, errorText);
         }
+      } catch (saveErr) {
+        console.error('Error saving session:', saveErr);
       }
 
-      setStatus('Feedback Ready');
-      setSubStatus('Redirecting to your results…');
+      setStatus(feedbackData ? 'Feedback Ready' : 'Session Saved');
+      setSubStatus(feedbackData ? 'Redirecting to your results…' : 'Feedback is still processing. You can retry from results/history.');
       await new Promise(res => setTimeout(res, 1000));
 
       // Navigate to results page
@@ -139,8 +162,164 @@ export function LoadingPage() {
     }
   };
 
+  const processBehavioralFeedback = async (state) => {
+    const { sessionId: rawSessionId, duration, company, candidateCv } = state;
+    const sessionId = rawSessionId?.startsWith('temp_')
+      ? (localStorage.getItem('currentPersistedSessionId') || rawSessionId)
+      : rawSessionId;
+    const token = localStorage.getItem('token');
+    let persistedSessionId = null;
+
+    try {
+      setShowRecoveryActions(false);
+      setStatus('Finalizing Session');
+      setSubStatus('Loading your interview configuration…');
+
+      let sessionData = null;
+      const sessionResponse = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (sessionResponse.ok) {
+        sessionData = await sessionResponse.json();
+      } else {
+        console.warn('[LoadingPage] Session lookup failed, trying callback fallback:', sessionResponse.status);
+        sessionData = getCallbackSessionData(sessionId);
+      }
+
+      if (!sessionData) {
+        throw new Error('Failed to load session data');
+      }
+
+      const effectiveSessionId = sessionData.sessionId || sessionId;
+      const resolvedAgentId = sessionData.agentId || sessionData.agent_id;
+      const conversationId = sessionData.conversationId || sessionData.conversation_id || null;
+      const feedbackPrompt = sessionData.feedbackPrompt || sessionData.feedback_prompt;
+
+      if (!resolvedAgentId || !feedbackPrompt) {
+        throw new Error('Session missing agent or feedback prompt.');
+      }
+
+      setStatus('Saving Session');
+      setSubStatus('Storing your interview session…');
+
+      const initialSaveResponse = await fetch(`${API_BASE_URL}/api/interview/behavioral/save`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          sessionId: effectiveSessionId,
+          agentId: resolvedAgentId,
+          conversationId,
+          interviewPlan: sessionData.interviewPlan || null,
+          interviewPrompt: sessionData.interviewPrompt || null,
+          feedbackPrompt,
+          feedback: null,
+          duration,
+        }),
+      });
+
+      if (!initialSaveResponse.ok) {
+        const errorText = await initialSaveResponse.text();
+        throw new Error(errorText || `Failed to save session (${initialSaveResponse.status})`);
+      }
+
+      const initialSaveResult = await initialSaveResponse.json();
+      persistedSessionId = initialSaveResult.sessionId;
+
+      setStatus('Generating Feedback');
+      setSubStatus('AI is analyzing your interview…');
+
+      const feedbackResponse = await fetch(`${API_BASE_URL}/api/interview/session/${persistedSessionId}/generate-feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          agent_id: resolvedAgentId,
+          conversation_id: conversationId,
+          feedback_prompt: feedbackPrompt,
+        }),
+      });
+
+      const feedbackText = await feedbackResponse.text();
+      if (!feedbackResponse.ok) {
+        if (feedbackResponse.status === 404) {
+          throw new Error('Feedback endpoint not found. Please restart the backend server.');
+        }
+        throw new Error(feedbackText || 'Failed to generate behavioral feedback');
+      }
+
+      const feedbackPayload = feedbackText ? JSON.parse(feedbackText) : {};
+      const generatedFeedback = feedbackPayload.feedback || null;
+      if (!generatedFeedback) {
+        throw new Error('Feedback workflow returned no feedback payload.');
+      }
+
+      setStatus('Feedback Ready');
+      setSubStatus('Redirecting to your results…');
+      await new Promise((res) => setTimeout(res, 800));
+
+      navigate(`/results/${persistedSessionId}`, {
+        replace: true,
+        state: {
+          fromInterview: true,
+          type: 'behavioral',
+          sessionId: persistedSessionId,
+          feedback: generatedFeedback,
+          company,
+          candidateCv,
+          duration,
+        },
+      });
+    } catch (err) {
+      console.error('Error processing behavioral feedback:', err);
+      if (persistedSessionId) {
+        setStatus('Session Saved');
+        setSubStatus('Feedback failed for now. You can retry from results or history.');
+        setTimeout(() => {
+          navigate(`/results/${persistedSessionId}`, {
+            replace: true,
+            state: {
+              fromInterview: true,
+              type: 'behavioral',
+              sessionId: persistedSessionId,
+              company,
+              candidateCv,
+              duration,
+            },
+          });
+        }, 1200);
+      } else {
+        setStatus('Error');
+        setSubStatus(err?.message || 'Failed to process interview feedback. You can retry or return to dashboard.');
+        setShowRecoveryActions(true);
+      }
+    }
+  };
+
+  const handleRetry = () => {
+    const state = latestStateRef.current || location.state || {};
+    if (state.type?.toLowerCase() === 'behavioral' && state.sessionId) {
+      processBehavioralFeedback(state);
+      return;
+    }
+    if (state.type?.toLowerCase() === 'technical' && state.executionSummary && state.webhookUrl) {
+      processTechnicalFeedback(state);
+      return;
+    }
+    setSubStatus('Missing session context. Please return to dashboard and try again.');
+  };
+
   const navigateToResults = (state) => {
-    const { sessionId, type, fromInterview } = state;
+    const { sessionId, type } = state;
     // Check if it's a technical interview - handle both 'Technical' and 'technical'
     const isTechnical = type?.toLowerCase() === 'technical' || window.location.pathname.includes('technical');
     const resultsPath = isTechnical
@@ -219,6 +398,25 @@ export function LoadingPage() {
             />
           ))}
         </motion.div>
+
+        {showRecoveryActions && (
+          <div className='mt-3 flex flex-col sm:flex-row gap-3'>
+            <button
+              type='button'
+              onClick={handleRetry}
+              className='inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-5 py-2.5 text-sm font-medium'
+            >
+              Retry
+            </button>
+            <button
+              type='button'
+              onClick={() => navigate('/dashboard', { replace: true })}
+              className='inline-flex items-center justify-center rounded-full border border-white/10 text-white px-5 py-2.5 text-sm font-medium hover:bg-white/5'
+            >
+              Back to dashboard
+            </button>
+          </div>
+        )}
       </motion.div>
     </div>
   );

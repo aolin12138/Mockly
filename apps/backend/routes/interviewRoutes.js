@@ -12,6 +12,8 @@ import { setSessionProgress } from '../lib/sessionProgressStore.js';
 
 const PROMPT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7';
 const AGENT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
+const FEEDBACK_WEBHOOK_URL = process.env.FEEDBACK_WEBHOOK_URL || 'https://aolin12138.app.n8n.cloud/webhook/feedback';
+const TECHNICAL_FEEDBACK_WEBHOOK_URL = process.env.TECHNICAL_FEEDBACK_WEBHOOK_URL || 'https://aolin12138.app.n8n.cloud/webhook/technical-feedback';
 const WEBHOOK_TIMEOUT_MS = 55_000;
 
 const getWebhookValue = (payload, keys) => {
@@ -97,6 +99,76 @@ async function resolveElevenLabsKey(userId, interviewMode) {
   throw new Error('ElevenLabs API key required. Please connect your key in Settings.');
 }
 
+async function runFeedbackWorkflow({ userId, sessionId, agentId, feedbackPrompt, conversationId }) {
+  const resolved = await resolveElevenLabsKey(userId, 'behavioral');
+  const elevenLabsKey = resolved.apiKey;
+
+  const webhookPayload = {
+    session_id: sessionId || null,
+    agent_id: agentId,
+    conversation_id: conversationId || null,
+    feedback_agent_prompt: feedbackPrompt,
+    feedback_prompt: feedbackPrompt
+  };
+
+  const { response, body, rawText } = await fetchJsonWithTimeout(
+    FEEDBACK_WEBHOOK_URL,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-ELEVENLABS-KEY': elevenLabsKey
+      },
+      body: JSON.stringify(webhookPayload)
+    }
+  );
+
+  if (!response.ok) {
+    const error = new Error(rawText || response.statusText || 'Feedback workflow failed');
+    error.status = 502;
+    throw error;
+  }
+
+  if (!rawText || !rawText.trim()) {
+    const error = new Error('Feedback workflow returned empty response');
+    error.status = 502;
+    throw error;
+  }
+
+  return body;
+}
+
+async function runTechnicalFeedbackWorkflow({ userId, executionSummary }) {
+  const resolved = await resolveElevenLabsKey(userId, 'technical');
+  const elevenLabsKey = resolved.apiKey;
+
+  const { response, body, rawText } = await fetchJsonWithTimeout(
+    TECHNICAL_FEEDBACK_WEBHOOK_URL,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-ELEVENLABS-KEY': elevenLabsKey
+      },
+      body: JSON.stringify(executionSummary || {})
+    }
+  );
+
+  if (!response.ok) {
+    const error = new Error(rawText || response.statusText || 'Technical feedback workflow failed');
+    error.status = 502;
+    throw error;
+  }
+
+  if (!rawText || !rawText.trim()) {
+    const error = new Error('Technical feedback workflow returned empty response');
+    error.status = 502;
+    throw error;
+  }
+
+  return body;
+}
+
 const router = express.Router();
 
 // Helper: unwrap feedback from array/nested structure
@@ -115,6 +187,74 @@ const unwrapFeedback = (raw) => {
     fb = fb.feedback;
   }
   return fb || {};
+};
+
+const normalizeDurationSeconds = (duration) => {
+  if (!Number.isFinite(Number(duration))) return null;
+  const value = Math.round(Number(duration));
+  return value > 0 ? value : null;
+};
+
+const getSessionStatus = ({ feedback, durationSeconds }) => {
+  if (durationSeconds != null && durationSeconds < 600) return 'incomplete';
+  if (feedback) return 'completed';
+  return 'pending';
+};
+
+const extractFeedbackEnvelope = ({ feedbackPayload, rawPayload = {} }) => {
+  const callDurationRaw =
+    rawPayload.call_duration_secs ??
+    rawPayload.callDurationSecs ??
+    rawPayload.duration_seconds ??
+    rawPayload.duration ??
+    null;
+  const transcripts = rawPayload.transcripts ?? rawPayload.transcript ?? null;
+  const audio = rawPayload.audio ?? null;
+
+  const hasEnvelopeFields =
+    callDurationRaw != null ||
+    transcripts != null ||
+    audio != null ||
+    (feedbackPayload && typeof feedbackPayload === 'object' && (
+      Object.prototype.hasOwnProperty.call(feedbackPayload, 'feedback') ||
+      Object.prototype.hasOwnProperty.call(feedbackPayload, 'call_duration_secs') ||
+      Object.prototype.hasOwnProperty.call(feedbackPayload, 'transcripts') ||
+      Object.prototype.hasOwnProperty.call(feedbackPayload, 'audio')
+    ));
+
+  const durationSeconds = normalizeDurationSeconds(callDurationRaw);
+
+  if (!hasEnvelopeFields) {
+    return {
+      storedFeedback: feedbackPayload || null,
+      feedbackForScoring: feedbackPayload || null,
+      durationSeconds
+    };
+  }
+
+  let baseEnvelope = {};
+  if (feedbackPayload && typeof feedbackPayload === 'object' && !Array.isArray(feedbackPayload)) {
+    baseEnvelope = { ...feedbackPayload };
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(baseEnvelope, 'feedback')) {
+    baseEnvelope.feedback = feedbackPayload;
+  }
+  if (callDurationRaw != null && !Object.prototype.hasOwnProperty.call(baseEnvelope, 'call_duration_secs')) {
+    baseEnvelope.call_duration_secs = Number(callDurationRaw);
+  }
+  if (transcripts != null && !Object.prototype.hasOwnProperty.call(baseEnvelope, 'transcripts')) {
+    baseEnvelope.transcripts = transcripts;
+  }
+  if (audio != null && !Object.prototype.hasOwnProperty.call(baseEnvelope, 'audio')) {
+    baseEnvelope.audio = audio;
+  }
+
+  return {
+    storedFeedback: baseEnvelope,
+    feedbackForScoring: baseEnvelope.feedback || feedbackPayload || null,
+    durationSeconds
+  };
 };
 
 const normalizeInterviewConfig = (config) => {
@@ -205,10 +345,23 @@ router.get('/user/interviews', async (req, res) => {
       let score = session.score || 0;
       let topic = '';
       let assessment = '';
+      const status = session.status || 'pending';
       const feedback = unwrapFeedback(session.feedback);
       const interviewType = session.interviewType || 'Interview';
       const duration = session.duration || 0;
       const createdAt = session.createdAt;
+
+      if (status === 'cancelled') {
+        topic = interviewType === 'Technical' ? 'Technical Interview' : 'Interview';
+        assessment = 'Session was cancelled before completion.';
+      } else if (status === 'not_started') {
+        topic = interviewType === 'Technical' ? 'Technical Interview' : 'Interview';
+        assessment = 'Session is prepared and ready to start.';
+      } else if (status === 'incomplete') {
+        topic = interviewType === 'Technical' ? 'Technical Interview' : 'Interview';
+        assessment = 'Session ended too early to generate a complete assessment.';
+      }
+
       if (interviewType === 'Technical') {
         // If score column is empty, fall back to computing from feedback
         if (!score) {
@@ -216,7 +369,9 @@ router.get('/user/interviews', async (req, res) => {
           if (score <= 10) score = Math.round(score * 10);
         }
         topic = feedback?.meta?.questionTitle || feedback?.outcome?.verdict || 'Technical Interview';
-        assessment = feedback?.overall?.summary || feedback?.outcome?.summary || 'Technical interview session completed.';
+        if (status !== 'cancelled' && status !== 'incomplete') {
+          assessment = feedback?.overall?.summary || feedback?.outcome?.summary || (status === 'pending' ? 'Feedback is still being prepared.' : 'Technical interview session completed.');
+        }
       } else {
         if (!score) {
           score = feedback?.overall_score || feedback?.overallScore || feedback?.score || 0;
@@ -224,9 +379,11 @@ router.get('/user/interviews', async (req, res) => {
           else if (score <= 10) score = Math.round(score * 10);
         }
         topic = feedback?.position_title || 'Interview';
-        assessment = feedback?.overall_assessment?.summary || 'Interview session completed.';
+        if (status !== 'cancelled' && status !== 'incomplete') {
+          assessment = feedback?.overall_assessment?.summary || (status === 'pending' ? 'Feedback is still being prepared.' : 'Interview session completed.');
+        }
       }
-      return { id: session.id, interviewType, topic, assessment, score, duration, createdAt };
+      return { id: session.id, interviewType, topic, assessment, score, duration, createdAt, status };
     };
 
     const sessions = await prisma.session.findMany({
@@ -289,6 +446,7 @@ router.post('/session', async (req, res) => {
 
   // Generate a temporary session ID (UUID-like)
   const tempSessionId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  setSessionOwner(tempSessionId, userId);
 
   // Attach Company Profile
   const companyPreset = interviewConfig.role?.company_preset || 'general_tech';
@@ -428,15 +586,19 @@ router.post('/technical/save', async (req, res) => {
 
   const { conversationId, executionSummary, feedback, duration } = req.body;
   const userId = req.userId; // From authMiddleware
+  const envelope = extractFeedbackEnvelope({
+    feedbackPayload: feedback,
+    rawPayload: req.body || {}
+  });
+  const durationSeconds = normalizeDurationSeconds(duration) ?? envelope.durationSeconds;
 
-  if (!feedback) {
-    return res.status(400).json({ error: 'No feedback provided' });
+  let score = null;
+  if (envelope.feedbackForScoring) {
+    const parsedFeedback = unwrapFeedback(envelope.feedbackForScoring);
+    const rawScore = parsedFeedback?.outcome?.score || parsedFeedback?.overall?.score || 0;
+    score = rawScore <= 10 ? Math.round(rawScore * 10) : rawScore;
   }
-
-  // Extract and normalise score from feedback JSON
-  const parsedFeedback = unwrapFeedback(feedback);
-  let score = parsedFeedback?.outcome?.score || parsedFeedback?.overall?.score || 0;
-  if (score <= 10) score = Math.round(score * 10);
+  const status = getSessionStatus({ feedback: envelope.feedbackForScoring, durationSeconds });
 
   try {
     // Create session in database with feedback
@@ -444,10 +606,10 @@ router.post('/technical/save', async (req, res) => {
       data: {
         userId: userId,
         interviewType: 'Technical',
-        feedback: feedback,
-        agentId: conversationId || null,
-        status: 'completed',
-        duration: duration || null, // Duration in seconds
+        feedback: envelope.storedFeedback || null,
+        conversationId: conversationId || null,
+        status,
+        duration: durationSeconds, // Duration in seconds
         score: score || null,
         // Store execution summary in interviewPlan field (repurposed for technical)
         interviewPlan: executionSummary ? JSON.stringify(executionSummary) : null,
@@ -471,35 +633,90 @@ router.post('/technical/save', async (req, res) => {
 router.post('/behavioral/save', async (req, res) => {
   console.log("Request received at /behavioral/save");
 
-  const { agentId, interviewPlan, interviewPrompt, feedbackPrompt, feedback, duration } = req.body;
+  const rawBody = req.body || {};
+  const rootBody = Array.isArray(rawBody) ? (rawBody[0] || {}) : rawBody;
+  const dataBody = rootBody?.data && typeof rootBody.data === 'object' ? rootBody.data : {};
+  const payloadBody = { ...dataBody, ...rootBody };
+
+  const agentId = payloadBody.agentId || payloadBody.agent_id || null;
+  const conversationId = payloadBody.conversationId || payloadBody.conversation_id || null;
+  const requestSessionId = payloadBody.sessionId || payloadBody.session_id || null;
+  const interviewPlan = payloadBody.interviewPlan || payloadBody.interview_plan || null;
+  const interviewPrompt = payloadBody.interviewPrompt || payloadBody.interview_prompt || null;
+  const feedbackPrompt =
+    payloadBody.feedbackPrompt ||
+    payloadBody.feedback_prompt ||
+    payloadBody.feedback_agent_prompt ||
+    null;
+  const feedback = payloadBody.feedback || payloadBody.feedback_result || null;
+  const duration = payloadBody.duration || payloadBody.duration_seconds || null;
+  const envelope = extractFeedbackEnvelope({
+    feedbackPayload: feedback,
+    rawPayload: payloadBody
+  });
+  const durationSeconds = normalizeDurationSeconds(duration) ?? envelope.durationSeconds;
   const userId = req.userId; // From authMiddleware
 
-  if (!feedback) {
-    return res.status(400).json({ error: 'No feedback provided' });
+  let score = null;
+  if (envelope.feedbackForScoring) {
+    const parsedFeedback = unwrapFeedback(envelope.feedbackForScoring);
+    const rawScore = parsedFeedback?.overall_score || parsedFeedback?.overallScore || parsedFeedback?.score || 0;
+    score = rawScore <= 5 ? Math.round(rawScore * 20) : rawScore <= 10 ? Math.round(rawScore * 10) : rawScore;
   }
-
-  // Extract and normalise score from feedback JSON
-  const parsedFeedback = unwrapFeedback(feedback);
-  let score = parsedFeedback?.overall_score || parsedFeedback?.overallScore || parsedFeedback?.score || 0;
-  if (score <= 5) score = Math.round(score * 20);
-  else if (score <= 10) score = Math.round(score * 10);
+  const status = getSessionStatus({ feedback: envelope.feedbackForScoring, durationSeconds });
 
   try {
-    // Create session in database with all callback data
-    const session = await prisma.session.create({
-      data: {
-        userId: userId,
-        interviewType: 'Behavioural',
-        feedback: feedback,
-        agentId: agentId || null,
-        interviewPlan: interviewPlan || null,
-        interviewPrompt: interviewPrompt || null,
-        feedbackPrompt: feedbackPrompt || null,
-        status: 'completed',
-        duration: duration || null, // Duration in seconds
-        score: score || null,
+    console.log('Behavioral save payload keys:', Object.keys(payloadBody));
+
+    let session;
+    if (requestSessionId) {
+      const existingSession = await prisma.session.findFirst({
+        where: {
+          id: requestSessionId,
+          userId,
+          interviewType: 'Behavioural'
+        }
+      });
+
+      if (!existingSession) {
+        return res.status(404).json({ error: 'Session not found for update' });
       }
-    });
+
+      const computedStatus = (!envelope.feedbackForScoring && durationSeconds == null && existingSession.status === 'not_started')
+        ? 'not_started'
+        : getSessionStatus({ feedback: envelope.feedbackForScoring, durationSeconds });
+
+      session = await prisma.session.update({
+        where: { id: requestSessionId },
+        data: {
+          feedback: envelope.storedFeedback,
+          agentId: agentId || existingSession.agentId || null,
+          conversationId: conversationId || existingSession.conversationId || null,
+          interviewPlan: interviewPlan || existingSession.interviewPlan || null,
+          interviewPrompt: interviewPrompt || existingSession.interviewPrompt || null,
+          feedbackPrompt: feedbackPrompt || existingSession.feedbackPrompt || null,
+          status: computedStatus,
+          duration: durationSeconds != null ? durationSeconds : existingSession.duration,
+          score: score || existingSession.score || null,
+        }
+      });
+    } else {
+      session = await prisma.session.create({
+        data: {
+          userId: userId,
+          interviewType: 'Behavioural',
+          feedback: envelope.storedFeedback,
+          agentId: agentId || null,
+          conversationId: conversationId || null,
+          interviewPlan: interviewPlan || null,
+          interviewPrompt: interviewPrompt || null,
+          feedbackPrompt: feedbackPrompt || null,
+          status,
+          duration: durationSeconds,
+          score: score || null,
+        }
+      });
+    }
 
     console.log(`Behavioral session saved to database: ${session.id}`);
     console.log("Session details:", JSON.stringify({ id: session.id, userId, agentId }, null, 2));
@@ -528,11 +745,129 @@ router.post('/behavioral/save', async (req, res) => {
   }
 });
 
+// Generate behavioural feedback before persistence (for temp sessions)
+router.post('/behavioral/generate-feedback', async (req, res) => {
+  const userId = req.userId;
+  const rawBody = req.body || {};
+  const rootBody = Array.isArray(rawBody) ? (rawBody[0] || {}) : rawBody;
+  const dataBody = rootBody?.data && typeof rootBody.data === 'object' ? rootBody.data : {};
+  const payloadBody = { ...dataBody, ...rootBody };
+
+  const sessionId = payloadBody.session_id || payloadBody.sessionId || null;
+  const agentId = payloadBody.agent_id || payloadBody.agentId || null;
+  const conversationId = payloadBody.conversation_id || payloadBody.conversationId || null;
+  const feedbackPrompt =
+    payloadBody.feedback_prompt ||
+    payloadBody.feedbackPrompt ||
+    payloadBody.feedback_agent_prompt ||
+    null;
+
+  if (!agentId) {
+    return res.status(400).json({ error: 'Missing agent_id for feedback generation' });
+  }
+
+  if (!feedbackPrompt) {
+    return res.status(400).json({ error: 'Missing feedback_prompt for feedback generation' });
+  }
+
+  try {
+    const feedbackBody = await runFeedbackWorkflow({
+      userId,
+      sessionId,
+      agentId,
+      feedbackPrompt,
+      conversationId
+    });
+
+    return res.json({
+      success: true,
+      sessionId,
+      agentId,
+      feedback: feedbackBody
+    });
+  } catch (error) {
+    const status = Number.isInteger(error.status) ? error.status : 500;
+    console.error('Error generating behavioural feedback:', error);
+    return res.status(status).json({ error: 'Failed to generate feedback', details: error.message });
+  }
+});
+
+// Generate technical feedback for a saved session and persist it
+router.post('/session/:sessionId/generate-technical-feedback', async (req, res) => {
+  const { sessionId } = req.params;
+  const userId = req.userId;
+
+  try {
+    const session = await prisma.session.findFirst({
+      where: {
+        id: sessionId,
+        userId,
+        interviewType: 'Technical'
+      }
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Technical session not found' });
+    }
+
+    if (!session.interviewPlan) {
+      return res.status(400).json({ error: 'Missing execution summary for technical feedback generation' });
+    }
+
+    let executionSummary;
+    try {
+      executionSummary = JSON.parse(session.interviewPlan);
+    } catch {
+      return res.status(400).json({ error: 'Stored execution summary is invalid JSON' });
+    }
+
+    const feedbackBody = await runTechnicalFeedbackWorkflow({
+      userId,
+      executionSummary
+    });
+
+    const envelope = extractFeedbackEnvelope({ feedbackPayload: feedbackBody, rawPayload: feedbackBody || {} });
+    const feedbackResult = envelope.feedbackForScoring;
+    const parsedFeedback = unwrapFeedback(feedbackResult);
+    let score = parsedFeedback?.outcome?.score || parsedFeedback?.overall?.score || 0;
+    if (score <= 10) score = Math.round(score * 10);
+
+    const durationSeconds = envelope.durationSeconds ?? normalizeDurationSeconds(session.duration);
+    const updateData = {
+      feedback: envelope.storedFeedback,
+      status: getSessionStatus({ feedback: feedbackResult, durationSeconds })
+    };
+    if (score > 0) {
+      updateData.score = score;
+    }
+
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: updateData
+    });
+
+    return res.json({
+      success: true,
+      sessionId,
+      feedback: feedbackBody
+    });
+  } catch (error) {
+    const status = Number.isInteger(error.status) ? error.status : 500;
+    console.error('Error generating technical feedback:', error);
+    return res.status(status).json({ error: 'Failed to generate technical feedback', details: error.message });
+  }
+});
+
 // PATCH: Update session with duration and/or feedback after interview ends
 router.patch('/session/:sessionId', async (req, res) => {
   const { sessionId } = req.params;
   const userId = req.userId;
-  const { duration, feedback } = req.body;
+  const rawBody = req.body || {};
+  const rootBody = Array.isArray(rawBody) ? (rawBody[0] || {}) : rawBody;
+  const dataBody = rootBody?.data && typeof rootBody.data === 'object' ? rootBody.data : {};
+  const payloadBody = { ...dataBody, ...rootBody };
+  const duration = payloadBody.duration ?? payloadBody.duration_seconds;
+  const feedback = payloadBody.feedback ?? payloadBody.feedback_result;
 
   try {
     const session = await prisma.session.findFirst({
@@ -543,10 +878,14 @@ router.patch('/session/:sessionId', async (req, res) => {
     }
 
     const updateData = {};
-    if (duration != null) updateData.duration = duration;
+    const normalizedDuration = normalizeDurationSeconds(duration);
+    if (normalizedDuration != null) updateData.duration = normalizedDuration;
     if (feedback != null) {
       updateData.feedback = feedback;
-      updateData.status = 'completed';
+      updateData.status = getSessionStatus({
+        feedback,
+        durationSeconds: normalizedDuration != null ? normalizedDuration : normalizeDurationSeconds(session.duration)
+      });
       // Extract and persist score
       const parsedFeedback = unwrapFeedback(feedback);
       const isTechnical = session.interviewType === 'Technical';
@@ -560,6 +899,10 @@ router.patch('/session/:sessionId', async (req, res) => {
         else if (score <= 10) score = Math.round(score * 10);
       }
       if (score > 0) updateData.score = score;
+    }
+
+    if (feedback == null && normalizedDuration != null && session.status === 'pending') {
+      updateData.status = getSessionStatus({ feedback: null, durationSeconds: normalizedDuration });
     }
 
     const updated = await prisma.session.update({
@@ -597,15 +940,165 @@ router.get('/session/:sessionId', async (req, res) => {
     res.json({
       sessionId: session.id,
       agentId: session.agentId,
+      conversationId: session.conversationId,
       interviewPlan: session.interviewPlan,
       interviewPrompt: session.interviewPrompt,
       feedbackPrompt: session.feedbackPrompt,
       feedback: session.feedback,
+      status: session.status,
+      duration: session.duration,
       ready
     });
   } catch (error) {
     console.error('Error fetching session:', error);
     res.status(500).json({ error: 'Failed to fetch session', details: error.message });
+  }
+});
+
+// Generate behavioural feedback for a saved session (server-side so ElevenLabs key stays private)
+router.post('/session/:sessionId/generate-feedback', async (req, res) => {
+  const { sessionId } = req.params;
+  const userId = req.userId;
+
+  const rawBody = req.body || {};
+  const rootBody = Array.isArray(rawBody) ? (rawBody[0] || {}) : rawBody;
+  const dataBody = rootBody?.data && typeof rootBody.data === 'object' ? rootBody.data : {};
+  const payloadBody = { ...dataBody, ...rootBody };
+
+  try {
+    const session = await prisma.session.findFirst({
+      where: {
+        id: sessionId,
+        userId
+      }
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const agentId = payloadBody.agent_id || payloadBody.agentId || session.agentId;
+    const feedbackPrompt =
+      payloadBody.feedback_prompt ||
+      payloadBody.feedbackPrompt ||
+      payloadBody.feedback_agent_prompt ||
+      session.feedbackPrompt;
+
+    if (!agentId) {
+      return res.status(400).json({ error: 'Missing agent_id for feedback generation' });
+    }
+
+    if (!feedbackPrompt) {
+      return res.status(400).json({ error: 'Missing feedback_prompt for feedback generation' });
+    }
+
+    const body = await runFeedbackWorkflow({
+      userId,
+      sessionId,
+      agentId,
+      feedbackPrompt,
+      conversationId: session.conversationId || payloadBody.conversation_id || payloadBody.conversationId || null
+    });
+
+    const envelope = extractFeedbackEnvelope({ feedbackPayload: body, rawPayload: body || {} });
+    const feedbackResult = envelope.feedbackForScoring;
+    const parsedFeedback = unwrapFeedback(feedbackResult);
+    let score = parsedFeedback?.overall_score || parsedFeedback?.overallScore || parsedFeedback?.score || 0;
+    if (score <= 5) score = Math.round(score * 20);
+    else if (score <= 10) score = Math.round(score * 10);
+
+    const durationSeconds = envelope.durationSeconds ?? normalizeDurationSeconds(session.duration);
+    const updateData = {
+      feedback: envelope.storedFeedback,
+      status: getSessionStatus({ feedback: feedbackResult, durationSeconds })
+    };
+    if (score > 0) {
+      updateData.score = score;
+    }
+
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: updateData
+    });
+
+    return res.json({
+      success: true,
+      sessionId,
+      agentId,
+      feedback: body
+    });
+  } catch (error) {
+    console.error('Error generating feedback:', error);
+    return res.status(500).json({ error: 'Failed to generate feedback', details: error.message });
+  }
+});
+
+router.post('/session/:sessionId/link-conversation', async (req, res) => {
+  const { sessionId } = req.params;
+  const userId = req.userId;
+  const conversationId = req.body?.conversationId || req.body?.conversation_id || null;
+
+  if (!conversationId) {
+    return res.status(400).json({ error: 'Missing conversationId' });
+  }
+
+  try {
+    const session = await prisma.session.findFirst({
+      where: { id: sessionId, userId }
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const updated = await prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        conversationId,
+        status: session.status === 'not_started' ? 'pending' : session.status
+      }
+    });
+
+    return res.json({ success: true, sessionId: updated.id, conversationId: updated.conversationId, status: updated.status });
+  } catch (error) {
+    console.error('Error linking conversation:', error);
+    return res.status(500).json({ error: 'Failed to link conversation', details: error.message });
+  }
+});
+
+router.post('/session/:sessionId/spawn-reconnect-session', async (req, res) => {
+  const { sessionId } = req.params;
+  const userId = req.userId;
+
+  try {
+    const session = await prisma.session.findFirst({
+      where: {
+        id: sessionId,
+        userId,
+        interviewType: 'Behavioural'
+      }
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const cloned = await prisma.session.create({
+      data: {
+        userId,
+        interviewType: 'Behavioural',
+        agentId: session.agentId,
+        interviewPlan: session.interviewPlan,
+        interviewPrompt: session.interviewPrompt,
+        feedbackPrompt: session.feedbackPrompt,
+        status: 'not_started'
+      }
+    });
+
+    return res.json({ success: true, sessionId: cloned.id });
+  } catch (error) {
+    console.error('Error spawning reconnect session:', error);
+    return res.status(500).json({ error: 'Failed to create reconnect session', details: error.message });
   }
 });
 
@@ -643,16 +1136,37 @@ router.post('/session/:sessionId/duration', async (req, res) => {
   }
 
   try {
+    const existingSession = await prisma.session.findFirst({
+      where: {
+        id: sessionId,
+        userId
+      }
+    });
+
+    if (!existingSession) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const durationSeconds = normalizeDurationSeconds(duration);
+    if (durationSeconds == null) {
+      return res.status(400).json({ error: 'Invalid duration provided' });
+    }
+
+    const status = existingSession.status === 'pending'
+      ? getSessionStatus({ feedback: existingSession.feedback, durationSeconds })
+      : existingSession.status;
+
     const session = await prisma.session.update({
       where: {
         id: sessionId
       },
       data: {
-        duration: duration
+        duration: durationSeconds,
+        status
       }
     });
 
-    console.log(`Session ${sessionId} duration updated to ${duration} seconds by user ${userId}`);
+    console.log(`Session ${sessionId} duration updated to ${durationSeconds} seconds by user ${userId}`);
     res.json({ success: true, sessionId: session.id, duration: session.duration });
   } catch (error) {
     console.error('Error updating session duration:', error);
