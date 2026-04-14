@@ -1,56 +1,83 @@
 import Card from './Card';
 import { formatTime } from './helpers';
 
-export default function TranscriptCard({ transcript, audioRef, delay = 0.4 }) {
-  const handleTimestampClick = (timestart) => {
-    if (audioRef?.current && timestart != null) {
-      audioRef.current.currentTime = timestart;
-      audioRef.current.play().catch(err => console.error('Failed to play', err));
+export default function TranscriptCard({ transcript, audio, audioRef, delay = 0.4 }) {
+  const source = audio?.base64 ? `data:${audio.mimeType || 'audio/mpeg'};base64,${audio.base64}` : null;
+
+  const playFromLine = (line) => {
+    if (!source || !audioRef?.current || line?.timestart == null) return;
+    audioRef.current.currentTime = line.timestart;
+    audioRef.current.play().catch((err) => console.error('Failed to play', err));
+  };
+
+  const toggleMainPlayback = () => {
+    if (!source || !audioRef?.current) return;
+    if (audioRef.current.paused) {
+      audioRef.current.play().catch((err) => console.error('Failed to play', err));
+      return;
     }
+    audioRef.current.pause();
   };
 
   return (
     <Card delay={delay}>
-      <h2 className="text-base font-semibold text-slate-900 mb-1">Chat history</h2>
-      <p className="text-sm text-slate-500 mb-4">Click timestamp to jump to that moment in the audio.</p>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-slate-900 mb-1">Transcript Replay</h2>
+          <p className="text-sm text-slate-500">Play from any sentence to review specific answers quickly.</p>
+        </div>
+        <button
+          type="button"
+          onClick={toggleMainPlayback}
+          disabled={!source}
+          className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 px-4 py-2 text-sm font-medium hover:bg-slate-100 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
+        >
+          {source ? 'Play / Pause Audio' : 'Audio unavailable'}
+        </button>
+      </div>
 
-      <div className="max-h-72 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 max-h-[30rem] overflow-y-auto space-y-3 pr-1 custom-scrollbar">
         {transcript && transcript.length > 0 ? (
-          transcript.map((m) => (
+          transcript.map((m, index) => (
             <div
               key={m.id}
               className={'flex ' + (m.role === 'user' ? 'justify-end' : 'justify-start')}
             >
               <div
                 className={
-                  'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ' +
+                  'max-w-[92%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ' +
                   (m.role === 'user'
                     ? 'bg-emerald-50 text-slate-900 border border-emerald-200'
-                    : 'bg-slate-100 text-slate-800 border border-slate-200')
+                    : 'bg-white text-slate-800 border border-slate-200')
                 }
               >
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide">
                     {m.role === 'user' ? (
                       <span className="text-emerald-700">You</span>
                     ) : (
                       <span className="text-sky-700">Interviewer</span>
                     )}
                   </span>
-                  {m.timestart != null && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-slate-500">#{index + 1}</span>
                     <button
                       type="button"
-                      onClick={() => handleTimestampClick(m.timestart)}
+                      onClick={() => playFromLine(m)}
+                      disabled={!source || m.timestart == null}
                       className={
-                        'text-[11px] font-medium px-2 py-0.5 rounded-full transition hover:scale-105 cursor-pointer ' +
-                        (m.role === 'user'
-                          ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                          : 'bg-slate-200 text-slate-600 hover:bg-slate-300')
+                        'group inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full border transition-all duration-200 ' +
+                        (source && m.timestart != null
+                          ? 'border-emerald-200 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 hover:scale-105 hover:-translate-y-0.5 cursor-pointer'
+                          : 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed')
                       }
                     >
-                      {formatTime(m.timestart)}
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" className="h-3 w-3 transition-transform duration-200 group-hover:scale-110">
+                        <path d="M5.5 4.5A1.5 1.5 0 007 5.99v8.02a1.5 1.5 0 002.25 1.299l6.96-4.01a1.5 1.5 0 000-2.598l-6.96-4.01A1.5 1.5 0 005.5 4.5z" />
+                      </svg>
+                      {m.timestart != null ? formatTime(m.timestart) : 'No timestamp'}
                     </button>
-                  )}
+                  </div>
                 </div>
                 <p className="whitespace-pre-wrap text-sm">{m.text}</p>
               </div>
@@ -62,6 +89,8 @@ export default function TranscriptCard({ transcript, audioRef, delay = 0.4 }) {
           </p>
         )}
       </div>
+
+      <audio ref={audioRef} src={source || undefined} preload="metadata" className="hidden" />
     </Card>
   );
 }

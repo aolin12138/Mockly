@@ -1,8 +1,10 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import { prisma } from '../prismaClient.js';
 import { decrypt } from '../lib/encryption.js';
 import { getSessionOwner, deleteSessionOwner } from '../lib/sessionOwnerStore.js';
 import { getSessionProgress, setSessionProgress, deleteSessionProgress } from '../lib/sessionProgressStore.js';
+import { clearFeedbackGenerationInFlight } from './interviewRoutes.js';
 
 const router = express.Router();
 
@@ -15,12 +17,27 @@ const callbackDataStore = new Map();
 const pendingAgentSetupStore = new Map();
 // Map temp session IDs to persisted DB session IDs (in-memory)
 const tempSessionToPersistedSessionId = new Map();
+// Maps sessionId -> Set<SSE response>
+const feedbackSseClients = new Map();
+// Fallback store in case callback arrives before results SSE connects
+const feedbackEventStore = new Map();
 
 const AGENT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
 const ELEVENLABS_CONVAI_BASE_URL = 'https://api.elevenlabs.io/v1/convai';
 const CREDIT_TOOL_NAME = 'getCreditStatus';
 
 const CREDIT_TOOL_WARNING_MESSAGE = 'Credit-aware wrap-up may be unavailable for this session. If your remaining credits are low, the interview could end abruptly.';
+const FEEDBACK_CALLBACK_SECRET = process.env.FEEDBACK_CALLBACK_SECRET || '';
+
+const verifyUserIdFromToken = (token) => {
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    return decoded?.userId || null;
+  } catch {
+    return null;
+  }
+};
 
 const buildCreditToolConfig = () => ({
   type: 'client',
@@ -228,6 +245,28 @@ const deliverSseEvent = (sessionId, eventName, payload, closeConnection = false)
   });
 };
 
+const deliverFeedbackSseEvent = (sessionId, eventName, payload, closeConnection = false) => {
+  const clients = feedbackSseClients.get(sessionId);
+  if (clients?.size) {
+    for (const client of clients) {
+      client.write(`event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`);
+      if (closeConnection) {
+        client.end();
+      }
+    }
+
+    if (closeConnection) {
+      feedbackSseClients.delete(sessionId);
+    }
+  }
+
+  feedbackEventStore.set(sessionId, {
+    event: eventName,
+    payload,
+    closeConnection
+  });
+};
+
 const triggerAgentSetupWorkflow = async ({
   sessionId,
   callbackUserId,
@@ -353,6 +392,82 @@ router.get('/session/:sessionId/stream', (req, res) => {
     console.log(`📡 SSE client disconnected for session ${sessionId}`);
     clearInterval(keepAlive);
     sseClients.delete(sessionId);
+  });
+});
+
+router.get('/session/:sessionId/feedback-stream', async (req, res) => {
+  const { sessionId } = req.params;
+  const token = req.query?.token;
+  const userId = verifyUserIdFromToken(typeof token === 'string' ? token : '');
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Invalid or missing token' });
+  }
+
+  const session = await prisma.session.findFirst({
+    where: {
+      id: sessionId,
+      userId
+    },
+    select: {
+      id: true,
+      feedback: true,
+      status: true,
+      duration: true,
+      score: true
+    }
+  });
+
+  if (!session) {
+    return res.status(404).json({ error: 'Session not found' });
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+  });
+
+  res.write('event: connected\ndata: {}\n\n');
+
+  if (session.feedback) {
+    res.write(`event: feedback-ready\ndata: ${JSON.stringify({
+      sessionId,
+      status: session.status,
+      duration: session.duration,
+      score: session.score,
+      feedback: session.feedback
+    })}\n\n`);
+    res.end();
+    return;
+  }
+
+  const existingEvent = feedbackEventStore.get(sessionId);
+  if (existingEvent) {
+    res.write(`event: ${existingEvent.event || 'feedback-ready'}\ndata: ${JSON.stringify(existingEvent.payload || {})}\n\n`);
+    if (existingEvent.closeConnection !== false) {
+      res.end();
+      return;
+    }
+  }
+
+  const currentClients = feedbackSseClients.get(sessionId) || new Set();
+  currentClients.add(res);
+  feedbackSseClients.set(sessionId, currentClients);
+
+  const keepAlive = setInterval(() => {
+    res.write(':keepalive\n\n');
+  }, 15000);
+
+  req.on('close', () => {
+    clearInterval(keepAlive);
+    const clients = feedbackSseClients.get(sessionId);
+    if (!clients) return;
+    clients.delete(res);
+    if (clients.size === 0) {
+      feedbackSseClients.delete(sessionId);
+    }
   });
 });
 
@@ -525,6 +640,94 @@ router.post('/session/:sessionId/callback', async (req, res) => {
       stage: 'agent_setup'
     }, false);
     res.status(500).json({ error: 'Failed to process callback', details: error.message });
+  }
+});
+
+router.post('/session/:sessionId/feedback-callback', async (req, res) => {
+  const { sessionId } = req.params;
+
+  if (FEEDBACK_CALLBACK_SECRET) {
+    const providedSecret = req.get('x-feedback-callback-secret') || req.body?.callback_secret || req.body?.callbackSecret;
+    if (providedSecret !== FEEDBACK_CALLBACK_SECRET) {
+      return res.status(401).json({ error: 'Invalid callback secret' });
+    }
+  }
+
+  const rawBody = req.body || {};
+  const rootBody = Array.isArray(rawBody) ? (rawBody[0] || {}) : rawBody;
+  const dataBody = rootBody?.data && typeof rootBody.data === 'object' ? rootBody.data : {};
+  const payloadBody = { ...dataBody, ...rootBody };
+
+  try {
+    const session = await prisma.session.findUnique({ where: { id: sessionId } });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const feedbackPayload =
+      payloadBody.feedback ||
+      payloadBody.feedback_result ||
+      (payloadBody.summary || payloadBody.overall_score || payloadBody.dimension_scores ? payloadBody : null);
+
+    if (!feedbackPayload) {
+      return res.status(400).json({ error: 'Missing feedback payload in callback' });
+    }
+
+    const callDurationRaw =
+      payloadBody.call_duration_secs ??
+      payloadBody.callDurationSecs ??
+      payloadBody.duration_seconds ??
+      payloadBody.duration ??
+      null;
+
+    const transcripts = payloadBody.transcripts ?? payloadBody.transcript ?? null;
+    const audio = payloadBody.audio ?? null;
+    const durationSeconds = Number.isFinite(Number(callDurationRaw)) ? Math.max(0, Math.round(Number(callDurationRaw))) : (session.duration ?? null);
+
+    const storedFeedback = {
+      feedback: feedbackPayload,
+      ...(callDurationRaw != null ? { call_duration_secs: Number(callDurationRaw) } : {}),
+      ...(transcripts != null ? { transcripts } : {}),
+      ...(audio != null ? { audio } : {})
+    };
+
+    let score = feedbackPayload?.overall_score ?? feedbackPayload?.overallScore ?? feedbackPayload?.score ?? 0;
+    score = Number(score) || 0;
+    if (score > 0 && score <= 5) score = Math.round(score * 20);
+    else if (score > 0 && score <= 10) score = Math.round(score * 10);
+    else if (score > 0) score = Math.round(score);
+
+    const status = durationSeconds != null && durationSeconds < 600
+      ? 'incomplete'
+      : 'completed';
+
+    const updateData = {
+      feedback: storedFeedback,
+      status,
+      ...(durationSeconds != null ? { duration: durationSeconds } : {}),
+      ...(score > 0 ? { score } : {})
+    };
+
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: updateData
+    });
+
+    clearFeedbackGenerationInFlight(sessionId);
+
+    deliverFeedbackSseEvent(sessionId, 'feedback-ready', {
+      sessionId,
+      status,
+      duration: updateData.duration ?? session.duration ?? null,
+      score: updateData.score ?? session.score ?? null,
+      feedback: storedFeedback
+    }, true);
+
+    return res.json({ success: true, sessionId, status });
+  } catch (error) {
+    console.error('Error processing behavioral feedback callback:', error);
+    return res.status(500).json({ error: 'Failed to process feedback callback', details: error.message });
   }
 });
 

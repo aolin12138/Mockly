@@ -12,9 +12,34 @@ import { setSessionProgress } from '../lib/sessionProgressStore.js';
 
 const PROMPT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7';
 const AGENT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
-const FEEDBACK_WEBHOOK_URL = process.env.FEEDBACK_WEBHOOK_URL || 'https://aolin12138.app.n8n.cloud/webhook/feedback';
+const FEEDBACK_WEBHOOK_URL = process.env.FEEDBACK_WEBHOOK_URL || 'http://localhost:5678/webhook/feedback';
 const TECHNICAL_FEEDBACK_WEBHOOK_URL = process.env.TECHNICAL_FEEDBACK_WEBHOOK_URL || 'https://aolin12138.app.n8n.cloud/webhook/technical-feedback';
+const FEEDBACK_CALLBACK_BASE_URL = process.env.FEEDBACK_CALLBACK_BASE_URL || '';
+const FEEDBACK_CALLBACK_SECRET = process.env.FEEDBACK_CALLBACK_SECRET || '';
 const WEBHOOK_TIMEOUT_MS = 55_000;
+const FEEDBACK_IN_FLIGHT_TTL_MS = 20 * 60 * 1000;
+const feedbackGenerationInFlight = new Map();
+
+const markFeedbackGenerationInFlight = (sessionId) => {
+  if (!sessionId) return;
+  feedbackGenerationInFlight.set(sessionId, Date.now() + FEEDBACK_IN_FLIGHT_TTL_MS);
+};
+
+export const clearFeedbackGenerationInFlight = (sessionId) => {
+  if (!sessionId) return;
+  feedbackGenerationInFlight.delete(sessionId);
+};
+
+const isFeedbackGenerationInFlight = (sessionId) => {
+  if (!sessionId) return false;
+  const expiresAt = feedbackGenerationInFlight.get(sessionId);
+  if (!expiresAt) return false;
+  if (Date.now() > expiresAt) {
+    feedbackGenerationInFlight.delete(sessionId);
+    return false;
+  }
+  return true;
+};
 
 const getWebhookValue = (payload, keys) => {
   const sources = [];
@@ -50,7 +75,18 @@ const fetchJsonWithTimeout = async (url, options, timeoutMs = WEBHOOK_TIMEOUT_MS
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
+    let response;
+    try {
+      response = await fetch(url, { ...options, signal: controller.signal });
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        const timeoutError = new Error(`Webhook request timed out after ${timeoutMs}ms`);
+        timeoutError.status = 504;
+        timeoutError.code = 'WEBHOOK_TIMEOUT';
+        throw timeoutError;
+      }
+      throw error;
+    }
     const rawText = await response.text();
     let body = {};
     if (rawText && rawText.trim()) {
@@ -99,7 +135,41 @@ async function resolveElevenLabsKey(userId, interviewMode) {
   throw new Error('ElevenLabs API key required. Please connect your key in Settings.');
 }
 
-async function runFeedbackWorkflow({ userId, sessionId, agentId, feedbackPrompt, conversationId }) {
+const buildFeedbackCallbackUrl = (req, sessionId) => {
+  const configuredBase = FEEDBACK_CALLBACK_BASE_URL.trim();
+  const baseUrl = configuredBase || `${req.protocol}://${req.get('host')}`;
+  return `${baseUrl}/api/interview/session/${sessionId}/feedback-callback`;
+};
+
+const extractImmediateFeedbackPayload = (payload) => {
+  if (!payload) return null;
+
+  const direct = getWebhookValue(payload, ['feedback', 'feedback_result']);
+  if (direct && typeof direct === 'object') {
+    return direct;
+  }
+
+  if (Array.isArray(payload)) {
+    if (payload.length === 1) {
+      return extractImmediateFeedbackPayload(payload[0]);
+    }
+    return null;
+  }
+
+  if (typeof payload !== 'object') {
+    return null;
+  }
+
+  const looksLikeBehavioralFeedback =
+    Object.prototype.hasOwnProperty.call(payload, 'overall_score') ||
+    Object.prototype.hasOwnProperty.call(payload, 'dimension_scores') ||
+    Object.prototype.hasOwnProperty.call(payload, 'areas_for_improvement') ||
+    Object.prototype.hasOwnProperty.call(payload, 'summary');
+
+  return looksLikeBehavioralFeedback ? payload : null;
+};
+
+async function runFeedbackWorkflow({ userId, sessionId, agentId, feedbackPrompt, conversationId, callbackUrl, callbackSecret }) {
   const resolved = await resolveElevenLabsKey(userId, 'behavioral');
   const elevenLabsKey = resolved.apiKey;
 
@@ -108,7 +178,11 @@ async function runFeedbackWorkflow({ userId, sessionId, agentId, feedbackPrompt,
     agent_id: agentId,
     conversation_id: conversationId || null,
     feedback_agent_prompt: feedbackPrompt,
-    feedback_prompt: feedbackPrompt
+    feedback_prompt: feedbackPrompt,
+    callback_url: callbackUrl || null,
+    callbackUrl: callbackUrl || null,
+    callback_secret: callbackSecret || null,
+    callbackSecret: callbackSecret || null
   };
 
   const { response, body, rawText } = await fetchJsonWithTimeout(
@@ -992,41 +1066,98 @@ router.post('/session/:sessionId/generate-feedback', async (req, res) => {
       return res.status(400).json({ error: 'Missing feedback_prompt for feedback generation' });
     }
 
-    const body = await runFeedbackWorkflow({
-      userId,
-      sessionId,
-      agentId,
-      feedbackPrompt,
-      conversationId: session.conversationId || payloadBody.conversation_id || payloadBody.conversationId || null
-    });
-
-    const envelope = extractFeedbackEnvelope({ feedbackPayload: body, rawPayload: body || {} });
-    const feedbackResult = envelope.feedbackForScoring;
-    const parsedFeedback = unwrapFeedback(feedbackResult);
-    let score = parsedFeedback?.overall_score || parsedFeedback?.overallScore || parsedFeedback?.score || 0;
-    if (score <= 5) score = Math.round(score * 20);
-    else if (score <= 10) score = Math.round(score * 10);
-
-    const durationSeconds = envelope.durationSeconds ?? normalizeDurationSeconds(session.duration);
-    const updateData = {
-      feedback: envelope.storedFeedback,
-      status: getSessionStatus({ feedback: feedbackResult, durationSeconds })
-    };
-    if (score > 0) {
-      updateData.score = score;
+    if (session.feedback) {
+      return res.json({
+        success: true,
+        sessionId,
+        agentId,
+        feedback: session.feedback,
+        cached: true
+      });
     }
 
-    await prisma.session.update({
-      where: { id: sessionId },
-      data: updateData
-    });
+    if (isFeedbackGenerationInFlight(sessionId)) {
+      return res.status(202).json({
+        success: false,
+        inProgress: true,
+        sessionId,
+        message: 'Feedback generation is already in progress. Please retry shortly.'
+      });
+    }
 
-    return res.json({
-      success: true,
-      sessionId,
-      agentId,
-      feedback: body
-    });
+    markFeedbackGenerationInFlight(sessionId);
+    let keepInFlightLock = false;
+
+    try {
+      const callbackUrl = buildFeedbackCallbackUrl(req, sessionId);
+      const body = await runFeedbackWorkflow({
+        userId,
+        sessionId,
+        agentId,
+        feedbackPrompt,
+        conversationId: session.conversationId || payloadBody.conversation_id || payloadBody.conversationId || null,
+        callbackUrl,
+        callbackSecret: FEEDBACK_CALLBACK_SECRET || null
+      });
+
+      const immediateFeedback = extractImmediateFeedbackPayload(body);
+      if (!immediateFeedback) {
+        keepInFlightLock = true;
+        return res.status(202).json({
+          success: false,
+          inProgress: true,
+          sessionId,
+          callback: true,
+          message: 'Feedback generation started. Waiting for callback completion.'
+        });
+      }
+
+      const envelope = extractFeedbackEnvelope({ feedbackPayload: immediateFeedback, rawPayload: body || {} });
+      const feedbackResult = envelope.feedbackForScoring;
+      const parsedFeedback = unwrapFeedback(feedbackResult);
+      let score = parsedFeedback?.overall_score || parsedFeedback?.overallScore || parsedFeedback?.score || 0;
+      if (score <= 5) score = Math.round(score * 20);
+      else if (score <= 10) score = Math.round(score * 10);
+
+      const durationSeconds = envelope.durationSeconds ?? normalizeDurationSeconds(session.duration);
+      const updateData = {
+        feedback: envelope.storedFeedback,
+        status: getSessionStatus({ feedback: feedbackResult, durationSeconds })
+      };
+      if (score > 0) {
+        updateData.score = score;
+      }
+
+      await prisma.session.update({
+        where: { id: sessionId },
+        data: updateData
+      });
+
+      return res.json({
+        success: true,
+        sessionId,
+        agentId,
+        feedback: immediateFeedback
+      });
+    } catch (error) {
+      if (error?.code === 'WEBHOOK_TIMEOUT' || error?.name === 'AbortError') {
+        keepInFlightLock = true;
+        return res.status(202).json({
+          success: false,
+          inProgress: true,
+          sessionId,
+          callback: true,
+          message: 'Feedback generation is still processing. Waiting for callback completion.'
+        });
+      }
+
+      console.error('Error generating feedback:', error);
+      return res.status(500).json({ error: 'Failed to generate feedback', details: error.message });
+    } finally {
+      if (!keepInFlightLock) {
+        clearFeedbackGenerationInFlight(sessionId);
+      }
+    }
   } catch (error) {
     console.error('Error generating feedback:', error);
     return res.status(500).json({ error: 'Failed to generate feedback', details: error.message });
