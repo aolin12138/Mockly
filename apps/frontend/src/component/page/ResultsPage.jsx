@@ -11,7 +11,6 @@ import { SAMPLE_FEEDBACK } from './constants';
 // Shared results components
 import AmbientBackground from '../results/AmbientBackground';
 import ErrorState from '../results/ErrorState';
-import AudioPlayer from '../results/AudioPlayer';
 import TranscriptCard from '../results/TranscriptCard';
 import SectionNav from '../results/SectionNav';
 import Card from '../results/Card';
@@ -28,6 +27,10 @@ import NextStepsList from '../results/NextStepsList';
 
 const USE_LOCAL_SAMPLE = false;
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const FEEDBACK_REQUEST_LOCK_TTL_MS = 2 * 60 * 1000;
+const FEEDBACK_POLL_INTERVAL_MS = 5_000;
+const FEEDBACK_POLL_MAX_ATTEMPTS = 36;
+const FEEDBACK_SSE_TIMEOUT_MS = 3 * 60 * 1000;
 
 /* --- Transform the new feedback schema --- */
 function transformFeedbackData(feedbackData) {
@@ -38,7 +41,7 @@ function transformFeedbackData(feedbackData) {
     data = { ...data.data, ...data };
   }
   const feedback = data.feedback || data;
-  const transcript = data.transcript;
+  const transcript = data.transcript || data.transcripts || feedback.transcript || feedback.transcripts;
   const audio = data.audio;
 
   // Support both new schema (summary.overall_score) and legacy (overall_score at root)
@@ -66,7 +69,7 @@ function transformFeedbackData(feedbackData) {
     strengths: feedback.strengths || [],
     areasForImprovement: feedback.areas_for_improvement || [],
     nextSteps: feedback.next_steps || [],
-    transcript: transcript
+    transcript: Array.isArray(transcript)
       ? transcript.map((msg, index) => ({
           id: index + 1,
           role: msg.role === 'agent' || msg.role === 'assistant' ? 'assistant' : 'user',
@@ -104,7 +107,7 @@ function buildSections(data) {
   if (data.nextSteps.length > 0) {
     sections.push({ id: 'next-steps', label: 'Next Steps' });
   }
-  if (data.audio || data.transcript?.length > 0) {
+  if (data.transcript?.length > 0) {
     sections.push({ id: 'replay', label: 'Replay' });
   }
 
@@ -120,6 +123,37 @@ export default function ResultsPage() {
   const [feedbackData, setFeedbackData] = useState(null);
   const [error, setError] = useState(null);
 
+  const getFeedbackRequestLockKey = (sessionId) => `resultsFeedbackRequestLock:${sessionId}`;
+
+  const hasFreshFeedbackRequestLock = (sessionId) => {
+    try {
+      const raw = sessionStorage.getItem(getFeedbackRequestLockKey(sessionId));
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      const startedAt = Number(parsed?.startedAt || 0);
+      if (!startedAt) return false;
+      return Date.now() - startedAt < FEEDBACK_REQUEST_LOCK_TTL_MS;
+    } catch {
+      return false;
+    }
+  };
+
+  const setFeedbackRequestLock = (sessionId) => {
+    try {
+      sessionStorage.setItem(getFeedbackRequestLockKey(sessionId), JSON.stringify({ startedAt: Date.now() }));
+    } catch {
+      // no-op if sessionStorage unavailable
+    }
+  };
+
+  const clearFeedbackRequestLock = (sessionId) => {
+    try {
+      sessionStorage.removeItem(getFeedbackRequestLockKey(sessionId));
+    } catch {
+      // no-op if sessionStorage unavailable
+    }
+  };
+
   useEffect(() => {
     if (USE_LOCAL_SAMPLE) {
       const transformed = transformFeedbackData(SAMPLE_FEEDBACK);
@@ -131,6 +165,72 @@ export default function ResultsPage() {
     const fetchFeedback = async () => {
       try {
         const sessionId = urlSessionId || localStorage.getItem('currentSessionId');
+        const token = localStorage.getItem('token');
+
+        const waitForFeedbackViaSse = (activeSessionId) => new Promise((resolve) => {
+          if (!token) {
+            resolve(null);
+            return;
+          }
+
+          const streamUrl = `${API_BASE_URL}/api/interview/session/${activeSessionId}/feedback-stream?token=${encodeURIComponent(token)}`;
+          const source = new EventSource(streamUrl);
+          let settled = false;
+
+          const settle = (value) => {
+            if (settled) return;
+            settled = true;
+            source.close();
+            resolve(value);
+          };
+
+          const timeout = setTimeout(() => settle(null), FEEDBACK_SSE_TIMEOUT_MS);
+
+          source.addEventListener('feedback-ready', (event) => {
+            try {
+              const payload = JSON.parse(event.data || '{}');
+              const transformed = transformFeedbackData(payload.feedback);
+              clearTimeout(timeout);
+              settle(transformed || null);
+            } catch {
+              clearTimeout(timeout);
+              settle(null);
+            }
+          });
+
+          source.onerror = () => {
+            clearTimeout(timeout);
+            settle(null);
+          };
+        });
+
+        const pollSessionForFeedback = async ({
+          maxAttempts = FEEDBACK_POLL_MAX_ATTEMPTS,
+          intervalMs = FEEDBACK_POLL_INTERVAL_MS,
+        } = {}) => {
+          for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+            const response = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data?.feedback) {
+                return transformFeedbackData(data.feedback);
+              }
+            }
+
+            if (attempt < maxAttempts - 1) {
+              await new Promise((res) => setTimeout(res, intervalMs));
+            }
+          }
+
+          return null;
+        };
 
         if (!sessionId) {
           setError('No session ID found. Please start a new interview session.');
@@ -156,14 +256,14 @@ export default function ResultsPage() {
           return;
         }
 
-        await new Promise((res) => setTimeout(res, 5000));
+        await new Promise((res) => setTimeout(res, 1000));
 
         // Check database for existing feedback
         const checkResponse = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -187,34 +287,69 @@ export default function ResultsPage() {
           throw new Error('Session data incomplete. Cannot generate feedback.');
         }
 
-        // Generate feedback via backend route using the saved session id
-        const response = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}/generate-feedback`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify({
-            agent_id: agentId,
-            feedback_agent_prompt: feedbackPrompt,
-            feedback_prompt: feedbackPrompt,
-          }),
-        });
+        if (hasFreshFeedbackRequestLock(sessionId)) {
+          const transformed = await pollSessionForFeedback({ maxAttempts: 3, intervalMs: 2000 });
+          if (transformed) {
+            setFeedbackData(transformed);
+            setIsLoading(false);
+            return;
+          }
+        }
 
-        const responseText = await response.text();
-        if (!response.ok) throw new Error(`Webhook request failed: ${responseText || response.statusText}`);
-        if (!responseText) throw new Error('Webhook returned empty response');
+        setFeedbackRequestLock(sessionId);
 
-        const generationResult = JSON.parse(responseText);
-        const rawFeedback = generationResult.feedback || generationResult;
-        const transformed = transformFeedbackData(rawFeedback);
+        try {
+          // Generate feedback via backend route using the saved session id
+          const response = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}/generate-feedback`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              agent_id: agentId,
+              feedback_agent_prompt: feedbackPrompt,
+              feedback_prompt: feedbackPrompt,
+            }),
+          });
 
-        if (transformed) {
-          setFeedbackData(transformed);
+          const responseText = await response.text();
+          if (response.status === 202) {
+            const sseFeedback = await waitForFeedbackViaSse(sessionId);
+            if (sseFeedback) {
+              setFeedbackData(sseFeedback);
+              return;
+            }
 
-          // Session is already updated by backend generate-feedback route
-        } else {
-          setError('Invalid feedback data received — missing required fields');
+            const transformed = await pollSessionForFeedback();
+            if (transformed) {
+              setFeedbackData(transformed);
+              return;
+            }
+            throw new Error('Feedback is still processing. Please wait a moment and retry.');
+          }
+
+          if (!response.ok) throw new Error(`Webhook request failed: ${responseText || response.statusText}`);
+          if (!responseText) throw new Error('Webhook returned empty response');
+
+          const generationResult = JSON.parse(responseText);
+          const rawFeedback = generationResult.feedback || generationResult;
+          const transformed = transformFeedbackData(rawFeedback);
+
+          if (transformed) {
+            setFeedbackData(transformed);
+            return;
+          }
+
+          const polledFeedback = await pollSessionForFeedback();
+          if (polledFeedback) {
+            setFeedbackData(polledFeedback);
+            return;
+          }
+
+          throw new Error('Feedback is still processing. Please wait a moment and retry.');
+        } finally {
+          clearFeedbackRequestLock(sessionId);
         }
       } catch (err) {
         console.error('Error fetching feedback:', err);
@@ -341,17 +476,12 @@ export default function ResultsPage() {
             </section>
           )}
 
-          {/* Audio + Transcript */}
-          {(audio || (transcript && transcript.length > 0)) && (
-            <section id="replay">
-              <div className="grid gap-4 md:grid-cols-2">
-                {audio && <AudioPlayer audio={audio} audioRef={audioRef} delay={0.4} />}
-                {transcript && transcript.length > 0 && (
-                  <TranscriptCard transcript={transcript} audioRef={audioRef} delay={0.45} />
-                )}
-              </div>
-            </section>
-          )}
+           {/* Transcript Replay */}
+           {transcript && transcript.length > 0 && (
+             <section id="replay">
+               <TranscriptCard transcript={transcript} audio={audio} audioRef={audioRef} delay={0.45} />
+             </section>
+           )}
 
           {/* Navigation Buttons */}
           <motion.div

@@ -11,6 +11,42 @@ export function LoadingPage() {
   const latestStateRef = useRef(null);
   const [showRecoveryActions, setShowRecoveryActions] = useState(false);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const PROCESSING_LOCK_TTL_MS = 2 * 60 * 1000;
+
+  const getProcessingLockKey = (state) => {
+    const type = (state?.type || 'unknown').toLowerCase();
+    const sessionPart = state?.sessionId || state?.conversationId || state?.executionSummary?.conversationId || 'no-session';
+    return `loadingProcessingLock:${type}:${sessionPart}`;
+  };
+
+  const hasFreshProcessingLock = (lockKey) => {
+    try {
+      const raw = sessionStorage.getItem(lockKey);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      const startedAt = Number(parsed?.startedAt || 0);
+      if (!startedAt) return false;
+      return Date.now() - startedAt < PROCESSING_LOCK_TTL_MS;
+    } catch {
+      return false;
+    }
+  };
+
+  const setProcessingLock = (lockKey) => {
+    try {
+      sessionStorage.setItem(lockKey, JSON.stringify({ startedAt: Date.now() }));
+    } catch {
+      // no-op if sessionStorage unavailable
+    }
+  };
+
+  const clearProcessingLock = (lockKey) => {
+    try {
+      sessionStorage.removeItem(lockKey);
+    } catch {
+      // no-op if sessionStorage unavailable
+    }
+  };
 
   useEffect(() => {
     // Prevent double-call from React StrictMode
@@ -22,19 +58,32 @@ export function LoadingPage() {
     const state = location.state || {};
     latestStateRef.current = state;
     console.log('[LoadingPage] state:', state);
+    const lockKey = getProcessingLockKey(state);
+
+    if (hasFreshProcessingLock(lockKey)) {
+      console.log('[LoadingPage] Duplicate processing attempt blocked for key:', lockKey);
+      setStatus('Processing Your Feedback');
+      setSubStatus('Your interview is already being processed…');
+      return;
+    }
+
+    setProcessingLock(lockKey);
 
     // If we have technical interview data to process (handle both 'Technical' and 'technical')
     const isTechnicalType = state.type?.toLowerCase() === 'technical';
     if (isTechnicalType && state.executionSummary && state.webhookUrl) {
       hasStartedProcessing.current = true;
-      processTechnicalFeedback(state);
+      processTechnicalFeedback(state, lockKey);
     } else if (state.type?.toLowerCase() === 'behavioral' && state.sessionId) {
       hasStartedProcessing.current = true;
-      processBehavioralFeedback(state);
+      processBehavioralFeedback(state, lockKey);
     } else if (state.feedback) {
       // Already have feedback, go to results
       hasStartedProcessing.current = true;
+      clearProcessingLock(lockKey);
       navigateToResults(state);
+    } else {
+      clearProcessingLock(lockKey);
     }
   }, [location.state]);
 
@@ -57,7 +106,7 @@ export function LoadingPage() {
     }
   };
 
-  const processTechnicalFeedback = async (state) => {
+  const processTechnicalFeedback = async (state, lockKey) => {
     const { executionSummary, webhookUrl, sessionId: stateSessionId, conversationId, duration } = state;
     const token = localStorage.getItem('token');
 
@@ -159,10 +208,12 @@ export function LoadingPage() {
           state: { fromInterview: true, feedback: feedbackData }
         });
       }, 2000);
+    } finally {
+      clearProcessingLock(lockKey);
     }
   };
 
-  const processBehavioralFeedback = async (state) => {
+  const processBehavioralFeedback = async (state, lockKey) => {
     const { sessionId: rawSessionId, duration, company, candidateCv } = state;
     const sessionId = rawSessionId?.startsWith('temp_')
       ? (localStorage.getItem('currentPersistedSessionId') || rawSessionId)
@@ -250,6 +301,25 @@ export function LoadingPage() {
       });
 
       const feedbackText = await feedbackResponse.text();
+      if (feedbackResponse.status === 202) {
+        setStatus('Feedback In Progress');
+        setSubStatus('Your feedback is processing in the background. Opening results…');
+        await new Promise((res) => setTimeout(res, 800));
+
+        navigate(`/results/${persistedSessionId}`, {
+          replace: true,
+          state: {
+            fromInterview: true,
+            type: 'behavioral',
+            sessionId: persistedSessionId,
+            company,
+            candidateCv,
+            duration,
+          },
+        });
+        return;
+      }
+
       if (!feedbackResponse.ok) {
         if (feedbackResponse.status === 404) {
           throw new Error('Feedback endpoint not found. Please restart the backend server.');
@@ -260,7 +330,22 @@ export function LoadingPage() {
       const feedbackPayload = feedbackText ? JSON.parse(feedbackText) : {};
       const generatedFeedback = feedbackPayload.feedback || null;
       if (!generatedFeedback) {
-        throw new Error('Feedback workflow returned no feedback payload.');
+        setStatus('Feedback In Progress');
+        setSubStatus('Your feedback is processing in the background. Opening results…');
+        await new Promise((res) => setTimeout(res, 800));
+
+        navigate(`/results/${persistedSessionId}`, {
+          replace: true,
+          state: {
+            fromInterview: true,
+            type: 'behavioral',
+            sessionId: persistedSessionId,
+            company,
+            candidateCv,
+            duration,
+          },
+        });
+        return;
       }
 
       setStatus('Feedback Ready');
@@ -302,6 +387,8 @@ export function LoadingPage() {
         setSubStatus(err?.message || 'Failed to process interview feedback. You can retry or return to dashboard.');
         setShowRecoveryActions(true);
       }
+    } finally {
+      clearProcessingLock(lockKey);
     }
   };
 
