@@ -17,6 +17,7 @@ import {
   TrendingUp,
   BookOpen
 } from 'lucide-react';
+import { authFetch, clearAuthState, ensureAuthenticated } from '../../lib/auth';
 
 const MotionButton = motion.button;
 const MotionDiv = motion.div;
@@ -181,15 +182,15 @@ const HistoryPage = () => {
       if (reset) setInitialLoading(true);
       else setLoadingMore(true);
 
-      const token = localStorage.getItem('token');
+      const token = ensureAuthenticated();
+      if (!token) return;
       const limit = 10;
       const offset = reset ? 0 : (page - 1) * limit;
       try {
-        const res = await fetch(
+        const res = await authFetch(
           `http://localhost:3000/api/interview/user/interviews?limit=${limit}&offset=${offset}&sortBy=${sortBy}&sortDir=${sortDir}`,
           {
             headers: {
-              Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }
@@ -204,7 +205,7 @@ const HistoryPage = () => {
           setHasMore(data.hasMore);
         }
       } catch (e) {
-        // Handle error silently
+        if (e?.code === 'AUTH_REQUIRED' || e?.code === 'AUTH_EXPIRED') return;
       } finally {
         setInitialLoading(false);
         setLoadingMore(false);
@@ -248,7 +249,7 @@ const HistoryPage = () => {
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem('token');
+    clearAuthState();
     navigate('/');
   };
 

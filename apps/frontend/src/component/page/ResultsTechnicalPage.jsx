@@ -23,6 +23,7 @@ import {
   FileCode,
   MessageSquare,
 } from 'lucide-react';
+import { authFetch, ensureAuthenticated } from '../../lib/auth';
 
 // For results, go via our local proxy instead of hitting n8n directly.
 const TECHNICAL_API_URL = import.meta.env.DEV
@@ -684,12 +685,11 @@ export default function TechnicalResultsPage() {
   const [feedbackData, setFeedbackData] = useState(null);
   const [error, setError] = useState(null);
 
-  const generateFeedbackForSession = async (sessionId, token) => {
-    const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}/generate-technical-feedback`, {
+  const generateFeedbackForSession = async (sessionId) => {
+    const response = await authFetch(`http://localhost:3000/api/interview/session/${sessionId}/generate-technical-feedback`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       }
     });
 
@@ -758,11 +758,10 @@ export default function TechnicalResultsPage() {
         }
 
         // Check if feedback already exists in the database
-        const checkFeedbackResponse = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
+        const checkFeedbackResponse = await authFetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
         });
 
@@ -793,14 +792,12 @@ export default function TechnicalResultsPage() {
           }
         }
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('No auth token found. Please log in again.');
-        }
+        if (!ensureAuthenticated()) return;
 
-        const generated = await generateFeedbackForSession(sessionId, token);
+        const generated = await generateFeedbackForSession(sessionId);
         setFeedbackData(generated);
       } catch (err) {
+        if (err?.code === 'AUTH_REQUIRED' || err?.code === 'AUTH_EXPIRED') return;
         console.error('[technical-results] Error fetching feedback:', err);
         setError(err?.message || 'Failed to load technical interview feedback.');
       } finally {
@@ -813,26 +810,22 @@ export default function TechnicalResultsPage() {
 
   const handleRetryGeneration = async () => {
     const sessionId = urlSessionId || localStorage.getItem('currentTechnicalSessionId');
-    const token = localStorage.getItem('token');
-
     if (!sessionId) {
       setError('No session ID found. Please start a new technical interview.');
       return;
     }
 
-    if (!token) {
-      navigate('/login');
-      return;
-    }
+    if (!ensureAuthenticated()) return;
 
     setIsGenerating(true);
     setError(null);
 
     try {
-      const transformed = await generateFeedbackForSession(sessionId, token);
+      const transformed = await generateFeedbackForSession(sessionId);
       setFeedbackData(transformed);
       setError(null);
     } catch (err) {
+      if (err?.code === 'AUTH_REQUIRED' || err?.code === 'AUTH_EXPIRED') return;
       console.error('[technical-results] Retry generation failed:', err);
       setError(err?.message || 'Failed to generate technical feedback.');
     } finally {

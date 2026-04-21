@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { authFetch, ensureAuthenticated } from '../../lib/auth';
 
 export function LoadingPage() {
   const location = useLocation();
@@ -108,7 +109,11 @@ export function LoadingPage() {
 
   const processTechnicalFeedback = async (state, lockKey) => {
     const { executionSummary, webhookUrl, sessionId: stateSessionId, conversationId, duration } = state;
-    const token = localStorage.getItem('token');
+    const token = ensureAuthenticated();
+    if (!token) {
+      clearProcessingLock(lockKey);
+      return;
+    }
 
     // Ensure we have a session ID (generate one if not provided)
     let finalSessionId = stateSessionId || `tech_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -151,11 +156,10 @@ export function LoadingPage() {
       setSubStatus(feedbackData ? 'Storing your interview and feedback…' : 'Storing your interview so feedback can be retried later…');
 
       try {
-        const saveResponse = await fetch(`${API_BASE_URL}/api/interview/technical/save`, {
+        const saveResponse = await authFetch(`${API_BASE_URL}/api/interview/technical/save`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
             conversationId,
@@ -197,6 +201,7 @@ export function LoadingPage() {
       });
 
     } catch (err) {
+      if (err?.code === 'AUTH_REQUIRED' || err?.code === 'AUTH_EXPIRED') return;
       console.error('Error processing feedback:', err);
       setStatus('Error');
       setSubStatus('Something went wrong. Please try again.');
@@ -215,10 +220,14 @@ export function LoadingPage() {
 
   const processBehavioralFeedback = async (state, lockKey) => {
     const { sessionId: rawSessionId, duration, company, candidateCv } = state;
-    const sessionId = rawSessionId?.startsWith('temp_')
-      ? (localStorage.getItem('currentPersistedSessionId') || rawSessionId)
-      : rawSessionId;
-    const token = localStorage.getItem('token');
+      const sessionId = rawSessionId?.startsWith('temp_')
+        ? (localStorage.getItem('currentPersistedSessionId') || rawSessionId)
+        : rawSessionId;
+    const token = ensureAuthenticated();
+    if (!token) {
+      clearProcessingLock(lockKey);
+      return;
+    }
     let persistedSessionId = null;
 
     try {
@@ -227,11 +236,10 @@ export function LoadingPage() {
       setSubStatus('Loading your interview configuration…');
 
       let sessionData = null;
-      const sessionResponse = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
+      const sessionResponse = await authFetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -258,11 +266,10 @@ export function LoadingPage() {
       setStatus('Saving Session');
       setSubStatus('Storing your interview session…');
 
-      const initialSaveResponse = await fetch(`${API_BASE_URL}/api/interview/behavioral/save`, {
+      const initialSaveResponse = await authFetch(`${API_BASE_URL}/api/interview/behavioral/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           sessionId: effectiveSessionId,
@@ -287,11 +294,10 @@ export function LoadingPage() {
       setStatus('Generating Feedback');
       setSubStatus('AI is analyzing your interview…');
 
-      const feedbackResponse = await fetch(`${API_BASE_URL}/api/interview/session/${persistedSessionId}/generate-feedback`, {
+      const feedbackResponse = await authFetch(`${API_BASE_URL}/api/interview/session/${persistedSessionId}/generate-feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           agent_id: resolvedAgentId,
@@ -365,6 +371,7 @@ export function LoadingPage() {
         },
       });
     } catch (err) {
+      if (err?.code === 'AUTH_REQUIRED' || err?.code === 'AUTH_EXPIRED') return;
       console.error('Error processing behavioral feedback:', err);
       if (persistedSessionId) {
         setStatus('Session Saved');

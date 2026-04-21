@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Header from './Header';
+import { ensureAuthenticated } from '../../lib/auth';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
+    const token = ensureAuthenticated();
+    if (!token) return;
 
     const userData = JSON.parse(localStorage.getItem('user') || '{}');
     setUser(userData);
-  }, [navigate]);
+  }, []);
 
   if (!user) {
     return (

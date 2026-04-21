@@ -9,6 +9,7 @@ import { useToast } from '../ui/Toast';
 import Modal from '../ui/Modal.jsx';
 import ParticleOrb from '../ui/particle-orb.jsx';
 import gradientBackground from '../../assets/gradient_background.png';
+import { authFetch, ensureAuthenticated } from '../../lib/auth';
 
 /* ---------- Simple helper: read candidateCv from localStorage ---------- */
 function getStoredCv() {
@@ -61,7 +62,7 @@ export default function BehaviouralInterviewPage() {
   const selectedDurationMin = Math.max(15, Number(localStorage.getItem('interviewDurationMin')) || 15);
 
   const fetchCreditStatus = async () => {
-    const token = localStorage.getItem('token');
+    const token = ensureAuthenticated();
     if (!token) {
       return {
         credits_remaining: null,
@@ -72,9 +73,8 @@ export default function BehaviouralInterviewPage() {
       };
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/integrations/elevenlabs/status`, {
+    const response = await authFetch(`${API_BASE_URL}/api/integrations/elevenlabs/status`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
@@ -97,6 +97,9 @@ export default function BehaviouralInterviewPage() {
   };
 
   useEffect(() => {
+    const token = ensureAuthenticated();
+    if (!token) return;
+
     if (sessionId) {
       localStorage.setItem('currentSessionId', sessionId);
       if (!sessionId.startsWith('temp_')) {
@@ -109,7 +112,7 @@ export default function BehaviouralInterviewPage() {
   useEffect(() => {
     if (!sessionId) return;
 
-    const token = localStorage.getItem('token');
+    const token = ensureAuthenticated();
     if (!token) return;
 
     // For temporary sessions, skip database lookup (data is in-memory)
@@ -135,10 +138,9 @@ export default function BehaviouralInterviewPage() {
 
     const loadSession = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
+        const response = await authFetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
           }
         });
 
@@ -152,6 +154,7 @@ export default function BehaviouralInterviewPage() {
           setCreditToolWarning(data.toolWarning);
         }
       } catch (error) {
+        if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
         console.error('Failed to load session agentId:', error);
       }
     };
@@ -220,17 +223,16 @@ export default function BehaviouralInterviewPage() {
   });
 
   const ensureStartablePlatformSessionId = async () => {
-    const token = localStorage.getItem('token');
+    const token = ensureAuthenticated();
     const baseSessionId = persistedSessionId || localStorage.getItem('currentPersistedSessionId') || sessionId;
 
     if (!token || !baseSessionId || baseSessionId.startsWith('temp_')) {
       return baseSessionId;
     }
 
-    const sessionResponse = await fetch(`${API_BASE_URL}/api/interview/session/${baseSessionId}`, {
+    const sessionResponse = await authFetch(`${API_BASE_URL}/api/interview/session/${baseSessionId}`, {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
       }
     });
 
@@ -243,11 +245,10 @@ export default function BehaviouralInterviewPage() {
       return baseSessionId;
     }
 
-    const spawnResponse = await fetch(`${API_BASE_URL}/api/interview/session/${baseSessionId}/spawn-reconnect-session`, {
+    const spawnResponse = await authFetch(`${API_BASE_URL}/api/interview/session/${baseSessionId}/spawn-reconnect-session`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
       }
     });
 
@@ -264,16 +265,15 @@ export default function BehaviouralInterviewPage() {
   };
 
   const linkConversationToSession = async (platformSessionId, elevenConversationId) => {
-    const token = localStorage.getItem('token');
+    const token = ensureAuthenticated();
     if (!token || !platformSessionId || !elevenConversationId || platformSessionId.startsWith('temp_')) {
       return;
     }
 
-    await fetch(`${API_BASE_URL}/api/interview/session/${platformSessionId}/link-conversation`, {
+    await authFetch(`${API_BASE_URL}/api/interview/session/${platformSessionId}/link-conversation`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         conversationId: elevenConversationId
@@ -311,6 +311,16 @@ export default function BehaviouralInterviewPage() {
     }
   };
 
+  const triggerSessionEndWorkflow = async (source) => {
+    if (workflowTriggeredRef.current) {
+      console.log(`[behavioural] Workflow already triggered, skipping (${source})`);
+      return;
+    }
+
+    workflowTriggeredRef.current = true;
+    await handleSessionEndWorkflow();
+  };
+
   // Button: End conversation only
   const handleCompleteInterview = async () => {
     setIsSubmitting(true);
@@ -319,8 +329,7 @@ export default function BehaviouralInterviewPage() {
       if (conversation.status === 'connected') {
         await conversation.endSession();
       } else if (!workflowTriggeredRef.current) {
-        workflowTriggeredRef.current = true;
-        await handleSessionEndWorkflow();
+        await triggerSessionEndWorkflow('complete-button-disconnected');
       }
       // Workflow will trigger automatically on session end
     } catch (error) {
@@ -350,13 +359,7 @@ export default function BehaviouralInterviewPage() {
   // Only trigger after the call has actually connected and then disconnected intentionally
   useEffect(() => {
     if (hasConnected && sessionEndedIntentionally && conversation.status === 'disconnected') {
-      // Guard against duplicate triggers
-      if (workflowTriggeredRef.current) {
-        console.log('Workflow already triggered, skipping');
-        return;
-      }
-      workflowTriggeredRef.current = true;
-      handleSessionEndWorkflow();
+      triggerSessionEndWorkflow('disconnected-effect');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversation.status, hasConnected, sessionEndedIntentionally]);
@@ -368,14 +371,16 @@ export default function BehaviouralInterviewPage() {
   const handleConfirmExit = async () => {
     setShowExitWarning(false);
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}/cancel`, {
+      const token = ensureAuthenticated();
+      if (!token) return;
+      await authFetch(`${API_BASE_URL}/api/interview/session/${sessionId}/cancel`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         }
       });
     } catch (error) {
+      if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
       console.error('Failed to cancel session:', error);
     }
     navigate('/dashboard');
@@ -487,11 +492,7 @@ export default function BehaviouralInterviewPage() {
   const handleEndAfterDisconnect = () => {
     setShowDisconnectWarning(false);
     setSessionEndedIntentionally(true);
-    // Trigger the workflow manually since we're already disconnected
-    if (!workflowTriggeredRef.current) {
-      workflowTriggeredRef.current = true;
-      handleSessionEndWorkflow();
-    }
+    triggerSessionEndWorkflow('disconnect-modal-end');
   };
 
   const isConnected = conversation.status === 'connected';

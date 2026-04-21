@@ -454,7 +454,7 @@ router.get('/user/interviews', async (req, res) => {
         }
         topic = feedback?.position_title || 'Interview';
         if (status !== 'cancelled' && status !== 'incomplete') {
-          assessment = feedback?.overall_assessment?.summary || (status === 'pending' ? 'Feedback is still being prepared.' : 'Interview session completed.');
+          assessment = feedback?.summary?.one_liner || (status === 'pending' ? 'Feedback is still being prepared.' : 'Interview session completed.');
         }
       }
       return { id: session.id, interviewType, topic, assessment, score, duration, createdAt, status };

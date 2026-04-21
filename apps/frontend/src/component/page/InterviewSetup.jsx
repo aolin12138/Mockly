@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../ui/Toast';
 import Modal from '../ui/Modal.jsx';
+import { authFetch, ensureAuthenticated } from '../../lib/auth';
 import {
   ChevronRight,
   ChevronLeft,
@@ -316,15 +317,15 @@ const InterviewSetup = () => {
   useEffect(() => {
     const fetchLastAgent = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = ensureAuthenticated();
         if (!token) {
           setLoadingAgent(false);
           return;
         }
 
-        const response = await fetch('http://localhost:3000/api/interview/agent/last', {
+        const response = await authFetch('http://localhost:3000/api/interview/agent/last', {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
           }
         });
 
@@ -335,6 +336,7 @@ const InterviewSetup = () => {
           }
         }
       } catch (error) {
+        if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
         console.error('Failed to fetch last agent:', error);
       } finally {
         setLoadingAgent(false);
@@ -348,16 +350,17 @@ const InterviewSetup = () => {
   useEffect(() => {
     const fetchByokStatus = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = ensureAuthenticated();
         if (!token) return;
-        const response = await fetch('http://localhost:3000/api/integrations/elevenlabs/status', {
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        const response = await authFetch('http://localhost:3000/api/integrations/elevenlabs/status', {
+          headers: { 'Content-Type': 'application/json' }
         });
         if (response.ok) {
           const data = await response.json();
           setByokStatus(data);
         }
       } catch (error) {
+        if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
         console.error('Failed to fetch BYOK status:', error);
         setByokStatus({ connected: false });
       }
@@ -379,17 +382,13 @@ const InterviewSetup = () => {
 
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
+      const token = ensureAuthenticated();
+      if (!token) return;
 
-      const response = await fetch('http://localhost:3000/api/interview/session/quick-start', {
+      const response = await authFetch('http://localhost:3000/api/interview/session/quick-start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           userId: (() => {
@@ -427,6 +426,7 @@ const InterviewSetup = () => {
       // Go directly to waiting page (which will skip polling for temp sessions)
       navigate(`/interview/session/${sessionId}/waiting`);
     } catch (error) {
+      if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
       console.error('Error with quick-start:', error);
       setIsSubmitting(false);
     }
@@ -450,12 +450,10 @@ const InterviewSetup = () => {
     console.log("Submitting Configuration:", formData);
 
     try {
-      const token = localStorage.getItem('token');
-
+      const token = ensureAuthenticated();
       if (!token) {
         console.error("No authentication token found. Please log in.");
         toast.error('Please log in to start an interview');
-        navigate('/login');
         return;
       }
 
@@ -469,11 +467,10 @@ const InterviewSetup = () => {
         : 'http://localhost:3000/api/interview/session';
 
       // Send configuration as JSON (CV file is already base64 encoded in formData)
-      const response = await fetch(endpoint, {
+      const response = await authFetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
         // No timeout - wait indefinitely
@@ -483,12 +480,6 @@ const InterviewSetup = () => {
         const errorData = await response.json().catch(() => ({}));
         console.error("Failed to fetch prompts from backend:", response.status, errorData);
         setIsSubmitting(false);
-
-        if (response.status === 401) {
-          setShowConfirmModal(false);
-          navigate('/login');
-          return;
-        }
 
         if (response.status === 403) {
           setShowConfirmModal(false);
@@ -530,6 +521,7 @@ const InterviewSetup = () => {
         }
       }
     } catch (error) {
+      if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
       console.error("Error submitting configuration:", error);
       setIsSubmitting(false);
       setShowConfirmModal(false);
