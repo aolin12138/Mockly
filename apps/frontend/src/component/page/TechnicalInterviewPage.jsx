@@ -7,6 +7,7 @@ import { ArrowLeft, Play, RotateCcw, Check, X, ChevronDown, AlertCircle, Chevron
 import { useConversation } from '@elevenlabs/react';
 import ParticleOrb from '../ui/particle-orb.jsx';
 import { LiveWaveform } from '../ui/live-waveform.jsx';
+import { authFetch, ensureAuthenticated } from '../../lib/auth';
 
 /**
  * TechnicalInterviewPage - Redesigned for Phase 3
@@ -63,7 +64,7 @@ const TechnicalInterviewPage = () => {
   const selectedDurationMin = Math.max(15, Number(localStorage.getItem('interviewDurationMin')) || 15);
 
   const fetchCreditStatus = async () => {
-    const token = localStorage.getItem('token');
+    const token = ensureAuthenticated();
     if (!token) {
       return {
         credits_remaining: null,
@@ -74,9 +75,8 @@ const TechnicalInterviewPage = () => {
       };
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/integrations/elevenlabs/status`, {
+    const response = await authFetch(`${API_BASE_URL}/api/integrations/elevenlabs/status`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
@@ -211,13 +211,10 @@ const TechnicalInterviewPage = () => {
 
   // Auth guard and fetch question
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
+    const token = ensureAuthenticated();
+    if (!token) return;
 
-    fetchQuestion(token);
+    fetchQuestion();
 
     // Warn user when trying to leave the page
     const handleBeforeUnload = (e) => {
@@ -233,14 +230,13 @@ const TechnicalInterviewPage = () => {
     };
   }, [navigate]);
 
-  const fetchQuestion = async (token) => {
+  const fetchQuestion = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:3000/api/questions/random', {
+      const response = await authFetch('http://localhost:3000/api/questions/random', {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -264,6 +260,7 @@ const TechnicalInterviewPage = () => {
       // Note: Initial context is sent in onConnect when agent connects
       // No need to queue it here as onConnect reads from refs directly
     } catch (err) {
+      if (err?.code === 'AUTH_REQUIRED' || err?.code === 'AUTH_EXPIRED') return;
       setError(err.message);
       console.error('Error fetching question:', err);
     } finally {
@@ -296,11 +293,8 @@ const TechnicalInterviewPage = () => {
       return;
     }
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
+    const token = ensureAuthenticated();
+    if (!token) return;
 
     try {
       setRunning(true);
@@ -310,10 +304,9 @@ const TechnicalInterviewPage = () => {
       console.log('Sending code execution request...');
 
       // Execute code first
-      const response = await fetch('http://localhost:3000/api/code/run', {
+      const response = await authFetch('http://localhost:3000/api/code/run', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -347,6 +340,7 @@ const TechnicalInterviewPage = () => {
         });
       }
     } catch (err) {
+      if (err?.code === 'AUTH_REQUIRED' || err?.code === 'AUTH_EXPIRED') return;
       const errorMsg = err.message;
       setError(errorMsg);
       console.error('Error running code:', err);
@@ -378,11 +372,8 @@ const TechnicalInterviewPage = () => {
       return;
     }
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
+    const token = ensureAuthenticated();
+    if (!token) return;
 
     try {
       setEnding(true);
@@ -392,10 +383,9 @@ const TechnicalInterviewPage = () => {
       let finalResults = testResults;
       if (question && code) {
         try {
-          const response = await fetch('http://localhost:3000/api/code/run', {
+          const response = await authFetch('http://localhost:3000/api/code/run', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
@@ -494,6 +484,7 @@ const TechnicalInterviewPage = () => {
       });
 
     } catch (err) {
+      if (err?.code === 'AUTH_REQUIRED' || err?.code === 'AUTH_EXPIRED') return;
       console.error('Error ending interview:', err);
       setError('Failed to end interview: ' + err.message);
     } finally {

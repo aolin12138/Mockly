@@ -24,6 +24,7 @@ import PatternsList from '../results/PatternsList';
 import StrengthsImprovements from '../results/StrengthsImprovements';
 import CvAlignmentSection from '../results/CvAlignmentSection';
 import NextStepsList from '../results/NextStepsList';
+import { authFetch, ensureAuthenticated } from '../../lib/auth';
 
 const USE_LOCAL_SAMPLE = false;
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
@@ -165,7 +166,8 @@ export default function ResultsPage() {
     const fetchFeedback = async () => {
       try {
         const sessionId = urlSessionId || localStorage.getItem('currentSessionId');
-        const token = localStorage.getItem('token');
+        const token = ensureAuthenticated();
+        if (!token) return;
 
         const waitForFeedbackViaSse = (activeSessionId) => new Promise((resolve) => {
           if (!token) {
@@ -209,11 +211,10 @@ export default function ResultsPage() {
           intervalMs = FEEDBACK_POLL_INTERVAL_MS,
         } = {}) => {
           for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-            const response = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
+            const response = await authFetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
               method: 'GET',
               headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
               },
             });
 
@@ -259,11 +260,10 @@ export default function ResultsPage() {
         await new Promise((res) => setTimeout(res, 1000));
 
         // Check database for existing feedback
-        const checkResponse = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
+        const checkResponse = await authFetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -300,11 +300,10 @@ export default function ResultsPage() {
 
         try {
           // Generate feedback via backend route using the saved session id
-          const response = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}/generate-feedback`, {
+          const response = await authFetch(`${API_BASE_URL}/api/interview/session/${sessionId}/generate-feedback`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
               agent_id: agentId,
@@ -352,6 +351,7 @@ export default function ResultsPage() {
           clearFeedbackRequestLock(sessionId);
         }
       } catch (err) {
+        if (err?.code === 'AUTH_REQUIRED' || err?.code === 'AUTH_EXPIRED') return;
         console.error('Error fetching feedback:', err);
         setError(err.message || 'Failed to process interview feedback. Please try again.');
       } finally {

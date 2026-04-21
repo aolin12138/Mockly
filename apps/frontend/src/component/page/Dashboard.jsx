@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../ui/Toast';
+import { authFetch, clearAuthState, ensureAuthenticated } from '../../lib/auth';
 
 const MotionButton = motion.button;
 const MotionDiv = motion.div;
@@ -106,6 +107,8 @@ const Dashboard = () => {
   const [sessions, setSessions] = useState([]);
   const [historyWindow, setHistoryWindow] = useState('6');
   const [historyType, setHistoryType] = useState('all');
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState('');
 
   // BYOK state
   const [elevenLabsStatus, setElevenLabsStatus] = useState(null); // null = loading, object = loaded
@@ -119,28 +122,20 @@ const Dashboard = () => {
 
   // Auth guard
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-    }
+    const token = ensureAuthenticated();
+    if (!token) return;
   }, [navigate]);
 
   // Fetch user data and sessions
   const fetchUserDataAndSessions = useCallback(async () => {
+    setDataLoading(true);
+    setDataError('');
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
       console.log('Fetching user profile...');
-      // Profile
-      const profileResponse = await fetch('http://localhost:3000/api/user/profile', {
+      const profileResponse = await authFetch('http://localhost:3000/api/user/profile', {
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
       });
 
       console.log('Profile response status:', profileResponse.status);
@@ -149,24 +144,15 @@ const Dashboard = () => {
         const user = await profileResponse.json();
         console.log('User data fetched:', user);
         setUserData(user);
-      } else if (profileResponse.status === 401) {
-        // Token expired or invalid
-        console.log('Token expired or invalid, redirecting to login');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/login');
-        return;
       } else {
-        console.error('Failed to fetch profile:', profileResponse.status);
+        throw new Error(`Failed to fetch profile (${profileResponse.status})`);
       }
 
       console.log('Fetching user sessions...');
-      // Sessions
-      const sessionsResponse = await fetch('http://localhost:3000/api/user/sessions', {
+      const sessionsResponse = await authFetch('http://localhost:3000/api/user/sessions', {
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
       });
 
       console.log('Sessions response status:', sessionsResponse.status);
@@ -175,34 +161,26 @@ const Dashboard = () => {
         const sessionsList = await sessionsResponse.json();
         console.log('Sessions fetched:', sessionsList.length, 'sessions');
         setSessions(sessionsList);
-      } else if (sessionsResponse.status === 401) {
-        // Token expired or invalid
-        console.log('Token expired or invalid, redirecting to login');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/login');
-        return;
       } else {
-        console.error('Failed to fetch sessions:', sessionsResponse.status);
+        throw new Error(`Failed to fetch sessions (${sessionsResponse.status})`);
       }
     } catch (error) {
+      if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
       console.error('Error fetching data:', error);
-      // If there's a network error or the server is down
-      if (error.message?.includes('Failed to fetch')) {
-        console.error('Network error - check if backend is running');
-      }
+      setDataError(error.message || 'Failed to load dashboard data');
+    } finally {
+      setDataLoading(false);
     }
-  }, [navigate]);
+  }, []);
 
   // Fetch ElevenLabs integration status
   const fetchElevenLabsStatus = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = ensureAuthenticated();
       if (!token) return;
       setByokLoading(true);
-      const response = await fetch('http://localhost:3000/api/integrations/elevenlabs/status', {
+      const response = await authFetch('http://localhost:3000/api/integrations/elevenlabs/status', {
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -211,6 +189,7 @@ const Dashboard = () => {
         setElevenLabsStatus(data);
       }
     } catch (error) {
+      if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
       console.error('Error fetching ElevenLabs status:', error);
       setElevenLabsStatus({ connected: false });
     } finally {
@@ -228,11 +207,9 @@ const Dashboard = () => {
     setConnectError('');
     setConnectSuccess('');
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/integrations/elevenlabs/connect', {
+      const response = await authFetch('http://localhost:3000/api/integrations/elevenlabs/connect', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ apiKey: connectKey.trim() })
@@ -251,6 +228,7 @@ const Dashboard = () => {
         setConnectError(data.message || 'Failed to verify API key');
       }
     } catch (error) {
+      if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
       toast.error('Network error — please try again');
       setConnectError('Network error — please try again');
     } finally {
@@ -261,11 +239,9 @@ const Dashboard = () => {
   // Disconnect ElevenLabs API key
   const handleDisconnect = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch('http://localhost:3000/api/integrations/elevenlabs', {
+      await authFetch('http://localhost:3000/api/integrations/elevenlabs', {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -275,18 +251,15 @@ const Dashboard = () => {
       setShowReplaceInput(false);
       toast.success('API key disconnected', { title: 'Disconnected' });
     } catch (error) {
+      if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
       console.error('Error disconnecting:', error);
       toast.error('Failed to disconnect — please try again');
     }
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchUserDataAndSessions();
-      fetchElevenLabsStatus();
-    }, 0);
-
-    return () => clearTimeout(timer);
+    fetchUserDataAndSessions();
+    fetchElevenLabsStatus();
   }, [fetchUserDataAndSessions, fetchElevenLabsStatus]);
 
   const stats = useMemo(() => {
@@ -577,10 +550,7 @@ const Dashboard = () => {
 
 
   const handleSignOut = () => {
-    // Clear authentication data
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    // Navigate to home/login
+    clearAuthState();
     navigate('/');
   };
 
@@ -630,6 +600,23 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 md:ml-72 p-8 h-screen overflow-y-auto no-scrollbar z-10 relative">
+        {dataLoading && !userData && sessions.length === 0 && (
+          <div className="max-w-[1600px] mx-auto mb-4 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-300">
+            Loading your dashboard data...
+          </div>
+        )}
+        {dataError && (
+          <div className="max-w-[1600px] mx-auto mb-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200 flex items-center justify-between gap-3">
+            <span>{dataError}</span>
+            <button
+              type="button"
+              onClick={fetchUserDataAndSessions}
+              className="rounded-full border border-red-300/40 px-3 py-1 text-xs font-semibold text-red-100 hover:bg-red-500/20 transition"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         <motion.div className="max-w-[1600px] mx-auto" variants={containerVariants} initial="hidden" animate="visible">
           {/* Header */}
           <motion.header
@@ -868,11 +855,11 @@ const Dashboard = () => {
                             // Behavioural interview feedback
                             sessionType = feedback?.interview_type || 'Behavioral';
                             sessionTopic = feedback?.position_title || 'Interview';
-                            assessment = session.sessionStatus === 'incomplete'
-                              ? 'Session ended too early to generate a complete assessment.'
-                              : session.sessionStatus === 'pending'
-                                ? 'Feedback is still being prepared.'
-                                : feedback?.overall_assessment?.summary || 'Interview session completed.';
+                             assessment = session.sessionStatus === 'incomplete'
+                               ? 'Session ended too early to generate a complete assessment.'
+                               : session.sessionStatus === 'pending'
+                                 ? 'Feedback is still being prepared.'
+                                 : feedback?.summary?.one_liner || 'Interview session completed.';
                           }
 
                           // Navigate to correct results page based on type

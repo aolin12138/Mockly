@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ParticleOrb from '../ui/particle-orb.jsx';
+import { authFetch, ensureAuthenticated } from '../../lib/auth';
 
 const fallbackLoadingMessages = [
   'Preparing your interview setup...',
@@ -45,11 +46,8 @@ export default function SessionWaiting() {
   useEffect(() => {
     if (!sessionId) return;
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
+    const token = ensureAuthenticated();
+    if (!token) return;
 
     // For temporary sessions (format: temp_*), use SSE to wait for n8n callback
     if (sessionId.startsWith('temp_')) {
@@ -147,10 +145,9 @@ export default function SessionWaiting() {
 
     const poll = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
+        const response = await authFetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
           }
         });
 
@@ -176,7 +173,8 @@ export default function SessionWaiting() {
           const route = routeMap[mode] || 'behavioural';
           navigate(`/${route}/${sessionId}`);
         }
-      } catch {
+      } catch (error) {
+        if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
         if (!isActive) return;
         setErrorMessage('Network error while checking session status');
       }
@@ -200,7 +198,7 @@ export default function SessionWaiting() {
     pushStatusMessage('Retrying agent setup...');
 
     try {
-      const response = await fetch(`http://localhost:3000/api/interview/session/${sessionId}/retry-agent-setup`, {
+      const response = await authFetch(`http://localhost:3000/api/interview/session/${sessionId}/retry-agent-setup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -214,6 +212,7 @@ export default function SessionWaiting() {
         setErrorMessage(message);
       }
     } catch (error) {
+      if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
       const message = error?.message || 'Network error while retrying setup.';
       setSetupError({ message, retryable: true });
       setErrorMessage(message);

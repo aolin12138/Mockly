@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from './component/page/Header';
+import { ensureAuthenticated } from './lib/auth';
 
 import behaviourIcon from './assets/behaviour.png';
 import technicalIcon from './assets/technical.png';
@@ -17,10 +18,8 @@ const App = () => {
 
   // Check if user is logged in
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-    }
+    const token = ensureAuthenticated();
+    if (!token) return;
   }, [navigate]);
   // Initialise from localStorage if available
   const [company, setCompany] = useState(
