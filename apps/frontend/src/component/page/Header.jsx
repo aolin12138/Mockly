@@ -4,7 +4,6 @@ import { useTheme } from '../../context/ThemeContext';
 
 const Header = () => {
   const token = localStorage.getItem('token');
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
   const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
 
@@ -66,12 +65,6 @@ const Header = () => {
                   className="px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-200"
                 >
                   Dashboard
-                </Link>
-                <Link
-                  to="/profile"
-                  className="px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-200"
-                >
-                  Profile
                 </Link>
                 <button
                   onClick={handleLogout}

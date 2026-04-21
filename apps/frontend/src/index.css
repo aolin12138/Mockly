@@ -322,3 +322,117 @@ body {
   display: none;
 }
 
+.hero-cta {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transform: translateY(0);
+  transition: transform 320ms cubic-bezier(0.19, 1, 0.22, 1), box-shadow 320ms ease;
+}
+
+.hero-cta::before {
+  content: '';
+  position: absolute;
+  left: -18%;
+  top: 0;
+  width: 42%;
+  height: 100%;
+  transform: translateX(-165%) skewX(-20deg);
+  border-radius: 9999px;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.56) 50%, rgba(255, 255, 255, 0) 100%);
+  transition: transform 680ms cubic-bezier(0.19, 1, 0.22, 1), opacity 260ms ease;
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-cta:hover::before,
+.hero-cta:focus-visible::before {
+  transform: translateX(320%) skewX(-20deg);
+  opacity: 1;
+}
+
+.hero-cta::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 9999px;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0));
+  opacity: 0;
+  transition: opacity 260ms ease;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-cta:hover::after,
+.hero-cta:focus-visible::after {
+  opacity: 1;
+}
+
+.hero-cta:hover,
+.hero-cta:focus-visible {
+  transform: translateY(-2px);
+}
+
+.interactive-btn,
+.interactive-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transform: translateY(0) scale(1);
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 300ms ease, border-color 250ms ease, background-color 250ms ease;
+}
+
+.interactive-btn:hover,
+.interactive-btn:focus-visible,
+.interactive-card:hover,
+.interactive-card:focus-visible {
+  transform: translateY(-2px) scale(1.01);
+}
+
+.interactive-btn::before,
+.interactive-card::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 170%;
+  height: 170%;
+  border-radius: 9999px;
+  transform: translate(-50%, -50%) scale(0);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0) 66%);
+  transition: transform 400ms cubic-bezier(0.22, 1, 0.36, 1), opacity 240ms ease;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.interactive-btn:hover::before,
+.interactive-btn:focus-visible::before,
+.interactive-card:hover::before,
+.interactive-card:focus-visible::before {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-cta,
+  .interactive-btn,
+  .interactive-card {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .hero-cta::before {
+    transition: none;
+    transform: translateX(0) skewX(-20deg);
+    opacity: 0.18;
+  }
+
+  .interactive-btn::before,
+  .interactive-card::before {
+    transition: none;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.14;
+  }
+}
