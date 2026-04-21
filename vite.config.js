@@ -8,6 +8,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './apps/frontend/src'),
     },
+    dedupe: ['react', 'react-dom', 'three', '@react-three/fiber'],
   },
   server: {
     proxy: {
