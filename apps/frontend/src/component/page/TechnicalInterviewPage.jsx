@@ -30,17 +30,46 @@ const Card = ({ children, className = '', delay = 0 }) => (
   </motion.div>
 );
 
+const LANGUAGE_STARTERS = {
+  javascript: `function solve(s) {
+  // Return the expected answer for the problem.
+  return 0;
+}`,
+  python: `def solve(s: str) -> int:
+    # Return the expected answer for the problem.
+    return 0`,
+  java: `public class Solution {
+    public int solve(String s) {
+        // Return the expected answer for the problem.
+        return 0;
+    }
+}`,
+};
+
+const getStarterCode = (lang) => LANGUAGE_STARTERS[lang] || LANGUAGE_STARTERS.javascript;
+
 const TechnicalInterviewPage = () => {
   const navigate = useNavigate();
   const { sessionId: urlSessionId } = useParams();
   // Generate a temp session ID if not provided in URL
   const sessionId = urlSessionId || `tech_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const initialPreferredLanguage = (() => {
+    try {
+      const raw = localStorage.getItem('technicalSessionConfig');
+      const parsed = raw ? JSON.parse(raw) : {};
+      const candidate = parsed?.preferred_coding_language;
+      return ['javascript', 'python', 'java'].includes(candidate) ? candidate : 'javascript';
+    } catch {
+      return 'javascript';
+    }
+  })();
+
   const pendingUpdatesRef = useRef([]);
   const conversationSessionRef = useRef(null);
   const hasStartedSessionRef = useRef(false);
   const hasSentInitialContextRef = useRef(false);
   const codeRef = useRef('');
-  const languageRef = useRef('javascript');
+  const languageRef = useRef(initialPreferredLanguage);
   const questionRef = useRef(null);
   const testResultsRef = useRef(null);
   const AGENT_ID = import.meta.env.VITE_TECHNICAL_INTERVIEW_AGENT_ID || 'agent_6601kc3hn3b8fbv9p4hpskza0qgm';
@@ -50,7 +79,7 @@ const TechnicalInterviewPage = () => {
   // Question and code state
   const [question, setQuestion] = useState(null);
   const [code, setCode] = useState('');
-  const [language, setLanguage] = useState('javascript');
+  const [language, setLanguage] = useState(initialPreferredLanguage);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [ending, setEnding] = useState(false);
@@ -61,7 +90,7 @@ const TechnicalInterviewPage = () => {
   const [panelOpen, setPanelOpen] = useState(true);
   const [interviewStarted, setInterviewStarted] = useState(false);
   const [startTime, setStartTime] = useState(null); // Track when interview started
-  const selectedDurationMin = Math.max(15, Number(localStorage.getItem('interviewDurationMin')) || 15);
+  const selectedDurationMin = Math.max(30, Number(localStorage.getItem('interviewDurationMin')) || 30);
 
   const fetchCreditStatus = async () => {
     const token = ensureAuthenticated();
@@ -248,10 +277,7 @@ const TechnicalInterviewPage = () => {
       const data = await response.json();
       setQuestion(data);
 
-      // Set initial code to boilerplate for selected language
-      const initialCode = data.boilerplate && data.boilerplate[language]
-        ? data.boilerplate[language]
-        : '// Write your solution here\n';
+      const initialCode = getStarterCode(language);
       setCode(initialCode);
 
       // Start timing the interview from when question loads
@@ -270,17 +296,13 @@ const TechnicalInterviewPage = () => {
 
   const handleLanguageChange = (newLanguage) => {
     setLanguage(newLanguage);
-    if (question && question.boilerplate && question.boilerplate[newLanguage]) {
-      setCode(question.boilerplate[newLanguage]);
-    }
+    setCode(getStarterCode(newLanguage));
   };
 
   const handleReset = () => {
-    if (question && question.boilerplate && question.boilerplate[language]) {
-      setCode(question.boilerplate[language]);
-      setTestResults(null);
-      setShowResults(false);
-    }
+    setCode(getStarterCode(language));
+    setTestResults(null);
+    setShowResults(false);
   };
 
   const handleRunCode = async () => {
@@ -436,19 +458,17 @@ const TechnicalInterviewPage = () => {
           hiddenTests: {
             passed: finalResults?.hiddenPassedTests || 0,
             total: finalResults?.totalHiddenTests || 0,
-            details: finalResults?.hiddenTestResults?.map((result, idx) => ({
-              testNumber: idx + 1,
-              name: result.name || `Hidden Test ${idx + 1}`,
-              tags: result.tags || [],
-              passed: result.passed,
-              expected: result.expected,
-              actual: result.actual,
-              error: result.error || null,
-            })) || [],
           },
           error: finalResults?.error || null,
           details: finalResults?.details || null,
         },
+        questionSnapshot: question ? {
+          id: question.id,
+          title: question.title,
+          difficulty: question.difficulty,
+          pattern_tags: question.pattern_tags,
+          topics: question.topics,
+        } : null,
       };
 
       console.log('Sending execution summary to n8n:', executionSummary);
@@ -571,7 +591,7 @@ const TechnicalInterviewPage = () => {
                   <div>
                     <h2 className="text-sm font-semibold text-emerald-400 mb-1 uppercase tracking-wide">Problem</h2>
                     <p className="text-slate-300 whitespace-pre-wrap text-sm leading-relaxed">
-                      {question.problemStatement}
+                      {question.problem_statement}
                     </p>
                   </div>
 
@@ -588,27 +608,14 @@ const TechnicalInterviewPage = () => {
                     </div>
                   )}
 
-                  {question.skillTargets && question.skillTargets.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-cyan-400 mb-1 uppercase tracking-wide">Skills</h3>
-                      <div className="flex flex-wrap gap-1">
-                        {question.skillTargets.map((skill, idx) => (
-                          <span key={idx} className="px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded text-sm text-emerald-300">
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {question.visibleTests && question.visibleTests.length > 0 && (
+                  {question.examples && question.examples.length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold text-cyan-400 mb-1 uppercase tracking-wide">Examples</h3>
                       <div className="space-y-1">
-                        {question.visibleTests.map((test, idx) => (
+                        {question.examples.map((test, idx) => (
                           <div key={idx} className="bg-slate-800/50 rounded p-1 text-sm font-mono text-slate-300">
-                            <div>I: <span className="text-cyan-300">{JSON.stringify(test.input)}</span></div>
-                            <div>O: <span className="text-emerald-300">{JSON.stringify(test.expectedOutput)}</span></div>
+                            <div>I: <span className="text-cyan-300">{String(test.input)}</span></div>
+                            <div>O: <span className="text-emerald-300">{String(test.output)}</span></div>
                           </div>
                         ))}
                       </div>

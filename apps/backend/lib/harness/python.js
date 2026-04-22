@@ -29,7 +29,7 @@ export function generatePythonHarness(userCode, allTests) {
   const testRunner = `
 import json
 
-test_cases = ${JSON.stringify(testsCases, null, 2).replace(/\\/g, '\\\\')}
+test_cases = ${JSON.stringify(testsCases, null, 2)}
 results = []
 
 for test_case in test_cases:

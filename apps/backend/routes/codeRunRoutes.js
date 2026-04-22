@@ -16,6 +16,53 @@ const HARNESS_GENERATORS = {
   java: generateJavaHarness,
 };
 
+function parseJson(value, fallback) {
+  if (value == null) return fallback;
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return fallback;
+    }
+  }
+  return value;
+}
+
+function parseMaybeJson(value) {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return value;
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return value;
+  }
+}
+
+function buildVisibleTestsFromExamples(examples) {
+  return examples.map((example, index) => ({
+    id: `v${index + 1}`,
+    input: parseMaybeJson(example.input),
+    expected: parseMaybeJson(example.output),
+    description: example.explanation || `example ${index + 1}`,
+  }));
+}
+
+function buildHiddenTests(hiddenTests) {
+  return hiddenTests.map((test, index) => ({
+    id: `h${index + 1}`,
+    input: parseMaybeJson(test.input),
+    expected: parseMaybeJson(test.expected_output),
+    description: test.description || `hidden ${index + 1}`,
+  }));
+}
+
 /**
  * Extract JSON results from stdout
  * Looks for ###START_JSON### and ###END_JSON### markers
@@ -83,34 +130,21 @@ router.post('/run', authMiddleware, async (req, res) => {
       });
     }
 
-    // Parse visible tests
-    let visibleTests = [];
-    try {
-      visibleTests = typeof question.visibleTests === 'string'
-        ? JSON.parse(question.visibleTests)
-        : question.visibleTests;
-    } catch (parseError) {
-      console.error('Error parsing visible tests:', parseError);
+    const examples = parseJson(question.examples, []);
+    const hiddenTestsRaw = parseJson(question.hidden_tests, []);
+
+    if (!Array.isArray(examples) || examples.length === 0) {
       return res.status(500).json({
-        error: 'Failed to parse question tests',
+        error: 'Question has no runnable examples',
       });
     }
 
-    // Parse hidden tests
-    let hiddenTests = [];
-    try {
-      hiddenTests = typeof question.hiddenTests === 'string'
-        ? JSON.parse(question.hiddenTests)
-        : question.hiddenTests;
-    } catch (parseError) {
-      console.error('Error parsing hidden tests:', parseError);
-      hiddenTests = [];
-    }
+    const visibleTests = buildVisibleTestsFromExamples(examples);
+    const hiddenTests = Array.isArray(hiddenTestsRaw) ? buildHiddenTests(hiddenTestsRaw) : [];
 
     console.log('Visible tests:', visibleTests);
     console.log('Hidden tests:', hiddenTests.length);
 
-    // Generate harness with ALL tests (visible + hidden)
     const allTests = [...visibleTests, ...hiddenTests];
     const harnessFn = HARNESS_GENERATORS[language];
     const harnessCode = harnessFn(code, allTests);
@@ -194,18 +228,13 @@ router.post('/run', authMiddleware, async (req, res) => {
     const visiblePassedTests = visibleTestResults.filter(t => t.passed).length;
     const hiddenPassedTests = hiddenTestResults.filter(t => t.passed).length;
 
-    // Return results
-    // - Visible tests: include full details (id, input, expected, actual, passed, error)
-    // - Hidden tests: only pass/fail counts (no details)
     res.json({
       success: true,
-      visibleTestResults, // Full details for visible tests
+      visibleTestResults,
       visiblePassedTests,
       totalVisibleTests: visibleTests.length,
-      // Hidden test results - save full details in backend but don't expose to user
-      hiddenPassedTests, // Only show count
+      hiddenPassedTests,
       totalHiddenTests: hiddenTests.length,
-      hiddenTestsDetails: hiddenTestResults, // Save for agent feedback later (could be stored in DB)
       executionTime: executionResult.executionTime,
       memoryUsed: executionResult.memoryUsed,
     });

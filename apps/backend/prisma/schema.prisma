@@ -45,6 +45,9 @@ model Session {
   id               String        @id @default(uuid())
   userId           String
   user             User          @relation(fields: [userId], references: [id])
+  technicalQuestionId String?
+  technicalQuestion   Question?    @relation(fields: [technicalQuestionId], references: [id])
+  technicalQuestionSnapshot Json?
   conversationId   String?
   agentId          String?
   interviewType    InterviewType @default(Behavioural)
@@ -60,22 +63,25 @@ model Session {
 }
 
 model Question {
-  id                String   @id @default(uuid())
-  slug              String   @unique
-  title             String
-  difficulty        String   @default("medium") // easy, medium, hard
-  skillTargets      Json     @default("[]") // JSON array of strings
-  tags              Json     @default("[]") // JSON array of strings
-  problemStatement  String   @db.Text
-  constraints       Json     @default("[]") // JSON array of strings
-  boilerplate       Json     // JSON object keyed by language: { javascript: "...", python: "...", java: "..." }
-  visibleTests      Json     // JSON array of { id, input, expected }
-  hiddenTests       Json     // JSON array of { id, input, expected, tags }
-  failureModes      Json     @default("[]") // JSON array of strings
-  hints             Json     @default("[]") // JSON array of strings
-  interviewerProbes Json     @default("[]") // JSON array of strings
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                  String    @id
+  title               String
+  difficulty          String
+  topics              Json      @default("[]")
+  pattern_tags        Json      @default("[]")
+  languages_supported Json      @default("[]")
+  estimated_time_min  Int
+  problem_statement   String    @db.Text
+  examples            Json      @default("[]")
+  constraints         Json      @default("[]")
+  hidden_tests        Json      @default("[]")
+  solutions           Json
+  hint_framework      Json
+  common_mistakes     Json      @default("[]")
+  follow_ups          Json      @default("[]")
+  meta                Json
+  sessions            Session[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 }
 
 model ElevenLabsIntegration {

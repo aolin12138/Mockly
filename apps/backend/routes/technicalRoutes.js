@@ -4,6 +4,54 @@ import authMiddleware from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+function parseJson(value, fallback) {
+  if (value == null) return fallback;
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return fallback;
+    }
+  }
+  return value;
+}
+
+function toQuestionPayload(question) {
+  return {
+    id: question.id,
+    title: question.title,
+    difficulty: question.difficulty,
+    topics: parseJson(question.topics, []),
+    pattern_tags: parseJson(question.pattern_tags, []),
+    languages_supported: parseJson(question.languages_supported, []),
+    estimated_time_min: question.estimated_time_min,
+    problem_statement: question.problem_statement,
+    examples: parseJson(question.examples, []),
+    constraints: parseJson(question.constraints, []),
+    hidden_tests: parseJson(question.hidden_tests, []),
+    solutions: parseJson(question.solutions, {}),
+    hint_framework: parseJson(question.hint_framework, {}),
+    common_mistakes: parseJson(question.common_mistakes, []),
+    follow_ups: parseJson(question.follow_ups, []),
+    meta: parseJson(question.meta, {}),
+  };
+}
+
+function toPublicQuestionPayload(question) {
+  return {
+    id: question.id,
+    title: question.title,
+    difficulty: question.difficulty,
+    topics: parseJson(question.topics, []),
+    pattern_tags: parseJson(question.pattern_tags, []),
+    languages_supported: parseJson(question.languages_supported, []),
+    estimated_time_min: question.estimated_time_min,
+    problem_statement: question.problem_statement,
+    examples: parseJson(question.examples, []),
+    constraints: parseJson(question.constraints, []),
+  };
+}
+
 /**
  * GET /api/questions/random
  * Fetch a random question with all necessary metadata
@@ -11,7 +59,6 @@ const router = express.Router();
  */
 router.get('/random', authMiddleware, async (req, res) => {
   try {
-    // Get total count of questions
     const count = await prisma.question.count();
 
     if (count === 0) {
@@ -20,7 +67,6 @@ router.get('/random', authMiddleware, async (req, res) => {
       });
     }
 
-    // Get random question
     const randomIndex = Math.floor(Math.random() * count);
     const question = await prisma.question.findMany({
       skip: randomIndex,
@@ -32,53 +78,7 @@ router.get('/random', authMiddleware, async (req, res) => {
         error: 'Question not found',
       });
     }
-
-    const q = question[0];
-
-    // Parse JSON fields safely
-    let boilerplate = {};
-    let visibleTests = [];
-    let constraints = [];
-    let skillTargets = [];
-    let tags = [];
-    let hiddenTests = [];
-    let failureModes = [];
-    let hints = [];
-    let interviewerProbes = [];
-
-    try {
-      boilerplate = typeof q.boilerplate === 'string' ? JSON.parse(q.boilerplate) : q.boilerplate;
-      visibleTests = typeof q.visibleTests === 'string' ? JSON.parse(q.visibleTests) : q.visibleTests;
-      constraints = typeof q.constraints === 'string' ? JSON.parse(q.constraints) : q.constraints;
-      skillTargets = typeof q.skillTargets === 'string' ? JSON.parse(q.skillTargets) : q.skillTargets;
-      tags = typeof q.tags === 'string' ? JSON.parse(q.tags) : q.tags;
-      hiddenTests = typeof q.hiddenTests === 'string' ? JSON.parse(q.hiddenTests) : q.hiddenTests;
-      failureModes = typeof q.failureModes === 'string' ? JSON.parse(q.failureModes) : q.failureModes;
-      hints = typeof q.hints === 'string' ? JSON.parse(q.hints) : q.hints;
-      interviewerProbes = typeof q.interviewerProbes === 'string'
-        ? JSON.parse(q.interviewerProbes)
-        : q.interviewerProbes;
-    } catch (parseError) {
-      console.error('Error parsing question JSON:', parseError);
-    }
-
-    // Return question with full metadata (including hidden tests) for agent context
-    res.json({
-      id: q.id,
-      slug: q.slug,
-      title: q.title,
-      difficulty: q.difficulty,
-      skillTargets,
-      tags,
-      problemStatement: q.problemStatement,
-      constraints,
-      boilerplate, // All 3 languages
-      visibleTests, // Visible tests (user can see these)
-      hiddenTests,
-      failureModes,
-      hints,
-      interviewerProbes,
-    });
+    res.json(toPublicQuestionPayload(question[0]));
   } catch (error) {
     console.error('Error fetching random question:', error);
     res.status(500).json({
@@ -105,50 +105,7 @@ router.get('/:questionId', authMiddleware, async (req, res) => {
         error: 'Question not found',
       });
     }
-
-    // Parse JSON fields safely
-    let boilerplate = {};
-    let visibleTests = [];
-    let constraints = [];
-    let skillTargets = [];
-    let tags = [];
-    let hiddenTests = [];
-    let failureModes = [];
-    let hints = [];
-    let interviewerProbes = [];
-
-    try {
-      boilerplate = typeof question.boilerplate === 'string' ? JSON.parse(question.boilerplate) : question.boilerplate;
-      visibleTests = typeof question.visibleTests === 'string' ? JSON.parse(question.visibleTests) : question.visibleTests;
-      constraints = typeof question.constraints === 'string' ? JSON.parse(question.constraints) : question.constraints;
-      skillTargets = typeof question.skillTargets === 'string' ? JSON.parse(question.skillTargets) : question.skillTargets;
-      tags = typeof question.tags === 'string' ? JSON.parse(question.tags) : question.tags;
-      hiddenTests = typeof question.hiddenTests === 'string' ? JSON.parse(question.hiddenTests) : question.hiddenTests;
-      failureModes = typeof question.failureModes === 'string' ? JSON.parse(question.failureModes) : question.failureModes;
-      hints = typeof question.hints === 'string' ? JSON.parse(question.hints) : question.hints;
-      interviewerProbes = typeof question.interviewerProbes === 'string'
-        ? JSON.parse(question.interviewerProbes)
-        : question.interviewerProbes;
-    } catch (parseError) {
-      console.error('Error parsing question JSON:', parseError);
-    }
-
-    res.json({
-      id: question.id,
-      slug: question.slug,
-      title: question.title,
-      difficulty: question.difficulty,
-      skillTargets,
-      tags,
-      problemStatement: question.problemStatement,
-      constraints,
-      boilerplate,
-      visibleTests,
-      hiddenTests,
-      failureModes,
-      hints,
-      interviewerProbes,
-    });
+    res.json(toQuestionPayload(question));
   } catch (error) {
     console.error('Error fetching question:', error);
     res.status(500).json({

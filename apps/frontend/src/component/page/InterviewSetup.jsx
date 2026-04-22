@@ -155,7 +155,10 @@ const InterviewSetup = () => {
     session: {
       mode: "practice",
       duration_min: 15,
-      language: "en"
+      language: "en",
+      difficulty: "medium",
+      communication_style: "general",
+      preferred_coding_language: "javascript"
     },
     candidate: {
       cv_available: false,
@@ -252,15 +255,12 @@ const InterviewSetup = () => {
     }));
   };
 
-  const toggleProbeDomain = (domain) => {
-    if (formData.interview.probe_domains.includes(domain)) {
-      updateField('interview', 'probe_domains', formData.interview.probe_domains.filter(d => d !== domain));
-      return;
-    }
-    updateField('interview', 'probe_domains', [...formData.interview.probe_domains, domain]);
-  };
-
   const buildSubmissionPayload = () => {
+    const isTechnicalOnly = formData.interview.mode === 'technical';
+    const normalizedDurationMin = isTechnicalOnly
+      ? Math.max(30, Number(formData.session.duration_min) || 30)
+      : Math.max(15, Number(formData.session.duration_min) || 15);
+
     let localUserId = null;
     try {
       const localUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -274,8 +274,11 @@ const InterviewSetup = () => {
       userId: localUserId,
       session: {
         mode: formData.session.mode || 'practice',
-        duration_min: Math.max(15, Number(formData.session.duration_min) || 15),
-        language: formData.session.language || 'en'
+        duration_min: normalizedDurationMin,
+        language: formData.session.language || 'en',
+        difficulty: formData.session.difficulty || 'medium',
+        communication_style: formData.session.communication_style || 'general',
+        preferred_coding_language: formData.session.preferred_coding_language || 'javascript'
       },
       candidate: {
         ...formData.candidate,
@@ -294,13 +297,18 @@ const InterviewSetup = () => {
       interview: {
         mode: formData.interview.mode,
         probe_domains: Array.isArray(formData.interview.probe_domains) ? formData.interview.probe_domains : [],
-        depth_preference: formData.interview.depth_preference || 'balanced'
+        depth_preference: formData.interview.depth_preference || 'balanced',
+        communication_style: formData.session.communication_style || 'general'
       }
     };
   };
 
   const getRecommendedWarnings = (payload) => {
     const warnings = [];
+
+    if (payload.interview?.mode === 'technical') {
+      return warnings;
+    }
 
     if (payload.interview?.mode === 'behavioral' && !payload.role?.context) {
       warnings.push('Add role context for significantly better question quality.');
@@ -368,11 +376,22 @@ const InterviewSetup = () => {
     fetchByokStatus();
   }, []);
 
-  const getTotalSteps = () => 3;
+  useEffect(() => {
+    if (formData.interview.mode === 'technical' && Number(formData.session.duration_min) < 30) {
+      updateField('session', 'duration_min', 30);
+    }
+  }, [formData.interview.mode, formData.session.duration_min]);
 
-  const selectedDurationMin = Number(formData.session.duration_min) || 15;
+  const getTotalSteps = () => (formData.interview.mode === 'technical' ? 2 : 3);
+
+  const minDurationForMode = formData.interview.mode === 'technical' ? 30 : 15;
+  const selectedDurationMin = Number(formData.session.duration_min) || minDurationForMode;
   const estimatedRemainingMin = Number(byokStatus?.minutesRemaining ?? 0);
   const mayEndEarly = byokStatus?.connected && Number.isFinite(estimatedRemainingMin) && estimatedRemainingMin > 0 && selectedDurationMin > estimatedRemainingMin;
+
+  useEffect(() => {
+    setStep((prev) => Math.min(prev, getTotalSteps()));
+  }, [formData.interview.mode]);
 
   const nextStep = () => setStep(prev => Math.min(prev + 1, getTotalSteps()));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
@@ -506,14 +525,18 @@ const InterviewSetup = () => {
         }
 
         localStorage.setItem('pendingInterviewMode', payload.interview.mode);
-        localStorage.setItem('interviewDurationMin', String(Math.max(15, Number(payload.session.duration_min) || 15)));
+        localStorage.setItem(
+          'interviewDurationMin',
+          String(isTechnicalOnly ? Math.max(30, Number(payload.session.duration_min) || 30) : Math.max(15, Number(payload.session.duration_min) || 15))
+        );
 
         if (isTechnicalOnly) {
           localStorage.setItem('technicalSessionConfig', JSON.stringify({
             interview_mode: 'technical',
             duration_min: payload.session.duration_min,
-            technical_focus_areas: payload.interview.probe_domains,
-            preferred_coding_language: 'javascript'
+            difficulty: payload.session.difficulty,
+            communication_style: payload.session.communication_style,
+            preferred_coding_language: payload.session.preferred_coding_language
           }));
           navigate(`/technical/${sessionId}`);
         } else {
@@ -528,11 +551,9 @@ const InterviewSetup = () => {
     }
   };
 
-  const steps = [
-    { title: "Type" },
-    { title: "Role & Focus" },
-    { title: "Candidate" }
-  ];
+  const steps = formData.interview.mode === 'technical'
+    ? [{ title: "Type" }, { title: "Technical Setup" }]
+    : [{ title: "Type" }, { title: "Role & Focus" }, { title: "Candidate" }];
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6 font-sans selection:bg-emerald-500/30 overflow-hidden relative">
@@ -656,7 +677,7 @@ const InterviewSetup = () => {
                     <div>
                       <label className="text-sm font-medium text-slate-400 mb-2 block">Duration</label>
                       <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
-                        {[15, 30, 45].map(mins => (
+                        {(formData.interview.mode === 'technical' ? [30, 45, 60] : [15, 30, 45]).map(mins => (
                           <button
                             key={mins}
                             onClick={() => updateField('session', 'duration_min', mins)}
@@ -794,7 +815,7 @@ const InterviewSetup = () => {
               </motion.div>
             )}
 
-            {/* STEP 2B: CODING FOCUS FOR TECHNICAL */}
+            {/* STEP 2B: TECHNICAL PREFERENCES */}
             {step === 2 && formData.interview.mode === 'technical' && (
               <motion.div
                 key="step2-technical"
@@ -804,53 +825,61 @@ const InterviewSetup = () => {
                 className="space-y-8"
               >
                 <div>
-                  <h2 className="text-3xl font-bold text-white mb-2">Coding Focus Areas</h2>
-                  <p className="text-slate-400">Pick the coding patterns you want to practice.</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Technical Preferences</h2>
+                  <p className="text-slate-400">Set difficulty, interview style, and default coding language.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-6">
-                    <div>
-                      <label className="text-sm font-medium text-slate-400 mb-2 block">Common Patterns</label>
-                      <div className="space-y-2">
-                        {[
-                          'array_two_pointers',
-                          'hashing_pattern',
-                          'sliding_window',
-                          'stack_queue',
-                          'tree_pattern',
-                          'graph_pattern',
-                          'dynamic_programming'
-                        ].map(pattern => (
-                          <SelectButton
-                            key={pattern}
-                            active={formData.interview.probe_domains.includes(pattern)}
-                            onClick={() => toggleProbeDomain(pattern)}
-                            icon={Code}
-                          >
-                            <span className="capitalize">{pattern.replaceAll('_', ' ')}</span>
-                          </SelectButton>
-                        ))}
-                      </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="text-sm font-medium text-slate-400 mb-2 block">Difficulty</label>
+                    <div className="space-y-2">
+                      {['easy', 'medium', 'hard'].map(level => (
+                        <SelectButton
+                          key={level}
+                          active={formData.session.difficulty === level}
+                          onClick={() => updateField('session', 'difficulty', level)}
+                        >
+                          <span className="capitalize">{level}</span>
+                        </SelectButton>
+                      ))}
                     </div>
-
                   </div>
 
-                  <div className="space-y-6">
-                    <TagInput
-                      label="Custom Coding Areas"
-                      tags={formData.interview.probe_domains}
-                      onAdd={(tag) => updateField('interview', 'probe_domains', [...formData.interview.probe_domains, tag])}
-                      onRemove={(tag) => updateField('interview', 'probe_domains', formData.interview.probe_domains.filter(t => t !== tag))}
-                      placeholder="e.g. heaps, bit manipulation, recursion"
-                    />
+                  <div>
+                    <label className="text-sm font-medium text-slate-400 mb-2 block">Interview Style</label>
+                    <div className="space-y-2">
+                      {['faang', 'startup', 'general'].map(style => (
+                        <SelectButton
+                          key={style}
+                          active={formData.session.communication_style === style}
+                          onClick={() => updateField('session', 'communication_style', style)}
+                        >
+                          <span className="capitalize">{style}</span>
+                        </SelectButton>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-slate-400 mb-2 block">Preferred Language</label>
+                    <div className="space-y-2">
+                      {['javascript', 'python', 'java'].map(lang => (
+                        <SelectButton
+                          key={lang}
+                          active={formData.session.preferred_coding_language === lang}
+                          onClick={() => updateField('session', 'preferred_coding_language', lang)}
+                        >
+                          <span className="capitalize">{lang}</span>
+                        </SelectButton>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </motion.div>
             )}
 
             {/* STEP 3: CANDIDATE */}
-            {step === 3 && (
+            {step === 3 && formData.interview.mode === 'behavioral' && (
               <motion.div
                 key="step3-candidate"
                 initial={{ opacity: 0, x: 20 }}
@@ -1156,9 +1185,19 @@ const InterviewSetup = () => {
               <li>✓ Session Mode: <span className="text-emerald-400 font-medium capitalize">{formData.session.mode}</span></li>
               <li>✓ Interview Mode: <span className="text-emerald-400 font-medium capitalize">{formData.interview.mode.replace('_', ' ')}</span></li>
               <li>✓ Duration: <span className="text-emerald-400 font-medium">{formData.session.duration_min} minutes</span></li>
-              <li>✓ Role: <span className="text-emerald-400 font-medium">{formData.role.title || 'Not specified'}</span></li>
-              <li>✓ Stage: <span className="text-emerald-400 font-medium capitalize">{formData.role.stage.replace('_', ' ')}</span></li>
-              <li>✓ Probe Domains: <span className="text-emerald-400 font-medium">{formData.interview.probe_domains.length || 0}</span></li>
+              {formData.interview.mode === 'technical' ? (
+                <>
+                  <li>✓ Difficulty: <span className="text-emerald-400 font-medium capitalize">{formData.session.difficulty}</span></li>
+                  <li>✓ Interview Style: <span className="text-emerald-400 font-medium capitalize">{formData.session.communication_style}</span></li>
+                  <li>✓ Preferred Language: <span className="text-emerald-400 font-medium capitalize">{formData.session.preferred_coding_language}</span></li>
+                </>
+              ) : (
+                <>
+                  <li>✓ Role: <span className="text-emerald-400 font-medium">{formData.role.title || 'Not specified'}</span></li>
+                  <li>✓ Stage: <span className="text-emerald-400 font-medium capitalize">{formData.role.stage.replace('_', ' ')}</span></li>
+                  <li>✓ Probe Domains: <span className="text-emerald-400 font-medium">{formData.interview.probe_domains.length || 0}</span></li>
+                </>
+              )}
             </ul>
           </div>
 

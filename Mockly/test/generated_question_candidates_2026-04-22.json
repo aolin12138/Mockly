@@ -1,0 +1,533 @@
+{
+  "generated_at": "2026-04-22",
+  "question_count": 4,
+  "questions": [
+    {
+      "id": "valid-anagram",
+      "title": "Valid Anagram",
+      "difficulty": "easy",
+      "pattern_tags": [
+        "strings",
+        "frequency-counting"
+      ],
+      "languages_supported": [
+        "python",
+        "js",
+        "java",
+        "cpp",
+        "go"
+      ],
+      "estimated_time_min": 15,
+      "problem_statement": "Given two strings s and t, return true if t is an anagram of s, and false otherwise.\nAn anagram uses exactly the same characters with the same frequencies, but can be in a different order.\nAssume both strings contain only lowercase English letters.",
+      "examples": [
+        {
+          "input": "s = \"anagram\", t = \"nagaram\"",
+          "output": "true",
+          "explanation": "Both strings contain the same characters with matching counts."
+        },
+        {
+          "input": "s = \"rat\", t = \"car\"",
+          "output": "false",
+          "explanation": "The characters differ, so they cannot be anagrams."
+        },
+        {
+          "input": "s = \"aacc\", t = \"ccac\"",
+          "output": "false",
+          "explanation": "The frequency of \"a\" is different between the two strings."
+        }
+      ],
+      "constraints": [
+        "1 <= s.length, t.length <= 5 * 10^4",
+        "s and t consist of lowercase English letters."
+      ],
+      "hidden_tests": [
+        {
+          "input": "s = \"listen\", t = \"silent\"",
+          "expected_output": "true",
+          "description": "basic true"
+        },
+        {
+          "input": "s = \"ab\", t = \"a\"",
+          "expected_output": "false",
+          "description": "length mismatch"
+        },
+        {
+          "input": "s = \"zzzz\", t = \"zzzz\"",
+          "expected_output": "true",
+          "description": "all same char"
+        },
+        {
+          "input": "s = \"abcd\", t = \"abce\"",
+          "expected_output": "false",
+          "description": "one char differs"
+        },
+        {
+          "generator": "s = 'abcdefghijklmnopqrstuvwxyz' * 2000; t = s[::-1]",
+          "expected_output_generator": "true",
+          "description": "large frequency case"
+        }
+      ],
+      "solutions": {
+        "brute_force": {
+          "approach": "Sort both strings and compare the sorted results.",
+          "time": "O(n log n)",
+          "space": "O(n)",
+          "code": "def solve(s: str, t: str) -> bool:\n    if len(s) != len(t):\n        return False\n    return sorted(s) == sorted(t)"
+        },
+        "optimal": {
+          "approach": "Count character frequencies in one pass and verify all counts return to zero.",
+          "time": "O(n)",
+          "space": "O(1)",
+          "code": "def solve(s: str, t: str) -> bool:\n    if len(s) != len(t):\n        return False\n\n    freq = [0] * 26\n    base = ord('a')\n\n    for ch in s:\n        freq[ord(ch) - base] += 1\n    for ch in t:\n        freq[ord(ch) - base] -= 1\n\n    for val in freq:\n        if val != 0:\n            return False\n    return True"
+        }
+      },
+      "hint_framework": {
+        "key_insights": [
+          "Anagrams must have equal lengths before anything else.",
+          "What matters is character frequency, not position.",
+          "You can compare frequencies without sorting by counting occurrences."
+        ],
+        "common_misdirections": [
+          {
+            "approach": "Comparing set(s) == set(t)",
+            "note": "Sets ignore frequency, so duplicates are handled incorrectly."
+          },
+          {
+            "approach": "Only checking sorted prefixes",
+            "note": "Partial comparisons can miss mismatches later in the strings."
+          }
+        ],
+        "tier_targets": {
+          "1": "Nudge them to think about what property must match besides length, without naming counting structures.",
+          "2": "Mention character-frequency tracking as the right direction, without describing the exact update loop.",
+          "3": "Describe incrementing for one string and decrementing for the other, then validating all counts are zero."
+        },
+        "never_reveal": [
+          "The exact code for the counting solution",
+          "The final complexity before the candidate derives it",
+          "Direct instruction to use a fixed-size array of length 26"
+        ],
+        "expected_path": "length check -> realize order is irrelevant -> compare frequency distributions -> implement count-based verification"
+      },
+      "common_mistakes": [
+        "Using sets and ignoring character multiplicity",
+        "Forgetting to short-circuit when lengths differ",
+        "Comparing only unique-character counts instead of exact frequencies"
+      ],
+      "follow_ups": [
+        {
+          "variant": "What if the strings include arbitrary Unicode characters?",
+          "angle": "Switch from fixed alphabet counting to hashmap frequency tracking",
+          "difficulty_delta": "harder"
+        },
+        {
+          "variant": "How would you group a list of words by anagram class?",
+          "angle": "Canonical signature construction and hashmap grouping",
+          "difficulty_delta": "harder"
+        }
+      ],
+      "meta": {
+        "source": "classic",
+        "author": "copilot-generated",
+        "created": "2026-04-22"
+      }
+    },
+    {
+      "id": "product-of-array-except-self",
+      "title": "Product of Array Except Self",
+      "difficulty": "medium",
+      "pattern_tags": [
+        "arrays",
+        "prefix-sum"
+      ],
+      "languages_supported": [
+        "python",
+        "js",
+        "java",
+        "cpp",
+        "go"
+      ],
+      "estimated_time_min": 25,
+      "problem_statement": "Given an integer array nums, return an array answer such that answer[i] is equal to the product of all elements of nums except nums[i].\nYou must solve it without using division.\nAll intermediate products are guaranteed to fit in a 32-bit integer.",
+      "examples": [
+        {
+          "input": "nums = [1,2,3,4]",
+          "output": "[24,12,8,6]",
+          "explanation": "Each position uses the product of all other elements."
+        },
+        {
+          "input": "nums = [-1,1,0,-3,3]",
+          "output": "[0,0,9,0,0]",
+          "explanation": "Every index that is not the zero produces 0 (because the zero is included in their product). Index 2 contains the zero, so its result is the product of all other elements: -1��1��-3��3 = 9."
+        },
+        {
+          "input": "nums = [2,5]",
+          "output": "[5,2]",
+          "explanation": "Each element is the product of the single remaining value."
+        }
+      ],
+      "constraints": [
+        "2 <= nums.length <= 10^5",
+        "-30 <= nums[i] <= 30",
+        "All intermediate products are guaranteed to fit in a 32-bit integer."
+      ],
+      "hidden_tests": [
+        {
+          "input": "nums = [3,4,5,6]",
+          "expected_output": "[120,90,72,60]",
+          "description": "basic case"
+        },
+        {
+          "input": "nums = [0,0,2]",
+          "expected_output": "[0,0,0]",
+          "description": "two zeros"
+        },
+        {
+          "input": "nums = [0,4,5]",
+          "expected_output": "[20,0,0]",
+          "description": "single zero"
+        },
+        {
+          "input": "nums = [-1,-2,-3,-4]",
+          "expected_output": "[-24,-12,-8,-6]",
+          "description": "all negatives"
+        },
+        {
+          "generator": "nums = [1] * 100000",
+          "expected_output_generator": "[1] * 100000",
+          "description": "max size all ones"
+        }
+      ],
+      "solutions": {
+        "brute_force": {
+          "approach": "For each index, multiply all other elements using an inner loop.",
+          "time": "O(n^2)",
+          "space": "O(1)",
+          "code": "def solve(nums):\n    n = len(nums)\n    ans = [1] * n\n\n    for i in range(n):\n        prod = 1\n        for j in range(n):\n            if j != i:\n                prod *= nums[j]\n        ans[i] = prod\n\n    return ans"
+        },
+        "optimal": {
+          "approach": "Build prefix products from the left and multiply by running suffix products from the right.",
+          "time": "O(n)",
+          "space": "O(1)",
+          "code": "def solve(nums):\n    n = len(nums)\n    ans = [1] * n\n\n    prefix = 1\n    for i in range(n):\n        ans[i] = prefix\n        prefix *= nums[i]\n\n    suffix = 1\n    for i in range(n - 1, -1, -1):\n        ans[i] *= suffix\n        suffix *= nums[i]\n\n    return ans"
+        }
+      },
+      "hint_framework": {
+        "key_insights": [
+          "Each index needs information from elements to its left and right.",
+          "Division-free means you should precompute directional products.",
+          "You can combine left and right products in-place in the answer array."
+        ],
+        "common_misdirections": [
+          {
+            "approach": "Compute total product and divide by nums[i]",
+            "note": "Division is disallowed and also fails with zeros."
+          },
+          {
+            "approach": "Recompute full product for every index",
+            "note": "Works functionally but misses the linear-time objective."
+          }
+        ],
+        "tier_targets": {
+          "1": "Nudge them to split each answer into a left contribution and a right contribution, without naming prefix/suffix arrays.",
+          "2": "Name prefix and suffix product strategy, but do not describe exact loop order.",
+          "3": "Describe two passes: write left products first, then multiply by running right product in reverse."
+        },
+        "never_reveal": [
+          "Exact implementation code",
+          "The final complexity before derivation",
+          "Direct instruction to initialize answer with ones"
+        ],
+        "expected_path": "nested product per index -> notice repeated multiplication -> decompose into left and right products -> combine in two linear passes"
+      },
+      "common_mistakes": [
+        "Using division despite explicit restriction",
+        "Incorrect handling of arrays containing one or more zeros",
+        "Off-by-one errors when computing prefix or suffix products"
+      ],
+      "follow_ups": [
+        {
+          "variant": "Can you solve this when input is a stream and you can only pass once?",
+          "angle": "Challenges bidirectional dependency and memory constraints",
+          "difficulty_delta": "harder"
+        },
+        {
+          "variant": "What if multiplication may overflow 32-bit integers?",
+          "angle": "Numeric safety and type selection",
+          "difficulty_delta": "same"
+        }
+      ],
+      "meta": {
+        "source": "classic",
+        "author": "copilot-generated",
+        "created": "2026-04-22"
+      }
+    },
+    {
+      "id": "minimum-size-subarray-sum",
+      "title": "Minimum Size Subarray Sum",
+      "difficulty": "medium",
+      "pattern_tags": [
+        "arrays",
+        "sliding-window"
+      ],
+      "languages_supported": [
+        "python",
+        "js",
+        "java",
+        "cpp",
+        "go"
+      ],
+      "estimated_time_min": 25,
+      "problem_statement": "Given an array of positive integers nums and a positive integer target, return the minimal length of a contiguous subarray whose sum is greater than or equal to target.\nIf there is no such subarray, return 0.\nAll numbers in nums are positive.",
+      "examples": [
+        {
+          "input": "target = 7, nums = [2,3,1,2,4,3]",
+          "output": "2",
+          "explanation": "The subarray [4,3] has sum 7 and length 2."
+        },
+        {
+          "input": "target = 4, nums = [1,4,4]",
+          "output": "1",
+          "explanation": "A single element 4 already meets the target."
+        },
+        {
+          "input": "target = 11, nums = [1,1,1,1,1,1,1,1]",
+          "output": "0",
+          "explanation": "No contiguous subarray can reach sum 11."
+        }
+      ],
+      "constraints": [
+        "1 <= target <= 10^9",
+        "1 <= nums.length <= 10^5",
+        "1 <= nums[i] <= 10^4"
+      ],
+      "hidden_tests": [
+        {
+          "input": "target = 15, nums = [1,2,3,4,5]",
+          "expected_output": "5",
+          "description": "whole array"
+        },
+        {
+          "input": "target = 5, nums = [5]",
+          "expected_output": "1",
+          "description": "single element hit"
+        },
+        {
+          "input": "target = 6, nums = [1,1,1,1,1]",
+          "expected_output": "0",
+          "description": "no solution"
+        },
+        {
+          "input": "target = 8, nums = [3,1,1,1,1,1,1,3]",
+          "expected_output": "6",
+          "description": "shrink window"
+        },
+        {
+          "generator": "target = 50000; nums = [1] * 100000",
+          "expected_output_generator": "50000",
+          "description": "max linear"
+        }
+      ],
+      "solutions": {
+        "brute_force": {
+          "approach": "Try every start index and extend until target is met, tracking the shortest valid length.",
+          "time": "O(n^2)",
+          "space": "O(1)",
+          "code": "def solve(target, nums):\n    n = len(nums)\n    best = n + 1\n\n    for i in range(n):\n        total = 0\n        for j in range(i, n):\n            total += nums[j]\n            if total >= target:\n                best = min(best, j - i + 1)\n                break\n\n    return 0 if best == n + 1 else best"
+        },
+        "optimal": {
+          "approach": "Use a sliding window with two pointers because all numbers are positive.",
+          "time": "O(n)",
+          "space": "O(1)",
+          "code": "def solve(target, nums):\n    left = 0\n    total = 0\n    best = float('inf')\n\n    for right, val in enumerate(nums):\n        total += val\n        while total >= target:\n            best = min(best, right - left + 1)\n            total -= nums[left]\n            left += 1\n\n    return 0 if best == float('inf') else best"
+        }
+      },
+      "hint_framework": {
+        "key_insights": [
+          "Because numbers are all positive, window sum changes monotonically when pointers move.",
+          "Once a window reaches target, you should try shrinking from the left.",
+          "Each index only needs to enter and leave the window once for linear time."
+        ],
+        "common_misdirections": [
+          {
+            "approach": "Using prefix sums plus binary search without considering positivity leverage",
+            "note": "Valid but adds complexity and can be harder to implement correctly."
+          },
+          {
+            "approach": "Resetting the right pointer for each left pointer",
+            "note": "Revisits work and degrades toward quadratic runtime."
+          }
+        ],
+        "tier_targets": {
+          "1": "Nudge them to maintain a moving contiguous region and adjust its boundaries, without naming sliding window.",
+          "2": "Name the sliding-window strategy and mention positivity as the reason it works.",
+          "3": "Describe expand-right-until-valid, then shrink-left-while-valid loop behavior in prose."
+        },
+        "never_reveal": [
+          "Exact code skeleton for the while loop",
+          "The final complexity before derivation",
+          "Direct statement of which pointer increments first in all cases"
+        ],
+        "expected_path": "nested subarray exploration -> observe positivity allows monotonic window behavior -> use two pointers -> derive shrink/expand loop"
+      },
+      "common_mistakes": [
+        "Trying to use sliding window when array elements are not guaranteed positive",
+        "Forgetting to keep shrinking while sum remains >= target",
+        "Returning infinity/sentinel instead of 0 when no valid subarray exists"
+      ],
+      "follow_ups": [
+        {
+          "variant": "What changes if nums can include negative numbers?",
+          "angle": "Sliding window monotonicity breaks; needs different strategy",
+          "difficulty_delta": "harder"
+        },
+        {
+          "variant": "Can you also return one shortest subarray's boundaries?",
+          "angle": "Track window indices while minimizing length",
+          "difficulty_delta": "same"
+        }
+      ],
+      "meta": {
+        "source": "classic",
+        "author": "copilot-generated",
+        "created": "2026-04-22"
+      }
+    },
+    {
+      "id": "first-missing-positive",
+      "title": "First Missing Positive",
+      "difficulty": "hard",
+      "pattern_tags": [
+        "arrays",
+        "cyclic-sort"
+      ],
+      "languages_supported": [
+        "python",
+        "js",
+        "java",
+        "cpp",
+        "go"
+      ],
+      "estimated_time_min": 40,
+      "problem_statement": "Given an unsorted integer array nums, return the smallest missing positive integer.\nYou must run in O(n) time and use O(1) extra space.\nThe array may contain duplicates, zeros, and negative numbers.",
+      "examples": [
+        {
+          "input": "nums = [1,2,0]",
+          "output": "3",
+          "explanation": "1 and 2 are present, so the smallest missing positive is 3."
+        },
+        {
+          "input": "nums = [3,4,-1,1]",
+          "output": "2",
+          "explanation": "1 is present but 2 is missing."
+        },
+        {
+          "input": "nums = [7,8,9,11,12]",
+          "output": "1",
+          "explanation": "No positive number starting from 1 appears."
+        }
+      ],
+      "constraints": [
+        "1 <= nums.length <= 10^5",
+        "-2^31 <= nums[i] <= 2^31 - 1"
+      ],
+      "hidden_tests": [
+        {
+          "input": "nums = [1]",
+          "expected_output": "2",
+          "description": "single one"
+        },
+        {
+          "input": "nums = [2]",
+          "expected_output": "1",
+          "description": "single non-one"
+        },
+        {
+          "input": "nums = [1,1,2,2]",
+          "expected_output": "3",
+          "description": "duplicates"
+        },
+        {
+          "input": "nums = [2,3,4]",
+          "expected_output": "1",
+          "description": "missing one"
+        },
+        {
+          "input": "nums = [3,4,-1,1,2,6,5,8,7,10,9]",
+          "expected_output": "11",
+          "description": "near complete range"
+        },
+        {
+          "generator": "import random; random.seed(42); nums = list(range(1, 100001)); random.shuffle(nums)",
+          "expected_output_generator": "100001",
+          "description": "max size complete range"
+        }
+      ],
+      "solutions": {
+        "brute_force": {
+          "approach": "Sort the array, then scan for the first missing positive while skipping non-positive and duplicate values.",
+          "time": "O(n log n)",
+          "space": "O(1)",
+          "code": "def solve(nums):\n    nums.sort()\n    expect = 1\n\n    for x in nums:\n        if x < expect:\n            continue\n        if x == expect:\n            expect += 1\n\n    return expect"
+        },
+        "optimal": {
+          "approach": "Place each value v in index v-1 when possible, then find the first index where nums[i] != i+1.",
+          "time": "O(n)",
+          "space": "O(1)",
+          "code": "def solve(nums):\n    n = len(nums)\n\n    i = 0\n    while i < n:\n        v = nums[i]\n        correct = v - 1\n        if 1 <= v <= n and nums[correct] != v:\n            nums[i], nums[correct] = nums[correct], nums[i]\n        else:\n            i += 1\n\n    for i in range(n):\n        if nums[i] != i + 1:\n            return i + 1\n\n    return n + 1"
+        }
+      },
+      "hint_framework": {
+        "key_insights": [
+          "Only positives in the range [1, n] can affect the answer for an array of length n.",
+          "If value v is present, ideal position for v is index v-1.",
+          "After placement, first mismatch index directly gives the missing positive."
+        ],
+        "common_misdirections": [
+          {
+            "approach": "Use a hash set of seen values",
+            "note": "Finds answer but violates O(1) extra space requirement."
+          },
+          {
+            "approach": "Single swap per index without rechecking",
+            "note": "Can leave chains unresolved and produce incorrect placements."
+          }
+        ],
+        "tier_targets": {
+          "1": "Nudge them to focus only on values that could matter for the smallest missing positive, without giving index formula.",
+          "2": "Name in-place placement by value range, without detailing swap loop conditions.",
+          "3": "Describe repeated swaps until each valid value is at its target index, then scan for first mismatch."
+        },
+        "never_reveal": [
+          "Exact cyclic-placement code",
+          "The final complexity before derivation",
+          "Direct instruction of the precise swap condition as code"
+        ],
+        "expected_path": "attempt sort/set baseline -> realize only 1..n matters -> map values to indices in-place -> mismatch scan yields answer"
+      },
+      "common_mistakes": [
+        "Trying to place values <= 0 or > n into the array mapping",
+        "Infinite swap loops when duplicate values are not guarded",
+        "Returning n instead of n+1 when all positions 1..n are correctly filled"
+      ],
+      "follow_ups": [
+        {
+          "variant": "How would you return the first k missing positives instead of one?",
+          "angle": "Extends placement logic and post-processing",
+          "difficulty_delta": "harder"
+        },
+        {
+          "variant": "What if array writes are expensive and should be minimized?",
+          "angle": "Tradeoff between in-place swaps and auxiliary memory",
+          "difficulty_delta": "same"
+        }
+      ],
+      "meta": {
+        "source": "classic",
+        "author": "copilot-generated",
+        "created": "2026-04-22"
+      }
+    }
+  ]
+}
