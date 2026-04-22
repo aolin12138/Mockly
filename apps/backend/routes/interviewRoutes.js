@@ -660,6 +660,8 @@ router.post('/technical/save', async (req, res) => {
 
   const { conversationId, executionSummary, feedback, duration } = req.body;
   const userId = req.userId; // From authMiddleware
+  const technicalQuestionId = executionSummary?.questionId || null;
+  const technicalQuestionSnapshot = executionSummary?.questionSnapshot || null;
   const envelope = extractFeedbackEnvelope({
     feedbackPayload: feedback,
     rawPayload: req.body || {}
@@ -685,6 +687,8 @@ router.post('/technical/save', async (req, res) => {
         status,
         duration: durationSeconds, // Duration in seconds
         score: score || null,
+        technicalQuestionId,
+        technicalQuestionSnapshot,
         // Store execution summary in interviewPlan field (repurposed for technical)
         interviewPlan: executionSummary ? JSON.stringify(executionSummary) : null,
       }

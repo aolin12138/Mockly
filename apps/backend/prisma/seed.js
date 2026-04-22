@@ -32,124 +32,140 @@ async function main() {
   await prisma.question.deleteMany({});
   console.log('✓ Cleared existing questions');
 
-  // Seed: Longest Substring Without Repeating Characters
-  const longestSubstringQuestion = await prisma.question.create({
+  const firstQuestion = await prisma.question.create({
     data: {
-      slug: 'longest-substring-without-repeating-characters',
+      id: 'longest-substring-without-repeating-characters',
       title: 'Longest Substring Without Repeating Characters',
       difficulty: 'medium',
-      skillTargets: ['sliding-window', 'hash-table', 'string-manipulation'],
-      tags: ['leetcode-3', 'interview-classic'],
-      problemStatement: `Given a string s, find the length of the longest substring without repeating characters.
-
-A substring is a contiguous sequence of characters within a string.
-
-Examples:
-- Input: s = "abcabcbb", Output: 3 (Explanation: The answer is "abc", which has length 3.)
-- Input: s = "bbbbb", Output: 1 (Explanation: The answer is "b", which has length 1.)
-- Input: s = "pwwkew", Output: 3 (Explanation: The answer is "wke", which has length 3.)`,
+      topics: ['strings', 'sliding-window'],
+      pattern_tags: ['strings', 'sliding-window', 'hashmaps'],
+      languages_supported: ['python', 'js', 'java', 'cpp', 'go'],
+      estimated_time_min: 30,
+      problem_statement: `Given a string s, return the length of the longest substring without repeating characters.\nA substring is a contiguous sequence of characters.\nReturn 0 when the input string is empty.`,
+      examples: [
+        {
+          input: '"abcabcbb"',
+          output: '3',
+          explanation: 'The longest substring without repeated characters is "abc".',
+        },
+        {
+          input: '"bbbbb"',
+          output: '1',
+          explanation: 'Any valid substring contains only one unique character.',
+        },
+        {
+          input: '"pwwkew"',
+          output: '3',
+          explanation: 'A longest valid substring is "wke".',
+        },
+      ],
       constraints: [
         '0 <= s.length <= 5 * 10^4',
-        's consists of English letters, digits, symbols and spaces.',
-        'Time Complexity: O(n)',
-        'Space Complexity: O(min(m, n)) where m is the character set size',
+        's consists of English letters, digits, symbols, and spaces.',
       ],
-      boilerplate: {
-        javascript: `function lengthOfLongestSubstring(s) {
-  // Your solution here
-  // Return the length of the longest substring without repeating characters
-}`,
-        python: `def lengthOfLongestSubstring(s: str) -> int:
-    # Your solution here
-    # Return the length of the longest substring without repeating characters
-    pass`,
-        java: `public class Solution {
-    public int lengthOfLongestSubstring(String s) {
-        // Your solution here
-        // Return the length of the longest substring without repeating characters
-        return 0;
-    }
-}`,
+      hidden_tests: [
+        {
+          input: '""',
+          expected_output: '0',
+          description: 'empty input',
+        },
+        {
+          input: '" "',
+          expected_output: '1',
+          description: 'single space',
+        },
+        {
+          input: '"abba"',
+          expected_output: '2',
+          description: 'window reset',
+        },
+        {
+          input: '"tmmzuxt"',
+          expected_output: '5',
+          description: 'last seen update',
+        },
+        {
+          input: '"dvdf"',
+          expected_output: '3',
+          description: 'off by one',
+        },
+        {
+          input: '"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"',
+          expected_output: '62',
+          description: 'basic case',
+        },
+      ],
+      solutions: {
+        brute_force: {
+          approach: 'Check every substring and verify whether all characters in it are unique.',
+          time: 'O(n^2)',
+          space: 'O(n)',
+          code: `def solve(s: str) -> int:\n    best = 0\n    n = len(s)\n\n    for i in range(n):\n        seen = set()\n        for j in range(i, n):\n            if s[j] in seen:\n                break\n            seen.add(s[j])\n            best = max(best, j - i + 1)\n\n    return best`,
+        },
+        optimal: {
+          approach: 'Use a sliding window and a map of last-seen indices to move the left bound without rescanning.',
+          time: 'O(n)',
+          space: 'O(min(n, charset))',
+          code: `def solve(s: str) -> int:\n    left = 0\n    best = 0\n    last_seen = {}\n\n    for right, ch in enumerate(s):\n        if ch in last_seen and last_seen[ch] >= left:\n            left = last_seen[ch] + 1\n        last_seen[ch] = right\n        best = max(best, right - left + 1)\n\n    return best`,
+        },
       },
-      visibleTests: [
+      hint_framework: {
+        key_insights: [
+          'The current candidate substring must always contain unique characters.',
+          'When a repeated character appears, move the left bound to exclude the prior occurrence.',
+          'Track last-seen positions to move left directly instead of scanning.',
+        ],
+        common_misdirections: [
+          {
+            approach: 'Restart scanning from each character with nested loops',
+            note: 'Works on small inputs but does repeated work and misses the linear target.',
+          },
+          {
+            approach: 'Reset left to duplicate_index + 1 even when left is already ahead',
+            note: 'Can move the window backward and produce incorrect lengths.',
+          },
+        ],
+        tier_targets: {
+          '1': 'Nudge toward maintaining a moving valid substring window without naming the technique.',
+          '2': 'Name the sliding-window plus last-seen-index idea without giving update rules.',
+          '3': 'Explain how to update left and right bounds with last-seen checks, without code.',
+        },
+        never_reveal: [
+          'the exact code',
+          'the final complexity before derivation',
+          'the exact off-by-one index update as a direct instruction',
+        ],
+        expected_path: 'nested substring checks -> identify repeated rescan waste -> keep a valid moving window -> use last-seen map to jump left -> derive linear solution',
+      },
+      common_mistakes: [
+        'Moving left pointer backward when duplicate index is before the current window.',
+        'Computing window length as right - left instead of right - left + 1.',
+        'Updating last_seen after length update in a way that misses duplicate handling.',
+      ],
+      follow_ups: [
         {
-          id: 'v1',
-          input: 'abcabcbb',
-          expected: 3,
-          description: 'Input: "abcabcbb", Output: 3 (Substring "abc")',
+          variant: 'What if you must return the actual substring, not just its length?',
+          angle: 'Track best window boundaries',
+          difficulty_delta: 'harder',
         },
         {
-          id: 'v2',
-          input: 'bbbbb',
-          expected: 1,
-          description: 'Input: "bbbbb", Output: 1 (Substring "b")',
-        },
-        {
-          id: 'v3',
-          input: 'pwwkew',
-          expected: 3,
-          description: 'Input: "pwwkew", Output: 3 (Substring "wke")',
+          variant: 'What if characters are streamed one-by-one and memory is bounded?',
+          angle: 'Online processing constraints',
+          difficulty_delta: 'harder',
         },
       ],
-      hiddenTests: [
-        {
-          id: 'h1',
-          input: '',
-          expected: 0,
-          tags: ['empty_input'],
-        },
-        {
-          id: 'h2',
-          input: ' ',
-          expected: 1,
-          tags: ['whitespace'],
-        },
-        {
-          id: 'h3',
-          input: 'abba',
-          expected: 2,
-          tags: ['window_reset_bug'],
-        },
-        {
-          id: 'h4',
-          input: 'tmmzuxt',
-          expected: 5,
-          tags: ['last_seen_update_bug'],
-        },
-        {
-          id: 'h5',
-          input: 'dvdf',
-          expected: 3,
-          tags: ['off_by_one'],
-        },
-      ],
-      failureModes: [
-        'Incorrect window reset when encountering duplicate',
-        'Non-monotonic left pointer (moving backwards)',
-        'Incorrect last-seen character index tracking',
-        'Using O(n^2) substring scanning instead of sliding window',
-        'Off-by-one errors in length calculation',
-      ],
-      hints: [
-        'Level 1: Use a sliding window approach with two pointers (left and right)',
-        'Level 2: Maintain a hash map to track the last seen index of each character',
-        'Level 3: The left pointer should only move forward (monotonic invariant)',
-      ],
-      interviewerProbes: [
-        'Walk me through your solution with the example "abba"',
-        'What is the invariant of your sliding window?',
-        'Can you explain why the left pointer never moves backward?',
-        'What is the time and space complexity of your solution?',
-        'How would your solution handle edge cases like empty strings or single characters?',
-      ],
+      meta: {
+        source: 'classic',
+        author: 'mockly-seed',
+        created: '2026-04-21',
+      },
     },
   });
 
-  console.log('✓ Seeded question:', longestSubstringQuestion.slug);
+  console.log('✓ Seeded question:', firstQuestion.id);
   console.log('\n📊 Seed Summary:');
-  console.log(`✓ Created 1 question: "${longestSubstringQuestion.title}"`);
-  console.log(`✓ Visible tests: ${longestSubstringQuestion.visibleTests.length}`);
-  console.log(`✓ Hidden tests: ${longestSubstringQuestion.hiddenTests.length}`);
+  console.log(`✓ Created 1 question: "${firstQuestion.title}"`);
+  console.log(`✓ Hidden tests: ${firstQuestion.hidden_tests.length}`);
 }
 
 main()
