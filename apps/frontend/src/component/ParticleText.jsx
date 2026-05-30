@@ -463,29 +463,24 @@ export default function ParticleText({ scrollProgress = 0, globeOffset = { x: 0.
     function animate() {
       ctx.clearRect(0, 0, width, height);
 
-      // Get current scroll progress
+      // Get current scroll progress (only used for text particles)
       const progress = scrollProgressRef.current;
 
-      // Earth expansion based on scroll (1 to 3x size at full scroll)
-      const earthExpansionFactor = 1 + (progress * 2);
-      const currentEarthRadius = earthRadius * earthExpansionFactor;      // Earth fade out (invisible at 80% scroll)
-      const earthOpacity = Math.max(0, 1 - (progress * 1.25));
+      // Earth stays fixed - no expansion or fade on scroll
+      const currentEarthRadius = earthRadius;
 
       // Auto-rotate Earth
       rotationY += 0.0015;
 
-      // Mouse interaction removed - Earth rotates independently
-
-      // Update mouse influence (disabled during scroll)
-      const targetInfluence = (mouse.active && progress < 0.3) ? 1 : 0;
+      // Update mouse influence
+      const targetInfluence = mouse.active ? 1 : 0;
       mouseInfluence += (targetInfluence - mouseInfluence) * 0.08;
 
-      // Draw Earth sphere with expansion and fade
-      if (earthOpacity > 0.01) {
-        ctx.save();
-        ctx.globalAlpha = earthOpacity;
+      // Draw Earth sphere (always fully visible)
+      ctx.save();
+      ctx.globalAlpha = 1;
 
-        earthParticles.forEach(particle => {
+      earthParticles.forEach(particle => {
           const x = currentEarthRadius * Math.sin(particle.phi) * Math.cos(particle.theta);
           const y = currentEarthRadius * Math.sin(particle.phi) * Math.sin(particle.theta);
           const z = currentEarthRadius * Math.cos(particle.phi);
@@ -503,22 +498,18 @@ export default function ParticleText({ scrollProgress = 0, globeOffset = { x: 0.
         });
 
         ctx.restore();
-      }
 
-      // Companies fade out earlier (invisible at 60% scroll)
-      const companyOpacity = Math.max(0, 1 - (progress * 1.66));
-
-      // Draw company logos with trails
-      if (companyOpacity > 0.01) {
+      // Draw company logos with trails (always fully visible)
+      {
         ctx.save();
-        ctx.globalAlpha = companyOpacity;
+        ctx.globalAlpha = 1;
 
         companies.forEach(company => {
           // Calculate potential updated position for hover detection
           // We calculate the position WITHOUT updating angles first to check if mouse is over
 
           // Calculate current parameters
-          const radius = company.orbitRadius * earthExpansionFactor;
+          const radius = company.orbitRadius;
 
           // Use current angles for hit testing (before update)
           const hitX = radius * Math.cos(company.angleY);
@@ -663,7 +654,7 @@ export default function ParticleText({ scrollProgress = 0, globeOffset = { x: 0.
         ctx.restore();
       }
 
-      // MOCKLY text particles - reverse formation on scroll
+      // MOCKLY text particles - vanish/reassemble on scroll
       const textOpacity = Math.max(0, 1 - (progress * 1.5)); // Fade faster
 
       if (textOpacity > 0.01) {
