@@ -82,6 +82,16 @@ const Home = () => {
   const [typedQuestion, setTypedQuestion] = useState('');
   const [showAnswerArea, setShowAnswerArea] = useState(false);
   const [answer, setAnswer] = useState('');
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const progress = Math.min(1, window.scrollY / (window.innerHeight * 0.6));
+      setScrollProgress(progress);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const stars = useMemo(() => {
     return [...Array(50)].map((_, i) => ({
@@ -145,7 +155,7 @@ const Home = () => {
             className="absolute inset-0 dark:hidden pointer-events-none"
             style={{
               backgroundImage:
-                'radial-gradient(circle 48vmin at 66% 46%, rgba(255,255,255,1) 0 57%, rgba(255,255,255,0.98) 62%, rgba(255,255,255,0.78) 67%, rgba(255,255,255,0.2) 72%, rgba(255,255,255,0) 76%), linear-gradient(to top, rgba(37,99,235,0.42) 0%, rgba(37,99,235,0.34) 34%, rgba(16,185,129,0.17) 62%, rgba(255,255,255,0) 78%, rgba(255,255,255,0) 100%)'
+                'radial-gradient(circle 32vmin at 66% 46%, rgba(255,255,255,1) 0 75%, rgba(255,255,255,0.7) 83%, rgba(255,255,255,0.3) 91%, rgba(255,255,255,0) 100%), linear-gradient(to top, rgba(37,99,235,0.42) 0%, rgba(37,99,235,0.34) 34%, rgba(16,185,129,0.17) 62%, rgba(255,255,255,0) 78%, rgba(255,255,255,0) 100%)'
             }}
           />
 
@@ -175,7 +185,7 @@ const Home = () => {
             transition={{ duration: 2, ease: 'easeOut' }}
             className="absolute inset-0 w-full h-full pointer-events-none z-10 isolate"
           >
-            <ParticleText scrollProgress={0} globeOffset={{ x: 0.66, y: 0.46 }} theme={theme} />
+            <ParticleText scrollProgress={scrollProgress} globeOffset={{ x: 0.66, y: 0.46 }} theme={theme} />
           </motion.div>
 
           <div className="relative z-20 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 w-full pointer-events-none">
