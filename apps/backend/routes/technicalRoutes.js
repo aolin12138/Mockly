@@ -1,56 +1,13 @@
 import express from 'express';
-import { prisma } from '../prismaClient.js';
 import authMiddleware from '../middleware/authMiddleware.js';
+import { prisma } from '../prismaClient.js';
+import {
+  getRandomQuestion,
+  toPublicQuestionPayload,
+  toQuestionPayload,
+} from '../lib/technicalQuestions.js';
 
 const router = express.Router();
-
-function parseJson(value, fallback) {
-  if (value == null) return fallback;
-  if (typeof value === 'string') {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return fallback;
-    }
-  }
-  return value;
-}
-
-function toQuestionPayload(question) {
-  return {
-    id: question.id,
-    title: question.title,
-    difficulty: question.difficulty,
-    topics: parseJson(question.topics, []),
-    pattern_tags: parseJson(question.pattern_tags, []),
-    languages_supported: parseJson(question.languages_supported, []),
-    estimated_time_min: question.estimated_time_min,
-    problem_statement: question.problem_statement,
-    examples: parseJson(question.examples, []),
-    constraints: parseJson(question.constraints, []),
-    hidden_tests: parseJson(question.hidden_tests, []),
-    solutions: parseJson(question.solutions, {}),
-    hint_framework: parseJson(question.hint_framework, {}),
-    common_mistakes: parseJson(question.common_mistakes, []),
-    follow_ups: parseJson(question.follow_ups, []),
-    meta: parseJson(question.meta, {}),
-  };
-}
-
-function toPublicQuestionPayload(question) {
-  return {
-    id: question.id,
-    title: question.title,
-    difficulty: question.difficulty,
-    topics: parseJson(question.topics, []),
-    pattern_tags: parseJson(question.pattern_tags, []),
-    languages_supported: parseJson(question.languages_supported, []),
-    estimated_time_min: question.estimated_time_min,
-    problem_statement: question.problem_statement,
-    examples: parseJson(question.examples, []),
-    constraints: parseJson(question.constraints, []),
-  };
-}
 
 /**
  * GET /api/questions/random
@@ -59,26 +16,13 @@ function toPublicQuestionPayload(question) {
  */
 router.get('/random', authMiddleware, async (req, res) => {
   try {
-    const count = await prisma.question.count();
-
-    if (count === 0) {
+    const question = await getRandomQuestion();
+    if (!question) {
       return res.status(404).json({
         error: 'No questions available',
       });
     }
-
-    const randomIndex = Math.floor(Math.random() * count);
-    const question = await prisma.question.findMany({
-      skip: randomIndex,
-      take: 1,
-    });
-
-    if (!question.length) {
-      return res.status(404).json({
-        error: 'Question not found',
-      });
-    }
-    res.json(toPublicQuestionPayload(question[0]));
+    res.json(toPublicQuestionPayload(question));
   } catch (error) {
     console.error('Error fetching random question:', error);
     res.status(500).json({
