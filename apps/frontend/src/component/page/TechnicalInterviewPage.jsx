@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import MonacoEditor from 'react-monaco-editor';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '../ui/Modal.jsx';
 import { ArrowLeft, Play, RotateCcw, Check, X, ChevronDown, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -49,10 +49,10 @@ const LANGUAGE_STARTERS = {
 const getStarterCode = (lang) => LANGUAGE_STARTERS[lang] || LANGUAGE_STARTERS.javascript;
 
 const TechnicalInterviewPage = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { sessionId: urlSessionId } = useParams();
-  // Generate a temp session ID if not provided in URL
-  const sessionId = urlSessionId || `tech_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const sessionId = urlSessionId || '';
   const initialPreferredLanguage = (() => {
     try {
       const raw = localStorage.getItem('technicalSessionConfig');
@@ -66,6 +66,7 @@ const TechnicalInterviewPage = () => {
 
   const pendingUpdatesRef = useRef([]);
   const conversationSessionRef = useRef(null);
+  const sessionFinalizedRef = useRef(false);
   const hasStartedSessionRef = useRef(false);
   const hasSentInitialContextRef = useRef(false);
   const codeRef = useRef('');
@@ -222,6 +223,38 @@ const TechnicalInterviewPage = () => {
     }
   };
 
+  const expireSession = useCallback(async ({ keepalive = false } = {}) => {
+    if (!sessionId || sessionFinalizedRef.current) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return;
+    }
+
+    sessionFinalizedRef.current = true;
+    localStorage.removeItem('currentTechnicalSessionId');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/interview/session/${sessionId}/cancel`, {
+        method: 'POST',
+        keepalive,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok && response.status !== 404) {
+        throw new Error(`Failed to expire technical session (${response.status})`);
+      }
+    } catch (error) {
+      sessionFinalizedRef.current = false;
+      throw error;
+    }
+  }, [API_BASE_URL, sessionId]);
+
   useEffect(() => {
     codeRef.current = code;
   }, [code]);
@@ -238,46 +271,45 @@ const TechnicalInterviewPage = () => {
     testResultsRef.current = testResults;
   }, [testResults]);
 
-  // Auth guard and fetch question
-  useEffect(() => {
-    const token = ensureAuthenticated();
-    if (!token) return;
-
-    fetchQuestion();
-
-    // Warn user when trying to leave the page
-    const handleBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = '';
-      setShowExitWarning(true);
-      return '';
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [navigate]);
-
-  const fetchQuestion = async () => {
+  const fetchQuestion = useCallback(async (token) => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await authFetch('http://localhost:3000/api/questions/random', {
+      if (!sessionId) {
+        throw new Error('Missing technical session ID');
+      }
+
+      const stateQuestion = location.state?.question;
+      if (stateQuestion?.id) {
+        setQuestion(stateQuestion);
+        setCode(getStarterCode(languageRef.current));
+        setStartTime(Date.now());
+        return;
+      }
+
+      const response = await authFetch(`${API_BASE_URL}/api/interview/session/${sessionId}`, {
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch question: ${response.statusText}`);
+        if (response.status === 410) {
+          localStorage.removeItem('currentTechnicalSessionId');
+          throw new Error('This technical session expired. Start a new one from the dashboard.');
+        }
+        throw new Error(`Failed to fetch technical session: ${response.statusText}`);
       }
 
       const data = await response.json();
-      setQuestion(data);
+      if (!data.technicalQuestionSnapshot?.id) {
+        throw new Error('Technical session is missing its question');
+      }
+      setQuestion(data.technicalQuestionSnapshot);
 
-      const initialCode = getStarterCode(language);
+      const initialCode = getStarterCode(languageRef.current);
       setCode(initialCode);
 
       // Start timing the interview from when question loads
@@ -292,7 +324,34 @@ const TechnicalInterviewPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE_URL, location.state, sessionId]);
+
+  // Auth guard and fetch question
+  useEffect(() => {
+    const token = ensureAuthenticated();
+    if (!token) return;
+
+    fetchQuestion(token);
+
+    // Warn user when trying to leave the page
+    const handleBeforeUnload = (e) => {
+      if (sessionFinalizedRef.current) {
+        return undefined;
+      }
+
+      expireSession({ keepalive: true }).catch((error) => {
+        console.error('Failed to expire technical session during page unload:', error);
+      });
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [expireSession, fetchQuestion]);
 
   const handleLanguageChange = (newLanguage) => {
     setLanguage(newLanguage);
@@ -384,9 +443,17 @@ const TechnicalInterviewPage = () => {
   };
 
   const handleBack = () => {
-    if (window.confirm('Leave the technical interview?')) {
-      navigate('/dashboard');
+    setShowExitWarning(true);
+  };
+
+  const handleConfirmExit = async () => {
+    setShowExitWarning(false);
+    try {
+      await expireSession();
+    } catch (err) {
+      console.error('Failed to expire technical session:', err);
     }
+    navigate('/dashboard');
   };
 
   const handleEndInterview = async () => {
@@ -492,6 +559,7 @@ const TechnicalInterviewPage = () => {
       console.log(`Interview duration: ${durationSeconds} seconds`);
 
       // Navigate to loading page - it will handle the webhook call and redirect to results
+      sessionFinalizedRef.current = true;
       navigate('/loading', {
         state: {
           type: 'technical',
@@ -937,9 +1005,26 @@ const TechnicalInterviewPage = () => {
           )}
         </AnimatePresence>
       </div>
+      <Modal
+        isOpen={showExitWarning}
+        onClose={() => setShowExitWarning(false)}
+        title="⚠️ Leave Technical Interview?"
+        type="warning"
+        primaryButtonText="Leave & Expire"
+        secondaryButtonText="Keep Interviewing"
+        onPrimaryClick={handleConfirmExit}
+        onSecondaryClick={() => setShowExitWarning(false)}
+        showCloseButton={true}
+      >
+        <div className="space-y-3 text-slate-300 text-sm">
+          <p>If you leave now, this technical session will be <span className="text-amber-200 font-semibold">marked as expired</span> and removed from your dashboard history.</p>
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+            <p className="text-amber-100">Start a new technical interview from the dashboard whenever you're ready.</p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
 
 export default TechnicalInterviewPage;
-

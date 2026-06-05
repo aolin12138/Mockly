@@ -1,5 +1,6 @@
 import express from 'express';
 import { prisma } from '../prismaClient.js';
+import { expireStaleTechnicalSessions } from '../lib/sessionLifecycle.js';
 
 const router = express.Router();
 
@@ -33,9 +34,14 @@ router.get('/sessions', async (req, res) => {
   const userId = req.userId; // From authMiddleware
 
   try {
+    await expireStaleTechnicalSessions(prisma, { userId });
+
     const sessions = await prisma.session.findMany({
       where: {
-        userId: userId
+        userId: userId,
+        status: {
+          not: 'expired'
+        }
       },
       orderBy: {
         createdAt: 'desc'

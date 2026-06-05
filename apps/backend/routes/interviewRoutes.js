@@ -7,8 +7,10 @@ const roleRubrics = require('../prompts/role_rubrics.json');
 import { prisma } from '../prismaClient.js';
 import { decrypt } from '../lib/encryption.js';
 import { extractCvText } from '../lib/cvTextExtractor.js';
+import { expireStaleTechnicalSessions, getAbandonedSessionStatus } from '../lib/sessionLifecycle.js';
 import { setSessionOwner } from '../lib/sessionOwnerStore.js';
 import { setSessionProgress } from '../lib/sessionProgressStore.js';
+import { getRandomQuestion, toPublicQuestionPayload } from '../lib/technicalQuestions.js';
 
 const PROMPT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7';
 const AGENT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
@@ -133,6 +135,41 @@ async function resolveElevenLabsKey(userId, interviewMode) {
   }
 
   throw new Error('ElevenLabs API key required. Please connect your key in Settings.');
+}
+
+async function ensurePendingBehavioralSession({
+  sessionId,
+  userId,
+  agentId = undefined,
+  interviewPlan = undefined,
+  interviewPrompt = undefined,
+  feedbackPrompt = undefined
+}) {
+  const updateData = {
+    userId,
+    interviewType: 'Behavioural'
+  };
+
+  if (agentId !== undefined) updateData.agentId = agentId || null;
+  if (interviewPlan !== undefined) updateData.interviewPlan = interviewPlan || null;
+  if (interviewPrompt !== undefined) updateData.interviewPrompt = interviewPrompt || null;
+  if (feedbackPrompt !== undefined) updateData.feedbackPrompt = feedbackPrompt || null;
+
+  return prisma.session.upsert({
+    where: { id: sessionId },
+    update: updateData,
+    create: {
+      id: sessionId,
+      userId,
+      interviewType: 'Behavioural',
+      agentId: agentId || null,
+      interviewPlan: interviewPlan || null,
+      interviewPrompt: interviewPrompt || null,
+      feedbackPrompt: feedbackPrompt || null,
+      feedback: null,
+      status: 'not_started'
+    }
+  });
 }
 
 const buildFeedbackCallbackUrl = (req, sessionId) => {
@@ -415,6 +452,8 @@ router.get('/user/interviews', async (req, res) => {
   const orderByColumn = sortColumnMap[sortBy] || 'createdAt';
 
   try {
+    await expireStaleTechnicalSessions(prisma, { userId });
+
     const mapSession = (session) => {
       let score = session.score || 0;
       let topic = '';
@@ -461,13 +500,25 @@ router.get('/user/interviews', async (req, res) => {
     };
 
     const sessions = await prisma.session.findMany({
-      where: { userId },
+      where: {
+        userId,
+        status: {
+          not: 'expired'
+        }
+      },
       orderBy: { [orderByColumn]: sortDir },
       skip: offset,
       take: limit
     });
     const interviews = sessions.map(mapSession);
-    const totalCount = await prisma.session.count({ where: { userId } });
+    const totalCount = await prisma.session.count({
+      where: {
+        userId,
+        status: {
+          not: 'expired'
+        }
+      }
+    });
 
     const hasMore = offset + limit < totalCount;
     res.json({ interviews, hasMore });
@@ -578,6 +629,8 @@ router.post('/session', async (req, res) => {
   }
 
   const setupWebhookPayload = {
+    userId,
+    user_id: userId,
     session_id: tempSessionId,
     session: interviewConfig.session,
     candidate: candidatePayload,
@@ -602,6 +655,16 @@ router.post('/session', async (req, res) => {
     }
   } catch (err) {
     return res.status(403).json({ error: err.message });
+  }
+
+  try {
+    await ensurePendingBehavioralSession({
+      sessionId: tempSessionId,
+      userId
+    });
+  } catch (error) {
+    console.error(`Failed to persist pending behavioral session ${tempSessionId}:`, error.message);
+    return res.status(500).json({ error: 'Failed to create session', details: error.message });
   }
 
   // Pre-serialize payload BEFORE sending response to avoid blocking
@@ -630,7 +693,7 @@ router.post('/session', async (req, res) => {
   });
 });
 
-// Technical session route - creates temporary session (NOT saved to DB)
+// Technical session route - selects question and creates persisted session
 router.post('/technical/session', async (req, res) => {
   console.log("Request received at /technical/session");
 
@@ -642,31 +705,51 @@ router.post('/technical/session', async (req, res) => {
   const userId = req.userId; // From authMiddleware
   console.log("User ID from auth middleware:", userId);
 
-  // Generate a temporary session ID (UUID-like)
-  const tempSessionId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  try {
+    const question = await getRandomQuestion();
+    if (!question) {
+      return res.status(404).json({ error: 'No technical questions available' });
+    }
 
-  console.log(`Created temporary technical session ${tempSessionId} for user ${userId}`);
-  console.log("Session config:", JSON.stringify(interviewConfig, null, 2));
+    const publicQuestion = toPublicQuestionPayload(question);
+    const session = await prisma.session.create({
+      data: {
+        userId,
+        interviewType: 'Technical',
+        technicalQuestionId: question.id,
+        technicalQuestionSnapshot: publicQuestion,
+        status: 'pending',
+      }
+    });
 
-  // Return session ID immediately - NO DATABASE SAVE, NO WEBHOOK
-  res.json({
-    sessionId: tempSessionId
-  });
+    console.log(`Created technical session ${session.id} for user ${userId}`);
+    console.log("Session config:", JSON.stringify(interviewConfig, null, 2));
+
+    res.json({
+      sessionId: session.id,
+      question: publicQuestion
+    });
+  } catch (error) {
+    console.error('Error creating technical session:', error);
+    res.status(500).json({ error: 'Failed to create technical session', details: error.message });
+  }
 });
 
 // Save technical session with feedback to database
 router.post('/technical/save', async (req, res) => {
   console.log("Request received at /technical/save");
 
-  const { conversationId, executionSummary, feedback, duration } = req.body;
+  const { sessionId, conversationId, executionSummary, feedback, duration } = req.body;
   const userId = req.userId; // From authMiddleware
-  const technicalQuestionId = executionSummary?.questionId || null;
-  const technicalQuestionSnapshot = executionSummary?.questionSnapshot || null;
   const envelope = extractFeedbackEnvelope({
     feedbackPayload: feedback,
     rawPayload: req.body || {}
   });
   const durationSeconds = normalizeDurationSeconds(duration) ?? envelope.durationSeconds;
+
+  if (!sessionId) {
+    return res.status(400).json({ error: 'Session ID is required' });
+  }
 
   let score = null;
   if (envelope.feedbackForScoring) {
@@ -677,20 +760,29 @@ router.post('/technical/save', async (req, res) => {
   const status = getSessionStatus({ feedback: envelope.feedbackForScoring, durationSeconds });
 
   try {
-    // Create session in database with feedback
-    const session = await prisma.session.create({
-      data: {
-        userId: userId,
+    const existingSession = await prisma.session.findFirst({
+      where: {
+        id: sessionId,
+        userId,
         interviewType: 'Technical',
+      }
+    });
+
+    if (!existingSession) {
+      return res.status(404).json({ error: 'Technical session not found' });
+    }
+
+    const session = await prisma.session.update({
+      where: { id: existingSession.id },
+      data: {
         feedback: envelope.storedFeedback || null,
         conversationId: conversationId || null,
         status,
         duration: durationSeconds, // Duration in seconds
         score: score || null,
-        technicalQuestionId,
-        technicalQuestionSnapshot,
-        // Store execution summary in interviewPlan field (repurposed for technical)
-        interviewPlan: executionSummary ? JSON.stringify(executionSummary) : null,
+        technicalQuestionId: existingSession.technicalQuestionId || executionSummary?.questionId || null,
+        technicalQuestionSnapshot: existingSession.technicalQuestionSnapshot || executionSummary?.questionSnapshot || null,
+        interviewPlan: executionSummary ? JSON.stringify(executionSummary) : existingSession.interviewPlan,
       }
     });
 
@@ -876,6 +968,8 @@ router.post('/session/:sessionId/generate-technical-feedback', async (req, res) 
   const userId = req.userId;
 
   try {
+    await expireStaleTechnicalSessions(prisma, { userId });
+
     const session = await prisma.session.findFirst({
       where: {
         id: sessionId,
@@ -955,6 +1049,10 @@ router.patch('/session/:sessionId', async (req, res) => {
       return res.status(404).json({ error: 'Session not found' });
     }
 
+    if (session.interviewType === 'Technical' && session.status === 'expired') {
+      return res.status(410).json({ error: 'Technical session expired' });
+    }
+
     const updateData = {};
     const normalizedDuration = normalizeDurationSeconds(duration);
     if (normalizedDuration != null) updateData.duration = normalizedDuration;
@@ -1023,6 +1121,9 @@ router.get('/session/:sessionId', async (req, res) => {
       interviewPrompt: session.interviewPrompt,
       feedbackPrompt: session.feedbackPrompt,
       feedback: session.feedback,
+      interviewType: session.interviewType,
+      technicalQuestionId: session.technicalQuestionId,
+      technicalQuestionSnapshot: session.technicalQuestionSnapshot,
       status: session.status,
       duration: session.duration,
       ready
@@ -1243,17 +1344,28 @@ router.post('/session/:sessionId/cancel', async (req, res) => {
   const userId = req.userId;
 
   try {
+    const existingSession = await prisma.session.findFirst({
+      where: {
+        id: sessionId,
+        userId
+      }
+    });
+
+    if (!existingSession) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
     const session = await prisma.session.update({
       where: {
         id: sessionId
       },
       data: {
-        status: 'cancelled'
+        status: getAbandonedSessionStatus(existingSession)
       }
     });
 
-    console.log(`Session ${sessionId} cancelled by user ${userId}`);
-    res.json({ success: true, sessionId: session.id });
+    console.log(`Session ${sessionId} marked as ${session.status} by user ${userId}`);
+    res.json({ success: true, sessionId: session.id, status: session.status });
   } catch (error) {
     console.error('Error cancelling session:', error);
     res.status(500).json({ error: 'Failed to cancel session', details: error.message });
@@ -1349,6 +1461,7 @@ router.post('/session/quick-start', async (req, res) => {
 
   // Generate a temporary session ID (UUID-like)
   const tempSessionId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  setSessionOwner(tempSessionId, userId);
 
   try {
     // Fetch last agent
@@ -1379,6 +1492,7 @@ router.post('/session/quick-start', async (req, res) => {
     // Prepare quick-start config
     const quickStartConfig = {
       userId: userId,
+      user_id: userId,
       session_id: tempSessionId,
       agent_id: agent.id,
       interview_mode: 'behavioral',
@@ -1389,6 +1503,12 @@ router.post('/session/quick-start', async (req, res) => {
     console.log("----- QUICK-START SESSION INITIATED -----");
     console.log(JSON.stringify(quickStartConfig, null, 2));
     console.log("----------------------------------------");
+
+    await ensurePendingBehavioralSession({
+      sessionId: tempSessionId,
+      userId,
+      agentId: agent.id
+    });
 
     // Trigger webhook for quick-start
     fetch('http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7', {

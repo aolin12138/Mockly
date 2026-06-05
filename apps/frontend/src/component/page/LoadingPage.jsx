@@ -115,13 +115,16 @@ export function LoadingPage() {
       return;
     }
 
-    // Ensure we have a session ID (generate one if not provided)
-    let finalSessionId = stateSessionId || `tech_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    let finalSessionId = stateSessionId;
     console.log('[LoadingPage] Initial session ID:', finalSessionId);
 
     let feedbackData = null;
 
     try {
+      if (!stateSessionId) {
+        throw new Error('Missing technical session ID.');
+      }
+
       setStatus('Sending to AI Evaluator');
       setSubStatus('Preparing your interview data…');
 
@@ -162,6 +165,7 @@ export function LoadingPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            sessionId: finalSessionId,
             conversationId,
             executionSummary,
             feedback: feedbackData,

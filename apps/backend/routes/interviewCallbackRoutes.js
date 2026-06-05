@@ -25,6 +25,7 @@ const feedbackEventStore = new Map();
 const AGENT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
 const ELEVENLABS_CONVAI_BASE_URL = 'https://api.elevenlabs.io/v1/convai';
 const CREDIT_TOOL_NAME = 'getCreditStatus';
+const COMPLETE_INTERVIEW_TOOL_NAME = 'completeInterview';
 
 const CREDIT_TOOL_WARNING_MESSAGE = 'Credit-aware wrap-up may be unavailable for this session. If your remaining credits are low, the interview could end abruptly.';
 const FEEDBACK_CALLBACK_SECRET = process.env.FEEDBACK_CALLBACK_SECRET || '';
@@ -51,6 +52,18 @@ const buildCreditToolConfig = () => ({
   }
 });
 
+const buildCompleteInterviewToolConfig = () => ({
+  type: 'client',
+  name: COMPLETE_INTERVIEW_TOOL_NAME,
+  description: 'Finish the interview in the app. Use this when the interview is truly complete, instead of any built-in end-call or hang-up action.',
+  expects_response: true,
+  parameters: {
+    type: 'object',
+    properties: {},
+    required: []
+  }
+});
+
 const normalizeToolList = (payload) => {
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload?.tools)) return payload.tools;
@@ -62,6 +75,13 @@ const findMatchingCreditTool = (tools) => {
   return tools.find((tool) => {
     const cfg = tool?.tool_config || {};
     return cfg.type === 'client' && cfg.name === CREDIT_TOOL_NAME;
+  }) || null;
+};
+
+const findMatchingCompleteInterviewTool = (tools) => {
+  return tools.find((tool) => {
+    const cfg = tool?.tool_config || {};
+    return cfg.type === 'client' && cfg.name === COMPLETE_INTERVIEW_TOOL_NAME;
   }) || null;
 };
 
@@ -130,8 +150,48 @@ async function ensureCreditToolAttachedForAgent({ userId, agentId }) {
       throw new Error('Credit tool ID missing after lookup/create');
     }
 
+    let needsPatch = false;
     if (!mergedToolIds.includes(toolId)) {
       mergedToolIds.push(toolId);
+      needsPatch = true;
+      console.log('[credit_tool_attached]', JSON.stringify({ userId, agentId, toolId }));
+    }
+
+    let completionToolReady = true;
+    try {
+      let completionTool = findMatchingCompleteInterviewTool(allTools);
+      if (!completionTool) {
+        completionTool = await elevenLabsRequest(apiKey, '/tools', {
+          method: 'POST',
+          body: {
+            tool_config: buildCompleteInterviewToolConfig()
+          }
+        });
+        console.log('[complete_interview_tool_created]', JSON.stringify({ userId, agentId, toolId: completionTool?.id || null }));
+      } else {
+        console.log('[complete_interview_tool_found]', JSON.stringify({ userId, agentId, toolId: completionTool.id }));
+      }
+
+      const completionToolId = completionTool?.id;
+      if (!completionToolId) {
+        throw new Error('Complete interview tool ID missing after lookup/create');
+      }
+
+      if (!mergedToolIds.includes(completionToolId)) {
+        mergedToolIds.push(completionToolId);
+        needsPatch = true;
+        console.log('[complete_interview_tool_attached]', JSON.stringify({ userId, agentId, toolId: completionToolId }));
+      }
+    } catch (error) {
+      completionToolReady = false;
+      console.error('[complete_interview_tool_soft_fail]', JSON.stringify({
+        userId,
+        agentId,
+        message: error?.message || 'Unknown error'
+      }));
+    }
+
+    if (needsPatch) {
       await elevenLabsRequest(apiKey, `/agents/${agentId}`, {
         method: 'PATCH',
         body: {
@@ -145,10 +205,9 @@ async function ensureCreditToolAttachedForAgent({ userId, agentId }) {
           }
         }
       });
-      console.log('[credit_tool_attached]', JSON.stringify({ userId, agentId, toolId }));
     }
 
-    return { toolReady: true, toolId };
+    return { toolReady: true, toolId, completionToolReady };
   } catch (error) {
     console.error('[credit_tool_soft_fail]', JSON.stringify({
       userId,
@@ -175,8 +234,18 @@ async function ensurePersistedBehavioralSession({
     return existingId;
   }
 
-  const session = await prisma.session.create({
-    data: {
+  const session = await prisma.session.upsert({
+    where: { id: tempSessionId },
+    update: {
+      userId,
+      interviewType: 'Behavioural',
+      agentId: agentId || null,
+      interviewPlan: interviewPlan || null,
+      interviewPrompt: interviewPrompt || null,
+      feedbackPrompt: feedbackPrompt || null
+    },
+    create: {
+      id: tempSessionId,
       userId,
       interviewType: 'Behavioural',
       agentId: agentId || null,
@@ -478,9 +547,6 @@ router.post('/session/:sessionId/callback', async (req, res) => {
   const rootBody = Array.isArray(rawBody) ? (rawBody[0] || {}) : rawBody;
   const dataBody = rootBody?.data && typeof rootBody.data === 'object' ? rootBody.data : {};
   const payloadBody = { ...dataBody, ...rootBody };
-
-  let callbackAgentId = payloadBody.agent_id || payloadBody.agentId || null;
-  let callbackUserId = payloadBody.userId || payloadBody.user_id || getSessionOwner(sessionId) || null;
   const interviewPromptValue = payloadBody.interview_prompt || payloadBody.interview_primpot || undefined;
   const feedbackPromptValue = payloadBody.feedback_prompt_final || payloadBody.feedback_prompt || undefined;
   const firstMessageValue = payloadBody.first_message || payloadBody.firstMessage || undefined;
@@ -488,13 +554,21 @@ router.post('/session/:sessionId/callback', async (req, res) => {
 
   console.log('🔔 Callback received for sessionId:', sessionId);
   console.log('📦 Callback payload keys:', Object.keys(payloadBody || {}));
-  console.log('📦 agent_id from callback:', callbackAgentId, '| interview_prompt exists:', !!interviewPromptValue);
+  console.log('📦 agent_id from callback:', payloadBody.agent_id || payloadBody.agentId || null, '| interview_prompt exists:', !!interviewPromptValue);
   console.log('📦 cv exists:', !!cvValue, '| cv length:', cvValue?.length || 0);
 
   try {
     if (!sessionId) {
       return res.status(400).json({ error: 'Missing sessionId' });
     }
+
+    const persistedSession = await prisma.session.findUnique({
+      where: { id: sessionId },
+      select: { userId: true, agentId: true }
+    });
+
+    let callbackAgentId = payloadBody.agent_id || payloadBody.agentId || persistedSession?.agentId || null;
+    let callbackUserId = payloadBody.userId || payloadBody.user_id || persistedSession?.userId || getSessionOwner(sessionId) || null;
 
     // Resolve agent_id from DB only when callback did not provide one.
     if (!callbackAgentId && callbackUserId) {

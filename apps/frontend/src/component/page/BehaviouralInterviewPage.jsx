@@ -39,6 +39,17 @@ const COMPANY_COLORS = {
   default: ['#2792DC', '#9CE6E6'],
 };
 
+const COMPLETION_TOOL_NAMES = new Set([
+  'completeInterview',
+  'complete_interview',
+  'endCall',
+  'end_call',
+  'endConversation',
+  'end_conversation',
+  'hangup',
+  'hang_up'
+]);
+
 /* ---------- Interview page with ElevenLabs Agent ---------- */
 
 export default function BehaviouralInterviewPage() {
@@ -58,6 +69,10 @@ export default function BehaviouralInterviewPage() {
   const [creditToolWarning, setCreditToolWarning] = useState('');
   const [persistedSessionId, setPersistedSessionId] = useState(localStorage.getItem('currentPersistedSessionId') || null);
   const workflowTriggeredRef = useRef(false); // Prevent duplicate workflow triggers
+  const hasConnectedRef = useRef(false);
+  const sessionEndedIntentionallyRef = useRef(false);
+  const triggerSessionEndWorkflowRef = useRef(async () => {});
+  const conversationSessionRef = useRef(null);
   const showDevControls = import.meta.env.DEV && import.meta.env.VITE_ENABLE_INTERVIEW_TEST_MODE === 'true';
   const selectedDurationMin = Math.max(15, Number(localStorage.getItem('interviewDurationMin')) || 15);
 
@@ -162,12 +177,37 @@ export default function BehaviouralInterviewPage() {
     loadSession();
   }, [sessionId]);
 
+  useEffect(() => {
+    hasConnectedRef.current = hasConnected;
+  }, [hasConnected]);
+
+  useEffect(() => {
+    sessionEndedIntentionallyRef.current = sessionEndedIntentionally;
+  }, [sessionEndedIntentionally]);
+
   // Get selected company + CV from localStorage
   const selectedCompany =
     (typeof window !== 'undefined' && window.localStorage.getItem('selectedCompany')) || 'default';
   const candidateCv = getStoredCv();
 
   const orbColors = COMPANY_COLORS[selectedCompany] || COMPANY_COLORS.default;
+
+  const markIntentionalSessionEnd = (reason) => {
+    console.log(`[behavioural] Marking intentional session end (${reason})`);
+    setSessionEndedIntentionally(true);
+    sessionEndedIntentionallyRef.current = true;
+  };
+
+  const looksLikeCompletionTool = (event) => {
+    const payload = event?.agent_tool_request || event || {};
+    const rawName = payload?.tool_name || '';
+    const toolName = String(rawName).trim();
+    const normalized = toolName.toLowerCase();
+    if (COMPLETION_TOOL_NAMES.has(toolName) || COMPLETION_TOOL_NAMES.has(normalized)) {
+      return true;
+    }
+    return normalized.includes('end') && (normalized.includes('call') || normalized.includes('conversation') || normalized.includes('interview'));
+  };
 
   // ElevenLabs conversation hook
   const conversation = useConversation({
@@ -188,20 +228,51 @@ export default function BehaviouralInterviewPage() {
             error: 'credit_status_unavailable'
           };
         }
+      },
+      completeInterview: async () => {
+        markIntentionalSessionEnd('agent-client-tool');
+        setShowDisconnectWarning(false);
+        setTimeout(async () => {
+          try {
+            if (conversation.status === 'connected') {
+              await conversation.endSession();
+            } else if (!workflowTriggeredRef.current) {
+              await triggerSessionEndWorkflowRef.current('agent-client-tool-disconnected');
+            }
+          } catch (error) {
+            console.error('Failed to complete interview from agent tool:', error);
+            setSessionEndedIntentionally(false);
+            sessionEndedIntentionallyRef.current = false;
+            workflowTriggeredRef.current = false;
+          }
+        }, 0);
+        return { success: true };
       }
     },
     onConnect: () => {
       console.log('Agent connected');
       setHasConnected(true);
+      hasConnectedRef.current = true;
       setIsConnecting(false);
     },
     onDisconnect: () => {
-      console.log('Agent disconnected, intentional:', sessionEndedIntentionally);
+      const endedIntentionally = sessionEndedIntentionallyRef.current;
+      const hadConnected = hasConnectedRef.current;
+      console.log('Agent disconnected, intentional:', endedIntentionally);
       setIsConnecting(false);
+      if (hadConnected && endedIntentionally && !workflowTriggeredRef.current) {
+        triggerSessionEndWorkflowRef.current('disconnect-callback');
+        return;
+      }
       // If disconnected unexpectedly (not by user action), show warning
-      if (hasConnected && !sessionEndedIntentionally && !workflowTriggeredRef.current) {
+      if (hadConnected && !endedIntentionally && !workflowTriggeredRef.current) {
         console.warn('Unexpected disconnect detected');
         setShowDisconnectWarning(true);
+      }
+    },
+    onAgentToolRequest: (event) => {
+      if (looksLikeCompletionTool(event)) {
+        markIntentionalSessionEnd('agent-tool-request');
       }
     },
     onMessage: (message) => {
@@ -266,7 +337,7 @@ export default function BehaviouralInterviewPage() {
 
   const linkConversationToSession = async (platformSessionId, elevenConversationId) => {
     const token = ensureAuthenticated();
-    if (!token || !platformSessionId || !elevenConversationId || platformSessionId.startsWith('temp_')) {
+    if (!token || !platformSessionId || !elevenConversationId) {
       return;
     }
 
@@ -281,6 +352,43 @@ export default function BehaviouralInterviewPage() {
     });
   };
 
+  const persistCompletedSession = async ({ sessionId: platformSessionId, durationSeconds }) => {
+    const token = ensureAuthenticated();
+    if (!token || !platformSessionId) {
+      return platformSessionId;
+    }
+
+    const elevenConversationId =
+      conversationSessionRef.current?.getId?.() ||
+      localStorage.getItem('currentConversationId') ||
+      null;
+
+    const saveResponse = await authFetch(`${API_BASE_URL}/api/interview/behavioral/save`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sessionId: platformSessionId,
+        agentId: agentId || localStorage.getItem('currentAgentId') || null,
+        conversationId: elevenConversationId,
+        duration: durationSeconds,
+        feedback: null,
+      }),
+    });
+
+    if (!saveResponse.ok) {
+      const errorText = await saveResponse.text();
+      throw new Error(errorText || `Failed to persist completed session (${saveResponse.status})`);
+    }
+
+    const saveResult = await saveResponse.json();
+    const persistedId = saveResult?.sessionId || platformSessionId;
+    localStorage.setItem('currentPersistedSessionId', persistedId);
+    localStorage.setItem('currentSessionId', persistedId);
+    return persistedId;
+  };
+
   // Workflow: Save feedback and navigate to results
   const handleSessionEndWorkflow = async () => {
     setIsSubmitting(true);
@@ -289,7 +397,12 @@ export default function BehaviouralInterviewPage() {
       const durationSeconds = startTime ? Math.round((endTime - startTime) / 1000) : null;
       console.log(`Behavioural interview duration: ${durationSeconds} seconds`);
 
-      const finalSessionId = persistedSessionId || localStorage.getItem('currentPersistedSessionId') || sessionId;
+      const baseSessionId = persistedSessionId || localStorage.getItem('currentPersistedSessionId') || sessionId;
+      const finalSessionId = await persistCompletedSession({
+        sessionId: baseSessionId,
+        durationSeconds
+      });
+      setPersistedSessionId(finalSessionId);
 
       navigate('/loading', {
         replace: true,
@@ -321,20 +434,22 @@ export default function BehaviouralInterviewPage() {
     await handleSessionEndWorkflow();
   };
 
+  triggerSessionEndWorkflowRef.current = triggerSessionEndWorkflow;
+
   // Button: End conversation only
   const handleCompleteInterview = async () => {
     setIsSubmitting(true);
     try {
-      setSessionEndedIntentionally(true);
+      markIntentionalSessionEnd('complete-button');
       if (conversation.status === 'connected') {
         await conversation.endSession();
       } else if (!workflowTriggeredRef.current) {
         await triggerSessionEndWorkflow('complete-button-disconnected');
       }
-      // Workflow will trigger automatically on session end
     } catch (error) {
       console.error('Failed to complete interview:', error);
       setSessionEndedIntentionally(false);
+      sessionEndedIntentionallyRef.current = false;
       workflowTriggeredRef.current = false;
       toast.error('Failed to complete interview. Please try again.', { title: 'Completion Error' });
     } finally {
@@ -433,7 +548,9 @@ export default function BehaviouralInterviewPage() {
       });
 
       const elevenConversationId = callSession?.getId?.() || null;
+      conversationSessionRef.current = callSession || null;
       if (elevenConversationId) {
+        localStorage.setItem('currentConversationId', elevenConversationId);
         await linkConversationToSession(activeSessionId, elevenConversationId);
       }
     } catch (error) {
@@ -445,11 +562,12 @@ export default function BehaviouralInterviewPage() {
 
   const handleEndCall = async () => {
     try {
-      setSessionEndedIntentionally(true); // Mark that user intentionally ended the session
+      markIntentionalSessionEnd('end-call-button');
       await conversation.endSession();
     } catch (error) {
       console.error('Failed to end conversation:', error);
       setSessionEndedIntentionally(false); // Reset on error
+      sessionEndedIntentionallyRef.current = false;
     }
   };
 
@@ -476,8 +594,10 @@ export default function BehaviouralInterviewPage() {
           critical_threshold: 2000,
         }
       });
+      conversationSessionRef.current = callSession || null;
       const elevenConversationId = callSession?.getId?.() || null;
       if (elevenConversationId) {
+        localStorage.setItem('currentConversationId', elevenConversationId);
         await linkConversationToSession(activeSessionId, elevenConversationId);
       }
       toast.success('Reconnected successfully!', { title: 'Connection Restored' });
@@ -491,7 +611,7 @@ export default function BehaviouralInterviewPage() {
   // Handle ending session after unexpected disconnect
   const handleEndAfterDisconnect = () => {
     setShowDisconnectWarning(false);
-    setSessionEndedIntentionally(true);
+    markIntentionalSessionEnd('disconnect-modal-end');
     triggerSessionEndWorkflow('disconnect-modal-end');
   };
 

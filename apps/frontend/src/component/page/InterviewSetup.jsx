@@ -518,7 +518,8 @@ const InterviewSetup = () => {
         console.log("Received Prompts:", data);
 
         const sessionId = data.sessionId;
-        if (!sessionId) {
+        const question = data.question;
+        if (!sessionId || (isTechnicalOnly && !question?.id)) {
           setIsSubmitting(false);
           setShowConfirmModal(false);
           return;
@@ -538,7 +539,12 @@ const InterviewSetup = () => {
             communication_style: payload.session.communication_style,
             preferred_coding_language: payload.session.preferred_coding_language
           }));
-          navigate(`/technical/${sessionId}`);
+          localStorage.setItem('currentTechnicalSessionId', sessionId);
+          navigate(`/technical/${sessionId}`, {
+            state: {
+              question
+            }
+          });
         } else {
           navigate(`/interview/session/${sessionId}/waiting`);
         }
