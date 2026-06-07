@@ -236,7 +236,8 @@ export default function BehaviouralInterviewPage() {
           try {
             if (conversation.status === 'connected') {
               await conversation.endSession();
-            } else if (!workflowTriggeredRef.current) {
+            }
+            if (!workflowTriggeredRef.current) {
               await triggerSessionEndWorkflowRef.current('agent-client-tool-disconnected');
             }
           } catch (error) {
@@ -443,8 +444,9 @@ export default function BehaviouralInterviewPage() {
       markIntentionalSessionEnd('complete-button');
       if (conversation.status === 'connected') {
         await conversation.endSession();
-      } else if (!workflowTriggeredRef.current) {
-        await triggerSessionEndWorkflow('complete-button-disconnected');
+      }
+      if (!workflowTriggeredRef.current) {
+        await triggerSessionEndWorkflow('complete-button-post-end');
       }
     } catch (error) {
       console.error('Failed to complete interview:', error);
@@ -488,15 +490,33 @@ export default function BehaviouralInterviewPage() {
     try {
       const token = ensureAuthenticated();
       if (!token) return;
+      workflowTriggeredRef.current = true;
+      setSessionEndedIntentionally(false);
+      sessionEndedIntentionallyRef.current = false;
+      if (conversation.status === 'connected') {
+        await conversation.endSession();
+      }
+      const durationSeconds = startTime ? Math.max(1, Math.round((Date.now() - startTime) / 1000)) : null;
+      const activeConversationId =
+        conversationSessionRef.current ||
+        localStorage.getItem('currentConversationId') ||
+        null;
       await authFetch(`${API_BASE_URL}/api/interview/session/${sessionId}/cancel`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          duration: durationSeconds,
+          conversationId: activeConversationId
+        })
       });
     } catch (error) {
       if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
+      workflowTriggeredRef.current = false;
       console.error('Failed to cancel session:', error);
+      toast.error('Failed to save the session as incomplete. Please try again.', { title: 'Leave Interview Error' });
+      return;
     }
     navigate('/dashboard');
   };
@@ -564,6 +584,9 @@ export default function BehaviouralInterviewPage() {
     try {
       markIntentionalSessionEnd('end-call-button');
       await conversation.endSession();
+      if (!workflowTriggeredRef.current) {
+        await triggerSessionEndWorkflow('end-call-post-end');
+      }
     } catch (error) {
       console.error('Failed to end conversation:', error);
       setSessionEndedIntentionally(false); // Reset on error
@@ -798,16 +821,16 @@ export default function BehaviouralInterviewPage() {
         onClose={() => setShowExitWarning(false)}
         title="⚠️ Leave Interview?"
         type="warning"
-        primaryButtonText="Leave & Cancel"
+        primaryButtonText="Leave & Save as Incomplete"
         secondaryButtonText="Keep Interviewing"
         onPrimaryClick={handleConfirmExit}
         onSecondaryClick={() => setShowExitWarning(false)}
         showCloseButton={true}
       >
         <div className="space-y-3 text-slate-300 text-sm">
-          <p>If you leave now, your session will be <span className="text-amber-200 font-semibold">cancelled immediately</span> and you won't receive feedback.</p>
+          <p>If you leave now, your session will be <span className="text-amber-200 font-semibold">saved as incomplete</span> and no feedback will be generated unless you finish it later.</p>
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-            <p className="text-amber-100">You can start a new interview session from the dashboard.</p>
+            <p className="text-amber-100">Incomplete sessions are temporary and will expire automatically if you do not return to them.</p>
           </div>
         </div>
       </Modal>

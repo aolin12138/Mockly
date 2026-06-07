@@ -739,12 +739,34 @@ router.post('/session/:sessionId/feedback-callback', async (req, res) => {
       return res.status(404).json({ error: 'Session not found' });
     }
 
+    const callbackError =
+      payloadBody.error ||
+      payloadBody.details ||
+      payloadBody.message ||
+      null;
+
+    const explicitFailure =
+      payloadBody.success === false ||
+      payloadBody.status === 'error' ||
+      payloadBody.status === 'failed' ||
+      payloadBody.result === 'error';
+
     const feedbackPayload =
       payloadBody.feedback ||
       payloadBody.feedback_result ||
       (payloadBody.summary || payloadBody.overall_score || payloadBody.dimension_scores ? payloadBody : null);
 
     if (!feedbackPayload) {
+      if (explicitFailure || callbackError) {
+        clearFeedbackGenerationInFlight(sessionId);
+        deliverFeedbackSseEvent(sessionId, 'feedback-error', {
+          sessionId,
+          status: session.status,
+          message: String(callbackError || 'Feedback workflow failed.')
+        }, true);
+        return res.json({ success: false, sessionId, cleared: true });
+      }
+
       return res.status(400).json({ error: 'Missing feedback payload in callback' });
     }
 

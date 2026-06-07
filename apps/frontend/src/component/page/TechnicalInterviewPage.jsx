@@ -9,6 +9,8 @@ import ParticleOrb from '../ui/particle-orb.jsx';
 import { LiveWaveform } from '../ui/live-waveform.jsx';
 import { authFetch, ensureAuthenticated } from '../../lib/auth';
 
+void motion;
+
 /**
  * TechnicalInterviewPage - Redesigned for Phase 3
  * Features:
@@ -85,7 +87,6 @@ const TechnicalInterviewPage = () => {
   const [running, setRunning] = useState(false);
   const [ending, setEnding] = useState(false);
   const [testResults, setTestResults] = useState(null);
-  const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState(null);
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [panelOpen, setPanelOpen] = useState(true);
@@ -247,7 +248,7 @@ const TechnicalInterviewPage = () => {
       });
 
       if (!response.ok && response.status !== 404) {
-        throw new Error(`Failed to expire technical session (${response.status})`);
+        throw new Error(`Failed to update technical session (${response.status})`);
       }
     } catch (error) {
       sessionFinalizedRef.current = false;
@@ -361,7 +362,6 @@ const TechnicalInterviewPage = () => {
   const handleReset = () => {
     setCode(getStarterCode(language));
     setTestResults(null);
-    setShowResults(false);
   };
 
   const handleRunCode = async () => {
@@ -405,9 +405,8 @@ const TechnicalInterviewPage = () => {
       if (!response.ok) {
         throw new Error(result.message || result.error || `Code execution failed: ${response.statusText}`);
       }
-
       setTestResults(result);
-      setShowResults(true);
+      setTestResults(result);
       console.log('Test results set:', result);
 
       // Only send agent update after successful code execution
@@ -451,7 +450,9 @@ const TechnicalInterviewPage = () => {
     try {
       await expireSession();
     } catch (err) {
-      console.error('Failed to expire technical session:', err);
+      console.error('Failed to save technical session as incomplete:', err);
+      setError('Failed to save this session as incomplete. Please try again.');
+      return;
     }
     navigate('/dashboard');
   };
@@ -1010,16 +1011,16 @@ const TechnicalInterviewPage = () => {
         onClose={() => setShowExitWarning(false)}
         title="⚠️ Leave Technical Interview?"
         type="warning"
-        primaryButtonText="Leave & Expire"
+        primaryButtonText="Leave & Save as Incomplete"
         secondaryButtonText="Keep Interviewing"
         onPrimaryClick={handleConfirmExit}
         onSecondaryClick={() => setShowExitWarning(false)}
         showCloseButton={true}
       >
         <div className="space-y-3 text-slate-300 text-sm">
-          <p>If you leave now, this technical session will be <span className="text-amber-200 font-semibold">marked as expired</span> and removed from your dashboard history.</p>
+          <p>If you leave now, this technical session will be <span className="text-amber-200 font-semibold">saved as incomplete</span> and no final evaluation will run.</p>
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-            <p className="text-amber-100">Start a new technical interview from the dashboard whenever you're ready.</p>
+            <p className="text-amber-100">Incomplete sessions expire automatically later if you do not return to them.</p>
           </div>
         </div>
       </Modal>
