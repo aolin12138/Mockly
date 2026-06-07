@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Clipboard } from 'lucide-react';
 
 import { LoadingPage } from './LoadingPage';
@@ -26,16 +26,43 @@ import CvAlignmentSection from '../results/CvAlignmentSection';
 import NextStepsList from '../results/NextStepsList';
 import { authFetch, ensureAuthenticated } from '../../lib/auth';
 
+void motion;
+
 const USE_LOCAL_SAMPLE = false;
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-const FEEDBACK_REQUEST_LOCK_TTL_MS = 2 * 60 * 1000;
 const FEEDBACK_POLL_INTERVAL_MS = 5_000;
 const FEEDBACK_POLL_MAX_ATTEMPTS = 36;
 const FEEDBACK_SSE_TIMEOUT_MS = 3 * 60 * 1000;
 
+function hasUsableFeedbackPayload(rawFeedback) {
+  if (rawFeedback == null) return false;
+
+  let payload = rawFeedback;
+  if (typeof payload === 'string') {
+    try {
+      payload = JSON.parse(payload);
+    } catch {
+      return false;
+    }
+  }
+
+  if (Array.isArray(payload)) {
+    payload = payload[0];
+  }
+
+  if (payload && typeof payload === 'object' && Object.prototype.hasOwnProperty.call(payload, 'feedback')) {
+    payload = payload.feedback;
+  }
+
+  if (payload == null) return false;
+  if (typeof payload !== 'object' || Array.isArray(payload)) return Boolean(payload);
+
+  return Object.keys(payload).length > 0;
+}
+
 /* --- Transform the new feedback schema --- */
 function transformFeedbackData(feedbackData) {
-  if (!feedbackData) return null;
+  if (!hasUsableFeedbackPayload(feedbackData)) return null;
 
   let data = Array.isArray(feedbackData) ? feedbackData[0] : feedbackData;
   if (data?.data && typeof data.data === 'object') {
@@ -120,42 +147,17 @@ export default function ResultsPage() {
   const navigate = useNavigate();
   const { sessionId: urlSessionId } = useParams();
   const audioRef = useRef(null);
+  const hasStartedFetchRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [feedbackData, setFeedbackData] = useState(null);
   const [error, setError] = useState(null);
 
-  const getFeedbackRequestLockKey = (sessionId) => `resultsFeedbackRequestLock:${sessionId}`;
-
-  const hasFreshFeedbackRequestLock = (sessionId) => {
-    try {
-      const raw = sessionStorage.getItem(getFeedbackRequestLockKey(sessionId));
-      if (!raw) return false;
-      const parsed = JSON.parse(raw);
-      const startedAt = Number(parsed?.startedAt || 0);
-      if (!startedAt) return false;
-      return Date.now() - startedAt < FEEDBACK_REQUEST_LOCK_TTL_MS;
-    } catch {
-      return false;
-    }
-  };
-
-  const setFeedbackRequestLock = (sessionId) => {
-    try {
-      sessionStorage.setItem(getFeedbackRequestLockKey(sessionId), JSON.stringify({ startedAt: Date.now() }));
-    } catch {
-      // no-op if sessionStorage unavailable
-    }
-  };
-
-  const clearFeedbackRequestLock = (sessionId) => {
-    try {
-      sessionStorage.removeItem(getFeedbackRequestLockKey(sessionId));
-    } catch {
-      // no-op if sessionStorage unavailable
-    }
-  };
-
   useEffect(() => {
+    if (hasStartedFetchRef.current) {
+      return;
+    }
+    hasStartedFetchRef.current = true;
+
     if (USE_LOCAL_SAMPLE) {
       const transformed = transformFeedbackData(SAMPLE_FEEDBACK);
       setFeedbackData(transformed);
@@ -165,11 +167,11 @@ export default function ResultsPage() {
 
     const fetchFeedback = async () => {
       try {
-        const sessionId = urlSessionId || localStorage.getItem('currentSessionId');
+        let sessionId = urlSessionId || localStorage.getItem('currentSessionId');
         const token = ensureAuthenticated();
         if (!token) return;
 
-        const waitForFeedbackViaSse = (activeSessionId) => new Promise((resolve) => {
+    const waitForFeedbackViaSse = (activeSessionId) => new Promise((resolve, reject) => {
           if (!token) {
             resolve(null);
             return;
@@ -197,6 +199,19 @@ export default function ResultsPage() {
             } catch {
               clearTimeout(timeout);
               settle(null);
+            }
+          });
+
+          source.addEventListener('feedback-error', (event) => {
+            try {
+              const payload = JSON.parse(event.data || '{}');
+              clearTimeout(timeout);
+              source.close();
+              reject(new Error(payload?.message || 'Feedback workflow failed.'));
+            } catch {
+              clearTimeout(timeout);
+              source.close();
+              reject(new Error('Feedback workflow failed.'));
             }
           });
 
@@ -241,20 +256,27 @@ export default function ResultsPage() {
 
         // Temp session — use sessionStorage
         if (sessionId.startsWith('temp_')) {
-          const callbackDataStr = sessionStorage.getItem(`callbackData_${sessionId}`);
-          if (callbackDataStr) {
-            const callbackData = JSON.parse(callbackDataStr);
-            if (callbackData.feedback) {
-              const transformed = transformFeedbackData(callbackData.feedback);
-              if (transformed) {
-                setFeedbackData(transformed);
-                setIsLoading(false);
-                return;
+          const promotedSessionId = localStorage.getItem('currentPersistedSessionId');
+          if (promotedSessionId && !promotedSessionId.startsWith('temp_')) {
+            sessionId = promotedSessionId;
+          } else {
+            const callbackDataStr = sessionStorage.getItem(`callbackData_${sessionId}`);
+            if (callbackDataStr) {
+              const callbackData = JSON.parse(callbackDataStr);
+              const callbackPersistedSessionId = callbackData.persistedSessionId || callbackData.sessionId || null;
+              if (callbackPersistedSessionId && !String(callbackPersistedSessionId).startsWith('temp_')) {
+                sessionId = callbackPersistedSessionId;
+              }
+              if (callbackData.feedback) {
+                const transformed = transformFeedbackData(callbackData.feedback);
+                if (transformed) {
+                  setFeedbackData(transformed);
+                  setIsLoading(false);
+                  return;
+                }
               }
             }
           }
-          navigate('/dashboard', { replace: true });
-          return;
         }
 
         await new Promise((res) => setTimeout(res, 1000));
@@ -274,7 +296,7 @@ export default function ResultsPage() {
         const agentId = sessionData.agentId || sessionData.agent_id;
 
         // Use cached feedback if available
-        if (sessionData.feedback) {
+        if (hasUsableFeedbackPayload(sessionData.feedback)) {
           const transformed = transformFeedbackData(sessionData.feedback);
           if (transformed) {
             setFeedbackData(transformed);
@@ -287,69 +309,54 @@ export default function ResultsPage() {
           throw new Error('Session data incomplete. Cannot generate feedback.');
         }
 
-        if (hasFreshFeedbackRequestLock(sessionId)) {
-          const transformed = await pollSessionForFeedback({ maxAttempts: 3, intervalMs: 2000 });
-          if (transformed) {
-            setFeedbackData(transformed);
-            setIsLoading(false);
+        // Generate feedback via backend route using the saved session id
+        const response = await authFetch(`${API_BASE_URL}/api/interview/session/${sessionId}/generate-feedback`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            agent_id: agentId,
+            feedback_agent_prompt: feedbackPrompt,
+            feedback_prompt: feedbackPrompt,
+          }),
+        });
+
+        const responseText = await response.text();
+        if (response.status === 202) {
+          const sseFeedback = await waitForFeedbackViaSse(sessionId);
+          if (sseFeedback) {
+            setFeedbackData(sseFeedback);
             return;
           }
-        }
 
-        setFeedbackRequestLock(sessionId);
-
-        try {
-          // Generate feedback via backend route using the saved session id
-          const response = await authFetch(`${API_BASE_URL}/api/interview/session/${sessionId}/generate-feedback`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              agent_id: agentId,
-              feedback_agent_prompt: feedbackPrompt,
-              feedback_prompt: feedbackPrompt,
-            }),
-          });
-
-          const responseText = await response.text();
-          if (response.status === 202) {
-            const sseFeedback = await waitForFeedbackViaSse(sessionId);
-            if (sseFeedback) {
-              setFeedbackData(sseFeedback);
-              return;
-            }
-
-            const transformed = await pollSessionForFeedback();
-            if (transformed) {
-              setFeedbackData(transformed);
-              return;
-            }
-            throw new Error('Feedback is still processing. Please wait a moment and retry.');
-          }
-
-          if (!response.ok) throw new Error(`Webhook request failed: ${responseText || response.statusText}`);
-          if (!responseText) throw new Error('Webhook returned empty response');
-
-          const generationResult = JSON.parse(responseText);
-          const rawFeedback = generationResult.feedback || generationResult;
-          const transformed = transformFeedbackData(rawFeedback);
-
+          const transformed = await pollSessionForFeedback();
           if (transformed) {
             setFeedbackData(transformed);
             return;
           }
-
-          const polledFeedback = await pollSessionForFeedback();
-          if (polledFeedback) {
-            setFeedbackData(polledFeedback);
-            return;
-          }
-
           throw new Error('Feedback is still processing. Please wait a moment and retry.');
-        } finally {
-          clearFeedbackRequestLock(sessionId);
         }
+
+        if (!response.ok) throw new Error(`Webhook request failed: ${responseText || response.statusText}`);
+        if (!responseText) throw new Error('Webhook returned empty response');
+
+        const generationResult = JSON.parse(responseText);
+        const rawFeedback = generationResult.feedback || generationResult;
+        const transformed = transformFeedbackData(rawFeedback);
+
+        if (transformed) {
+          setFeedbackData(transformed);
+          return;
+        }
+
+        const polledFeedback = await pollSessionForFeedback();
+        if (polledFeedback) {
+          setFeedbackData(polledFeedback);
+          return;
+        }
+
+        throw new Error('Feedback is still processing. Please wait a moment and retry.');
       } catch (err) {
         if (err?.code === 'AUTH_REQUIRED' || err?.code === 'AUTH_EXPIRED') return;
         console.error('Error fetching feedback:', err);

@@ -224,9 +224,7 @@ export function LoadingPage() {
 
   const processBehavioralFeedback = async (state, lockKey) => {
     const { sessionId: rawSessionId, duration, company, candidateCv } = state;
-      const sessionId = rawSessionId?.startsWith('temp_')
-        ? (localStorage.getItem('currentPersistedSessionId') || rawSessionId)
-        : rawSessionId;
+    const sessionId = rawSessionId;
     const token = ensureAuthenticated();
     if (!token) {
       clearProcessingLock(lockKey);

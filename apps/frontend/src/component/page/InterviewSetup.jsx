@@ -441,6 +441,8 @@ const InterviewSetup = () => {
       localStorage.setItem('pendingInterviewMode', 'behavioral');
       localStorage.setItem('currentSessionId', sessionId);
       localStorage.setItem('currentAgentId', lastAgent.id);
+      localStorage.removeItem('currentPersistedSessionId');
+      localStorage.removeItem('currentConversationId');
 
       // Go directly to waiting page (which will skip polling for temp sessions)
       navigate(`/interview/session/${sessionId}/waiting`);
@@ -546,6 +548,8 @@ const InterviewSetup = () => {
             }
           });
         } else {
+          localStorage.removeItem('currentPersistedSessionId');
+          localStorage.removeItem('currentConversationId');
           navigate(`/interview/session/${sessionId}/waiting`);
         }
       }
