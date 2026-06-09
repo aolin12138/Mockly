@@ -118,81 +118,50 @@ export function LoadingPage() {
     let finalSessionId = stateSessionId;
     console.log('[LoadingPage] Initial session ID:', finalSessionId);
 
-    let feedbackData = null;
-
     try {
       if (!stateSessionId) {
         throw new Error('Missing technical session ID.');
       }
 
-      setStatus('Sending to AI Evaluator');
-      setSubStatus('Preparing your interview data…');
+      setStatus('Processing Your Interview');
+      setSubStatus('Saving your session data…');
 
-      // Send to n8n webhook
-      const webhookResponse = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(executionSummary),
-      });
-
-      setStatus('Generating Feedback');
-      setSubStatus('AI is analyzing your performance…');
-
-      if (!webhookResponse.ok) {
-        console.error('Failed to send to n8n webhook:', webhookResponse.statusText);
-        setStatus('Error');
-        setSubStatus('Failed to generate feedback. Redirecting…');
-        await new Promise(res => setTimeout(res, 2000));
-      } else {
-        console.log('Successfully sent to n8n webhook');
+      // Backend already marked session as ended and triggered feedback.
+      // Poll for feedback a few times before giving up.
+      let feedbackData = null;
+      const maxPolls = 6;
+      for (let i = 0; i < maxPolls; i++) {
         try {
-          feedbackData = await webhookResponse.json();
-          console.log('Received feedback from n8n:', feedbackData);
-        } catch (parseErr) {
-          console.error('Failed to parse n8n response:', parseErr);
+          const sessionResponse = await authFetch(`${API_BASE_URL}/api/interview/session/${finalSessionId}`);
+          if (sessionResponse.ok) {
+            const sessionData = await sessionResponse.json();
+            feedbackData = sessionData.feedback || null;
+            if (feedbackData) {
+              console.log('[LoadingPage] Feedback ready after', i + 1, 'polls');
+              break;
+            }
+          }
+        } catch (e) { /* ignore poll errors */ }
+        
+        if (i < maxPolls - 1) {
+          setSubStatus(`Waiting for AI feedback… (attempt ${i + 1}/${maxPolls})`);
+          await new Promise(res => setTimeout(res, 3000));
         }
       }
 
-      setStatus('Saving Session');
-      setSubStatus(feedbackData ? 'Storing your interview and feedback…' : 'Storing your interview so feedback can be retried later…');
-
-      try {
-        const saveResponse = await authFetch(`${API_BASE_URL}/api/interview/technical/save`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            sessionId: finalSessionId,
-            conversationId,
-            executionSummary,
-            feedback: feedbackData,
-            duration, // Duration in seconds
-          }),
-        });
-
-        if (saveResponse.ok) {
-          const saveResult = await saveResponse.json();
-          finalSessionId = saveResult.sessionId;
-          console.log('[LoadingPage] Session saved to database, new ID:', finalSessionId);
-        } else {
-          const errorText = await saveResponse.text();
-          console.error('Failed to save session to database:', saveResponse.status, errorText);
-        }
-      } catch (saveErr) {
-        console.error('Error saving session:', saveErr);
+      if (feedbackData) {
+        setStatus('Feedback Ready');
+        setSubStatus('Redirecting to your results…');
+      } else {
+        setStatus('Feedback Still Processing');
+        setSubStatus('This may take a minute. You can check back from your dashboard.');
+        setShowRecoveryActions(true);
+        await new Promise(res => setTimeout(res, 2000));
       }
 
-      setStatus(feedbackData ? 'Feedback Ready' : 'Session Saved');
-      setSubStatus(feedbackData ? 'Redirecting to your results…' : 'Feedback is still processing. You can retry from results/history.');
-      await new Promise(res => setTimeout(res, 1000));
-
-      // Navigate to results page
+      // Navigate to results — with or without feedback
       const navigateTo = `/results-technical/${finalSessionId}`;
-      console.log('[LoadingPage] Navigating to:', navigateTo);
-      console.log('[LoadingPage] With state feedback:', feedbackData ? 'present' : 'missing');
+      console.log('[LoadingPage] Navigating to:', navigateTo, '| feedback:', feedbackData ? 'present' : 'missing');
 
       navigate(navigateTo, {
         replace: true,

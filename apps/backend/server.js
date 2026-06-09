@@ -7,8 +7,11 @@ import interviewCallbackRoutes from './routes/interviewCallbackRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import technicalRoutes from './routes/technicalRoutes.js';
 import codeRunRoutes from './routes/codeRunRoutes.js';
+import codeSyncRoutes from './routes/codeSyncRoutes.js';
 import integrationRoutes from './routes/integrationRoutes.js';
 import authMiddleware from './middleware/authMiddleware.js';
+import { mcpPostHandler, mcpGetHandler } from './lib/mcp/server.js';
+import { mcpAuthMiddleware } from './lib/mcp/auth.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,7 +40,13 @@ app.use('/api/user', authMiddleware, userRoutes);
 app.use('/api/integrations', authMiddleware, integrationRoutes);
 app.use('/api/questions', technicalRoutes);
 app.use('/api/code', codeRunRoutes);
+app.use('/api/code', codeSyncRoutes);
+
+// MCP server endpoint (authenticated via shared secret, not JWT)
+app.post('/mcp', mcpAuthMiddleware, mcpPostHandler);
+app.get('/mcp', mcpAuthMiddleware, mcpGetHandler);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`MCP server available at POST /mcp`);
 });

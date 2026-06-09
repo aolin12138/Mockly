@@ -16,7 +16,9 @@ import { getRandomQuestion, toPublicQuestionPayload } from '../lib/technicalQues
 const PROMPT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7';
 const AGENT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
 const FEEDBACK_WEBHOOK_URL = process.env.FEEDBACK_WEBHOOK_URL || 'http://localhost:5678/webhook/feedback';
-const TECHNICAL_FEEDBACK_WEBHOOK_URL = process.env.TECHNICAL_FEEDBACK_WEBHOOK_URL || 'https://aolin12138.app.n8n.cloud/webhook/technical-feedback';
+const TECHNICAL_AGENT_WEBHOOK_URL = 'http://localhost:5678/webhook/84281349-1d93-47cd-ad3d-dfcc7013ad3b';
+const TECHNICAL_FEEDBACK_WEBHOOK_URL = process.env.TECHNICAL_FEEDBACK_WEBHOOK_URL || 'http://localhost:5678/webhook/technical-feedback';
+const CENTRAL_AGENT_VERSION = 1;
 const FEEDBACK_CALLBACK_BASE_URL = process.env.FEEDBACK_CALLBACK_BASE_URL || '';
 const FEEDBACK_CALLBACK_SECRET = process.env.FEEDBACK_CALLBACK_SECRET || '';
 const WEBHOOK_TIMEOUT_MS = 55_000;
@@ -248,6 +250,59 @@ async function runFeedbackWorkflow({ userId, sessionId, agentId, feedbackPrompt,
   }
 
   return body;
+}
+
+/**
+ * Call n8n Technical Agent Config workflow to provision/update an agent.
+ * Returns { agent_id, version, updated } on success, { error, retryable } on failure.
+ */
+async function callTechnicalAgentWorkflow({ elevenlabsApiKey, voiceId, agentId, version }) {
+  const payload = {
+    elevenlabs_api_key: elevenlabsApiKey,
+    voice_id: voiceId || 'cjVigY5qzO86Huf0OWal',
+  };
+  if (agentId) {
+    payload.agent_id = agentId;
+    payload.version = version ?? 0;
+  }
+
+  const { response, body, rawText } = await fetchJsonWithTimeout(
+    TECHNICAL_AGENT_WEBHOOK_URL,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+    WEBHOOK_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const err = new Error(rawText || `Agent workflow failed with status ${response.status}`);
+    err.status = 502;
+    throw err;
+  }
+
+  // n8n Respond to Webhook may wrap in array or data
+  const result = getWebhookValue(body, ['agent_id', 'version', 'updated', 'error', 'retryable']);
+  if (body && typeof body === 'object' && !Array.isArray(body)) {
+    // Direct response from Respond to Webhook node
+    if (body.error) {
+      console.warn('[technical-agent] Workflow returned error:', body.error);
+      return { error: body.error, retryable: body.retryable !== false };
+    }
+    return {
+      agent_id: body.agent_id,
+      version: body.version,
+      updated: body.updated,
+    };
+  }
+
+  // Fallback: extract from nested response
+  return {
+    agent_id: getWebhookValue(body, ['agent_id', 'agentId']),
+    version: getWebhookValue(body, ['version']),
+    updated: getWebhookValue(body, ['updated']),
+  };
 }
 
 async function runTechnicalFeedbackWorkflow({ userId, executionSummary }) {
@@ -701,7 +756,7 @@ router.post('/session', async (req, res) => {
   });
 });
 
-// Technical session route - selects question and creates persisted session
+// Technical session route - provisions agent, selects question, and creates session
 router.post('/technical/session', async (req, res) => {
   console.log("Request received at /technical/session");
 
@@ -710,32 +765,113 @@ router.post('/technical/session', async (req, res) => {
     return res.status(400).json({ error: 'No configuration provided' });
   }
 
-  const userId = req.userId; // From authMiddleware
+  const userId = req.userId;
   console.log("User ID from auth middleware:", userId);
 
   try {
+    // 1. Resolve ElevenLabs API key for this user
+    let elevenLabsKey;
+    try {
+      const resolved = await resolveElevenLabsKey(userId, 'technical');
+      elevenLabsKey = resolved.apiKey;
+    } catch (err) {
+      return res.status(403).json({ error: err.message });
+    }
+
+    // 2. Check if user already has an agent
+    const existingAgent = await prisma.agent.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // 3. Call n8n workflow to provision/update agent
+    let agentResult;
+    try {
+      agentResult = await callTechnicalAgentWorkflow({
+        elevenlabsApiKey: elevenLabsKey,
+        voiceId: interviewConfig?.tts?.voice_id,
+        agentId: existingAgent?.id,
+        version: existingAgent?.configVersion,
+      });
+    } catch (err) {
+      console.error('[technical/session] Agent workflow call failed:', err.message);
+      // If user has an existing agent, proceed with it (degraded)
+      if (existingAgent?.id) {
+        console.log('[technical/session] Proceeding with existing agent despite workflow error');
+        agentResult = { agent_id: existingAgent.id, updated: false };
+      } else {
+        return res.status(503).json({
+          error: 'Could not set up your interviewer. Please try again.',
+          retryable: true,
+          details: err.message,
+        });
+      }
+    }
+
+    // Handle workflow returning an error (e.g. create failed with no fallback)
+    if (agentResult?.error && !existingAgent?.id) {
+      return res.status(503).json({
+        error: 'Could not set up your interviewer. Please try again.',
+        retryable: agentResult.retryable !== false,
+        details: agentResult.error,
+      });
+    }
+
+    // If update failed but user has existing agent, proceed (soft failure)
+    if (agentResult?.error && existingAgent?.id) {
+      console.warn('[technical/session] Agent update failed, using existing agent:', agentResult.error);
+      agentResult = { agent_id: existingAgent.id, updated: false };
+    }
+
+    const agentId = agentResult?.agent_id || existingAgent?.id;
+    if (!agentId) {
+      return res.status(500).json({ error: 'Failed to determine agent ID' });
+    }
+
+    // 4. Store/update agent record
+    if (agentId) {
+      await prisma.agent.upsert({
+        where: { id: agentId },
+        update: {
+          userId,
+          configVersion: agentResult?.version ?? CENTRAL_AGENT_VERSION,
+        },
+        create: {
+          id: agentId,
+          userId,
+          configVersion: agentResult?.version ?? CENTRAL_AGENT_VERSION,
+        },
+      });
+      console.log(`[technical/session] Agent ${agentId} stored for user ${userId}, version ${agentResult?.version ?? CENTRAL_AGENT_VERSION}`);
+    }
+
+    // 5. Load question
     const question = await getRandomQuestion();
     if (!question) {
       return res.status(404).json({ error: 'No technical questions available' });
     }
 
     const publicQuestion = toPublicQuestionPayload(question);
+
+    // 6. Create session
     const session = await prisma.session.create({
       data: {
         userId,
         interviewType: 'Technical',
         technicalQuestionId: question.id,
         technicalQuestionSnapshot: publicQuestion,
+        agentId,
         status: 'pending',
-      }
+      },
     });
 
-    console.log(`Created technical session ${session.id} for user ${userId}`);
-    console.log("Session config:", JSON.stringify(interviewConfig, null, 2));
+    console.log(`Created technical session ${session.id} for user ${userId} with agent ${agentId}`);
 
+    // 7. Return everything the frontend needs
     res.json({
       sessionId: session.id,
-      question: publicQuestion
+      agentId,
+      question: publicQuestion,
     });
   } catch (error) {
     console.error('Error creating technical session:', error);
@@ -804,6 +940,106 @@ router.post('/technical/save', async (req, res) => {
   } catch (error) {
     console.error('Error saving technical session:', error);
     res.status(500).json({ error: 'Failed to save session', details: error.message });
+  }
+});
+
+// End technical session — mark ended, trigger feedback generation
+router.post('/technical/end', async (req, res) => {
+  console.log("Request received at /technical/end");
+
+  const { sessionId, conversationId, code, language, results } = req.body || {};
+  const userId = req.userId;
+
+  if (!sessionId) {
+    return res.status(400).json({ error: 'Session ID is required' });
+  }
+
+  try {
+    const session = await prisma.session.findFirst({
+      where: { id: sessionId, userId, interviewType: 'Technical' },
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Technical session not found' });
+    }
+
+    // 1. Mark session as ended
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        status: 'ended',
+        latestCode: code || session.latestCode,
+        latestLanguage: language || session.latestLanguage,
+      },
+    });
+
+    // 2. Build execution summary for feedback
+    const questionSnapshot = session.technicalQuestionSnapshot || {};
+    const executionSummary = {
+      sessionId,
+      conversationId,
+      questionId: session.technicalQuestionId,
+      questionTitle: questionSnapshot.title,
+      difficulty: questionSnapshot.difficulty,
+      language: language || session.latestLanguage,
+      code: code || session.latestCode,
+      results: results || null,
+      questionSnapshot: {
+        id: questionSnapshot.id,
+        title: questionSnapshot.title,
+        difficulty: questionSnapshot.difficulty,
+      },
+    };
+
+    // 3. Trigger feedback generation in background
+    let feedbackPromise = Promise.resolve(null);
+    try {
+      feedbackPromise = runTechnicalFeedbackWorkflow({
+        userId,
+        executionSummary,
+      });
+    } catch (err) {
+      console.error('[technical/end] Failed to start feedback workflow:', err.message);
+    }
+
+    // 4. Return immediately — frontend navigates to loading
+    res.json({
+      success: true,
+      sessionId,
+      feedbackPending: true,
+    });
+
+    // 5. Wait for feedback and store it
+    try {
+      const feedbackBody = await feedbackPromise;
+      if (feedbackBody) {
+        const envelope = extractFeedbackEnvelope({
+          feedbackPayload: feedbackBody,
+          rawPayload: feedbackBody || {},
+        });
+        const feedbackResult = envelope.feedbackForScoring;
+        const parsedFeedback = unwrapFeedback(feedbackResult);
+        let score = parsedFeedback?.outcome?.score || parsedFeedback?.overall?.score || 0;
+        if (score <= 10) score = Math.round(score * 10);
+
+        await prisma.session.update({
+          where: { id: sessionId },
+          data: {
+            feedback: envelope.storedFeedback,
+            status: 'completed',
+            score: score || null,
+            interviewPlan: JSON.stringify(executionSummary),
+          },
+        });
+        console.log(`[technical/end] Feedback stored for session ${sessionId}`);
+      }
+    } catch (err) {
+      console.error('[technical/end] Feedback generation/storage failed:', err.message);
+      // Session is already marked ended — feedback can be retried
+    }
+  } catch (error) {
+    console.error('Error ending technical session:', error);
+    res.status(500).json({ error: 'Failed to end session', details: error.message });
   }
 });
 
