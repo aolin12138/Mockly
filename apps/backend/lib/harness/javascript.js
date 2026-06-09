@@ -32,7 +32,9 @@ const results = [];
 
 for (const testCase of testCases) {
   try {
-    const actual = ${functionName}(testCase.input);
+    // If input is an array, spread as multiple arguments; otherwise pass as single arg
+    const args = Array.isArray(testCase.input) ? testCase.input : [testCase.input];
+    const actual = ${functionName}(...args);
     const passed = 'expected' in testCase ? actual === testCase.expected : true;
     results.push({
       id: testCase.id,

@@ -991,35 +991,35 @@ router.post('/technical/end', async (req, res) => {
       },
     };
 
-    // 3. Trigger feedback generation in background
-    let feedbackPromise = Promise.resolve(null);
+    // 3. Trigger feedback generation synchronously (wait for it)
+    let feedbackBody = null;
     try {
-      feedbackPromise = runTechnicalFeedbackWorkflow({
+      const resolved = await resolveElevenLabsKey(userId, 'technical');
+      // Pass conversation_id + elevenlabs key at top level for n8n webhook
+      const feedbackPayload = {
+        conversation_id: conversationId,
+        execution_summary: executionSummary,
+        elevenlabs_api_key: resolved.apiKey,
+      };
+      feedbackBody = await runTechnicalFeedbackWorkflow({
         userId,
-        executionSummary,
+        executionSummary: feedbackPayload,
       });
+      console.log('[technical/end] Feedback received from n8n');
     } catch (err) {
-      console.error('[technical/end] Failed to start feedback workflow:', err.message);
+      console.error('[technical/end] Feedback workflow failed:', err.message);
     }
 
-    // 4. Return immediately — frontend navigates to loading
-    res.json({
-      success: true,
-      sessionId,
-      feedbackPending: true,
-    });
-
-    // 5. Wait for feedback and store it
-    try {
-      const feedbackBody = await feedbackPromise;
-      if (feedbackBody) {
+    // 4. Store feedback if we got it
+    if (feedbackBody) {
+      try {
         const envelope = extractFeedbackEnvelope({
           feedbackPayload: feedbackBody,
           rawPayload: feedbackBody || {},
         });
         const feedbackResult = envelope.feedbackForScoring;
         const parsedFeedback = unwrapFeedback(feedbackResult);
-        let score = parsedFeedback?.outcome?.score || parsedFeedback?.overall?.score || 0;
+        let score = parsedFeedback?.overall?.score || parsedFeedback?.outcome?.score || 0;
         if (score <= 10) score = Math.round(score * 10);
 
         await prisma.session.update({
@@ -1031,12 +1031,18 @@ router.post('/technical/end', async (req, res) => {
             interviewPlan: JSON.stringify(executionSummary),
           },
         });
-        console.log(`[technical/end] Feedback stored for session ${sessionId}`);
+        console.log(`[technical/end] Feedback stored for session ${sessionId}, score: ${score}`);
+      } catch (storeErr) {
+        console.error('[technical/end] Failed to store feedback:', storeErr.message);
       }
-    } catch (err) {
-      console.error('[technical/end] Feedback generation/storage failed:', err.message);
-      // Session is already marked ended — feedback can be retried
     }
+
+    // 5. Return result
+    res.json({
+      success: true,
+      sessionId,
+      feedback: feedbackBody,
+    });
   } catch (error) {
     console.error('Error ending technical session:', error);
     res.status(500).json({ error: 'Failed to end session', details: error.message });

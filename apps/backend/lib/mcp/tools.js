@@ -35,7 +35,35 @@ function parseMaybeJson(value) {
   if (typeof value !== 'string') return value;
   const trimmed = value.trim();
   if (!trimmed) return value;
-  try { return JSON.parse(trimmed); } catch { return value; }
+  // Try JSON parse first
+  try { return JSON.parse(trimmed); } catch {}
+  // Handle Python assignment syntax like 'nums = [1,2,3]' or 's = "a", t = "b"'
+  const eqIdx = trimmed.indexOf('=');
+  if (eqIdx > 0) {
+    const rhs = trimmed.substring(eqIdx + 1).trim();
+    // Multi-arg: split by commas not inside brackets/quotes
+    if (rhs.includes(',') && !rhs.startsWith('[') && !rhs.startsWith('(')) {
+      const parts = [];
+      let depth = 0, current = '', inStr = false;
+      for (const ch of rhs) {
+        if (ch === '"' || ch === "'") inStr = !inStr;
+        if (!inStr) {
+          if (ch === '[' || ch === '(') depth++;
+          if (ch === ']' || ch === ')') depth--;
+        }
+        if (ch === ',' && depth === 0 && !inStr) {
+          parts.push(current.trim());
+          current = '';
+        } else { current += ch; }
+      }
+      if (current.trim()) parts.push(current.trim());
+      return parts.map(p => { try { return JSON.parse(p); } catch { return p.replace(/^["']|["']$/g, ''); } });
+    }
+    // Single value
+    try { return JSON.parse(rhs); } catch { return rhs.replace(/^["']|["']$/g, ''); }
+  }
+  return value;
+}
 }
 
 function buildHiddenTests(hiddenTests) {
@@ -306,6 +334,8 @@ export async function runCodeAgainstTests(args, context) {
   // Parse test results
   const testResults = extractJsonResults(executionResult.stdout);
   if (!testResults || !Array.isArray(testResults)) {
+    const stdoutPreview = (executionResult.stdout || '').substring(0, 500);
+    const stderrPreview = (executionResult.stderr || '').substring(0, 500);
     return {
       content: [{
         type: 'text',
@@ -315,6 +345,8 @@ export async function runCodeAgainstTests(args, context) {
           all_passed: false,
           failure_category: 'runtime_error',
           error_detail: 'Could not parse test results — the code may have crashed the harness',
+          stdout_preview: stdoutPreview || '(empty)',
+          stderr_preview: stderrPreview || '(empty)',
         }),
       }],
     };

@@ -34,7 +34,9 @@ results = []
 
 for test_case in test_cases:
     try:
-        actual = ${functionName}(test_case['input'])
+        inp = test_case['input']
+        args = inp if isinstance(inp, list) else [inp]
+        actual = ${functionName}(*args)
         passed = actual == test_case['expected'] if 'expected' in test_case else True
         results.append({
             'id': test_case['id'],
