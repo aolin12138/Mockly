@@ -34,6 +34,7 @@ model Agent {
   id              String   @id @default(uuid())
   userId          String
   user            User     @relation(fields: [userId], references: [id])
+  configVersion   Int      @default(0)
   feedbackPrompt  String?  @db.Text
   interviewPlan   String?  @db.Text
   interviewPrompt String?  @db.Text
@@ -58,8 +59,22 @@ model Session {
   status           String        @default("pending")
   duration         Int?          // Duration in seconds
   score            Int?          // Normalized score 0-100
+  startedAt        DateTime?     // When the interview conversation began (agent connected)
+  latestCode       String?       @db.Text // Candidate's current code, synced from frontend
+  latestLanguage   String?       // Language of latestCode (javascript|python|java)
+  hintCount        Int           @default(0) // How many hints the agent has given
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+  events           EventLog[]
+}
+
+model EventLog {
+  id          String   @id @default(uuid())
+  sessionId   String
+  session     Session  @relation(fields: [sessionId], references: [id])
+  eventType   String   // hint_given | phase_change | code_snapshot | test_run | interview_started | interview_ended
+  payload     Json
+  createdAt   DateTime @default(now())
 }
 
 model Question {
@@ -71,6 +86,7 @@ model Question {
   languages_supported Json      @default("[]")
   estimated_time_min  Int
   problem_statement   String    @db.Text
+  boilerplate         Json      @default("{}")
   examples            Json      @default("[]")
   constraints         Json      @default("[]")
   hidden_tests        Json      @default("[]")

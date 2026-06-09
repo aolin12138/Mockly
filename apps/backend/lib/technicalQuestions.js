@@ -12,6 +12,7 @@ function parseJson(value, fallback) {
   return value;
 }
 
+// Full payload for MCP tools (includes hidden data)
 export function toQuestionPayload(question) {
   return {
     id: question.id,
@@ -22,6 +23,7 @@ export function toQuestionPayload(question) {
     languages_supported: parseJson(question.languages_supported, []),
     estimated_time_min: question.estimated_time_min,
     problem_statement: question.problem_statement,
+    boilerplate: parseJson(question.boilerplate, {}),
     examples: parseJson(question.examples, []),
     constraints: parseJson(question.constraints, []),
     hidden_tests: parseJson(question.hidden_tests, []),
@@ -33,6 +35,7 @@ export function toQuestionPayload(question) {
   };
 }
 
+// Public payload (no hidden data) — includes boilerplate for the editor
 export function toPublicQuestionPayload(question) {
   return {
     id: question.id,
@@ -43,6 +46,7 @@ export function toPublicQuestionPayload(question) {
     languages_supported: parseJson(question.languages_supported, []),
     estimated_time_min: question.estimated_time_min,
     problem_statement: question.problem_statement,
+    boilerplate: parseJson(question.boilerplate, {}),
     examples: parseJson(question.examples, []),
     constraints: parseJson(question.constraints, []),
   };

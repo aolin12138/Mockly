@@ -542,9 +542,14 @@ const InterviewSetup = () => {
             preferred_coding_language: payload.session.preferred_coding_language
           }));
           localStorage.setItem('currentTechnicalSessionId', sessionId);
+          // Store the agent ID from backend so the interview page uses the correct agent
+          if (data.agentId) {
+            localStorage.setItem('currentTechnicalAgentId', data.agentId);
+          }
           navigate(`/technical/${sessionId}`, {
             state: {
-              question
+              question,
+              agentId: data.agentId
             }
           });
         } else {

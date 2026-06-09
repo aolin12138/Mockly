@@ -48,7 +48,13 @@ const LANGUAGE_STARTERS = {
 }`,
 };
 
-const getStarterCode = (lang) => LANGUAGE_STARTERS[lang] || LANGUAGE_STARTERS.javascript;
+const getStarterCode = (lang, question) => {
+  // Use question-specific boilerplate if available, fall back to generic template
+  if (question?.boilerplate?.[lang]) {
+    return question.boilerplate[lang];
+  }
+  return LANGUAGE_STARTERS[lang] || LANGUAGE_STARTERS.javascript;
+};
 
 const TechnicalInterviewPage = () => {
   const location = useLocation();
@@ -76,6 +82,13 @@ const TechnicalInterviewPage = () => {
   const questionRef = useRef(null);
   const testResultsRef = useRef(null);
   const AGENT_ID = import.meta.env.VITE_TECHNICAL_INTERVIEW_AGENT_ID || 'agent_6601kc3hn3b8fbv9p4hpskza0qgm';
+  // Get agentId from route state, localStorage, or session response. NEVER fall back to env var.
+  const initialAgentId = (() => {
+    const fromState = location.state?.agentId;
+    const fromStorage = localStorage.getItem('currentTechnicalAgentId');
+    return fromState || fromStorage || null;
+  })();
+  const agentIdRef = useRef(initialAgentId || AGENT_ID);
   const N8N_WEBHOOK_URL = 'https://aolin12138.app.n8n.cloud/webhook/technical-feedback';
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
@@ -130,83 +143,14 @@ const TechnicalInterviewPage = () => {
   };
 
   const conversation = useConversation({
-    overrides: {
-      agent: {
-        firstMessage: "Hello! I'm your technical interviewer. I'm here to help you work through this coding problem. Feel free to ask questions or discuss your approach as you work through the solution.",
-      },
-    },
-    clientTools: {
-      // Tool name must match EXACTLY what's configured in ElevenLabs UI
-      // Make sure to create a Client Tool named "getEditorState" in your agent's Tools section
-      getEditorState: async () => {
-        const state = {
-          code: codeRef.current,
-          language: languageRef.current,
-          question: questionRef.current,
-          testResults: testResultsRef.current,
-          timestamp: new Date().toISOString(),
-        };
-        console.log('getEditorState called by agent:', state);
-        return JSON.stringify(state);
-      },
-      getCreditStatus: async () => {
-        try {
-          const status = await fetchCreditStatus();
-          console.log('[technical] getCreditStatus tool response:', status);
-          return status;
-        } catch (error) {
-          console.error('[technical] getCreditStatus tool failed:', error);
-          return {
-            credits_remaining: null,
-            eta_min_remaining: null,
-            low_credit: false,
-            critical_credit: false,
-            recommended_check_turns: 5,
-            error: 'credit_status_unavailable'
-          };
-        }
-      },
-    },
     onConnect: () => {
-      console.log('Agent connected successfully');
-
-      // Only send initial context once
-      if (hasSentInitialContextRef.current) {
-        console.log('Initial context already sent, skipping');
-        return;
-      }
-      hasSentInitialContextRef.current = true;
-
-      // Send initial context with question metadata
-      const initialContext = JSON.stringify({
-        event: 'onSessionStart',
-        timestamp: new Date().toISOString(),
-        question: questionRef.current,
-        language: languageRef.current,
-        code: codeRef.current,
-      });
-
-      // Use a short delay to ensure connection is fully ready
-      setTimeout(() => {
-        try {
-          conversation.sendContextualUpdate(initialContext);
-          console.log('Initial context sent to agent:', initialContext);
-
-          // Clear any pending updates (they're now redundant)
-          pendingUpdatesRef.current = [];
-        } catch (err) {
-          console.error('Error sending initial context:', err);
-        }
-      }, 500);
+      console.log('[technical] Agent connected');
     },
     onDisconnect: () => {
-      console.log('Agent disconnected');
+      console.log('[technical] Agent disconnected');
     },
     onError: (error) => {
-      console.error('Technical interview conversation error:', error);
-    },
-    onUnhandledClientToolCall: (toolCall) => {
-      console.warn('Unhandled client tool call:', toolCall);
+      console.error('[technical] Conversation error:', error);
     },
   });
 
@@ -284,7 +228,7 @@ const TechnicalInterviewPage = () => {
       const stateQuestion = location.state?.question;
       if (stateQuestion?.id) {
         setQuestion(stateQuestion);
-        setCode(getStarterCode(languageRef.current));
+        setCode(getStarterCode(languageRef.current, stateQuestion));
         setStartTime(Date.now());
         return;
       }
@@ -310,7 +254,13 @@ const TechnicalInterviewPage = () => {
       }
       setQuestion(data.technicalQuestionSnapshot);
 
-      const initialCode = getStarterCode(languageRef.current);
+      // Store agentId from session
+      if (data.agentId) {
+        agentIdRef.current = data.agentId;
+        console.log('[technical] Agent ID from session:', data.agentId);
+      }
+
+      const initialCode = getStarterCode(languageRef.current, data.technicalQuestionSnapshot);
       setCode(initialCode);
 
       // Start timing the interview from when question loads
@@ -356,11 +306,11 @@ const TechnicalInterviewPage = () => {
 
   const handleLanguageChange = (newLanguage) => {
     setLanguage(newLanguage);
-    setCode(getStarterCode(newLanguage));
+    setCode(getStarterCode(newLanguage, question));
   };
 
   const handleReset = () => {
-    setCode(getStarterCode(language));
+    setCode(getStarterCode(language, question));
     setTestResults(null);
   };
 
@@ -559,8 +509,23 @@ const TechnicalInterviewPage = () => {
       const durationSeconds = startTime ? Math.round((endTime - startTime) / 1000) : null;
       console.log(`Interview duration: ${durationSeconds} seconds`);
 
-      // Navigate to loading page - it will handle the webhook call and redirect to results
       sessionFinalizedRef.current = true;
+
+      // Call backend to end session and trigger feedback
+      authFetch(`${API_BASE_URL}/api/interview/technical/end`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          conversationId,
+          code,
+          language,
+          results: executionSummary.results,
+          duration: durationSeconds,
+        }),
+      }).catch(e => console.error('[technical] End session call failed:', e));
+
+      // Navigate to loading page
       navigate('/loading', {
         state: {
           type: 'technical',
@@ -568,7 +533,6 @@ const TechnicalInterviewPage = () => {
           conversationId,
           executionSummary,
           duration: durationSeconds,
-          webhookUrl: N8N_WEBHOOK_URL,
         }
       });
 
@@ -798,24 +762,31 @@ const TechnicalInterviewPage = () => {
                         if (hasStartedSessionRef.current) {
                           return;
                         }
+                        if (!agentIdRef.current) {
+                          setError('No agent available. Please return to dashboard and try again.');
+                          return;
+                        }
                         try {
                           setInterviewStarted(true);
                           hasStartedSessionRef.current = true;
-                          const creditStatus = await fetchCreditStatus().catch(() => ({
-                            credits_remaining: null,
-                            eta_min_remaining: null,
-                          }));
+
+                          // Build dynamic variables for MCP agent
+                          const dynVars = {
+                            secret__session_id: sessionId,
+                            question_title: question?.title || '',
+                            question_statement: question?.problem_statement || '',
+                            constraints: (question?.constraints || []).join('; '),
+                            example_cases: (question?.examples || []).map(e => `Input: ${e.input} → Output: ${e.output}`).join(' | '),
+                            difficulty: question?.difficulty || 'medium',
+                            company_type: 'general_tech',
+                            time_budget_minutes: String(selectedDurationMin),
+                            remaining_minutes: String(selectedDurationMin),
+                          };
+
+                          console.log('[technical] Starting session with dyn vars:', dynVars);
                           const session = await conversation.startSession({
-                            agentId: AGENT_ID,
-                            dynamicVariables: {
-                              session_id: sessionId,
-                              mode: 'technical',
-                              selected_duration_min: selectedDurationMin,
-                              eta_min_initial: creditStatus.eta_min_remaining,
-                              credits_remaining_initial: creditStatus.credits_remaining,
-                              low_threshold: 20000,
-                              critical_threshold: 2000,
-                            }
+                            agentId: agentIdRef.current,
+                            dynamicVariables: dynVars,
                           });
                           conversationSessionRef.current = session || null;
                         } catch (error) {
