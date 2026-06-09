@@ -29,20 +29,29 @@ function parseJson(value, fallback) {
 }
 
 function parseMaybeJson(value) {
-  if (typeof value !== 'string') {
-    return value;
-  }
-
+  if (typeof value !== 'string') return value;
   const trimmed = value.trim();
-  if (!trimmed) {
-    return value;
+  if (!trimmed) return value;
+  // Try JSON parse first
+  try { return JSON.parse(trimmed); } catch {}
+  // Handle Python assignment syntax like 'nums = [1,2,3]' or 's = "a", t = "b"'
+  const eqIdx = trimmed.indexOf('=');
+  if (eqIdx > 0) {
+    const rhs = trimmed.substring(eqIdx + 1).trim();
+    if (rhs.includes(',') && !rhs.startsWith('[') && !rhs.startsWith('(')) {
+      const parts = []; let depth = 0, current = '', inStr = false;
+      for (const ch of rhs) {
+        if (ch === '"' || ch === "'") inStr = !inStr;
+        if (!inStr) { if (ch === '[' || ch === '(') depth++; if (ch === ']' || ch === ')') depth--; }
+        if (ch === ',' && depth === 0 && !inStr) { parts.push(current.trim()); current = ''; }
+        else { current += ch; }
+      }
+      if (current.trim()) parts.push(current.trim());
+      return parts.map(p => { try { return JSON.parse(p); } catch { return p.replace(/^["']|["']$/g, ''); } });
+    }
+    try { return JSON.parse(rhs); } catch { return rhs.replace(/^["']|["']$/g, ''); }
   }
-
-  try {
-    return JSON.parse(trimmed);
-  } catch {
-    return value;
-  }
+  return value;
 }
 
 function buildVisibleTestsFromExamples(examples) {
