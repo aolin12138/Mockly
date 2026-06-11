@@ -1255,20 +1255,42 @@ router.post('/session/:sessionId/generate-technical-feedback', async (req, res) 
       return res.status(404).json({ error: 'Technical session not found' });
     }
 
-    if (!session.interviewPlan) {
-      return res.status(400).json({ error: 'Missing execution summary for technical feedback generation' });
+    // Reconstruct execution summary from session data if not stored
+    let executionSummary;
+    if (session.interviewPlan) {
+      try {
+        executionSummary = JSON.parse(session.interviewPlan);
+      } catch {
+        // Invalid JSON — fall through to reconstruction
+      }
+    }
+    
+    if (!executionSummary) {
+      // Reconstruct from session fields
+      const snapshot = session.technicalQuestionSnapshot || {};
+      executionSummary = {
+        sessionId: session.id,
+        conversationId: session.conversationId,
+        questionId: session.technicalQuestionId,
+        questionTitle: snapshot.title || 'Unknown',
+        difficulty: snapshot.difficulty || 'Unknown',
+        language: session.latestLanguage || 'javascript',
+        code: session.latestCode || 'No code submitted',
+        questionSnapshot: { id: snapshot.id, title: snapshot.title, difficulty: snapshot.difficulty },
+      };
     }
 
-    let executionSummary;
-    try {
-      executionSummary = JSON.parse(session.interviewPlan);
-    } catch {
-      return res.status(400).json({ error: 'Stored execution summary is invalid JSON' });
-    }
+    // Resolve ElevenLabs key and enrich
+    const resolved = await resolveElevenLabsKey(userId, 'technical');
+    const feedbackPayload = {
+      conversation_id: executionSummary.conversationId || session.conversationId,
+      execution_summary: executionSummary,
+      elevenlabs_api_key: resolved.apiKey,
+    };
 
     const feedbackBody = await runTechnicalFeedbackWorkflow({
       userId,
-      executionSummary
+      executionSummary: feedbackPayload,
     });
 
     const envelope = extractFeedbackEnvelope({ feedbackPayload: feedbackBody, rawPayload: feedbackBody || {} });
