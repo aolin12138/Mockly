@@ -70,4 +70,6 @@ coverage/
 *.key
 *.crt
 
-claude/
+.claude/*
+!.claude/launch.json
+.opencode/
