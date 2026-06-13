@@ -44,7 +44,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../ui/Toast';
-import { authFetch, clearAuthState, ensureAuthenticated } from '../../lib/auth';
+import { authFetch, authFetchWithRetry, clearAuthState, ensureAuthenticated } from '../../lib/auth';
 
 const MotionButton = motion.button;
 const MotionDiv = motion.div;
@@ -98,6 +98,124 @@ const Card = ({ children, className = '', delay = 0 }) => (
   </MotionDiv>
 );
 
+/* ─── Skeleton wireframe shown during initial dashboard load ─── */
+
+// A single skeleton block. Uses the `skeleton-shimmer` utility from index.css
+// which animates a gradient highlight from left → right across the block.
+const SkeletonBlock = ({ className = '' }) => (
+  <div className={`skeleton-shimmer rounded-lg ${className}`} />
+);
+
+// Card-shaped skeleton container. Fades + lifts in via Framer Motion variants
+// (parent `skeletonContainerVariants` staggers its children).
+const SkeletonCard = ({ children, className = '' }) => (
+  <MotionDiv
+    variants={{
+      hidden: { opacity: 0, y: 14 },
+      visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }
+    }}
+    className={`relative bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-3xl p-6 overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] ${className}`}
+  >
+    {children}
+  </MotionDiv>
+);
+
+const SkeletonStatCard = () => (
+  <SkeletonCard>
+    <SkeletonBlock className="w-24 h-3 mb-4" />
+    <div className="flex items-end space-x-3">
+      <SkeletonBlock className="w-20 h-12" />
+      <SkeletonBlock className="w-10 h-4 mb-1.5" />
+    </div>
+  </SkeletonCard>
+);
+
+const skeletonContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.05 }
+  }
+};
+
+const DashboardSkeleton = () => (
+  <MotionDiv
+    className="max-w-[1600px] mx-auto skeleton-breath"
+    variants={skeletonContainerVariants}
+    initial="hidden"
+    animate="visible"
+    exit={{ opacity: 0, transition: { duration: 0.25 } }}
+  >
+    {/* Header */}
+    <MotionDiv
+      variants={{
+        hidden: { opacity: 0, y: -10 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+      }}
+      className="flex justify-between items-center mb-10"
+    >
+      <div className="space-y-3">
+        <SkeletonBlock className="w-80 h-10" />
+        <SkeletonBlock className="w-56 h-5" />
+      </div>
+    </MotionDiv>
+
+    <MotionDiv
+      className="flex flex-col xl:flex-row gap-8"
+      variants={skeletonContainerVariants}
+    >
+      {/* Left column */}
+      <MotionDiv className="flex-1 space-y-8" variants={skeletonContainerVariants}>
+        {/* Stats Row */}
+        <MotionDiv
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          variants={skeletonContainerVariants}
+        >
+          <SkeletonStatCard />
+          <SkeletonStatCard />
+          <SkeletonStatCard />
+          <SkeletonStatCard />
+        </MotionDiv>
+
+        {/* Chart card */}
+        <SkeletonCard>
+          <div className="flex items-center justify-between mb-6">
+            <SkeletonBlock className="w-48 h-6" />
+            <SkeletonBlock className="w-32 h-8" />
+          </div>
+          <SkeletonBlock className="w-full h-64" />
+        </SkeletonCard>
+
+        {/* Recent sessions card */}
+        <SkeletonCard>
+          <SkeletonBlock className="w-40 h-6 mb-6" />
+          <div className="space-y-4">
+            <SkeletonBlock className="w-full h-16" />
+            <SkeletonBlock className="w-full h-16" />
+            <SkeletonBlock className="w-full h-16" />
+          </div>
+        </SkeletonCard>
+      </MotionDiv>
+
+      {/* Right column */}
+      <MotionDiv className="xl:w-96 space-y-8" variants={skeletonContainerVariants}>
+        <SkeletonCard>
+          <SkeletonBlock className="w-32 h-6 mb-6" />
+          <SkeletonBlock className="w-full h-48" />
+        </SkeletonCard>
+        <SkeletonCard>
+          <SkeletonBlock className="w-40 h-6 mb-6" />
+          <div className="space-y-3">
+            <SkeletonBlock className="w-full h-12" />
+            <SkeletonBlock className="w-full h-12" />
+            <SkeletonBlock className="w-full h-12" />
+          </div>
+        </SkeletonCard>
+      </MotionDiv>
+    </MotionDiv>
+  </MotionDiv>
+);
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -107,8 +225,11 @@ const Dashboard = () => {
   const [sessions, setSessions] = useState([]);
   const [historyWindow, setHistoryWindow] = useState('6');
   const [historyType, setHistoryType] = useState('all');
-  const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState('');
+  // Gate the whole dashboard render until profile + sessions + BYOK have all settled
+  // (succeeded OR exhausted their retries). This avoids the "Failed to fetch" flash
+  // on cold loads where one of the parallel calls briefly errors.
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   // BYOK state
   const [elevenLabsStatus, setElevenLabsStatus] = useState(null); // null = loading, object = loaded
@@ -126,60 +247,53 @@ const Dashboard = () => {
     if (!token) return;
   }, [navigate]);
 
-  // Fetch user data and sessions
+  // Fetch user data and sessions (with automatic retry on transient failures).
+  // Returns `true` on success, `false` if all retries failed.
   const fetchUserDataAndSessions = useCallback(async () => {
-    setDataLoading(true);
     setDataError('');
     try {
-      console.log('Fetching user profile...');
-      const profileResponse = await authFetch('http://localhost:3000/api/user/profile', {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-      });
+      console.log('Fetching user profile + sessions...');
+      const [profileResponse, sessionsResponse] = await Promise.all([
+        authFetchWithRetry('http://localhost:3000/api/user/profile', {
+          headers: { 'Content-Type': 'application/json' }
+        }),
+        authFetchWithRetry('http://localhost:3000/api/user/sessions', {
+          headers: { 'Content-Type': 'application/json' }
+        })
+      ]);
 
-      console.log('Profile response status:', profileResponse.status);
-
-      if (profileResponse.ok) {
-        const user = await profileResponse.json();
-        console.log('User data fetched:', user);
-        setUserData(user);
-      } else {
+      if (!profileResponse.ok) {
         throw new Error(`Failed to fetch profile (${profileResponse.status})`);
       }
-
-      console.log('Fetching user sessions...');
-      const sessionsResponse = await authFetch('http://localhost:3000/api/user/sessions', {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-      });
-
-      console.log('Sessions response status:', sessionsResponse.status);
-
-      if (sessionsResponse.ok) {
-        const sessionsList = await sessionsResponse.json();
-        console.log('Sessions fetched:', sessionsList.length, 'sessions');
-        setSessions(sessionsList);
-      } else {
+      if (!sessionsResponse.ok) {
         throw new Error(`Failed to fetch sessions (${sessionsResponse.status})`);
       }
+
+      const [user, sessionsList] = await Promise.all([
+        profileResponse.json(),
+        sessionsResponse.json()
+      ]);
+      console.log('User data fetched:', user);
+      console.log('Sessions fetched:', sessionsList.length, 'sessions');
+      setUserData(user);
+      setSessions(sessionsList);
+      return true;
     } catch (error) {
-      if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
+      if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return false;
       console.error('Error fetching data:', error);
       setDataError(error.message || 'Failed to load dashboard data');
-    } finally {
-      setDataLoading(false);
+      return false;
     }
   }, []);
 
-  // Fetch ElevenLabs integration status
+  // Fetch ElevenLabs integration status (with automatic retry on transient failures).
+  // Always resolves — BYOK failure should not block the rest of the dashboard.
   const fetchElevenLabsStatus = useCallback(async () => {
     try {
       const token = ensureAuthenticated();
       if (!token) return;
       setByokLoading(true);
-      const response = await authFetch('http://localhost:3000/api/integrations/elevenlabs/status', {
+      const response = await authFetchWithRetry('http://localhost:3000/api/integrations/elevenlabs/status', {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -187,6 +301,9 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setElevenLabsStatus(data);
+      } else {
+        // Non-OK after retries — treat as disconnected so the UI is not stuck.
+        setElevenLabsStatus({ connected: false });
       }
     } catch (error) {
       if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') return;
@@ -257,10 +374,20 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    fetchUserDataAndSessions();
-    fetchElevenLabsStatus();
+  // Drive the initial load: fire both fetches in parallel, gate the dashboard
+  // render until both have settled (success or exhausted retries).
+  const runInitialLoad = useCallback(async () => {
+    setInitialLoadDone(false);
+    await Promise.allSettled([
+      fetchUserDataAndSessions(),
+      fetchElevenLabsStatus()
+    ]);
+    setInitialLoadDone(true);
   }, [fetchUserDataAndSessions, fetchElevenLabsStatus]);
+
+  useEffect(() => {
+    runInitialLoad();
+  }, [runInitialLoad]);
 
   const stats = useMemo(() => {
     if (!sessions.length) {
@@ -600,23 +727,23 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 md:ml-72 p-8 h-screen overflow-y-auto no-scrollbar z-10 relative">
-        {dataLoading && !userData && sessions.length === 0 && (
-          <div className="max-w-[1600px] mx-auto mb-4 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-300">
-            Loading your dashboard data...
-          </div>
-        )}
-        {dataError && (
-          <div className="max-w-[1600px] mx-auto mb-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200 flex items-center justify-between gap-3">
-            <span>{dataError}</span>
+        {!initialLoadDone ? (
+          <DashboardSkeleton />
+        ) : dataError ? (
+          <div className="max-w-[1600px] mx-auto mt-10 rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-5 text-sm text-red-200 flex items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-red-100 mb-1">Couldn’t load your dashboard</p>
+              <p className="text-red-200/80">{dataError}</p>
+            </div>
             <button
               type="button"
-              onClick={fetchUserDataAndSessions}
-              className="rounded-full border border-red-300/40 px-3 py-1 text-xs font-semibold text-red-100 hover:bg-red-500/20 transition"
+              onClick={runInitialLoad}
+              className="rounded-full border border-red-300/40 px-4 py-2 text-xs font-semibold text-red-100 hover:bg-red-500/20 transition"
             >
               Retry
             </button>
           </div>
-        )}
+        ) : (
         <motion.div className="max-w-[1600px] mx-auto" variants={containerVariants} initial="hidden" animate="visible">
           {/* Header */}
           <motion.header
@@ -1349,6 +1476,7 @@ const Dashboard = () => {
             )}
           </AnimatePresence>
         </motion.div>
+        )}
       </main>
     </div>
   );
