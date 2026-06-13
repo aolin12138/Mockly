@@ -1,6 +1,36 @@
 import express from 'express';
 import { createRequire } from 'module';
 import { randomUUID } from 'crypto';
+import { executeCode } from '../lib/judge0.js';
+import { generateJavaScriptHarness } from '../lib/harness/javascript.js';
+import { generatePythonHarness } from '../lib/harness/python.js';
+const HARNESS_BY_LANG = { javascript: generateJavaScriptHarness, python: generatePythonHarness };
+const LANGUAGE_IDS = { javascript: 63, python: 71 };
+const MAX_SANDBOX_CODE_LENGTH = 100 * 1024;
+
+function parseMaybeJsonForSandbox(value) {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+  try { return JSON.parse(trimmed); } catch {}
+  const eqIdx = trimmed.indexOf('=');
+  if (eqIdx > 0) {
+    const rhs = trimmed.substring(eqIdx + 1).trim();
+    if (rhs.includes(',') && !rhs.startsWith('[') && !rhs.startsWith('(')) {
+      const parts = []; let depth = 0, current = '', inStr = false;
+      for (const ch of rhs) {
+        if (ch === '"' || ch === "'") inStr = !inStr;
+        if (!inStr) { if (ch === '[' || ch === '(') depth++; if (ch === ']' || ch === ')') depth--; }
+        if (ch === ',' && depth === 0 && !inStr) { parts.push(current.trim()); current = ''; }
+        else current += ch;
+      }
+      if (current.trim()) parts.push(current.trim());
+      return parts.map(p => { try { return JSON.parse(p); } catch { return p.replace(/^["']|["']$/g, ''); } });
+    }
+    try { return JSON.parse(rhs); } catch { return rhs.replace(/^["']|["']$/g, ''); }
+  }
+  return value;
+}
 
 const require = createRequire(import.meta.url);
 const companyProfiles = require('../prompts/company_profile.json');
@@ -22,6 +52,39 @@ const CENTRAL_AGENT_VERSION = 1;
 const FEEDBACK_CALLBACK_BASE_URL = process.env.FEEDBACK_CALLBACK_BASE_URL || '';
 const FEEDBACK_CALLBACK_SECRET = process.env.FEEDBACK_CALLBACK_SECRET || '';
 const WEBHOOK_TIMEOUT_MS = 55_000;
+
+// Weighted scoring: backend computes overall from dimension scores (0-10)
+const DIMENSION_WEIGHTS = {
+  'Correctness & Completeness': 0.25,
+  'Problem-Solving & Thinking': 0.20,
+  'Technical Communication': 0.15,
+  'Complexity & Optimization': 0.15,
+  'Code Quality': 0.15,
+  'Independence': 0.10,
+};
+
+function computeOverallScore(parsedFeedback) {
+  const dimensions = parsedFeedback?.dimensions || [];
+  console.log('[computeOverallScore] dimensions count:', dimensions.length);
+  if (!dimensions.length) return null;
+  let weightedSum = 0, totalWeight = 0;
+  for (const dim of dimensions) {
+    const score = Number(dim?.score);
+    const weight = DIMENSION_WEIGHTS[dim.name] || 0;
+    console.log(`[computeOverallScore] ${dim.name}: score=${dim?.score} (parsed=${score}), weight=${weight}`);
+    if (!Number.isFinite(score)) continue;
+    weightedSum += score * weight;
+    totalWeight += weight;
+  }
+  console.log('[computeOverallScore] weightedSum:', weightedSum, 'totalWeight:', totalWeight);
+  if (totalWeight === 0) return null;
+  const overall = Math.round((weightedSum / totalWeight) * 10) / 10; // 1 decimal
+  let label = 'needs work';
+  if (overall >= 8.0) label = 'strong';
+  else if (overall >= 5.5) label = 'adequate';
+  console.log('[computeOverallScore] result:', overall, label);
+  return { score: overall, label };
+}
 const FEEDBACK_IN_FLIGHT_TTL_MS = 2 * 60 * 1000;
 const feedbackGenerationInFlight = new Map();
 
@@ -309,17 +372,23 @@ async function runTechnicalFeedbackWorkflow({ userId, executionSummary }) {
   const resolved = await resolveElevenLabsKey(userId, 'technical');
   const elevenLabsKey = resolved.apiKey;
 
-  const { response, body, rawText } = await fetchJsonWithTimeout(
-    TECHNICAL_FEEDBACK_WEBHOOK_URL,
-    {
+  // Single attempt with 120s timeout — enough for GPT-5.2
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 120_000);
+
+  let response, rawText, body;
+  try {
+    response = await fetch(TECHNICAL_FEEDBACK_WEBHOOK_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-ELEVENLABS-KEY': elevenLabsKey
-      },
-      body: JSON.stringify(executionSummary || {})
-    }
-  );
+      headers: { 'Content-Type': 'application/json', 'X-ELEVENLABS-KEY': elevenLabsKey },
+      body: JSON.stringify(executionSummary || {}),
+      signal: controller.signal,
+    });
+    rawText = await response.text();
+    try { body = JSON.parse(rawText); } catch { /* non-JSON */ }
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (!response.ok) {
     const error = new Error(rawText || response.statusText || 'Technical feedback workflow failed');
@@ -332,6 +401,16 @@ async function runTechnicalFeedbackWorkflow({ userId, executionSummary }) {
     error.status = 502;
     throw error;
   }
+
+  // Warn if code_assessment is empty (Part 6: treat as bug)
+  try {
+    const fb = (body && body.feedback && typeof body.feedback === 'object') ? body.feedback : body;
+    if (fb && typeof fb === 'object' && !Array.isArray(fb)) {
+      if (!fb.code_assessment) console.warn('[tech-feedback] code_assessment is empty — possible agent bug');
+      if (!fb.thinking_and_logic) console.warn('[tech-feedback] thinking_and_logic is empty — possible agent bug');
+      if (!fb.next_steps || (Array.isArray(fb.next_steps) && fb.next_steps.length === 0)) console.warn('[tech-feedback] next_steps is empty — possible agent bug');
+    }
+  } catch (e) { /* ignore validation errors */ }
 
   return body;
 }
@@ -898,8 +977,8 @@ router.post('/technical/save', async (req, res) => {
   let score = null;
   if (envelope.feedbackForScoring) {
     const parsedFeedback = unwrapFeedback(envelope.feedbackForScoring);
-    const rawScore = parsedFeedback?.outcome?.score || parsedFeedback?.overall?.score || 0;
-    score = rawScore <= 10 ? Math.round(rawScore * 10) : rawScore;
+    const overall = computeOverallScore(parsedFeedback);
+    score = overall ? Math.round(overall.score * 10) : null; // scale 0-10 to 0-100 for DB
   }
   const status = getSessionStatus({ feedback: envelope.feedbackForScoring, durationSeconds });
 
@@ -973,8 +1052,55 @@ router.post('/technical/end', async (req, res) => {
       },
     });
 
-    // 2. Build execution summary for feedback
+    // 2. Build execution summary for feedback — enrich with event data + question answer key
     const questionSnapshot = session.technicalQuestionSnapshot || {};
+
+    // Fetch events (hint log, phase changes)
+    let hintLog = [];
+    let reachedPhase = 0;
+    let phaseTimestamps = {};
+    try {
+      const events = await prisma.eventLog.findMany({
+        where: { sessionId },
+        orderBy: { createdAt: 'asc' },
+        select: { eventType: true, payload: true, createdAt: true },
+      });
+      for (const ev of events) {
+        if (ev.eventType === 'hint_given') {
+          hintLog.push({
+            phase: ev.payload?.phase || reachedPhase,
+            depth: ev.payload?.depth || 'general',
+            topic: ev.payload?.topic || '',
+          });
+        }
+        if (ev.eventType === 'phase_change') {
+          reachedPhase = ev.payload?.phase || 0;
+          if (reachedPhase) phaseTimestamps['phase_' + reachedPhase] = ev.createdAt;
+        }
+      }
+    } catch (e) {
+      console.warn('[technical/end] Could not fetch events:', e.message);
+    }
+
+    // Fetch answer key from question
+    let questionAnswerKey = {};
+    try {
+      if (session.technicalQuestionId) {
+        const q = await prisma.question.findUnique({
+          where: { id: session.technicalQuestionId },
+          select: { solutions: true, follow_ups: true, common_mistakes: true, pattern_tags: true, constraints: true },
+        });
+        if (q) questionAnswerKey = q;
+      }
+    } catch (e) {
+      console.warn('[technical/end] Could not fetch answer key:', e.message);
+    }
+
+    const startedAt = session.startedAt ? new Date(session.startedAt) : null;
+    const endedAt = new Date();
+    const timeTakenSeconds = startedAt ? Math.round((endedAt - startedAt) / 1000) : null;
+    const timeTakenMinutes = timeTakenSeconds ? Math.round(timeTakenSeconds / 60) : null;
+
     const executionSummary = {
       sessionId,
       conversationId,
@@ -984,11 +1110,19 @@ router.post('/technical/end', async (req, res) => {
       language: language || session.latestLanguage,
       code: code || session.latestCode,
       results: results || null,
+      completed: true,
+      reachedPhase,
+      timeTakenSeconds,
+      timeTakenMinutes,
+      timeBudgetMinutes: 35, // default, could be per-session config
+      hintCount: hintLog.length,
+      hintLog,
       questionSnapshot: {
         id: questionSnapshot.id,
         title: questionSnapshot.title,
         difficulty: questionSnapshot.difficulty,
       },
+      question: questionAnswerKey,
     };
 
     // 3. Trigger feedback generation synchronously (wait for it)
@@ -1000,6 +1134,7 @@ router.post('/technical/end', async (req, res) => {
         conversation_id: conversationId,
         execution_summary: executionSummary,
         elevenlabs_api_key: resolved.apiKey,
+        openai_api_key: process.env.OPENAI_API_KEY || '',
       };
       feedbackBody = await runTechnicalFeedbackWorkflow({
         userId,
@@ -1019,8 +1154,8 @@ router.post('/technical/end', async (req, res) => {
         });
         const feedbackResult = envelope.feedbackForScoring;
         const parsedFeedback = unwrapFeedback(feedbackResult);
-        let score = parsedFeedback?.overall?.score || parsedFeedback?.outcome?.score || 0;
-        if (score <= 10) score = Math.round(score * 10);
+        const overall = computeOverallScore(parsedFeedback);
+        let score = overall ? Math.round(overall.score * 10) : 0; // scale 0-10 to 0-100
 
         await prisma.session.update({
           where: { id: sessionId },
@@ -1266,8 +1401,44 @@ router.post('/session/:sessionId/generate-technical-feedback', async (req, res) 
     }
     
     if (!executionSummary) {
-      // Reconstruct from session fields
+      // Reconstruct from session fields + enrich with events + answer key
       const snapshot = session.technicalQuestionSnapshot || {};
+
+      // Fetch events
+      let hintLog = [];
+      let reachedPhase = 0;
+      try {
+        const events = await prisma.eventLog.findMany({
+          where: { sessionId },
+          orderBy: { createdAt: 'asc' },
+          select: { eventType: true, payload: true, createdAt: true },
+        });
+        for (const ev of events) {
+          if (ev.eventType === 'hint_given') {
+            hintLog.push({
+              phase: ev.payload?.phase || reachedPhase,
+              depth: ev.payload?.depth || 'general',
+              topic: ev.payload?.topic || '',
+            });
+          }
+          if (ev.eventType === 'phase_change') {
+            reachedPhase = ev.payload?.phase || 0;
+          }
+        }
+      } catch (e) { /* ignore */ }
+
+      // Fetch answer key
+      let questionAnswerKey = {};
+      try {
+        if (session.technicalQuestionId) {
+          const q = await prisma.question.findUnique({
+            where: { id: session.technicalQuestionId },
+            select: { solutions: true, follow_ups: true, common_mistakes: true, pattern_tags: true, constraints: true },
+          });
+          if (q) questionAnswerKey = q;
+        }
+      } catch (e) { /* ignore */ }
+
       executionSummary = {
         sessionId: session.id,
         conversationId: session.conversationId,
@@ -1276,16 +1447,64 @@ router.post('/session/:sessionId/generate-technical-feedback', async (req, res) 
         difficulty: snapshot.difficulty || 'Unknown',
         language: session.latestLanguage || 'javascript',
         code: session.latestCode || 'No code submitted',
+        completed: session.status === 'ended',
+        reachedPhase,
+        hintCount: hintLog.length,
+        hintLog,
         questionSnapshot: { id: snapshot.id, title: snapshot.title, difficulty: snapshot.difficulty },
+        question: questionAnswerKey,
       };
     }
 
     // Resolve ElevenLabs key and enrich
     const resolved = await resolveElevenLabsKey(userId, 'technical');
+    const openaiKey = process.env.OPENAI_API_KEY || '';
+
+    // Fetch transcript and audio from ElevenLabs if conversation_id available
+    let transcript = null;
+    let audioBase64 = null;
+    let callDurationSecs = null;
+    const convId = executionSummary.conversationId || session.conversationId;
+    if (convId && resolved.apiKey) {
+      try {
+        // Fetch transcript
+        const convResp = await fetch(
+          `https://api.elevenlabs.io/v1/convai/conversations/${encodeURIComponent(convId)}`,
+          { headers: { 'xi-api-key': resolved.apiKey } }
+        );
+        if (convResp.ok) {
+          const convData = await convResp.json();
+          if (convData.transcript && Array.isArray(convData.transcript)) {
+            transcript = convData.transcript.map(t => ({
+              role: t.role || 'unknown',
+              text: t.message || t.content || '',
+              timestart: t.time_in_call_secs || null,
+            }));
+          }
+          callDurationSecs = convData.metadata?.call_duration_secs || null;
+        }
+        // Fetch audio
+        const audioResp = await fetch(
+          `https://api.elevenlabs.io/v1/convai/conversations/${encodeURIComponent(convId)}/audio`,
+          { headers: { 'xi-api-key': resolved.apiKey } }
+        );
+        if (audioResp.ok) {
+          const audioBuffer = await audioResp.arrayBuffer();
+          audioBase64 = Buffer.from(audioBuffer).toString('base64');
+        }
+      } catch (e) {
+        console.warn('[tech-feedback] Could not fetch transcript/audio:', e.message);
+      }
+    }
+
     const feedbackPayload = {
-      conversation_id: executionSummary.conversationId || session.conversationId,
+      conversation_id: convId,
       execution_summary: executionSummary,
       elevenlabs_api_key: resolved.apiKey,
+      openai_api_key: openaiKey,
+      transcript: transcript,
+      call_duration_secs: callDurationSecs,
+      audio: audioBase64 ? { mimeType: 'audio/mpeg', base64: audioBase64 } : null,
     };
 
     const feedbackBody = await runTechnicalFeedbackWorkflow({
@@ -1296,8 +1515,8 @@ router.post('/session/:sessionId/generate-technical-feedback', async (req, res) 
     const envelope = extractFeedbackEnvelope({ feedbackPayload: feedbackBody, rawPayload: feedbackBody || {} });
     const feedbackResult = envelope.feedbackForScoring;
     const parsedFeedback = unwrapFeedback(feedbackResult);
-    let score = parsedFeedback?.outcome?.score || parsedFeedback?.overall?.score || 0;
-    if (score <= 10) score = Math.round(score * 10);
+    const overall = computeOverallScore(parsedFeedback);
+    const score = overall ? Math.round(overall.score * 10) : 0; // scale 0-10 to 0-100 for DB
 
     const durationSeconds = envelope.durationSeconds ?? normalizeDurationSeconds(session.duration);
     const updateData = {
@@ -1316,7 +1535,8 @@ router.post('/session/:sessionId/generate-technical-feedback', async (req, res) 
     return res.json({
       success: true,
       sessionId,
-      feedback: feedbackBody
+      feedback: feedbackBody,
+      score: score || null,
     });
   } catch (error) {
     const status = Number.isInteger(error.status) ? error.status : 500;
@@ -1362,8 +1582,8 @@ router.patch('/session/:sessionId', async (req, res) => {
       const isTechnical = session.interviewType === 'Technical';
       let score = 0;
       if (isTechnical) {
-        score = parsedFeedback?.outcome?.score || parsedFeedback?.overall?.score || 0;
-        if (score <= 10) score = Math.round(score * 10);
+        const overall = computeOverallScore(parsedFeedback);
+        score = overall ? Math.round(overall.score * 10) : 0;
       } else {
         score = parsedFeedback?.overall_score || parsedFeedback?.overallScore || parsedFeedback?.score || 0;
         if (score <= 5) score = Math.round(score * 20);
@@ -1421,6 +1641,9 @@ router.get('/session/:sessionId', async (req, res) => {
       technicalQuestionSnapshot: session.technicalQuestionSnapshot,
       status: session.status,
       duration: session.duration,
+      score: session.score,
+      latestCode: session.latestCode,
+      latestLanguage: session.latestLanguage,
       ready
     });
   } catch (error) {
@@ -1838,6 +2061,72 @@ router.post('/session/quick-start', async (req, res) => {
   } catch (error) {
     console.error('Error creating quick-start session:', error);
     res.status(500).json({ error: 'Failed to create quick-start session', details: error.message });
+  }
+});
+
+// Sandbox: run submitted code against full test set (post-interview, visible results)
+router.post('/session/:sessionId/run-tests', async (req, res) => {
+  const { sessionId } = req.params;
+  const userId = req.userId;
+  const { code, language } = req.body || {};
+
+  if (!code || !language) {
+    return res.status(400).json({ error: 'code and language are required' });
+  }
+  if (code.length > MAX_SANDBOX_CODE_LENGTH) {
+    return res.status(400).json({ error: `Code exceeds ${MAX_SANDBOX_CODE_LENGTH / 1024}KB limit` });
+  }
+
+  try {
+    const session = await prisma.session.findFirst({
+      where: { id: sessionId, userId, interviewType: 'Technical' },
+    });
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    const question = await prisma.question.findUnique({
+      where: { id: session.technicalQuestionId },
+    });
+    if (!question) return res.status(404).json({ error: 'Question not found' });
+
+    const langKey = (language || 'javascript').toLowerCase();
+    const langId = LANGUAGE_IDS[langKey];
+    if (!langId) return res.status(400).json({ error: `Unsupported language: ${langKey}` });
+
+    const harnessGen = HARNESS_BY_LANG[langKey];
+    if (!harnessGen) return res.status(400).json({ error: `No harness for: ${langKey}` });
+
+    // Run against ALL tests (visible examples + hidden tests)
+    const examples = question.examples || [];
+    const hiddenTests = question.hidden_tests || [];
+    const allTests = [
+      ...examples.map((e, i) => ({ ...e, id: `visible_${i + 1}`, visible: true })),
+      ...hiddenTests.map((t, i) => ({ ...t, id: `hidden_${i + 1}`, visible: false })),
+    ];
+
+    const inputs = allTests.map(t => parseMaybeJsonForSandbox(t.input));
+    const expected = allTests.map(t => t.expected_output ?? t.output);
+
+    const harness = await harnessGen(code, inputs);
+    if (!harness) return res.status(500).json({ error: 'Failed to generate harness' });
+
+    const result = await executeCode(langId, harness);
+
+    // Parse results
+    const results = allTests.map((tc, i) => {
+      const passed = result.testResults?.[i]?.passed ?? result.tests?.[i]?.passed ?? false;
+      const actual = result.testResults?.[i]?.actual ?? result.tests?.[i]?.actual ?? null;
+      return { id: tc.id, passed, actual, expected: expected[i], visibility: tc.visible ? 'visible' : 'hidden' };
+    });
+
+    res.json({
+      passed: results.filter(r => r.passed).length,
+      total: results.length,
+      results,
+      compileError: result.compile_error || null,
+    });
+  } catch (error) {
+    console.error('Error running sandbox tests:', error);
+    res.status(500).json({ error: 'Failed to run tests', details: error.message });
   }
 });
 

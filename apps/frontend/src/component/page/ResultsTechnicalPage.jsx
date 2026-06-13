@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Waveform } from '../ui/waveform';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { LoadingPage } from './LoadingPage';
+import Editor from '@monaco-editor/react';
 import {
   CheckCircle2,
   XCircle,
@@ -22,6 +23,10 @@ import {
   Brain,
   FileCode,
   MessageSquare,
+  RotateCcw,
+  Play,
+  Hash,
+  FlaskConical,
 } from 'lucide-react';
 import { authFetch, ensureAuthenticated } from '../../lib/auth';
 
@@ -34,62 +39,60 @@ const USE_LOCAL_SAMPLE = false;
 
 /* --- Helper to transform the new feedback schema --- */
 function transformFeedbackData(feedbackData) {
-  console.log('=== TRANSFORM START ===');
-  console.log('Raw input:', JSON.stringify(feedbackData, null, 2).slice(0, 2000));
-
   if (!feedbackData) {
-    console.error('No feedback data provided');
     return null;
   }
 
   // If n8n / caller ever returns an array, unwrap first element
   let data = Array.isArray(feedbackData) ? feedbackData[0] : feedbackData;
-  console.log('After array unwrap - keys:', Object.keys(data));
 
-  // The structure from workflow can be:
-  // { feedback, call_duration_secs, transcripts, audio } or { audio, transcript, feedback }
-  // So we need to get the nested feedback object for the actual feedback fields
+  // The structure from workflow can be: { feedback, call_duration_secs, transcripts, audio } etc.
   const feedback = data.feedback || data;
-  console.log('Feedback object keys:', Object.keys(feedback));
-  console.log('Feedback.dimensions:', feedback.dimensions);
-  console.log('Feedback.actionPlan:', feedback.actionPlan);
-  console.log('Feedback.outcome:', feedback.outcome);
 
-  // Handle transcript(s) - top-level can be transcript or transcripts
+  // Handle transcript(s) - top-level can be transcripts or transcript
   const transcript = Array.isArray(data.transcripts)
     ? data.transcripts
     : Array.isArray(data.transcript)
       ? data.transcript
       : [];
-  const transformedTranscript = transcript
+  const transformedTranscript = transcript.length > 0
     ? transcript.map((msg, index) => ({
-      id: index + 1,
-      role: msg.role === 'agent' || msg.role === 'assistant' ? 'assistant' : 'user',
-      text: msg.text || msg.message || '',
-      timestart: msg.timestart ?? null,
-    }))
+        id: index + 1,
+        role: msg.role === 'agent' || msg.role === 'assistant' ? 'assistant' : 'user',
+        text: msg.text || msg.message || '',
+        timestart: msg.timestart ?? null,
+      }))
     : null;
 
-  // Build the result - feedback fields come from the nested feedback object
+  // Extract scalar fields with defaults
+  const outcome = feedback.outcome || null; // string: "solved" | "partially_solved" | "not_solved"
+  const completed = feedback.completed ?? true;
+  const reachedPhase = feedback.reached_phase ?? feedback.reachedPhase ?? null;
+  const testResults = feedback.test_results ?? feedback.testResults ?? null;
+  const time = feedback.time ?? null;
+  const dimensions = Array.isArray(feedback.dimensions) ? feedback.dimensions : [];
+  const thinkingAndLogic = feedback.thinking_and_logic ?? feedback.thinkingAndLogic ?? null;
+  const codeAssessment = feedback.code_assessment ?? feedback.codeAssessment ?? null;
+  const nextSteps = Array.isArray(feedback.next_steps ?? feedback.nextSteps) ? (feedback.next_steps ?? feedback.nextSteps) : [];
+  const patternsToStudy = Array.isArray(feedback.patterns_to_study ?? feedback.patternsToStudy) ? (feedback.patterns_to_study ?? feedback.patternsToStudy) : [];
+  const encouragement = feedback.encouragement ?? null;
+
   const result = {
-    meta: feedback.meta || {},
-    outcome: feedback.outcome || {},
-    overall: feedback.overall || {},
-    dimensions: feedback.dimensions || [],
-    debuggingNarrative: feedback.debuggingNarrative || feedback.debugging_narrative || null,
-    codeAssessment: feedback.codeAssessment || feedback.code_assessment || null,
-    actionPlan: feedback.actionPlan || feedback.action_plan || feedback.nextSteps || [],
-    ui: feedback.ui || {},
+    outcome,
+    completed,
+    reachedPhase,
+    testResults,
+    time,
+    dimensions,
+    thinkingAndLogic,
+    codeAssessment,
+    nextSteps,
+    patternsToStudy,
+    encouragement,
     transcript: transformedTranscript,
-    audio: data.audio || null, // expects { type, base64 }
+    audio: data.audio || null, // expects { mimeType, base64 }
     callDurationSecs: Number(data.call_duration_secs ?? data.callDurationSecs ?? 0) || null,
   };
-
-  console.log('=== TRANSFORM RESULT ===');
-  console.log('dimensions count:', result.dimensions?.length);
-  console.log('actionPlan count:', result.actionPlan?.length);
-  console.log('First dimension:', result.dimensions?.[0]);
-  console.log('First actionPlan:', result.actionPlan?.[0]);
 
   return result;
 }
@@ -217,9 +220,7 @@ function AudioPlayer({ audio, audioRef }) {
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="text-sm font-semibold text-white">Conversation Replay</p>
-          <p className="text-xs text-slate-400">
-            Audio from your technical interview
-          </p>
+          <p className="text-xs text-slate-400">Audio from your technical interview</p>
         </div>
         <button
           type="button"
@@ -293,7 +294,6 @@ function AudioPlayer({ audio, audioRef }) {
 }
 
 /* --- Helpers for color based on score --- */
-
 function getScoreColor(score) {
   if (score >= 8) {
     return {
@@ -304,7 +304,7 @@ function getScoreColor(score) {
       arc: '#10b981',
     };
   }
-  if (score >= 5) {
+  if (score >= 5.5) {
     return {
       text: 'text-amber-400',
       gradient: 'from-amber-500 to-orange-500',
@@ -322,68 +322,104 @@ function getScoreColor(score) {
   };
 }
 
-/* --- Hire Signal Badge --- */
-function HireSignalBadge({ signal }) {
-  const styles = {
-    strong_hire: { bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', text: 'text-emerald-400', label: 'Strong Hire' },
-    hire: { bg: 'bg-cyan-500/20', border: 'border-cyan-500/40', text: 'text-cyan-400', label: 'Hire' },
-    lean_hire: { bg: 'bg-teal-500/20', border: 'border-teal-500/40', text: 'text-teal-400', label: 'Lean Hire' },
-    neutral: { bg: 'bg-amber-500/20', border: 'border-amber-500/40', text: 'text-amber-400', label: 'Neutral' },
-    lean_no_hire: { bg: 'bg-orange-500/20', border: 'border-orange-500/40', text: 'text-orange-400', label: 'Lean No Hire' },
-    no_hire: { bg: 'bg-red-500/20', border: 'border-red-500/40', text: 'text-red-400', label: 'No Hire' },
+function getLabelForScore(score) {
+  if (score == null) return '—';
+  if (score >= 8) return 'strong';
+  if (score >= 5.5) return 'adequate';
+  return 'needs work';
+}
+
+/* --- Outcome Chip --- */
+function OutcomeChip({ outcome }) {
+  if (!outcome) return null;
+
+  const config = {
+    solved: { bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', text: 'text-emerald-400', label: 'Solved', icon: CheckCircle2 },
+    partially_solved: { bg: 'bg-amber-500/20', border: 'border-amber-500/40', text: 'text-amber-400', label: 'Partially Solved', icon: AlertTriangle },
+    not_solved: { bg: 'bg-red-500/20', border: 'border-red-500/40', text: 'text-red-400', label: 'Not Solved', icon: XCircle },
   };
 
-  const style = styles[signal] || styles.neutral;
+  const style = config[outcome] || config.not_solved;
+  const Icon = style.icon;
 
   return (
-    <div className={`px-4 py-2 rounded-full ${style.bg} border ${style.border}`}>
+    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${style.bg} border ${style.border}`}>
+      <Icon className={`w-4 h-4 ${style.text}`} />
       <span className={`text-sm font-semibold ${style.text}`}>{style.label}</span>
     </div>
   );
 }
 
-/* --- Outcome Badge --- */
-function OutcomeBadge({ solved }) {
-  if (solved) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40">
-        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-        <span className="text-sm font-medium text-emerald-400">Solved</span>
-      </div>
-    );
-  }
+/* --- Score Circle --- */
+function ScoreCircle({ score, size = 'lg' }) {
+  const scoreOutOfTen = score != null ? (score / 10).toFixed(1) : '—';
+  const label = getLabelForScore(score != null ? score / 10 : null);
+  const colors = getScoreColor(score != null ? score / 10 : 0);
+
+  const sizeClasses = size === 'lg'
+    ? 'w-28 h-28 text-3xl'
+    : 'w-20 h-20 text-2xl';
+
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/20 border border-red-500/40">
-      <XCircle className="w-4 h-4 text-red-400" />
-      <span className="text-sm font-medium text-red-400">Not Solved</span>
+    <div className="flex flex-col items-center gap-1">
+      <div className={`relative ${sizeClasses} flex items-center justify-center`}>
+        {/* Ring background */}
+        <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+          {score != null && (
+            <circle
+              cx="50" cy="50" r="42" fill="none"
+              stroke={`url(#scoreGradient-${size})`}
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={`${(score / 10) * 264} 264`}
+            />
+          )}
+          <defs>
+            <linearGradient id={`scoreGradient-${size}`} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#10b981" />
+              <stop offset="100%" stopColor="#06b6d4" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span className={`relative font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400`}>
+          {scoreOutOfTen}
+        </span>
+      </div>
+      <span className={`text-xs font-medium ${colors.text}`}>{label}</span>
     </div>
   );
 }
 
-/* --- Dimension Score Card --- */
-function DimensionCard({ dimension, index }) {
-  const [expanded, setExpanded] = useState(false);
+/* --- Quick Fact Badge --- */
+function QuickFact({ icon: Icon, label, value }) {
+  if (value == null) return null;
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+      {Icon && <Icon className="w-4 h-4 text-slate-400" />}
+      <span className="text-xs text-slate-400">{label}:</span>
+      <span className="text-xs font-semibold text-white">{value}</span>
+    </div>
+  );
+}
 
-  // Handle different field name variations
-  const score = dimension?.score ?? dimension?.rating ?? 0;
+/* --- Dimension Score Card (new schema) --- */
+function DimensionCard({ dimension, index }) {
+  const score = dimension?.score ?? 0;
   const percentage = (score / 10) * 100;
   const colors = getScoreColor(score);
+  const label = dimension?.label || getLabelForScore(score);
+  const whatWentWell = dimension?.what_went_well ?? dimension?.whatWentWell ?? '';
+  const whatToImprove = dimension?.what_to_improve ?? dimension?.whatToImprove ?? '';
+  const hintsUsed = dimension?.hints_used ?? dimension?.hintsUsed ?? null;
 
   const formatDimensionName = (name) => {
     if (!name || typeof name !== 'string') return 'Unknown Dimension';
     return name
       .replace(/_/g, ' ')
-      .replace(/([a-z])([A-Z])/g, '$1 $2') // Handle camelCase
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
       .replace(/\b\w/g, (c) => c.toUpperCase());
   };
-
-  // Support multiple field names for dimension name (actual data uses 'key' and 'label')
-  const dimensionName = dimension?.label || dimension?.dimension || dimension?.name || dimension?.key || 'Unknown';
-  const summary = dimension?.summary || dimension?.description || dimension?.feedback || '';
-  const ratingLabel = dimension?.rating || dimension?.ratingLabel || null;
-  const evidence = dimension?.evidence || dimension?.examples || [];
-  const strengths = dimension?.strengths || [];
-  const weaknesses = dimension?.weaknesses || dimension?.areasForImprovement || [];
 
   return (
     <motion.div
@@ -393,12 +429,19 @@ function DimensionCard({ dimension, index }) {
       className={`${colors.bg} border ${colors.border} rounded-2xl p-4`}
     >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-semibold text-white">{formatDimensionName(dimensionName)}</span>
-        <span className={`text-xs font-bold ${colors.text}`}>{score}/10</span>
+        <span className="text-sm font-semibold text-white">{formatDimensionName(dimension.name)}</span>
+        <div className="flex items-center gap-2">
+          {hintsUsed != null && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-white/10">
+              {hintsUsed} hint{hintsUsed !== 1 ? 's' : ''}
+            </span>
+          )}
+          <span className={`text-xs font-bold ${colors.text}`}>{score.toFixed(1)}/10</span>
+        </div>
       </div>
 
       {/* Progress bar */}
-      <div className="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-3">
+      <div className="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
@@ -407,196 +450,345 @@ function DimensionCard({ dimension, index }) {
         />
       </div>
 
-      {/* Rating label */}
-      {ratingLabel && (
-        <div className="mb-3">
-          <span className={`text-xs px-2 py-1 rounded-full ${colors.bg} ${colors.text} border ${colors.border}`}>
-            {ratingLabel}
-          </span>
-        </div>
-      )}
+      {/* Label */}
+      <div className="mb-3">
+        <span className={`text-xs px-2 py-0.5 rounded-full ${colors.bg} ${colors.text} border ${colors.border}`}>
+          {label}
+        </span>
+      </div>
 
-      {/* Summary (always visible) */}
-      {summary && (
-        <p className="text-xs text-slate-300 mb-3">{summary}</p>
-      )}
-
-      {/* Strengths */}
-      {strengths && strengths.length > 0 && (
+      {/* What went well */}
+      {whatWentWell && (
         <div className="mb-2">
-          <p className="text-xs text-emerald-400 font-medium mb-1">Strengths:</p>
-          <ul className="space-y-1">
-            {strengths.map((s, i) => (
-              <li key={i} className="text-xs text-slate-300 flex items-start gap-1">
-                <span className="text-emerald-400">+</span>
-                <span>{typeof s === 'string' ? s : s.text || JSON.stringify(s)}</span>
-              </li>
-            ))}
-          </ul>
+          <p className="text-xs text-emerald-400 font-medium mb-1">What went well</p>
+          <p className="text-xs text-slate-300 leading-relaxed">{whatWentWell}</p>
         </div>
       )}
 
-      {/* Weaknesses */}
-      {weaknesses && weaknesses.length > 0 && (
-        <div className="mb-2">
-          <p className="text-xs text-amber-400 font-medium mb-1">Areas to Improve:</p>
-          <ul className="space-y-1">
-            {weaknesses.map((w, i) => (
-              <li key={i} className="text-xs text-slate-300 flex items-start gap-1">
-                <span className="text-amber-400">-</span>
-                <span>{typeof w === 'string' ? w : w.text || JSON.stringify(w)}</span>
-              </li>
-            ))}
-          </ul>
+      {/* What to improve */}
+      {whatToImprove && (
+        <div>
+          <p className="text-xs text-amber-400 font-medium mb-1">What to improve</p>
+          <p className="text-xs text-slate-300 leading-relaxed">{whatToImprove}</p>
         </div>
-      )}
-
-      {/* Evidence (collapsible) */}
-      {evidence && evidence.length > 0 && (
-        <>
-          <button
-            type="button"
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors"
-          >
-            {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            {expanded ? 'Hide evidence' : `Show ${evidence.length} evidence points`}
-          </button>
-
-          {expanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-3 space-y-2"
-            >
-              {evidence.map((ev, evIdx) => {
-                // Handle both object and string evidence
-                const observation = typeof ev === 'string' ? ev : (ev.observation || ev.text || ev.description || JSON.stringify(ev));
-                const quote = typeof ev === 'object' ? (ev.quote || ev.example) : null;
-                return (
-                  <div key={evIdx} className="text-xs bg-slate-800/50 rounded-lg p-3 border border-white/5">
-                    <p className="text-slate-300">
-                      <strong className="text-slate-200">Observation:</strong> {observation}
-                    </p>
-                    {quote && (
-                      <p className="text-slate-400 mt-1 italic border-l-2 border-emerald-500/30 pl-2">
-                        "{quote}"
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </motion.div>
-          )}
-        </>
       )}
     </motion.div>
   );
 }
 
-/* --- Action Plan Item --- */
-function ActionPlanItem({ item, index }) {
-  // If item is just a string, render it simply
-  if (typeof item === 'string') {
+/* --- Next Step Card --- */
+function NextStepCard({ step, index }) {
+  const action = step.action || '';
+  const why = step.why || '';
+  const how = step.how || '';
+
+  if (!action && !why && !how) {
+    // Fallback for plain string items
+    const text = typeof step === 'string' ? step : '';
     return (
       <motion.div
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1 * index }}
-        className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4"
+        className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4"
       >
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center">
-            <span className="text-xs font-bold text-amber-400">{index + 1}</span>
+          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+            <span className="text-xs font-bold text-emerald-400">{index + 1}</span>
           </div>
-          <p className="text-sm text-slate-300">{item}</p>
+          <p className="text-sm text-slate-300">{text}</p>
         </div>
       </motion.div>
     );
   }
-
-  // Handle different field name variations from API
-  const title = item.title || item.focus_area || item.focusArea || item.area || 'Action Item';
-
-  // Priority can be number (1=high, 2=medium, 3=low) or string
-  let priority = 'medium';
-  if (typeof item.priority === 'number') {
-    priority = item.priority === 1 ? 'high' : item.priority === 2 ? 'medium' : 'low';
-  } else if (typeof item.priority === 'string') {
-    priority = item.priority.toLowerCase();
-  }
-
-  const how = item.how || item.recommendation || item.action || item.description || '';
-  const why = item.why || '';
-  const resources = item.resources || [];
-
-  const priorityStyles = {
-    high: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', badge: 'bg-red-500/20', label: 'High Priority' },
-    medium: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', badge: 'bg-amber-500/20', label: 'Medium' },
-    low: { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400', badge: 'bg-slate-500/20', label: 'Low' },
-  };
-
-  const style = priorityStyles[priority] || priorityStyles.medium;
 
   return (
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.1 * index }}
-      className={`${style.bg} border ${style.border} rounded-xl p-4`}
+      className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4"
     >
       <div className="flex items-start gap-3">
-        <div className={`flex-shrink-0 w-6 h-6 rounded-full ${style.badge} flex items-center justify-center`}>
-          <span className={`text-xs font-bold ${style.text}`}>{index + 1}</span>
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+          <span className="text-xs font-bold text-emerald-400">{index + 1}</span>
         </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-semibold text-white">{title}</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full ${style.badge} ${style.text} uppercase font-medium`}>
-              {style.label}
-            </span>
-          </div>
-
-          {how && (
-            <div className="mb-2">
-              <p className="text-xs text-slate-400 font-medium mb-1">How:</p>
-              <p className="text-xs text-slate-300">{how}</p>
-            </div>
+        <div className="flex-1 space-y-2">
+          {action && (
+            <p className="text-sm font-semibold text-white">{action}</p>
           )}
-
           {why && (
-            <div className="mb-2">
-              <p className="text-xs text-slate-400 font-medium mb-1">Why:</p>
+            <div>
+              <p className="text-xs text-slate-400 font-medium">Why</p>
               <p className="text-xs text-slate-300">{why}</p>
             </div>
           )}
-
-          {resources && resources.length > 0 && (
-            <div className="mt-2 pt-2 border-t border-white/5">
-              <p className="text-xs text-slate-400 font-medium mb-1">Resources:</p>
-              <ul className="space-y-1">
-                {resources.map((resource, idx) => {
-                  const resourceText = typeof resource === 'string' ? resource : (resource.title || resource.name || resource.url || JSON.stringify(resource));
-                  const resourceUrl = typeof resource === 'object' ? resource.url : null;
-                  return (
-                    <li key={idx} className="text-xs text-cyan-400">
-                      {resourceUrl ? (
-                        <a href={resourceUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                          {resourceText}
-                        </a>
-                      ) : (
-                        <span>{resourceText}</span>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+          {how && (
+            <div>
+              <p className="text-xs text-slate-400 font-medium">How</p>
+              <p className="text-xs text-slate-300">{how}</p>
             </div>
           )}
         </div>
       </div>
     </motion.div>
+  );
+}
+
+/* --- Pattern Tag --- */
+function PatternTag({ pattern, index }) {
+  return (
+    <motion.span
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.05 * index }}
+      className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 font-medium"
+    >
+      <Hash className="w-3 h-3" />
+      {pattern}
+    </motion.span>
+  );
+}
+
+/* --- Test Results Panel --- */
+function TestResultsPanel({ testResults }) {
+  if (!testResults) return null;
+
+  const passed = testResults.passed ?? 0;
+  const total = testResults.total ?? 0;
+  const byCategory = testResults.by_category ?? testResults.byCategory ?? {};
+  const summaryNote = testResults.summary_note ?? testResults.summaryNote ?? '';
+
+  return (
+    <div className="space-y-4">
+      {/* Passed / Total */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FlaskConical className="w-5 h-5 text-emerald-400" />
+          <span className="text-sm text-slate-300">Test Results</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-white">{passed}</span>
+          <span className="text-sm text-slate-500">/</span>
+          <span className="text-lg font-bold text-white">{total}</span>
+          <span className="text-xs text-slate-400">passed</span>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${total > 0 ? (passed / total) * 100 : 0}%` }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className={`h-full rounded-full ${
+            passed === total ? 'bg-gradient-to-r from-emerald-500 to-cyan-500' :
+            passed >= total / 2 ? 'bg-gradient-to-r from-amber-500 to-orange-500' :
+            'bg-gradient-to-r from-red-500 to-rose-500'
+          }`}
+        />
+      </div>
+
+      {/* By category */}
+      {Object.keys(byCategory).length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {Object.entries(byCategory).map(([category, result]) => {
+            const isPass = result === 'pass' || result === true;
+            const isFail = result === 'fail' || result === false || (typeof result === 'string' && result.toLowerCase().includes('fail'));
+            return (
+              <div
+                key={category}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                  isPass
+                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
+                    : isFail
+                      ? 'bg-red-500/10 border border-red-500/20 text-red-300'
+                      : 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+                }`}
+              >
+                {isPass ? (
+                  <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
+                ) : isFail ? (
+                  <XCircle className="w-3 h-3 flex-shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                )}
+                <span className="capitalize">{category}</span>
+                <span className="ml-auto font-medium">{typeof result === 'string' ? result : (isPass ? 'pass' : 'fail')}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Summary note */}
+      {summaryNote && (
+        <p className="text-xs text-slate-400 italic">{summaryNote}</p>
+      )}
+    </div>
+  );
+}
+
+/* --- Code Review Sandbox --- */
+function CodeReviewSandbox({ sessionId, initialCode, language }) {
+  const [code, setCode] = useState(initialCode || '');
+  const [originalCode] = useState(initialCode || '');
+  const [isRunning, setIsRunning] = useState(false);
+  const [testResults, setTestResults] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleRunTests = async () => {
+    if (!sessionId) {
+      setError('No session ID available to run tests.');
+      return;
+    }
+    setIsRunning(true);
+    setError(null);
+    setTestResults(null);
+
+    try {
+      const response = await fetch(`/api/interview/session/${sessionId}/run-tests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ code, language: language || 'javascript' }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text().catch(() => 'Unknown error');
+        throw new Error(errText || `Server responded with ${response.status}`);
+      }
+
+      const data = await response.json();
+      setTestResults(data);
+    } catch (err) {
+      console.error('Failed to run tests:', err);
+      setError(err.message || 'Failed to run tests. Please try again.');
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleReset = () => {
+    setCode(originalCode);
+    setTestResults(null);
+    setError(null);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Editor */}
+      <div className="rounded-xl overflow-hidden border border-white/10">
+        <Editor
+          height="300px"
+          language={language || 'javascript'}
+          theme="vs-dark"
+          value={code}
+          onChange={(value) => setCode(value || '')}
+          options={{
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            fontSize: 13,
+            lineNumbers: 'on',
+            automaticLayout: true,
+          }}
+        />
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleRunTests}
+            disabled={isRunning}
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 text-xs font-medium hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed transition-all"
+          >
+            {isRunning ? (
+              <>
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Running...
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4" />
+                Run Tests
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={isRunning}
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 text-white px-4 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed transition-all"
+          >
+            <RotateCcw className="w-3 h-3" />
+            Reset to Submission
+          </button>
+        </div>
+        <p className="text-[10px] text-slate-500 italic">
+          Edits here are for practice and aren't saved — your interview submission is preserved.
+        </p>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+          <div className="flex items-start gap-2">
+            <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-red-300">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Test Results */}
+      {testResults && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-white">Test Results</p>
+          <div className="grid gap-2">
+            {Array.isArray(testResults.results) && testResults.results.length > 0 ? (
+              testResults.results.map((test, idx) => (
+                <div
+                  key={idx}
+                  className={`flex items-start gap-3 px-3 py-2 rounded-lg text-xs ${
+                    test.passed
+                      ? 'bg-emerald-500/10 border border-emerald-500/20'
+                      : 'bg-red-500/10 border border-red-500/20'
+                  }`}
+                >
+                  {test.passed ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                  )}
+                  <div className="flex-1">
+                    <p className={`font-medium ${test.passed ? 'text-emerald-300' : 'text-red-300'}`}>
+                      {test.name || `Test ${idx + 1}`}
+                    </p>
+                    {!test.passed && (
+                      <div className="mt-1 space-y-0.5 text-slate-400">
+                        {test.input != null && <p>Input: <code className="text-slate-300">{JSON.stringify(test.input)}</code></p>}
+                        {test.expected != null && <p>Expected: <code className="text-slate-300">{JSON.stringify(test.expected)}</code></p>}
+                        {test.actual != null && <p>Actual: <code className="text-red-300">{JSON.stringify(test.actual)}</code></p>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-slate-400">
+                {testResults.passed != null
+                  ? `${testResults.passed} / ${testResults.total || '?'} tests passed`
+                  : 'Tests completed (no detail available).'}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -683,14 +875,15 @@ export default function TechnicalResultsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [feedbackData, setFeedbackData] = useState(null);
+  const [sessionMeta, setSessionMeta] = useState(null);
   const [error, setError] = useState(null);
 
   const generateFeedbackForSession = async (sessionId) => {
     const response = await authFetch(`http://localhost:3000/api/interview/session/${sessionId}/generate-technical-feedback`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
 
     const rawText = await response.text();
@@ -706,7 +899,7 @@ export default function TechnicalResultsPage() {
       throw new Error('Generated feedback is invalid. Please try again.');
     }
 
-    return transformed;
+    return { transformed, score: parsed.score ?? null };
   };
 
   useEffect(() => {
@@ -721,6 +914,7 @@ export default function TechnicalResultsPage() {
       console.log('[technical-results] Transformed data:', transformed);
       if (transformed) {
         setFeedbackData(transformed);
+        if (state.score != null) setSessionMeta({ score: state.score, ...state.meta });
         setIsLoading(false);
         return;
       }
@@ -740,7 +934,31 @@ export default function TechnicalResultsPage() {
 
     // 2) Dev mode: local sample
     if (USE_LOCAL_SAMPLE) {
-      // TODO: Add sample data for new schema
+      const sample = {
+        outcome: 'partially_solved',
+        completed: true,
+        reachedPhase: 4,
+        testResults: { passed: 9, total: 10, by_category: { basic: 'pass', edge: '1 fail', performance: 'pass' }, summary_note: 'One edge case missed on large input.' },
+        time: { taken_minutes: 32, budget_minutes: 35 },
+        dimensions: [
+          { name: 'Correctness & Completeness', score: 7.5, label: 'adequate', what_went_well: 'Covered most test cases.', what_to_improve: 'Missed one edge case.' },
+          { name: 'Problem-Solving & Thinking', score: 8.0, label: 'strong', what_went_well: 'Clear approach discussion.', what_to_improve: 'Could consider alternative solutions.' },
+          { name: 'Technical Communication', score: 8.5, label: 'strong', what_went_well: 'Articulated reasoning well.', what_to_improve: 'Use more precise terminology.' },
+          { name: 'Complexity & Optimization', score: 4.5, label: 'needs work', what_went_well: 'Identified brute force.', what_to_improve: 'Analyze time/space complexity upfront.' },
+          { name: 'Code Quality', score: 7.0, label: 'adequate', what_went_well: 'Readable code.', what_to_improve: 'Add more comments and error handling.' },
+          { name: 'Independence', score: 6.0, label: 'adequate', hints_used: 2, what_went_well: 'Worked through problems independently.', what_to_improve: 'Ask clarifying questions earlier.' },
+        ],
+        thinkingAndLogic: 'You started by clarifying the problem constraints, then walked through a brute force approach before arriving at an O(n log n) solution using a hash map with sorting. Your reasoning was logical and you caught one inconsistency during the walkthrough.',
+        codeAssessment: 'Your code is well-structured with consistent naming conventions. The hash map approach was appropriate for this problem. One area for improvement is handling edge cases like empty inputs and large numbers — you missed the integer overflow edge case.',
+        nextSteps: [
+          { action: 'Review hash map and sliding window patterns', why: 'These patterns appear in ~40% of technical interviews at this level', how: 'Practice 3-4 problems on LeetCode using the Two Pointer and Sliding Window tags' },
+          { action: 'Practice explaining complexity analysis', why: 'Interviewers noted your complexity analysis could be more thorough', how: 'For each practice problem, write out the time and space complexity before coding' },
+        ],
+        patternsToStudy: ['hash map', 'complexity analysis', 'two pointers'],
+        encouragement: 'You have solid fundamentals — with focused practice on edge case handling and complexity analysis, you\'ll be well-prepared for your next interview.',
+      };
+      setFeedbackData(sample);
+      setSessionMeta({ score: 72 });
       setIsLoading(false);
       return;
     }
@@ -760,9 +978,7 @@ export default function TechnicalResultsPage() {
         // Check if feedback already exists in the database
         const checkFeedbackResponse = await authFetch(`http://localhost:3000/api/interview/session/${sessionId}`, {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
         });
 
         if (!checkFeedbackResponse.ok) {
@@ -771,21 +987,17 @@ export default function TechnicalResultsPage() {
 
         const sessionData = await checkFeedbackResponse.json();
         console.log('[technical-results] Session data from DB:', sessionData);
-        console.log('[technical-results] Feedback field:', sessionData.feedback);
+
+        // Store session meta (score, language, code, etc.)
+        if (sessionData.score != null) {
+          setSessionMeta({ score: sessionData.score, language: sessionData.latestLanguage, code: sessionData.latestCode, questionTitle: sessionData.technicalQuestionSnapshot?.title });
+        }
 
         // If feedback already exists in the database, use it
         if (sessionData.feedback) {
           console.log('Found existing feedback in database');
-          console.log('[technical-results] Feedback structure keys:', Object.keys(sessionData.feedback));
-          console.log('[technical-results] Is Array?', Array.isArray(sessionData.feedback));
-          console.log('[technical-results] Raw feedback:', JSON.stringify(sessionData.feedback).slice(0, 500));
           const transformed = transformFeedbackData(sessionData.feedback);
-          console.log('[technical-results] Transformed result keys:', transformed ? Object.keys(transformed) : null);
-          console.log('[technical-results] Transformed outcome:', transformed?.outcome);
-          console.log('[technical-results] Transformed overall:', transformed?.overall);
-          console.log('[technical-results] Transformed dimensions count:', transformed?.dimensions?.length);
           if (transformed) {
-            console.log('[technical-results] Calling setFeedbackData with transformed data');
             setFeedbackData(transformed);
             setIsLoading(false);
             return;
@@ -795,7 +1007,8 @@ export default function TechnicalResultsPage() {
         if (!ensureAuthenticated()) return;
 
         const generated = await generateFeedbackForSession(sessionId);
-        setFeedbackData(generated);
+        setFeedbackData(generated.transformed);
+        if (generated.score != null) setSessionMeta(prev => ({ ...prev, score: generated.score }));
       } catch (err) {
         if (err?.code === 'AUTH_REQUIRED' || err?.code === 'AUTH_EXPIRED') return;
         console.error('[technical-results] Error fetching feedback:', err);
@@ -821,8 +1034,9 @@ export default function TechnicalResultsPage() {
     setError(null);
 
     try {
-      const transformed = await generateFeedbackForSession(sessionId);
-      setFeedbackData(transformed);
+      const result = await generateFeedbackForSession(sessionId);
+      setFeedbackData(result.transformed);
+      if (result.score != null) setSessionMeta(prev => ({ ...prev, score: result.score }));
       setError(null);
     } catch (err) {
       if (err?.code === 'AUTH_REQUIRED' || err?.code === 'AUTH_EXPIRED') return;
@@ -839,7 +1053,6 @@ export default function TechnicalResultsPage() {
   }
 
   if (error || !feedbackData) {
-    console.log('[technical-results] Error state - error:', error, 'feedbackData:', feedbackData);
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md text-center">
@@ -877,18 +1090,30 @@ export default function TechnicalResultsPage() {
     );
   }
 
-  const { meta, outcome, overall, dimensions, debuggingNarrative, codeAssessment, actionPlan, ui, transcript, audio } = feedbackData;
+  const sessionScore = sessionMeta?.score != null ? sessionMeta.score : null;
+  const sessionLanguage = sessionMeta?.language || 'javascript';
+  const sessionCode = sessionMeta?.code || '';
+  const sessionId = urlSessionId || localStorage.getItem('currentTechnicalSessionId');
 
-  // Debug: Log what's being rendered
-  console.log('=== RENDER TIME DEBUG ===');
-  console.log('feedbackData keys:', Object.keys(feedbackData));
-  console.log('outcome:', outcome);
-  console.log('overall:', overall);
-  console.log('dimensions:', dimensions);
-  console.log('ui:', ui);
-  console.log('transcript:', transcript);
-  console.log('audio:', audio);
-  console.log('=========================');
+  const {
+    outcome,
+    completed,
+    reachedPhase,
+    testResults,
+    time,
+    dimensions,
+    thinkingAndLogic,
+    codeAssessment,
+    nextSteps,
+    patternsToStudy,
+    encouragement,
+    transcript,
+    audio,
+  } = feedbackData;
+
+  const hintsTotal = dimensions
+    .filter(d => d.hints_used != null || d.hintsUsed != null)
+    .reduce((sum, d) => sum + (d.hints_used ?? d.hintsUsed ?? 0), 0);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30 overflow-hidden relative">
@@ -901,351 +1126,142 @@ export default function TechnicalResultsPage() {
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-6xl space-y-6">
-          {/* Header with Score and Verdict */}
+
+          {/* ===== 1. HEADER BAND ===== */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
+            className="space-y-4"
           >
+            {/* Title row */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
                   Technical Interview Results
                 </h1>
                 <p className="mt-2 text-sm text-slate-400">
-                  {meta?.questionTitle || 'Comprehensive analysis of your coding interview performance'}
+                  Comprehensive analysis of your coding interview performance
                 </p>
-                {meta?.language && (
+                {sessionLanguage && (
                   <div className="mt-2 flex items-center gap-2">
                     <FileCode className="w-4 h-4 text-cyan-400" />
-                    <span className="text-xs text-slate-400">{meta.language}</span>
+                    <span className="text-xs text-slate-400">{sessionLanguage}</span>
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-4">
-                {overall?.score != null && (
-                  <div className="text-center">
-                    <div className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
-                      {overall.score}/10
-                    </div>
-                    <div className="text-xs text-slate-400 mt-1">Overall Score</div>
-                  </div>
-                )}
-                {overall?.hireSignal && <HireSignalBadge signal={overall.hireSignal} />}
+
+              {/* Score circle + outcome */}
+              <div className="flex items-center gap-6">
+                <ScoreCircle score={sessionScore} size="lg" />
+                <OutcomeChip outcome={outcome} />
               </div>
+            </div>
+
+            {/* Quick facts row */}
+            <div className="flex flex-wrap items-center gap-3">
+              {testResults && (
+                <QuickFact icon={FlaskConical} label="Tests" value={`${testResults.passed ?? 0}/${testResults.total ?? 0}`} />
+              )}
+              {time && (
+                <QuickFact icon={Clock} label="Time" value={`${time.taken_minutes ?? '?'} / ${time.budget_minutes ?? '?'} min`} />
+              )}
+              {hintsTotal > 0 && (
+                <QuickFact icon={Lightbulb} label="Hints" value={`${hintsTotal} used`} />
+              )}
+              {reachedPhase != null && (
+                <QuickFact icon={TrendingUp} label="Phase" value={`${reachedPhase}`} />
+              )}
+              {completed != null && (
+                <QuickFact icon={completed ? CheckCircle2 : XCircle} label="Completed" value={completed ? 'Yes' : 'No'} />
+              )}
+              {audio && feedbackData.callDurationSecs && (
+                <QuickFact icon={Clock} label="Duration" value={formatTime(feedbackData.callDurationSecs)} />
+              )}
             </div>
           </motion.div>
 
-          {/* Outcome Card */}
-          {outcome && (
-            <Card delay={0.1}>
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <OutcomeBadge solved={outcome.solved} />
-                  {outcome.assistanceLevel && (
-                    <div className="flex items-center gap-2 text-sm text-slate-300">
-                      <Lightbulb className="w-4 h-4 text-amber-400" />
-                      <span>Assistance: <strong>{outcome.assistanceLevel}</strong></span>
-                    </div>
-                  )}
-                </div>
-                {outcome.passSummary && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Target className="w-4 h-4 text-emerald-400" />
-                    <span className="text-slate-300">
-                      {typeof outcome.passSummary === 'string'
-                        ? outcome.passSummary
-                        : typeof outcome.passSummary === 'object'
-                          ? (outcome.passSummary.summary ||
-                            outcome.passSummary.text ||
-                            `${outcome.passSummary.passed ?? outcome.passSummary.passedCount ?? '?'}/${outcome.passSummary.total ?? outcome.passSummary.totalCount ?? '?'} tests passed`)
-                          : String(outcome.passSummary)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </Card>
+          {/* ===== 2. CODE REVIEW SANDBOX (NEW) ===== */}
+          {sessionCode && (
+            <CollapsibleSection title="Code Review Sandbox" icon={Code2} defaultOpen={true} delay={0.1}>
+              <CodeReviewSandbox
+                sessionId={sessionId}
+                initialCode={sessionCode}
+                language={sessionLanguage}
+              />
+            </CollapsibleSection>
           )}
 
-          {/* Overall Summary */}
-          {overall?.summary && (
+          {/* ===== 3. TEST RESULTS PANEL ===== */}
+          {testResults && (
             <Card delay={0.15}>
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30">
-                  <TrendingUp className="w-5 h-5 text-emerald-400" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold text-white">Overall Assessment</h3>
-                    {overall.confidence && (
-                      <span className={`text-xs px-2 py-1 rounded-full ${overall.confidence === 'high' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                          overall.confidence === 'medium' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                            'bg-red-500/20 text-red-400 border border-red-500/30'
-                        }`}>
-                        {overall.confidence} confidence
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-slate-300 leading-relaxed">{overall.summary}</p>
-                </div>
-              </div>
+              <TestResultsPanel testResults={testResults} />
             </Card>
           )}
 
-          {/* UI Summary - Top Strengths and Improvements */}
-          {ui && (ui.topStrengths?.length > 0 || ui.topImprovements?.length > 0) && (
-            <div className="grid gap-6 md:grid-cols-2">
-              {/* Strengths */}
-              {ui.topStrengths?.length > 0 && (
-                <Card delay={0.2}>
-                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    Top Strengths
-                  </h2>
-                  <ul className="space-y-3">
-                    {ui.topStrengths.map((strength, idx) => {
-                      const strengthText = typeof strength === 'string' ? strength : (strength.text || JSON.stringify(strength));
-                      return (
-                        <motion.li
-                          key={idx}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.25 + 0.05 * idx }}
-                          className="flex items-start gap-2 text-sm text-slate-300 bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3"
-                        >
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
-                          <span>{strengthText}</span>
-                        </motion.li>
-                      );
-                    })}
-                  </ul>
-                </Card>
-              )}
-
-              {/* Improvements */}
-              {ui.topImprovements?.length > 0 && (
-                <Card delay={0.25}>
-                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-amber-400" />
-                    Areas to Improve
-                  </h2>
-                  <ul className="space-y-3">
-                    {ui.topImprovements.map((improvement, idx) => {
-                      const improvementText = typeof improvement === 'string' ? improvement : (improvement.text || JSON.stringify(improvement));
-                      return (
-                        <motion.li
-                          key={idx}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.3 + 0.05 * idx }}
-                          className="flex items-start gap-2 text-sm text-slate-300 bg-amber-500/5 border border-amber-500/20 rounded-lg p-3"
-                        >
-                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
-                          <span>{improvementText}</span>
-                        </motion.li>
-                      );
-                    })}
-                  </ul>
-                </Card>
-              )}
-            </div>
-          )}
-
-          {/* Dimension Scores */}
+          {/* ===== 4. DIMENSION SCORE CARDS ===== */}
           {dimensions && dimensions.length > 0 && (
-            <CollapsibleSection title="Skill Breakdown" icon={Target} defaultOpen={true} delay={0.3}>
+            <CollapsibleSection title="Skill Breakdown" icon={Target} defaultOpen={true} delay={0.2}>
               <div className="grid gap-4 md:grid-cols-2">
                 {dimensions.filter(d => d && typeof d === 'object').map((dimension, idx) => (
-                  <DimensionCard key={dimension.dimension || dimension.name || idx} dimension={dimension} index={idx} />
+                  <DimensionCard key={dimension.name || idx} dimension={dimension} index={idx} />
                 ))}
               </div>
             </CollapsibleSection>
           )}
 
-          {/* Debugging Narrative */}
-          {debuggingNarrative && (
-            <CollapsibleSection title="Debugging Journey" icon={Bug} delay={0.35}>
-              <div className="space-y-4">
-                {debuggingNarrative.timeline && debuggingNarrative.timeline.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-cyan-400" />
-                      Timeline
-                    </h4>
-                    {debuggingNarrative.timeline.map((event, idx) => {
-                      const eventText = typeof event === 'string' ? event : (event.event || event.text || JSON.stringify(event));
-                      const eventTime = typeof event === 'object' ? event.time : null;
-                      return (
-                        <div key={idx} className="flex items-start gap-3 text-sm">
-                          <div className="flex-shrink-0 w-8 text-xs text-slate-500 font-mono">{eventTime || `${idx + 1}.`}</div>
-                          <div className="flex-1 text-slate-300">{eventText}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                {(debuggingNarrative.description || debuggingNarrative.summary) && (
-                  <p className="text-sm text-slate-300 mt-4">{debuggingNarrative.description || debuggingNarrative.summary}</p>
-                )}
-                {debuggingNarrative.goodPracticesObserved && debuggingNarrative.goodPracticesObserved.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-semibold text-emerald-400 mb-2">Good Practices</h4>
-                    <ul className="space-y-1">
-                      {debuggingNarrative.goodPracticesObserved.map((practice, idx) => {
-                        const practiceText = typeof practice === 'string' ? practice : (practice.text || JSON.stringify(practice));
-                        return (
-                          <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-400 mt-0.5 flex-shrink-0" />
-                            {practiceText}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
-                {debuggingNarrative.issuesObserved && debuggingNarrative.issuesObserved.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-semibold text-amber-400 mb-2">Areas for Improvement</h4>
-                    <ul className="space-y-1">
-                      {debuggingNarrative.issuesObserved.map((issue, idx) => {
-                        const issueText = typeof issue === 'string' ? issue : (issue.text || JSON.stringify(issue));
-                        const severityColor = issue?.severity === 'high' ? 'text-red-400' : 'text-amber-400';
-                        return (
-                          <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
-                            <AlertTriangle className={`w-3 h-3 ${severityColor} mt-0.5 flex-shrink-0`} />
-                            {issueText}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
-              </div>
+          {/* ===== 5. THINKING & LOGIC ===== */}
+          {thinkingAndLogic && (
+            <CollapsibleSection title="Thinking & Logic" icon={Brain} delay={0.25}>
+              <p className="text-sm text-slate-300 leading-relaxed">{thinkingAndLogic}</p>
             </CollapsibleSection>
           )}
 
-          {/* Code Assessment */}
+          {/* ===== 6. CODE ASSESSMENT ===== */}
           {codeAssessment && (
-            <CollapsibleSection title="Code Assessment" icon={Code2} delay={0.4}>
-              {/* Notes/Overview */}
-              {codeAssessment.notes && (
-                <p className="text-sm text-slate-300 mb-4">{codeAssessment.notes}</p>
-              )}
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* Positives */}
-                {codeAssessment.positives && codeAssessment.positives.length > 0 && (
-                  <div className="bg-slate-800/50 rounded-xl p-4 border border-emerald-500/20">
-                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      Strengths
-                    </h4>
-                    <ul className="space-y-2">
-                      {codeAssessment.positives.map((item, idx) => {
-                        const itemText = typeof item === 'string' ? item : (item.text || item.description || JSON.stringify(item));
-                        return (
-                          <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
-                            <span className="text-emerald-400">•</span>
-                            {itemText}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Risks */}
-                {codeAssessment.risks && codeAssessment.risks.length > 0 && (
-                  <div className="bg-slate-800/50 rounded-xl p-4 border border-amber-500/20">
-                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-400" />
-                      Risks / Areas to Improve
-                    </h4>
-                    <ul className="space-y-2">
-                      {codeAssessment.risks.map((item, idx) => {
-                        const itemText = typeof item === 'string' ? item : (item.text || item.description || JSON.stringify(item));
-                        return (
-                          <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
-                            <span className="text-amber-400">•</span>
-                            {itemText}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Legacy fields for backward compatibility */}
-                {codeAssessment.correctness && (
-                  <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
-                    <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      Correctness
-                    </h4>
-                    <p className="text-xs text-slate-300">{codeAssessment.correctness}</p>
-                  </div>
-                )}
-                {codeAssessment.efficiency && (
-                  <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
-                    <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-amber-400" />
-                      Efficiency
-                    </h4>
-                    <p className="text-xs text-slate-300">{codeAssessment.efficiency}</p>
-                  </div>
-                )}
-                {codeAssessment.style && (
-                  <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
-                    <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                      <FileCode className="w-4 h-4 text-cyan-400" />
-                      Code Style
-                    </h4>
-                    <p className="text-xs text-slate-300">{codeAssessment.style}</p>
-                  </div>
-                )}
-                {codeAssessment.edgeCases && (
-                  <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
-                    <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                      <Brain className="w-4 h-4 text-purple-400" />
-                      Edge Cases
-                    </h4>
-                    <p className="text-xs text-slate-300">{codeAssessment.edgeCases}</p>
-                  </div>
-                )}
-              </div>
-              {codeAssessment.overallNote && (
-                <p className="text-sm text-slate-300 mt-4 italic">{codeAssessment.overallNote}</p>
-              )}
+            <CollapsibleSection title="Code Assessment" icon={Code2} delay={0.3}>
+              <p className="text-sm text-slate-300 leading-relaxed">{codeAssessment}</p>
             </CollapsibleSection>
           )}
 
-          {/* Action Plan */}
-          {actionPlan && actionPlan.length > 0 && (
-            <CollapsibleSection title="Action Plan" icon={Lightbulb} defaultOpen={true} delay={0.45}>
+          {/* ===== 7. NEXT STEPS ===== */}
+          {nextSteps && nextSteps.length > 0 && (
+            <CollapsibleSection title="Next Steps" icon={Lightbulb} defaultOpen={true} delay={0.35}>
               <div className="space-y-3">
-                {actionPlan.map((item, idx) => (
-                  <ActionPlanItem key={idx} item={item} index={idx} />
+                {nextSteps.map((step, idx) => (
+                  <NextStepCard key={idx} step={step} index={idx} />
                 ))}
               </div>
+              {/* Patterns to study */}
+              {patternsToStudy && patternsToStudy.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <p className="text-xs text-slate-400 font-medium mb-2">Patterns to Study</p>
+                  <div className="flex flex-wrap gap-2">
+                    {patternsToStudy.map((pattern, idx) => (
+                      <PatternTag key={idx} pattern={pattern} index={idx} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </CollapsibleSection>
           )}
 
-          {/* Verdict Card */}
-          {(ui?.verdict || ui?.oneLineVerdict) && (
-            <Card delay={0.5}>
+          {/* ===== 8. ENCOURAGEMENT ===== */}
+          {encouragement && (
+            <Card delay={0.4}>
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30">
-                  <Award className="w-5 h-5 text-purple-400" />
+                <div className="p-2 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30">
+                  <Award className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-white mb-2">Final Verdict</h3>
-                  <p className="text-sm text-slate-300 leading-relaxed">{ui.verdict || ui.oneLineVerdict}</p>
+                  <h3 className="text-sm font-semibold text-white mb-1">Final Words</h3>
+                  <p className="text-sm text-slate-300 leading-relaxed italic">{encouragement}</p>
                 </div>
               </div>
             </Card>
           )}
 
-          {/* Audio and Transcript */}
+          {/* ===== 9. AUDIO PLAYER + TRANSCRIPT (keep existing) ===== */}
           {(audio || (transcript && transcript.length > 0)) && (
             <div className="grid gap-4 md:grid-cols-2">
               {audio && <AudioPlayer audio={audio} audioRef={audioRef} />}

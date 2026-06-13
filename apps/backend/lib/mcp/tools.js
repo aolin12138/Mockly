@@ -64,7 +64,6 @@ function parseMaybeJson(value) {
   }
   return value;
 }
-}
 
 function buildHiddenTests(hiddenTests) {
   if (!Array.isArray(hiddenTests)) return [];
