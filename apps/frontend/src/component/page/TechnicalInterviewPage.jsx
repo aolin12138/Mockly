@@ -216,6 +216,24 @@ const TechnicalInterviewPage = () => {
     testResultsRef.current = testResults;
   }, [testResults]);
 
+  // Auto-sync code to backend so MCP tools (get_current_code, run_code_against_tests)
+  // can read the latest code even before the candidate clicks "Run"
+  useEffect(() => {
+    if (!sessionId || !code) return;
+    const timer = setTimeout(async () => {
+      try {
+        await authFetch(`${API_BASE_URL}/api/code/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, code, language }),
+        });
+      } catch (err) {
+        // Silent — sync failures shouldn't break the UI
+      }
+    }, 2000); // debounce: sync 2s after last keystroke
+    return () => clearTimeout(timer);
+  }, [code, language, sessionId, API_BASE_URL]);
+
   const fetchQuestion = useCallback(async (token) => {
     try {
       setLoading(true);
