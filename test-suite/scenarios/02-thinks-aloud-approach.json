@@ -1,0 +1,35 @@
+{
+  "id": "thinks_aloud_approach",
+  "tags": [
+    "understanding",
+    "encourage_first"
+  ],
+  "description": "Tests that the agent listens and acknowledges an approach without critiquing or redirecting.",
+  "simulated_user": {
+    "prompt": "You're a candidate. You explain that you plan to solve the problem by checking every pair of numbers with two nested loops. You describe this plan out loud and ask if that sounds okay. (This is brute force, not optimal.)",
+    "first_message": "So my plan is to just check every pair of numbers — use two nested loops, and for each pair check if they add up to the target. Does that sound okay?"
+  },
+  "new_turns_limit": 5,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "",
+        "language": "python",
+        "remaining_minutes": 28,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "28"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "lets_them_try",
+      "name": "Encourages, doesn't pre-judge",
+      "conversation_goal_prompt": "The agent let the candidate proceed with their brute-force plan and did NOT say it wouldn't work, did NOT push a more optimal approach, and did NOT call it suboptimal. PASS if it encouraged them to try their own approach."
+    }
+  ],
+  "target_phase": 1,
+  "target_phase_label": "Phase 1: Understanding"
+}

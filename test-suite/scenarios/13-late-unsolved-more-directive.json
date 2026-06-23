@@ -1,0 +1,59 @@
+{
+  "id": "late_unsolved_more_directive",
+  "tags": [
+    "closing",
+    "hints",
+    "leak"
+  ],
+  "description": "Tests that with little time left and no solution, agent is more directive but doesn't hand over code. Agent should be in time-pressure phase.",
+  "simulated_user": {
+    "prompt": "You're a candidate near the end of the interview. You still don't have a working solution and you're a bit anxious about time. You've been stuck for a while. The clock is running down.",
+    "first_message": "I'm running out of time here and I'm still not getting it to work. What should I do?"
+  },
+  "partial_conversation_history": [
+    {
+      "role": "user",
+      "message": "I'll try nested loops — check every pair."
+    },
+    {
+      "role": "agent",
+      "message": "Go for it."
+    },
+    {
+      "role": "user",
+      "message": "I've got the loops but I'm not sure how to track the best result. I've been going in circles."
+    },
+    {
+      "role": "agent",
+      "message": "What information do you need at each step of the iteration?"
+    }
+  ],
+  "new_turns_limit": 5,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def solve(nums, target):\n    for i in range(len(nums)):\n        pass",
+        "language": "python",
+        "remaining_minutes": 3,
+        "hintCount": 2
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "3"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "more_directive",
+      "name": "More proactive under time pressure",
+      "conversation_goal_prompt": "Given little time remains and no working solution, the agent stepped in more proactively/directly than an early-stage gentle nudge. PASS if it was noticeably more directive about the next step."
+    },
+    {
+      "id": "still_no_handover",
+      "name": "Still no solution handover",
+      "conversation_goal_prompt": "Despite being more directive, the agent did NOT give the full solution, the optimal approach by name, or code. PASS if it pushed them toward it without handing it over."
+    }
+  ],
+  "target_phase": 3,
+  "target_phase_label": "Phase 3: Time Pressure"
+}

@@ -1,0 +1,45 @@
+{
+  "id": "silent_coding_no_nag",
+  "tags": [
+    "silence",
+    "implementation"
+  ],
+  "description": "Tests that agent doesn't interrupt normal coding silence. Agent should be in implementation phase with candidate actively coding.",
+  "simulated_user": {
+    "prompt": "You're a candidate actively coding. You've already explained your approach (hash map) and are now implementing it. You make brief progress comments occasionally but you are NOT stuck and you do NOT ask for help. You're focused and working steadily. Mostly you are quiet.",
+    "first_message": "Alright, let me code this up..."
+  },
+  "partial_conversation_history": [
+    {
+      "role": "user",
+      "message": "I think I'll use a hash map — store values as I go and check for complements. That should be O(n)."
+    },
+    {
+      "role": "agent",
+      "message": "That sounds like a solid approach. Go ahead and implement it."
+    }
+  ],
+  "new_turns_limit": 5,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def solve(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        # making progress\n",
+        "language": "python",
+        "remaining_minutes": 18,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "18"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "no_unprompted_help",
+      "name": "Doesn't interrupt progress",
+      "conversation_goal_prompt": "The candidate was making progress and not stuck. The agent did NOT interrupt with unsolicited hints or check-ins. PASS if the agent stayed largely quiet and did not offer help that wasn't asked for."
+    }
+  ],
+  "target_phase": 2,
+  "target_phase_label": "Phase 2: Implementation"
+}

@@ -1,0 +1,35 @@
+{
+  "id": "garbled_term_not_echoed",
+  "tags": [
+    "stt",
+    "understanding"
+  ],
+  "description": "Tests that agent doesn't parrot a misheard term; asks them to explain.",
+  "simulated_user": {
+    "prompt": "You're a candidate. Say: 'I'll first try with the blue-frost approach.' (This is a transcription error for 'brute force', but say it exactly as 'blue-frost'.) Then wait.",
+    "first_message": "I'll first try with the blue-frost approach."
+  },
+  "new_turns_limit": 4,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "",
+        "language": "python",
+        "remaining_minutes": 27,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "27"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "no_echo",
+      "name": "Doesn't echo the garbled term",
+      "conversation_goal_prompt": "The agent did NOT repeat the nonsense term 'blue-frost' back as if it were a real concept. PASS if it either silently interpreted it as a real technique or asked the candidate to explain how their approach works, without echoing 'blue-frost'."
+    }
+  ],
+  "target_phase": 1,
+  "target_phase_label": "Phase 1: Understanding"
+}

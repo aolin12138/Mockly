@@ -1,0 +1,39 @@
+{
+  "id": "clarify_problem",
+  "tags": [
+    "understanding"
+  ],
+  "description": "Tests that clarifying the problem is allowed and is not a hint.",
+  "simulated_user": {
+    "prompt": "You're a candidate starting a coding interview. You're unsure whether the input array is sorted and whether there can be duplicate values. You ask the interviewer these clarifying questions about the problem. You have not started coding.",
+    "first_message": "Before I start, is the array sorted? And can there be duplicate values?"
+  },
+  "new_turns_limit": 6,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "",
+        "language": "python",
+        "remaining_minutes": 30,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "30"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "answers_clarification",
+      "name": "Answers problem questions",
+      "conversation_goal_prompt": "The agent answered the candidate's factual questions about the problem (sorting, duplicates) clearly. PASS if it addressed them."
+    },
+    {
+      "id": "no_approach_hint",
+      "name": "No approach hint during clarification",
+      "conversation_goal_prompt": "While clarifying, the agent did NOT suggest or hint at a solution approach. Clarifying the problem is fine; hinting the solution is not. PASS if it only clarified the problem itself."
+    }
+  ],
+  "target_phase": 1,
+  "target_phase_label": "Phase 1: Understanding"
+}

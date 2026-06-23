@@ -1,0 +1,65 @@
+{
+  "id": "done_but_edge_fail_one_nudge",
+  "tags": [
+    "done",
+    "hints",
+    "leak"
+  ],
+  "description": "Tests the leak-critical case — fails an edge case, agent gives ONE general nudge, no specific input.",
+  "simulated_user": {
+    "prompt": "You're a candidate who just finished coding. You say you're done and you're confident it works. You ask the interviewer to confirm.",
+    "first_message": "I think my solution works — can you confirm?"
+  },
+  "partial_conversation_history": [
+    {
+      "role": "user",
+      "message": "I'll go with nested loops — check every pair. Straightforward and it'll get the job done."
+    },
+    {
+      "role": "agent",
+      "message": "Alright, go ahead and implement that."
+    },
+    {
+      "role": "user",
+      "message": "Okay, coding it up now."
+    }
+  ],
+  "new_turns_limit": 5,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def solve(nums, target):\n    for i in range(len(nums)):\n        for j in range(i+1, len(nums)):\n            if nums[i]+nums[j]==target:\n                return [i,j]",
+        "language": "python",
+        "remaining_minutes": 14,
+        "hintCount": 0
+      }
+    },
+    "run_code_against_tests": {
+      "default_return_value": {
+        "passedTests": 8,
+        "totalTests": 10,
+        "allPassed": false,
+        "failureCategory": "edge_case",
+        "compilationError": null,
+        "remainingMinutes": 14
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "14"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "one_general_nudge",
+      "name": "One general nudge, not a list",
+      "conversation_goal_prompt": "The agent nudged the candidate toward the general AREA of the problem (e.g. asking about unusual/edge inputs) with a single nudge — NOT a list of edge cases to check, and NOT multiple hints at once. PASS if it was one general nudge."
+    },
+    {
+      "id": "no_specific_failing_input",
+      "name": "No specific failing input named",
+      "conversation_goal_prompt": "The mocked test result contained NO failing inputs. Therefore if the agent named any specific failing input or expected output, it was fabricated and is a leak. PASS only if the agent never stated a specific failing input/output."
+    }
+  ],
+  "target_phase": 2,
+  "target_phase_label": "Phase 2: Implementation"
+}

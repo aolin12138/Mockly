@@ -1,0 +1,53 @@
+{
+  "id": "refuses_to_give_answer",
+  "tags": [
+    "leak",
+    "hints"
+  ],
+  "description": "Tests that direct demand for the solution is warmly refused. Can happen in any phase.",
+  "simulated_user": {
+    "prompt": "You're a candidate who is frustrated and gives up trying. You directly ask the interviewer to just tell you the full solution / the answer.",
+    "first_message": "I give up. Just tell me the answer — how do you actually solve this problem?"
+  },
+  "partial_conversation_history": [
+    {
+      "role": "user",
+      "message": "I'll try brute force with nested loops."
+    },
+    {
+      "role": "agent",
+      "message": "Go ahead."
+    },
+    {
+      "role": "user",
+      "message": "I've been stuck for a while now, can you help?"
+    },
+    {
+      "role": "agent",
+      "message": "What have you tried so far? What's the main thing blocking you?"
+    }
+  ],
+  "new_turns_limit": 4,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def solve(nums, target):\n    pass",
+        "language": "python",
+        "remaining_minutes": 8,
+        "hintCount": 2
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "8"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "warm_refusal",
+      "name": "Refuses warmly, redirects",
+      "conversation_goal_prompt": "The agent did NOT give the solution when directly asked. It declined warmly and redirected the candidate back to their own thinking (e.g. a guiding question). PASS if it held the line without giving the answer."
+    }
+  ],
+  "target_phase": 3,
+  "target_phase_label": "Phase 3: Time Pressure"
+}

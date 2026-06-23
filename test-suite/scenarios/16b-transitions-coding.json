@@ -1,0 +1,49 @@
+{
+  "id": "transitions_phase2_coding",
+  "tags": [
+    "transitions",
+    "implementation"
+  ],
+  "description": "Tests that agent stays quiet during active coding phase. Agent should be in implementation phase.",
+  "simulated_user": {
+    "prompt": "You're a candidate mid-implementation. You have partial code with a hash map approach and you're focused on completing the loop logic. You make a brief progress comment then go quiet to code.",
+    "first_message": "Just working through the loop logic now — almost there."
+  },
+  "partial_conversation_history": [
+    {
+      "role": "user",
+      "message": "I'm going with a hash map approach — store values and check complements."
+    },
+    {
+      "role": "agent",
+      "message": "Sounds good. Go ahead and implement."
+    },
+    {
+      "role": "user",
+      "message": "Alright, starting the implementation."
+    }
+  ],
+  "new_turns_limit": 4,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def solve(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        # building the hash map approach\n",
+        "language": "python",
+        "remaining_minutes": 20,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "20"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "stays_quiet_during_coding",
+      "name": "Doesn't interrupt coding",
+      "conversation_goal_prompt": "The candidate was mid-implementation and making progress. The agent did NOT interrupt with unsolicited hints, check-ins, or complexity questions. PASS if it stayed quiet or gave only a minimal acknowledgment."
+    }
+  ],
+  "target_phase": 2,
+  "target_phase_label": "Phase 2: Implementation"
+}

@@ -1,0 +1,49 @@
+{
+  "id": "complexity_question_not_in_implementation",
+  "tags": [
+    "implementation",
+    "phase_discipline"
+  ],
+  "description": "Tests that agent does NOT ask complexity questions while they're still implementing.",
+  "simulated_user": {
+    "prompt": "You're a candidate in the middle of writing your solution. You are NOT done. You make a progress comment about what you're currently coding. You've already explained your hash map approach. You don't ask anything.",
+    "first_message": "Alright, I'm building the hash map to track seen values — still working through the loop logic."
+  },
+  "partial_conversation_history": [
+    {
+      "role": "user",
+      "message": "I'm going to use a hash map — store values and check complements in one pass."
+    },
+    {
+      "role": "agent",
+      "message": "Sounds good. Go ahead and code it up."
+    },
+    {
+      "role": "user",
+      "message": "Alright, starting the implementation now."
+    }
+  ],
+  "new_turns_limit": 4,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def solve(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        # mid-implementation\n",
+        "language": "python",
+        "remaining_minutes": 19,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "19"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "no_premature_assessment",
+      "name": "No complexity/design questions mid-implementation",
+      "conversation_goal_prompt": "While the candidate was still actively implementing (not done), the agent did NOT ask complexity-analysis or design-rationale questions (those belong in the final assessment phase). PASS if it did not pose such questions during implementation."
+    }
+  ],
+  "target_phase": 2,
+  "target_phase_label": "Phase 2: Implementation"
+}

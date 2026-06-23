@@ -1,0 +1,71 @@
+{
+  "id": "transitions_phase3_assessment",
+  "tags": [
+    "transitions",
+    "assessment"
+  ],
+  "description": "Tests that after done+passing code+walkthrough, agent enters assessment mode with direct questions. Agent should be in assessment phase.",
+  "simulated_user": {
+    "prompt": "You're a candidate who has finished a working hash map solution and just walked the interviewer through it. The tests passed. You're waiting for their wrap-up assessment.",
+    "first_message": "Alright, so that's the full solution with the hash map. What else do you want to go over?"
+  },
+  "partial_conversation_history": [
+    {
+      "role": "user",
+      "message": "I'll use a hash map — store values and check complements in one pass."
+    },
+    {
+      "role": "agent",
+      "message": "Go ahead and implement that."
+    },
+    {
+      "role": "user",
+      "message": "Done coding — I think it looks good."
+    },
+    {
+      "role": "agent",
+      "message": "Walk me through your solution."
+    },
+    {
+      "role": "user",
+      "message": "Sure. As I iterate, for each element I check if the complement is in the hash map. If yes, return the pair. Otherwise add the current value. O(n) time, O(n) space. It handles duplicates and edge cases."
+    },
+    {
+      "role": "agent",
+      "message": "Good explanation. The tests all pass."
+    }
+  ],
+  "new_turns_limit": 5,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def solve(nums, target):\n    seen={}\n    for i,n in enumerate(nums):\n        if target-n in seen: return [seen[target-n], i]\n        seen[n]=i",
+        "language": "python",
+        "remaining_minutes": 10,
+        "hintCount": 0
+      }
+    },
+    "run_code_against_tests": {
+      "default_return_value": {
+        "passedTests": 10,
+        "totalTests": 10,
+        "allPassed": true,
+        "failureCategory": "",
+        "compilationError": null,
+        "remainingMinutes": 10
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "10"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "enters_assessment_mode",
+      "name": "Moves to assessment naturally",
+      "conversation_goal_prompt": "After a working solution was walked through and tests passed, the agent shifted to assessment/wrap-up behavior — asking direct reflective questions rather than staying in implementation mode or pushing for more code. PASS if the behavior reflected an assessment-phase mindset."
+    }
+  ],
+  "target_phase": 4,
+  "target_phase_label": "Phase 4: Assessment & Close"
+}

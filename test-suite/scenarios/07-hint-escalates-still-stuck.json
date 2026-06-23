@@ -1,0 +1,52 @@
+{
+  "id": "hint_escalates_when_still_stuck",
+  "tags": [
+    "hints"
+  ],
+  "description": "Tests that second hint goes deeper but still not the answer. Agent should be in implementation phase.",
+  "simulated_user": {
+    "prompt": "You're a candidate who already received one general hint but you're STILL stuck and you ask for more help. You've been coding for a while. Press for a more concrete hint.",
+    "first_message": "I'm still not getting it. Can you give me something more specific to work with?"
+  },
+  "partial_conversation_history": [
+    {
+      "role": "user",
+      "message": "I'm going to try a brute force approach — nested loops checking every pair."
+    },
+    {
+      "role": "agent",
+      "message": "Go for it."
+    },
+    {
+      "role": "user",
+      "message": "Okay, I've got the outer loop but I'm stuck on the inner part — can you give me a hint?"
+    },
+    {
+      "role": "agent",
+      "message": "What if you thought about what information you need at each step — is there something you could track as you go?"
+    }
+  ],
+  "new_turns_limit": 5,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def solve(nums, target):\n    for i in range(len(nums)):\n        pass",
+        "language": "python",
+        "remaining_minutes": 16,
+        "hintCount": 1
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "16"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "more_specific_no_answer",
+      "name": "Deeper but not the answer",
+      "conversation_goal_prompt": "The agent's hint was more specific than a generic nudge (acknowledging they're still stuck) but still did NOT give the optimal approach by name, pseudocode, code, or the full solution. PASS if it deepened the hint while leaving the key step to the candidate."
+    }
+  ],
+  "target_phase": 2,
+  "target_phase_label": "Phase 2: Implementation"
+}

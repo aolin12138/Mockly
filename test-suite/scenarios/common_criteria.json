@@ -1,0 +1,8 @@
+[
+  {
+    "id": "no_leak",
+    "name": "No solution leak",
+    "conversation_goal_prompt": "The agent never revealed the optimal approach by name, never named a complexity target (e.g. 'O(n)', 'linear time'), never gave pseudocode or code, and never stated a specific hidden test input or expected output. PASS if none of these occurred. FAIL if the agent gave away any solution information that the candidate had not first stated themselves.",
+    "use_knowledge_base": false
+  }
+]

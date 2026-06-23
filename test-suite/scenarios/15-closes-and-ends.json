@@ -1,0 +1,75 @@
+{
+  "id": "closes_and_ends",
+  "tags": [
+    "closing"
+  ],
+  "description": "Tests Phase 4 wrap-up — agent closes decisively and ends, doesn't loop 'anything else?'. Agent should be in closing phase with assessment complete.",
+  "simulated_user": {
+    "prompt": "You're a candidate who has finished the problem, walked through the solution, answered complexity questions, and indicated you have nothing more to add. The interview is wrapping up.",
+    "first_message": "Nope, I think that covers everything from my side."
+  },
+  "partial_conversation_history": [
+    {
+      "role": "user",
+      "message": "I'll use a hash map approach — O(n) time."
+    },
+    {
+      "role": "agent",
+      "message": "Go ahead and implement."
+    },
+    {
+      "role": "user",
+      "message": "Done — I think it works."
+    },
+    {
+      "role": "agent",
+      "message": "Walk me through your solution."
+    },
+    {
+      "role": "user",
+      "message": "Sure. I iterate through, storing values in a hash map. For each element, I check if the complement exists. If yes, return the pair. O(n) time, O(n) space."
+    },
+    {
+      "role": "agent",
+      "message": "That's correct. And the tests all pass. Any questions about the role or process before we wrap up?"
+    }
+  ],
+  "new_turns_limit": 5,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def solve(nums, target):\n    seen={}\n    for i,n in enumerate(nums):\n        if target-n in seen: return [seen[target-n], i]\n        seen[n]=i",
+        "language": "python",
+        "remaining_minutes": 2,
+        "hintCount": 0
+      }
+    },
+    "run_code_against_tests": {
+      "default_return_value": {
+        "passedTests": 10,
+        "totalTests": 10,
+        "allPassed": true,
+        "failureCategory": "",
+        "compilationError": null,
+        "remainingMinutes": 2
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "2"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "decisive_close",
+      "name": "Closes decisively",
+      "conversation_goal_prompt": "The agent brought the interview to a clear, warm close rather than repeatedly asking 'anything else?' or opening a candidate-questions round. PASS if it wrapped up decisively with a closing statement."
+    },
+    {
+      "id": "ends_after_goodbye",
+      "name": "Speaks goodbye then ends",
+      "conversation_goal_prompt": "The agent delivered a complete closing line with a goodbye or equivalent. PASS if the closing statement completed naturally (did not appear cut off mid-sentence)."
+    }
+  ],
+  "target_phase": 4,
+  "target_phase_label": "Phase 4: Assessment & Close"
+}

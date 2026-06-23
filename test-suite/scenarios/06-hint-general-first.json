@@ -1,0 +1,48 @@
+{
+  "id": "hint_general_first",
+  "tags": [
+    "hints"
+  ],
+  "description": "Tests that first hint is general, not the solution. Agent should be in implementation phase — candidate is stuck while coding.",
+  "simulated_user": {
+    "prompt": "You're a candidate mid-implementation. You're stuck on how to find the matching pair efficiently and you directly ask the interviewer for a hint. You've already explained your brute force approach and started coding.",
+    "first_message": "I'm kind of stuck — can you give me a hint on how to find the pair more efficiently?"
+  },
+  "partial_conversation_history": [
+    {
+      "role": "user",
+      "message": "Okay, so I think I'll try a brute force approach first — just checking every pair with nested loops. It's not the fastest but it should work."
+    },
+    {
+      "role": "agent",
+      "message": "That's a valid starting point. Go ahead and implement it."
+    },
+    {
+      "role": "user",
+      "message": "Alright, let me start coding this up."
+    }
+  ],
+  "new_turns_limit": 5,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def solve(nums, target):\n    for i in range(len(nums)):\n        # stuck on the rest\n        pass",
+        "language": "python",
+        "remaining_minutes": 20,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "20"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "general_nudge",
+      "name": "First hint is general",
+      "conversation_goal_prompt": "The agent's first hint was a general nudge — a question, pointing at an example, or asking what they've tried — NOT the solution approach, not code, not the optimal technique named. PASS if the first hint stayed general."
+    }
+  ],
+  "target_phase": 2,
+  "target_phase_label": "Phase 2: Implementation"
+}
