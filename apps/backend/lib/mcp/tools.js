@@ -127,6 +127,9 @@ function classifyFailure(executionResult, testResults, hiddenTests) {
 export async function getCurrentCode(args, context) {
   const { sessionId, session } = context;
 
+  // Check for test-mode session IDs (prefixed with "live-run-" or "test-")
+  const isTestSession = sessionId?.startsWith('live-run-') || sessionId?.startsWith('test-');
+
   // Refresh session from DB to get latest code
   const fresh = await prisma.session.findUnique({
     where: { id: sessionId },
@@ -140,8 +143,26 @@ export async function getCurrentCode(args, context) {
     },
   });
 
-  if (!fresh) {
+  if (!fresh && !isTestSession) {
     return { content: [{ type: 'text', text: JSON.stringify({ error: 'Session not found' }) }] };
+  }
+
+  // For test sessions without a real DB entry, return mock code
+  if (isTestSession && !fresh) {
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          code: `def solve(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        complement = target - n\n        if complement in seen:\n            return [seen[complement], i]\n        seen[n] = i\n    return []`,
+          language: 'python',
+          elapsed_seconds: 180,
+          remaining_seconds: 1620,
+          phase_hint: 'implementation',
+          hint_count: 0,
+          status: 'in_progress',
+        }),
+      }],
+    };
   }
 
   const now = new Date();
@@ -189,11 +210,47 @@ export async function getCurrentCode(args, context) {
 export async function runCodeAgainstTests(args, context) {
   const { sessionId, session, question } = context;
 
+  const isTestSession = sessionId?.startsWith('live-run-') || sessionId?.startsWith('test-');
+
   // Refresh session for latest code
   const fresh = await prisma.session.findUnique({
     where: { id: sessionId },
     select: { latestCode: true, latestLanguage: true, startedAt: true, hintCount: true },
   });
+
+  // For test sessions, return mock test results directly
+  if (isTestSession && !fresh) {
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          passed: 3,
+          total: 5,
+          all_passed: false,
+          failure_category: 'edge_case',
+          visible: {
+            passed: 2,
+            total: 2,
+            results: [
+              { id: 'v1', name: 'Example 1', visible: true, passed: true, input: [2,7,11,15], expected: [0,1], actual: [0,1] },
+              { id: 'v2', name: 'Example 2', visible: true, passed: true, input: [3,2,4], expected: [1,2], actual: [1,2] },
+            ],
+          },
+          hidden: {
+            passed: 1,
+            total: 3,
+            results: [
+              { id: 'h1', name: 'Hidden 1', visible: false, passed: true },
+              { id: 'h2', name: 'Hidden 2', visible: false, passed: false },
+              { id: 'h3', name: 'Hidden 3', visible: false, passed: false },
+            ],
+          },
+          elapsed_seconds: 181,
+          remaining_seconds: 1619,
+        }),
+      }],
+    };
+  }
 
   if (!fresh) {
     return { content: [{ type: 'text', text: JSON.stringify({ error: 'Session not found' }) }] };
