@@ -857,71 +857,54 @@ router.post('/technical/session', async (req, res) => {
       return res.status(403).json({ error: err.message });
     }
 
-    // 2. Check if user already has an agent
+    // 2. Check if user already has a TECHNICAL agent
     const existingAgent = await prisma.agent.findFirst({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
+      where: { userId, type: 'Technical' },
     });
 
-    // 3. Call n8n workflow to provision/update agent
-    let agentResult;
-    try {
-      agentResult = await callTechnicalAgentWorkflow({
-        elevenlabsApiKey: elevenLabsKey,
-        voiceId: interviewConfig?.tts?.voice_id,
-        agentId: existingAgent?.id,
-        version: existingAgent?.configVersion,
-      });
-    } catch (err) {
-      console.error('[technical/session] Agent workflow call failed:', err.message);
-      // If user has an existing agent, proceed with it (degraded)
-      if (existingAgent?.id) {
-        console.log('[technical/session] Proceeding with existing agent despite workflow error');
-        agentResult = { agent_id: existingAgent.id, updated: false };
-      } else {
+    let agentId;
+
+    if (existingAgent?.id) {
+      // User already has an agent — reuse it, skip n8n provisioning
+      agentId = existingAgent.id;
+      console.log(`[technical/session] Reusing existing technical agent ${agentId} for user ${userId}`);
+    } else {
+      // No agent yet — call n8n to provision one
+      let agentResult;
+      try {
+        agentResult = await callTechnicalAgentWorkflow({
+          elevenlabsApiKey: elevenLabsKey,
+          voiceId: interviewConfig?.tts?.voice_id,
+        });
+      } catch (err) {
+        console.error('[technical/session] Agent workflow call failed:', err.message);
         return res.status(503).json({
           error: 'Could not set up your interviewer. Please try again.',
           retryable: true,
           details: err.message,
         });
       }
-    }
 
-    // Handle workflow returning an error (e.g. create failed with no fallback)
-    if (agentResult?.error && !existingAgent?.id) {
-      return res.status(503).json({
-        error: 'Could not set up your interviewer. Please try again.',
-        retryable: agentResult.retryable !== false,
-        details: agentResult.error,
-      });
-    }
+      if (agentResult?.error) {
+        return res.status(503).json({
+          error: 'Could not set up your interviewer. Please try again.',
+          retryable: agentResult.retryable !== false,
+          details: agentResult.error,
+        });
+      }
 
-    // If update failed but user has existing agent, proceed (soft failure)
-    if (agentResult?.error && existingAgent?.id) {
-      console.warn('[technical/session] Agent update failed, using existing agent:', agentResult.error);
-      agentResult = { agent_id: existingAgent.id, updated: false };
-    }
+      agentId = agentResult?.agent_id;
+      if (!agentId) {
+        return res.status(500).json({ error: 'Agent provisioning did not return an agent ID' });
+      }
 
-    const agentId = agentResult?.agent_id || existingAgent?.id;
-    if (!agentId) {
-      return res.status(500).json({ error: 'Failed to determine agent ID' });
-    }
-
-    // 4. Store/update agent record
-    if (agentId) {
+      // 3. Store new agent record
       await prisma.agent.upsert({
-        where: { id: agentId },
-        update: {
-          userId,
-          configVersion: agentResult?.version ?? CENTRAL_AGENT_VERSION,
-        },
-        create: {
-          id: agentId,
-          userId,
-          configVersion: agentResult?.version ?? CENTRAL_AGENT_VERSION,
-        },
+        where: { userId_type: { userId, type: 'Technical' } },
+        update: { id: agentId, configVersion: agentResult?.version ?? CENTRAL_AGENT_VERSION },
+        create: { id: agentId, userId, type: 'Technical', configVersion: agentResult?.version ?? CENTRAL_AGENT_VERSION },
       });
-      console.log(`[technical/session] Agent ${agentId} stored for user ${userId}, version ${agentResult?.version ?? CENTRAL_AGENT_VERSION}`);
+      console.log(`[technical/session] Agent ${agentId} provisioned for user ${userId}, version ${agentResult?.version ?? CENTRAL_AGENT_VERSION}`);
     }
 
     // 5. Load question
@@ -1306,10 +1289,11 @@ router.post('/behavioral/save', async (req, res) => {
         await prisma.agent.create({
           data: {
             id: agentId,
-            userId: userId
+            userId: userId,
+            type: 'Behavioural',
           }
         });
-        console.log(`Agent created: ${agentId}`);
+        console.log(`Behavioural agent created: ${agentId}`);
       }
     }
 
