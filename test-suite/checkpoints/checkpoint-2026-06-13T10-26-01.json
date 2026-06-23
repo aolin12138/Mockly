@@ -1,0 +1,383 @@
+{
+  "id": "2026-06-13T10-26-01",
+  "timestamp": "2026-06-13T10:26:01.353Z",
+  "description": "Baseline: MCP server live, simUser prefix fix, starting_workflow_node_id enabled, conv init data at top level",
+  "agent_config": {
+    "agent_id": "agent_2201ktp0n7mwek6avkphs4x6394m",
+    "name": "Technical interview agent",
+    "branch_id": "agtbrch_1301ktp0n97rfn4tkjz5626383hm",
+    "main_branch_id": "agtbrch_1301ktp0n97rfn4tkjz5626383hm",
+    "version_id": "agtvrsn_4801kv082v67ezw9kkqz88get4h6",
+    "conversation_config": {
+      "text_only": false,
+      "llm": "gpt-5-mini",
+      "mcp_server_ids": [
+        "mcaiiVJDVZFS5dB7RFN2"
+      ],
+      "dynamic_variables_placeholders": [
+        "question_statement",
+        "time_budget_minutes",
+        "company_type",
+        "question_title",
+        "constraints",
+        "example_cases",
+        "difficulty",
+        "remaining_minutes",
+        "secret__session_id"
+      ],
+      "enable_starting_workflow_node_id_from_client": true
+    },
+    "workflow": {
+      "nodes": {
+        "start_node": {
+          "type": "start",
+          "tools": [],
+          "prompt_preview": ""
+        },
+        "node_01ksvy7ntre8gsanne5tj7kmca": {
+          "label": "Phase 1",
+          "type": "override_agent",
+          "tools": [],
+          "prompt_preview": "# Right now: the candidate is getting their head around the problem.\nThey're reading it and figuring out an approach — they haven't started really coding yet.\n- Let them read and think. If they go qui"
+        },
+        "node_01ksvyddppe8gsannvqqc66p4w": {
+          "label": "Phase 2",
+          "type": "override_agent",
+          "tools": [],
+          "prompt_preview": "# Right now: they've picked an approach and they're coding.\n- Default to quiet. Let them work. Glance at their code yourself (behind the scenes) to keep track of where they are — don't interrupt to as"
+        },
+        "node_01ksvyftate8gsanp9mkqw49tf": {
+          "label": "Phase 3",
+          "type": "override_agent",
+          "tools": [],
+          "prompt_preview": "# Right now: time's running short and the problem still isn't solved. Shift toward helping them land SOMETHING working.\n- Lean in more than before. You don't wait for them to be obviously stuck anymor"
+        },
+        "node_01kt35w596exs8pbna62db1zkr": {
+          "label": "Phase 4",
+          "type": "override_agent",
+          "tools": [],
+          "prompt_preview": "# Right now: the core problem is resolved (or time is up). This is the final stage.\nYour job shifts from helping them code to assessing their understanding, then closing the interview. You no longer g"
+        }
+      },
+      "edges": [
+        {
+          "source": "start_node",
+          "target": "node_01ksvy7ntre8gsanne5tj7kmca",
+          "condition": "unconditional"
+        },
+        {
+          "source": "node_01ksvy7ntre8gsanne5tj7kmca",
+          "target": "node_01ksvyddppe8gsannvqqc66p4w",
+          "condition": "llm"
+        },
+        {
+          "source": "node_01ksvyddppe8gsannvqqc66p4w",
+          "target": "node_01ksvyftate8gsanp9mkqw49tf",
+          "condition": "llm"
+        },
+        {
+          "source": "node_01ksvyftate8gsanp9mkqw49tf",
+          "target": "node_01kt35w596exs8pbna62db1zkr",
+          "condition": "llm"
+        },
+        {
+          "source": "node_01ksvyddppe8gsannvqqc66p4w",
+          "target": "node_01kt35w596exs8pbna62db1zkr",
+          "condition": "llm"
+        }
+      ]
+    },
+    "fetched_at": "2026-06-13T10:26:01.353Z"
+  },
+  "results": {
+    "total": 18,
+    "passed": 8,
+    "failed": 10,
+    "errors": 0,
+    "criteria_total": 42,
+    "criteria_passed": 29,
+    "per_scenario": [
+      {
+        "id": "clarify_problem",
+        "result": "pass",
+        "criteria": [
+          {
+            "id": "answers_clarification",
+            "result": "success"
+          },
+          {
+            "id": "no_approach_hint",
+            "result": "success"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "thinks_aloud_approach",
+        "result": "pass",
+        "criteria": [
+          {
+            "id": "lets_them_try",
+            "result": "success"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "filler_stays_silent",
+        "result": "fail",
+        "criteria": [
+          {
+            "id": "no_response_to_filler",
+            "result": "failure"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "directed_request_for_time",
+        "result": "fail",
+        "criteria": [
+          {
+            "id": "brief_ack",
+            "result": "failure"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "garbled_term_not_echoed",
+        "result": "fail",
+        "criteria": [
+          {
+            "id": "no_echo",
+            "result": "failure"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "hint_general_first",
+        "result": "pass",
+        "criteria": [
+          {
+            "id": "general_nudge",
+            "result": "success"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "hint_escalates_when_still_stuck",
+        "result": "pass",
+        "criteria": [
+          {
+            "id": "more_specific_no_answer",
+            "result": "success"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "silent_coding_no_nag",
+        "result": "pass",
+        "criteria": [
+          {
+            "id": "no_unprompted_help",
+            "result": "success"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "done_asks_walkthrough",
+        "result": "pass",
+        "criteria": [
+          {
+            "id": "asks_walkthrough",
+            "result": "success"
+          },
+          {
+            "id": "no_recap_verdict",
+            "result": "success"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "done_but_edge_fail_one_nudge",
+        "result": "fail",
+        "criteria": [
+          {
+            "id": "one_general_nudge",
+            "result": "failure"
+          },
+          {
+            "id": "no_specific_failing_input",
+            "result": "success"
+          },
+          {
+            "id": "no_leak",
+            "result": "failure"
+          }
+        ]
+      },
+      {
+        "id": "assessment_asks_directly",
+        "result": "pass",
+        "criteria": [
+          {
+            "id": "direct_questions",
+            "result": "success"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "complexity_question_not_in_implementation",
+        "result": "fail",
+        "criteria": [
+          {
+            "id": "no_premature_assessment",
+            "result": "failure"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "late_unsolved_more_directive",
+        "result": "fail",
+        "criteria": [
+          {
+            "id": "more_directive",
+            "result": "success"
+          },
+          {
+            "id": "still_no_handover",
+            "result": "success"
+          },
+          {
+            "id": "no_leak",
+            "result": "failure"
+          }
+        ]
+      },
+      {
+        "id": "refuses_to_give_answer",
+        "result": "fail",
+        "criteria": [
+          {
+            "id": "warm_refusal",
+            "result": "failure"
+          },
+          {
+            "id": "no_leak",
+            "result": "failure"
+          }
+        ]
+      },
+      {
+        "id": "closes_and_ends",
+        "result": "fail",
+        "criteria": [
+          {
+            "id": "decisive_close",
+            "result": "failure"
+          },
+          {
+            "id": "ends_after_goodbye",
+            "result": "failure"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "transitions_phase1_understanding",
+        "result": "fail",
+        "criteria": [
+          {
+            "id": "listens_to_approach",
+            "result": "success"
+          },
+          {
+            "id": "no_premature_complexity",
+            "result": "failure"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "transitions_phase2_coding",
+        "result": "fail",
+        "criteria": [
+          {
+            "id": "stays_quiet_during_coding",
+            "result": "failure"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "transitions_phase3_assessment",
+        "result": "pass",
+        "criteria": [
+          {
+            "id": "enters_assessment_mode",
+            "result": "success"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      }
+    ]
+  },
+  "metadata": {
+    "filter": "all",
+    "estimated_tokens": 41000,
+    "duration_ms": 47667
+  }
+}

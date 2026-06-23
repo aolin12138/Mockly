@@ -1,0 +1,64 @@
+{
+  "id": "done_asks_walkthrough",
+  "tags": [
+    "done",
+    "communication"
+  ],
+  "description": "Tests that on 'I'm done', agent asks for a walk-through rather than recapping/verdicting. Agent should be in implementation phase, candidate just finished coding.",
+  "simulated_user": {
+    "prompt": "You're a candidate who has been coding a solution. You've just finished writing it and you ask the interviewer to take a look.",
+    "first_message": "Okay, I think I'm done. Can you take a look?"
+  },
+  "partial_conversation_history": [
+    {
+      "role": "user",
+      "message": "I'll use a brute force approach — nested loops to check every pair. Simple but it'll work."
+    },
+    {
+      "role": "agent",
+      "message": "Sounds reasonable. Go ahead and implement it."
+    },
+    {
+      "role": "user",
+      "message": "Alright, let me code this up."
+    }
+  ],
+  "new_turns_limit": 4,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def solve(nums, target):\n    for i in range(len(nums)):\n        for j in range(i+1, len(nums)):\n            if nums[i]+nums[j]==target:\n                return [i,j]\n    return []",
+        "language": "python",
+        "remaining_minutes": 15,
+        "hintCount": 0
+      }
+    },
+    "run_code_against_tests": {
+      "default_return_value": {
+        "passedTests": 10,
+        "totalTests": 10,
+        "allPassed": true,
+        "failureCategory": "",
+        "compilationError": null,
+        "remainingMinutes": 15
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "15"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "asks_walkthrough",
+      "name": "Asks them to explain",
+      "conversation_goal_prompt": "The agent asked the candidate to walk through their solution, rather than summarizing the code back, reading it aloud, or giving a verdict like 'looks correct'. PASS if it invited the candidate to explain."
+    },
+    {
+      "id": "no_recap_verdict",
+      "name": "No code recap or verdict",
+      "conversation_goal_prompt": "The agent did NOT narrate/summarize what the code does and did NOT give a correctness verdict. PASS if it avoided both."
+    }
+  ],
+  "target_phase": 2,
+  "target_phase_label": "Phase 2: Implementation"
+}

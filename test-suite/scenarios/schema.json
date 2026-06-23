@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mockly.dev/test-suite/scenario.schema.json",
+  "title": "Test Scenario",
+  "description": "A single test scenario for the ElevenLabs interview agent",
+  "type": "object",
+  "required": ["id", "tags", "simulated_user", "new_turns_limit", "evaluation_criteria"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique scenario identifier, e.g. 'clarify_problem'"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this scenario tests"
+    },
+    "simulated_user": {
+      "type": "object",
+      "required": ["prompt"],
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "The LLM prompt that defines the simulated candidate's persona and behavior"
+        },
+        "first_message": {
+          "type": "string",
+          "description": "Optional first message the simulated user speaks. If empty string, the simulation starts with the agent."
+        },
+        "llm": {
+          "type": "string",
+          "default": "gpt-4o"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "default": 0.3
+        }
+      }
+    },
+    "new_turns_limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "description": "Maximum conversation turns for this scenario"
+    },
+    "tool_mocks": {
+      "type": "object",
+      "description": "Mock configurations for agent tools. Keys are scenario-library tool names (get_current_code, run_code_against_tests).",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["default_return_value"],
+        "properties": {
+          "default_return_value": {
+            "type": "object",
+            "description": "The JSON value to return when the tool is called (will be stringified)"
+          },
+          "default_is_error": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "partial_conversation_history": {
+      "type": "array",
+      "description": "Prior conversation turns to seed context and phase state before the simulation begins",
+      "items": {
+        "type": "object",
+        "required": ["role", "message"],
+        "properties": {
+          "role": { "type": "string", "enum": ["user", "agent"] },
+          "message": { "type": "string" }
+        }
+      }
+    },
+    "dynamic_variables": {
+      "type": "object",
+      "description": "Dynamic variables injected into the simulation (e.g. remaining_minutes)",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "evaluation_criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "conversation_goal_prompt"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "conversation_goal_prompt": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "use_knowledge_base": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "minItems": 1
+    }
+  }
+}

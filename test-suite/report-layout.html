@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockly Test Suite — 2026-06-13T05:16:40.313Z</title>
+<style>
+:root{--bg:#0d1117;--card:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--g:#22c55e;--r:#ef4444;--y:#eab308;--b:#58a6ff;--p:#bc8cff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;font-size:15px}
+.container{max-width:1000px;margin:0 auto;padding:32px 20px}
+
+h1{font-size:22px;margin-bottom:2px;text-align:center}
+.subtitle{text-align:center;color:var(--muted);font-size:14px;margin-bottom:28px}
+
+/* Summary */
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:20px 16px;text-align:center}
+.stat .val{font-size:32px;font-weight:700}
+.stat .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;margin-top:4px;letter-spacing:.5px}
+.stat.pass .val{color:var(--g)}
+.stat.fail .val{color:var(--r)}
+.stat.err .val{color:var(--y)}
+.bar-wrap{grid-column:1/-1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px 18px}
+.bar-lbl{font-size:13px;color:var(--muted);margin-bottom:8px}
+.bar{height:8px;border-radius:4px;background:#21262d;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .4s}
+
+.filter{text-align:center;font-size:13px;color:var(--muted);margin-bottom:16px;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:6px}
+.filter b{color:var(--text)}
+
+.controls{display:flex;justify-content:center;gap:24px;margin-bottom:20px;font-size:14px}
+.controls label{cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:8px}
+.controls input{accent-color:var(--b);width:16px;height:16px}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden}
+.card-bad{border-left:3px solid var(--r)}
+.card-hd{cursor:pointer;user-select:none;transition:background .1s}
+.card-hd:hover{background:rgba(255,255,255,.02)}
+.card-hd-row{display:flex;align-items:center;gap:12px;padding:14px 18px}
+.badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:14px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.badge.pass{background:rgba(34,197,94,.12);color:var(--g)}
+.badge.fail{background:rgba(239,68,68,.12);color:var(--r)}
+.badge.error{background:rgba(234,179,8,.12);color:var(--y)}
+.card-title{font-weight:600;font-size:15px;flex:1;min-width:0}
+.card-desc{font-size:13px;color:var(--muted);line-height:1.6;padding:8px 18px 10px;border-top:1px solid var(--border);margin-top:0}
+.phase-tag{font-size:10px;font-weight:600;padding:3px 10px;border-radius:12px;border:1px solid;white-space:nowrap;letter-spacing:.3px;text-transform:uppercase}
+.card-meta{font-size:12px;color:var(--muted);white-space:nowrap;text-align:right}
+.card-bd{padding:0 18px 18px}
+.card.folded .card-bd{display:none}
+
+.err-msg{background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.2);padding:12px 16px;border-radius:6px;margin-bottom:14px;font-size:14px;color:var(--y)}
+.summary{font-size:13px;color:var(--muted);margin-bottom:14px;font-style:italic}
+h4{font-size:12px;margin:18px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+/* Criteria table */
+.ct{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px}
+.ct th{text-align:left;padding:8px 12px;color:var(--muted);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.ct td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:top}
+.row-fail{background:rgba(239,68,68,.04)}
+.cid{font-family:'SF Mono',Consolas,monospace;font-size:12px;color:var(--p);white-space:nowrap}
+.chip{display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-size:12px;font-weight:700}
+.chip.pass{background:rgba(34,197,94,.18);color:var(--g)}
+.chip.fail{background:rgba(239,68,68,.18);color:var(--r)}
+.chip.unk{background:rgba(188,140,255,.18);color:var(--p)}
+
+/* Transcript */
+.hist-legend{font-weight:400;text-transform:none;font-size:11px;color:var(--muted);letter-spacing:0}
+.transcript{border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.turn{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.03);font-size:14px}
+.turn:last-child{border-bottom:none}
+.t-hist{opacity:.55;border-left:3px solid var(--border)}
+.t-user{background:rgba(88,166,255,.03)}
+.t-agent{background:rgba(188,140,255,.03)}
+.t-role{font-size:10px;font-weight:700;text-transform:uppercase;margin-right:10px;padding:3px 7px;border-radius:4px}
+.t-user .t-role{background:rgba(88,166,255,.2);color:var(--b)}
+.t-agent .t-role{background:rgba(188,140,255,.2);color:var(--p)}
+.t-n{font-size:10px;color:var(--muted);margin-right:8px}
+.history-tag{font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;background:rgba(139,148,158,.15);color:var(--muted);margin-right:8px;text-transform:uppercase;letter-spacing:.3px}
+.history-tag.sm{display:inline-block}
+.phase-badge{font-size:10px;padding:2px 7px;border-radius:3px;background:rgba(234,179,8,.15);color:var(--y);margin-right:8px;font-family:monospace}
+.t-msg{margin-top:8px;color:var(--text);line-height:1.6}
+.tool-call{font-size:13px;color:var(--y);padding:4px 0 4px 16px;border-left:2px solid rgba(234,179,8,.3);margin:4px 0 4px 8px}
+.tool-result{font-size:13px;color:var(--g);padding:4px 0 4px 16px;border-left:2px solid rgba(34,197,94,.3);margin:4px 0 4px 8px}
+.mock-code{background:rgba(255,255,255,.04);padding:8px 12px;border-radius:4px;font-family:'SF Mono',Consolas,monospace;font-size:12px;margin:4px 0;white-space:pre-wrap;line-height:1.5}
+.meta{font-size:11px;color:var(--muted);margin-left:8px}
+.test-badge{font-weight:600;font-size:13px}
+.test-badge.tp{color:var(--g)}.test-badge.tf{color:var(--r)}
+.empty{color:var(--muted);font-style:italic;padding:14px}
+
+.footer{text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+</style></head><body>
+<div class="container">
+<h1>Mockly Test Suite Report</h1>
+<div class="subtitle">Agent: test · 2026-06-13T05:16:40.313Z · filter: test</div>
+
+<div class="summary">
+  <div class="stat pass"><div class="val">0</div><div class="lbl">Passed</div></div>
+  <div class="stat fail"><div class="val">1</div><div class="lbl">Failed</div></div>
+  <div class="stat err"><div class="val">0</div><div class="lbl">Errors</div></div>
+  <div class="stat"><div class="val">1</div><div class="lbl">Total</div></div>
+  <div class="bar-wrap">
+    <div class="bar-lbl">0/1 criteria passed (0%) · est. 1,000 tokens · 1s</div>
+    <div class="bar"><div class="bar-fill" style="width:0%;background:var(--r)"></div></div>
+  </div>
+</div>
+
+<div class="filter">Ran <b>1</b> of <b>18</b> scenarios — <b>partial run</b></div>
+
+<div class="controls">
+  <label><input type="checkbox" id="fo" onchange="document.querySelectorAll('.card').forEach(c=>c.style.display=this.checked&&!c.classList.contains('card-bad')?'none':'')"> Show failures & errors only</label>
+  <label><input type="checkbox" id="hideHist" onchange="document.querySelectorAll('.t-hist').forEach(t=>t.style.display=this.checked?'none':'')"> Hide context history</label>
+</div>
+
+<div class="card card-bad">
+    <div class="card-hd" onclick="this.parentElement.classList.toggle('folded')">
+      <div class="card-hd-row">
+        <span class="badge fail">FAIL</span>
+        <span class="phase-tag" style="border-color:#58a6ff;color:#58a6ff">Phase 1: Understanding</span>
+        <span class="card-title">filler_stays_silent</span>
+        <span class="card-meta">4/3 turns · 5.0s · ~500 tok</span>
+      </div>
+      <div class="card-desc">Tests that acknowledgment noise gets no response. The agent should stay silent when the candidate says filler words.</div>
+    </div>
+    <div class="card-bd">
+      
+      
+      <h4>Criteria (1)</h4>
+      <table class="ct"><thead><tr><th></th><th>Criterion</th><th>Rationale</th></tr></thead><tbody><tr class="row-fail"><td><span class="chip fail">✗</span></td><td class="cid">x</td><td>Reason here.</td></tr></tbody></table>
+      <h4>Transcript </h4>
+      <div class="transcript"><div class="empty">No transcript</div></div>
+    </div>
+  </div>
+
+<div class="footer">Mockly Test Suite · ElevenLabs simulate-conversation API<br>Token counts are estimated (API does not return actual usage for simulations)</div>
+</div>
+</body></html>

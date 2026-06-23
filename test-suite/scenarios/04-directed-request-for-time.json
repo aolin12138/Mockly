@@ -1,0 +1,34 @@
+{
+  "id": "directed_request_for_time",
+  "tags": [
+    "silence"
+  ],
+  "description": "Tests that a request for time directed at the agent gets a brief warm ack, then silence.",
+  "simulated_user": {
+    "prompt": "You're a candidate. You directly tell the interviewer 'let me have a look at this for a second' — addressed to them, asking for a moment. Then you stop.",
+    "first_message": "let me have a look at this for a second"
+  },
+  "new_turns_limit": 3,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "",
+        "language": "python",
+        "remaining_minutes": 29,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "29"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "brief_ack",
+      "name": "Brief acknowledgment only",
+      "conversation_goal_prompt": "The agent gave a brief, warm acknowledgment (a few words like 'sure, take your time') and nothing more — no follow-up question, no list of options, no continuation. PASS if the acknowledgment was short and self-contained. FAIL if it elaborated, offered options, or asked a question."
+    }
+  ],
+  "target_phase": 1,
+  "target_phase_label": "Phase 1: Understanding"
+}

@@ -1,0 +1,139 @@
+{
+  "id": "2026-06-13T10-24-29",
+  "timestamp": "2026-06-13T10:24:29.783Z",
+  "description": "Initial baseline - MCP server up, simUser prefix fix",
+  "agent_config": {
+    "agent_id": "agent_2201ktp0n7mwek6avkphs4x6394m",
+    "name": "Technical interview agent",
+    "branch_id": "agtbrch_1301ktp0n97rfn4tkjz5626383hm",
+    "main_branch_id": "agtbrch_1301ktp0n97rfn4tkjz5626383hm",
+    "version_id": "agtvrsn_4801kv082v67ezw9kkqz88get4h6",
+    "conversation_config": {
+      "text_only": false,
+      "llm": "gpt-5-mini",
+      "mcp_server_ids": [
+        "mcaiiVJDVZFS5dB7RFN2"
+      ],
+      "dynamic_variables_placeholders": [
+        "question_statement",
+        "time_budget_minutes",
+        "company_type",
+        "question_title",
+        "constraints",
+        "example_cases",
+        "difficulty",
+        "remaining_minutes",
+        "secret__session_id"
+      ],
+      "enable_starting_workflow_node_id_from_client": true
+    },
+    "workflow": {
+      "nodes": {
+        "start_node": {
+          "type": "start",
+          "tools": [],
+          "prompt_preview": ""
+        },
+        "node_01ksvy7ntre8gsanne5tj7kmca": {
+          "label": "Phase 1",
+          "type": "override_agent",
+          "tools": [],
+          "prompt_preview": "# Right now: the candidate is getting their head around the problem.\nThey're reading it and figuring out an approach — they haven't started really coding yet.\n- Let them read and think. If they go qui"
+        },
+        "node_01ksvyddppe8gsannvqqc66p4w": {
+          "label": "Phase 2",
+          "type": "override_agent",
+          "tools": [],
+          "prompt_preview": "# Right now: they've picked an approach and they're coding.\n- Default to quiet. Let them work. Glance at their code yourself (behind the scenes) to keep track of where they are — don't interrupt to as"
+        },
+        "node_01ksvyftate8gsanp9mkqw49tf": {
+          "label": "Phase 3",
+          "type": "override_agent",
+          "tools": [],
+          "prompt_preview": "# Right now: time's running short and the problem still isn't solved. Shift toward helping them land SOMETHING working.\n- Lean in more than before. You don't wait for them to be obviously stuck anymor"
+        },
+        "node_01kt35w596exs8pbna62db1zkr": {
+          "label": "Phase 4",
+          "type": "override_agent",
+          "tools": [],
+          "prompt_preview": "# Right now: the core problem is resolved (or time is up). This is the final stage.\nYour job shifts from helping them code to assessing their understanding, then closing the interview. You no longer g"
+        }
+      },
+      "edges": [
+        {
+          "source": "start_node",
+          "target": "node_01ksvy7ntre8gsanne5tj7kmca",
+          "condition": "unconditional"
+        },
+        {
+          "source": "node_01ksvy7ntre8gsanne5tj7kmca",
+          "target": "node_01ksvyddppe8gsannvqqc66p4w",
+          "condition": "llm"
+        },
+        {
+          "source": "node_01ksvyddppe8gsannvqqc66p4w",
+          "target": "node_01ksvyftate8gsanp9mkqw49tf",
+          "condition": "llm"
+        },
+        {
+          "source": "node_01ksvyftate8gsanp9mkqw49tf",
+          "target": "node_01kt35w596exs8pbna62db1zkr",
+          "condition": "llm"
+        },
+        {
+          "source": "node_01ksvyddppe8gsannvqqc66p4w",
+          "target": "node_01kt35w596exs8pbna62db1zkr",
+          "condition": "llm"
+        }
+      ]
+    },
+    "fetched_at": "2026-06-13T10:24:29.783Z"
+  },
+  "results": {
+    "total": 2,
+    "passed": 0,
+    "failed": 2,
+    "errors": 0,
+    "criteria_total": 5,
+    "criteria_passed": 3,
+    "per_scenario": [
+      {
+        "id": "filler_stays_silent",
+        "result": "fail",
+        "criteria": [
+          {
+            "id": "no_response_to_filler",
+            "result": "failure"
+          },
+          {
+            "id": "no_leak",
+            "result": "success"
+          }
+        ]
+      },
+      {
+        "id": "done_asks_walkthrough",
+        "result": "fail",
+        "criteria": [
+          {
+            "id": "asks_walkthrough",
+            "result": "success"
+          },
+          {
+            "id": "no_recap_verdict",
+            "result": "success"
+          },
+          {
+            "id": "no_leak",
+            "result": "failure"
+          }
+        ]
+      }
+    ]
+  },
+  "metadata": {
+    "filter": "ids=filler_stays_silent,done_asks_walkthrough",
+    "estimated_tokens": 3500,
+    "duration_ms": 8314
+  }
+}

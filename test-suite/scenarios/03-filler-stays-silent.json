@@ -1,0 +1,34 @@
+{
+  "id": "filler_stays_silent",
+  "tags": [
+    "silence"
+  ],
+  "description": "Tests that acknowledgment noise gets no response.",
+  "simulated_user": {
+    "prompt": "You're a candidate about to start. You say only a short filler acknowledgment like 'okay, alrighty' and then you go quiet to think. You do NOT ask anything. Say just the one short filler line.",
+    "first_message": "okay, alrighty"
+  },
+  "new_turns_limit": 3,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "",
+        "language": "python",
+        "remaining_minutes": 30,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "30"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "no_response_to_filler",
+      "name": "Silent on filler",
+      "conversation_goal_prompt": "After the candidate said only a filler acknowledgment ('okay, alrighty') with no question, the agent did NOT respond with a substantive turn and did NOT ask a check-in question. PASS if the agent stayed quiet or gave at most nothing. FAIL if it asked anything or offered options."
+    }
+  ],
+  "target_phase": 1,
+  "target_phase_label": "Phase 1: Understanding"
+}

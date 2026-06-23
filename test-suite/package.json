@@ -1,0 +1,17 @@
+{
+  "name": "mockly-test-suite",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Scenario-based test suite for the Mockly ElevenLabs interview agent",
+  "scripts": {
+    "test": "node runner.mjs --all",
+    "test:dry": "node runner.mjs --all --dry-run",
+    "test:tag": "node runner.mjs --tag",
+    "test:scenario": "node runner.mjs --scenario"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "playwright": "^1.60.0"
+  }
+}
