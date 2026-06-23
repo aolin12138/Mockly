@@ -573,8 +573,7 @@ router.post('/session/:sessionId/callback', async (req, res) => {
     // Resolve agent_id from DB only when callback did not provide one.
     if (!callbackAgentId && callbackUserId) {
       const existingAgent = await prisma.agent.findFirst({
-        where: { userId: callbackUserId },
-        orderBy: { createdAt: 'desc' },
+        where: { userId: callbackUserId, type: 'Behavioural' },
         select: { id: true }
       });
       if (existingAgent?.id) {
@@ -689,10 +688,10 @@ router.post('/session/:sessionId/callback', async (req, res) => {
     if (callbackAgentId && callbackUserId) {
       await prisma.agent.upsert({
         where: { id: callbackAgentId },
-        update: { userId: callbackUserId },
-        create: { id: callbackAgentId, userId: callbackUserId }
+        update: { userId: callbackUserId, type: 'Behavioural' },
+        create: { id: callbackAgentId, userId: callbackUserId, type: 'Behavioural' }
       });
-      console.log(`💾 Persisted callback agent_id ${callbackAgentId} for user ${callbackUserId}`);
+      console.log(`💾 Persisted behavioural agent_id ${callbackAgentId} for user ${callbackUserId}`);
       deleteSessionOwner(sessionId);
       tempSessionToPersistedSessionId.delete(sessionId);
       emitProgressUpdate(sessionId, 'Session is ready. Launching your interview...', 'ready');
@@ -876,8 +875,8 @@ router.post('/session/:sessionId/retry-agent-setup', async (req, res) => {
     if (resolvedAgentId && retryContext.callbackUserId) {
       await prisma.agent.upsert({
         where: { id: resolvedAgentId },
-        update: { userId: retryContext.callbackUserId },
-        create: { id: resolvedAgentId, userId: retryContext.callbackUserId }
+        update: { userId: retryContext.callbackUserId, type: 'Behavioural' },
+        create: { id: resolvedAgentId, userId: retryContext.callbackUserId, type: 'Behavioural' }
       });
       deleteSessionOwner(sessionId);
       tempSessionToPersistedSessionId.delete(sessionId);
