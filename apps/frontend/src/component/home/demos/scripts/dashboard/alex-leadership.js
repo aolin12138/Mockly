@@ -34,11 +34,16 @@ export default {
   frames: [
     { t: 600, type: 'materialize', target: 'score-card' },
     { t: 600, type: 'score_arc', to: 78 },
+    { t: 1200, type: 'callout', id: 'score-callout', x: 22, y: 32, text: 'Your overall score, averaged across all sessions', align: 'right' },
     { t: 2200, type: 'materialize', target: 'session-row' },
+    { t: 3500, type: 'callout', id: 'sessions-callout', x: 44, y: 68, text: 'STAR breakdown on every answer you give', align: 'center' },
     { t: 4500, type: 'cursor_to', x: 48, y: 78 },
+    { t: 4600, type: 'cursor_click' },
     { t: 5200, type: 'card_hover', index: 1 },
     { t: 7800, type: 'cursor_to', x: 82, y: 30 },
+    { t: 7900, type: 'cursor_click' },
     { t: 7800, type: 'goal_progress' },
+    { t: 8200, type: 'callout', id: 'goal-callout', x: 80, y: 18, text: 'Set weekly goals, watch yourself improve', align: 'left' },
   ],
   captions: [
     { t: 0, text: 'Your interview practice, tracked' },
