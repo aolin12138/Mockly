@@ -269,13 +269,13 @@ const Home = () => {
             </div>
             <div className="relative rounded-xl md:rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-900 shadow-lg dark:shadow-none">
               <video
-                src="/mockly-demo.mp4"
+                src="/dashboard-demo.mp4"
                 autoPlay
                 muted
                 loop
                 playsInline
                 className="w-full h-auto block"
-                aria-label="Mockly product demo showing dashboard, behavioural interview, and technical interview"
+                aria-label="Mockly dashboard demo"
               />
             </div>
             {/* Try Question Lab anchor */}

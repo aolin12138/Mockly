@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, height=1080" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0a0f1a; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #e2e8f0; }
+
+    /* ── App frame ── */
+    .app-area {
+      position: absolute; top: 0; left: 0; right: 0; height: 810px;
+      background: #0a0f1a; overflow: hidden;
+      border-bottom: 2px solid rgba(0,188,125,0.25);
+    }
+
+    /* Ambient orbs */
+    .ambient { position: absolute; border-radius: 999px; filter: blur(80px); pointer-events: none; z-index: 0; }
+    .ambient-1 { top: -80px; left: -80px; width: 360px; height: 360px; background: rgba(0,188,125,0.08); }
+    .ambient-2 { top: 120px; right: -40px; width: 280px; height: 280px; background: rgba(45,125,255,0.06); }
+    .ambient-3 { bottom: -60px; left: 25%; width: 300px; height: 300px; background: rgba(139,92,246,0.06); }
+
+    /* Header */
+    .app-header {
+      height: 56px; background: rgba(10,15,26,0.92);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; padding: 0 24px; position: relative; z-index: 10;
+    }
+    .app-header .logo { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #00bc7d, #059669); color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; margin-right: 10px; }
+    .app-header .brand { font-size: 15px; font-weight: 600; color: #fff; }
+    .app-header .path { color: #64748b; font-size: 12px; margin-left: 6px; }
+    .app-header .user-area { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .app-header .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, #00bc7d, #059669); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+    /* Sidebar */
+    .sidebar {
+      position: absolute; left: 0; top: 56px; bottom: 0; width: 240px;
+      background: rgba(10,15,26,0.6); border-right: 1px solid rgba(255,255,255,0.05);
+      padding: 20px 16px; z-index: 5;
+    }
+    .side-nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px;
+      font-size: 13px; font-weight: 500; color: #94a3b8; margin-bottom: 4px;
+    }
+    .side-nav-item.active { color: #00bc7d; background: rgba(0,188,125,0.1); border: 1px solid rgba(0,188,125,0.15); }
+    .side-nav-dot { width: 18px; height: 18px; border-radius: 5px; background: rgba(255,255,255,0.1); flex-shrink: 0; }
+    .side-nav-item.active .side-nav-dot { background: rgba(0,188,125,0.3); }
+
+    /* Main content area */
+    .main-content {
+      position: absolute; left: 240px; top: 56px; right: 0; bottom: 0;
+      padding: 24px; overflow: hidden; z-index: 2;
+    }
+
+    /* Cards */
+    .card {
+      background: rgba(15,22,42,0.7); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px; padding: 18px;
+    }
+    .card-hover-effect {
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    }
+
+    /* Stats cards */
+    .stat-card { position: relative; }
+    .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; font-weight: 600; margin-bottom: 8px; }
+    .stat-value { font-size: 40px; font-weight: 700; color: #fff; }
+    .stat-unit { font-size: 16px; color: #64748b; font-weight: 500; margin-left: 4px; }
+
+    /* Chart area */
+    .chart-area { height: 220px; display: flex; align-items: flex-end; gap: 16px; padding-top: 30px; }
+    .chart-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .chart-bar { width: 36px; background: rgba(0,188,125,0.15); border: 1px solid rgba(0,188,125,0.25); border-radius: 8px 8px 0 0; }
+    .chart-bar-label { font-size: 10px; color: #64748b; }
+    .chart-bar-value { font-size: 11px; font-weight: 600; color: #cbd5e1; }
+    .chart-line { position: absolute; height: 2px; background: #00bc7d; left: 0; right: 0; opacity: 0.5; }
+
+    /* Session rows */
+    .session-row {
+      display: flex; align-items: center; justify-content: space-between; padding: 12px 14px;
+      border-radius: 12px; background: rgba(15,22,42,0.4); border: 1px solid rgba(255,255,255,0.04);
+      margin-bottom: 8px;
+    }
+    .session-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .session-icon.behavioural { background: rgba(139,92,246,0.15); color: #a78bfa; }
+    .session-icon.technical { background: rgba(6,182,212,0.15); color: #22d3ee; }
+    .badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 999px; }
+    .badge-completed { background: rgba(0,188,125,0.15); color: #00bc7d; }
+    .badge-behavioural { background: rgba(139,92,246,0.15); color: #a78bfa; }
+    .badge-technical { background: rgba(6,182,212,0.15); color: #22d3ee; }
+    .score-badge { font-size: 15px; font-weight: 700; padding: 4px 12px; border-radius: 999px; }
+    .score-high { background: rgba(0,188,125,0.12); color: #00bc7d; border: 1px solid rgba(0,188,125,0.2); }
+    .score-mid { background: rgba(234,179,8,0.12); color: #eab308; border: 1px solid rgba(234,179,8,0.2); }
+
+    /* Goal card */
+    .goal-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .goal-item:last-child { border-bottom: none; }
+    .progress-bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden; width: 80px; }
+    .progress-fill { height: 100%; background: #00bc7d; border-radius: 999px; }
+
+    /* Cursor */
+    .cursor {
+      position: absolute; z-index: 100; width: 22px; height: 22px; pointer-events: none;
+    }
+    .cursor svg { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+    .click-ring {
+      position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; border-radius: 999px;
+      background: rgba(0,188,125,0.6); transform: translate(-50%, -50%); opacity: 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════ */
+    /* EXPLANATION BAR — the key addition */
+    /* ═══════════════════════════════════════════════════════════ */
+    .explanation-bar {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 270px;
+      background: #060b14;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 150; padding: 0 60px;
+    }
+    .explanation-content {
+      display: flex; align-items: flex-start; gap: 24px; max-width: 1100px; width: 100%;
+    }
+    .explanation-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: rgba(0,188,125,0.12); border: 1px solid rgba(0,188,125,0.2);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .explanation-text-wrap { flex: 1; }
+    .explanation-heading {
+      font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 6px;
+    }
+    .explanation-body {
+      font-size: 16px; line-height: 1.55; color: #94a3b8;
+      max-width: 700px;
+    }
+    .explanation-step {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+      color: #00bc7d; font-weight: 600; margin-bottom: 8px;
+    }
+
+    /* ── Animations ── */
+    @keyframes pulse-ring {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,188,125,0.3); }
+      50% { box-shadow: 0 0 0 8px rgba(0,188,125,0); }
+    }
+    .highlight-border { animation: pulse-ring 2s ease-in-out infinite; border-color: rgba(0,188,125,0.5) !important; }
+  </style>
+</head>
+<body>
+
+<div id="root" data-composition-id="dashboard" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+
+  <!-- ═══════════ APP AREA ═══════════ -->
+  <div class="app-area">
+    <!-- Ambient glows -->
+    <div class="ambient ambient-1"></div>
+    <div class="ambient ambient-2"></div>
+    <div class="ambient ambient-3"></div>
+
+    <!-- Header -->
+    <div class="app-header">
+      <div class="logo">M</div>
+      <span class="brand">Mockly</span>
+      <span class="path">/ Dashboard</span>
+      <div class="user-area">
+        <span style="font-size:13px;color:#cbd5e1;">Alex Chen</span>
+        <div class="avatar">A</div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="side-nav-item active"><div class="side-nav-dot"></div>Overview</div>
+      <div class="side-nav-item"><div class="side-nav-dot"></div>History</div>
+      <div class="side-nav-item"><div class="side-nav-dot"></div>Analytics</div>
+      <div class="side-nav-item"><div class="side-nav-dot"></div>Improve</div>
+    </div>
+
+    <!-- Main content -->
+    <div class="main-content">
+      <!-- Welcome header -->
+      <div style="margin-bottom:20px;">
+        <h1 style="font-size:30px;font-weight:700;color:#fff;margin-bottom:4px;">
+          Welcome back, <span style="background:linear-gradient(90deg,#00bc7d,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Alex</span>
+        </h1>
+        <p style="font-size:14px;color:#64748b;">Your interview prep headquarters</p>
+      </div>
+
+      <div style="display:flex;gap:20px;">
+
+        <!-- LEFT COLUMN -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:16px;">
+
+          <!-- Stats Row -->
+          <div style="display:flex;gap:14px;" id="d-stats-row">
+            <div class="card stat-card" id="d-stat-score">
+              <div class="stat-label">Average Score</div>
+              <div style="display:flex;align-items:baseline;"><span class="stat-value" id="d-score-val">0</span><span class="stat-unit">/100</span></div>
+            </div>
+            <div class="card stat-card" id="d-stat-time">
+              <div class="stat-label">Total Practice</div>
+              <div style="display:flex;align-items:baseline;"><span class="stat-value">4.2</span><span class="stat-unit">hr</span></div>
+            </div>
+            <div class="card stat-card" id="d-stat-sessions">
+              <div class="stat-label">Sessions</div>
+              <div style="display:flex;align-items:baseline;"><span class="stat-value">12</span><span class="stat-unit">total</span></div>
+            </div>
+            <div class="card stat-card" id="d-stat-voice">
+              <div class="stat-label">ElevenLabs</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="width:8px;height:8px;border-radius:999px;background:#00bc7d;"></span>
+                <span style="font-size:13px;font-weight:600;color:#00bc7d;">Connected</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Performance Chart -->
+          <div class="card" id="d-chart" style="padding:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+              <h2 style="font-size:16px;font-weight:700;color:#fff;">Performance History</h2>
+              <span style="font-size:11px;color:#64748b;background:rgba(255,255,255,0.04);padding:4px 10px;border-radius:999px;">Last 6 sessions</span>
+            </div>
+            <div class="chart-area" style="position:relative;">
+              <div class="chart-bar-group" id="chart-bar-0"><div class="chart-bar" style="height:52%;"></div><span class="chart-bar-value">52</span><span class="chart-bar-label">S1</span></div>
+              <div class="chart-bar-group" id="chart-bar-1"><div class="chart-bar" style="height:67%;"></div><span class="chart-bar-value">67</span><span class="chart-bar-label">S2</span></div>
+              <div class="chart-bar-group" id="chart-bar-2"><div class="chart-bar" style="height:61%;"></div><span class="chart-bar-value">61</span><span class="chart-bar-label">S3</span></div>
+              <div class="chart-bar-group" id="chart-bar-3"><div class="chart-bar" style="height:74%;"></div><span class="chart-bar-value">74</span><span class="chart-bar-label">S4</span></div>
+              <div class="chart-bar-group" id="chart-bar-4"><div class="chart-bar" style="height:78%;"></div><span class="chart-bar-value" style="color:#00bc7d;font-weight:700;">76</span><span class="chart-bar-label">S5</span></div>
+              <div class="chart-bar-group" id="chart-bar-5"><div class="chart-bar" style="height:82%;"></div><span class="chart-bar-value" style="color:#00bc7d;font-weight:700;">82</span><span class="chart-bar-label">S6</span></div>
+            </div>
+          </div>
+
+          <!-- Recent Sessions -->
+          <div class="card" id="d-sessions">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <h2 style="font-size:16px;font-weight:700;color:#fff;">Recent Sessions</h2>
+              <span style="font-size:12px;color:#00bc7d;">View all</span>
+            </div>
+            <div class="session-row" id="d-sess-0">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div class="session-icon behavioural"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                <div><div style="font-size:13px;font-weight:500;color:#cbd5e1;">Influence without authority</div><div style="display:flex;gap:6px;margin-top:3px;"><span class="badge badge-behavioural">Behavioural</span><span style="font-size:10px;color:#475569;">2 days ago</span></div></div>
+              </div>
+              <span class="score-badge score-high">82</span>
+            </div>
+            <div class="session-row" id="d-sess-1">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div class="session-icon behavioural"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                <div><div style="font-size:13px;font-weight:500;color:#cbd5e1;">Cross-functional conflict</div><div style="display:flex;gap:6px;margin-top:3px;"><span class="badge badge-behavioural">Behavioural</span><span style="font-size:10px;color:#475569;">3 days ago</span></div></div>
+              </div>
+              <span class="score-badge score-mid">74</span>
+            </div>
+            <div class="session-row" id="d-sess-2">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div class="session-icon technical"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+                <div><div style="font-size:13px;font-weight:500;color:#cbd5e1;">Two-pointer optimization</div><div style="display:flex;gap:6px;margin-top:3px;"><span class="badge badge-technical">Technical</span><span style="font-size:10px;color:#475569;">5 days ago</span></div></div>
+              </div>
+              <span class="score-badge score-mid">71</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Goals -->
+        <div style="width:280px;display:flex;flex-direction:column;gap:14px;">
+          <div class="card" id="d-goals-card">
+            <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:14px;">Your Goals</h2>
+            <div class="goal-item">
+              <span style="font-size:12px;color:#cbd5e1;">Complete 5 behavioural</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:11px;color:#64748b;">3/5</span>
+                <div class="progress-bar"><div class="progress-fill" id="d-goal-bar-1" style="width:60%;"></div></div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <span style="font-size:12px;color:#cbd5e1;">Improve avg score</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:11px;color:#64748b;">76/85</span>
+                <div class="progress-bar"><div class="progress-fill" style="width:89%;"></div></div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <span style="font-size:12px;color:#cbd5e1;">3 technical sessions</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:11px;color:#64748b;">1/3</span>
+                <div class="progress-bar"><div class="progress-fill" id="d-goal-bar-3" style="width:33%;"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" id="d-insights-card">
+            <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;">Focus Area</h2>
+            <p style="font-size:12px;line-height:1.5;color:#94a3b8;">Your confidence scores are climbing — push clarity and structure next. Each session gives you a tailored path forward.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cursor -->
+    <div class="cursor" id="cursor" style="left:1500px;top:750px;">
+      <svg width="22" height="22" viewBox="0 0 20 20"><path d="M3 2L17 9.5L10 11L7 18L3 2Z" fill="#fff" stroke="#0f172a" stroke-width="1"/></svg>
+      <div class="click-ring" id="click-ring"></div>
+    </div>
+  </div><!-- /app-area -->
+
+  <!-- ═══════════ EXPLANATION BAR ═══════════ -->
+  <div class="explanation-bar">
+    <div class="explanation-content">
+      <div class="explanation-icon" id="exp-icon">📊</div>
+      <div class="explanation-text-wrap">
+        <div class="explanation-step" id="exp-step">1 of 3</div>
+        <div class="explanation-heading" id="exp-heading">Track every session, see real growth</div>
+        <div class="explanation-body" id="exp-body">Your interview scores are tracked and visualized over time. Each point on the chart is a practice session — watch your trend climb as you improve.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+
+/* ── PHASE 0: Score animates ── */
+tl.to("#d-score-val", { textContent: 76, duration: 1.0, snap: { textContent: 1 }, ease: "steps(8)" }, 0.2);
+
+/* ── PHASE 1: Cards stagger in ── */
+tl.from("#d-stats-row > div", { opacity: 0, y: 16, duration: 0.3, stagger: 0.08 }, 0.3);
+tl.from("#d-chart", { opacity: 0, y: 14, duration: 0.35 }, 0.6);
+tl.from("#d-sessions", { opacity: 0, y: 14, duration: 0.35 }, 0.8);
+tl.from("#d-goals-card", { opacity: 0, y: 14, duration: 0.35 }, 0.6);
+tl.from("#d-insights-card", { opacity: 0, y: 14, duration: 0.35 }, 0.8);
+
+/* ── PHASE 2: Cursor → score card → click ── */
+// exp: "Step 1: Track every session" (already showing)
+tl.to("#cursor", { left: 290, top: 200, duration: 1.5, ease: "power2.inOut" }, 2.0);
+tl.call(() => {
+  document.getElementById("d-stat-score").classList.add("highlight-border");
+  document.getElementById("d-stat-score").style.transform = "translateY(-2px)";
+  document.getElementById("d-stat-score").style.boxShadow = "0 8px 24px rgba(0,188,125,0.12)";
+}, null, 3.5);
+// click
+tl.call(() => {
+  const r = document.getElementById("click-ring");
+  r.style.opacity = "1";
+  gsap.to(r, { scale: 12, opacity: 0, duration: 0.4 });
+}, null, 3.5);
+
+/* ── Exp 1 → 2 ── */
+tl.call(() => {
+  document.getElementById("exp-step").textContent = "2 of 3";
+  document.getElementById("exp-heading").textContent = "Spot patterns across your sessions";
+  document.getElementById("exp-body").textContent = "Every row is a completed interview. Click into any session to see a full STAR breakdown with actionable coaching notes.";
+}, null, 4.0);
+tl.from("#exp-heading", { opacity: 0, y: 8, duration: 0.35 }, 4.0);
+tl.from("#exp-body", { opacity: 0, y: 6, duration: 0.35 }, 4.15);
+
+/* ── PHASE 3: Cursor → sessions → click session 1 ── */
+// Remove highlight from score card
+tl.call(() => { document.getElementById("d-stat-score").classList.remove("highlight-border"); document.getElementById("d-stat-score").style.transform = ""; document.getElementById("d-stat-score").style.boxShadow = ""; }, null, 5.5);
+tl.to("#cursor", { left: 500, top: 475, duration: 1.4, ease: "power2.inOut" }, 5.5);
+tl.call(() => {
+  document.getElementById("d-sess-1").style.borderColor = "rgba(0,188,125,0.35)";
+  document.getElementById("d-sess-1").style.background = "rgba(0,188,125,0.06)";
+}, null, 6.9);
+tl.call(() => {
+  const r = document.getElementById("click-ring");
+  r.style.opacity = "1";
+  gsap.to(r, { scale: 12, opacity: 0, duration: 0.4 });
+}, null, 7.0);
+
+/* ── Exp 2 → 3 ── */
+tl.call(() => {
+  document.getElementById("exp-step").textContent = "3 of 3";
+  document.getElementById("exp-heading").textContent = "Set goals and get directed feedback";
+  document.getElementById("exp-body").textContent = "Mockly tells you exactly what to work on. Goals on the right track your progress — clarity, structure, confidence. Every session earns you a concrete next step to level up.";
+}, null, 7.8);
+tl.from("#exp-heading", { opacity: 0, y: 8, duration: 0.35 }, 7.8);
+tl.from("#exp-body", { opacity: 0, y: 6, duration: 0.35 }, 7.95);
+
+/* ── PHASE 4: Cursor → goals → click goal 1 ── */
+tl.call(() => { document.getElementById("d-sess-1").style.borderColor = ""; document.getElementById("d-sess-1").style.background = ""; }, null, 9.2);
+tl.to("#cursor", { left: 870, top: 480, duration: 1.4, ease: "power2.inOut" }, 9.2);
+tl.call(() => {
+  document.getElementById("d-goals-card").style.borderColor = "rgba(0,188,125,0.35)";
+  document.getElementById("d-goals-card").style.boxShadow = "0 8px 24px rgba(0,188,125,0.10)";
+}, null, 10.6);
+// Animate goal bar
+tl.to("#d-goal-bar-1", { width: "80%", duration: 0.6, ease: "power2.out" }, 10.8);
+tl.call(() => {
+  const r = document.getElementById("click-ring");
+  r.style.opacity = "1";
+  gsap.to(r, { scale: 12, opacity: 0, duration: 0.4 });
+}, null, 10.8);
+
+/* ── Hold final explanation ── */
+tl.call(() => {}, null, 14.5);
+
+window.__timelines["dashboard"] = tl;
+</script>
+</body>
+</html>
