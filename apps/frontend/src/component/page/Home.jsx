@@ -4,7 +4,6 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Code2, MessageSquare } from 'lucide-react';
 import Header from './Header';
 import ParticleText from '../ParticleText';
-import LiveDemoSection from '../home/LiveDemoSection';
 import { useTheme } from '../../context/ThemeContext';
 
 const PRACTICE_QUESTIONS = [
@@ -248,8 +247,51 @@ const Home = () => {
       <div className="relative z-10 bg-slate-50 dark:bg-[#02040a] transition-colors duration-300 shadow-[0_-20px_50px_rgba(0,0,0,0.05)] dark:shadow-none" style={{ marginTop: '80vh' }}>
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-slate-50 dark:to-[#02040a] -mt-32 pointer-events-none" />
 
-        {/* M1: Live demo section (skeleton + tab strip). M2-M4 will populate each demo panel. */}
-        <LiveDemoSection />
+        {/* Live product demo — 38s MP4 rendered via HyperFrames */}
+        <section
+          className="relative py-16 px-4 sm:py-20 sm:px-8 lg:py-24 lg:px-12"
+          aria-labelledby="live-demo-heading"
+        >
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-8 md:mb-10">
+              <span className="inline-block text-xs md:text-sm font-semibold tracking-[0.18em] uppercase text-emerald-600 dark:text-emerald-400 mb-3">
+                Live Product Tour
+              </span>
+              <h2
+                id="live-demo-heading"
+                className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white"
+              >
+                See how Mockly trains you
+              </h2>
+              <p className="mt-3 md:mt-4 text-base md:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+                Three practice modes, one focused loop: voice, code, and the dashboard that ties them together.
+              </p>
+            </div>
+            <div className="relative rounded-xl md:rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-900 shadow-lg dark:shadow-none">
+              <video
+                src="/mockly-demo.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-auto block"
+                aria-label="Mockly product demo showing dashboard, behavioural interview, and technical interview"
+              />
+            </div>
+            {/* Try Question Lab anchor */}
+            <div className="text-center mt-6">
+              <a
+                href="#question-lab"
+                className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+              >
+                Try a sample question yourself
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </section>
 
         <motion.section
           id="question-lab"

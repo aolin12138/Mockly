@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, height=1080" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #020617; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #f1f5f9; }
+    code, pre, .mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+
+    /* Scene backgrounds */
+    .scene { position: absolute; inset: 0; }
+    .scene-dashboard { background: linear-gradient(180deg, #0f172a 0%, #020617 100%); }
+    .scene-behavioural { background: linear-gradient(180deg, #0f172a 0%, #020617 100%); }
+    .scene-technical { background: #0f172a; }
+
+    /* App chrome */
+    .header { height: 48px; background: rgba(15,23,42,0.95); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; padding: 0 20px; }
+    .header .logo { width: 28px; height: 28px; border-radius: 6px; background: #10b981; color: white; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; margin-right: 8px; }
+    .header .brand { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+    .header .path { font-size: 11px; color: #94a3b8; margin-left: 4px; }
+    .header .user { margin-left: auto; font-size: 11px; color: #cbd5e1; display: flex; align-items: center; gap: 6px; }
+    .header .avatar { width: 24px; height: 24px; border-radius: 999px; background: #10b981; color: white; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+    .sidebar { position: absolute; left: 0; top: 48px; bottom: 0; width: 44px; background: rgba(15,23,42,0.8); border-right: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 8px; }
+    .sidebar .nav-dot { width: 24px; height: 24px; border-radius: 6px; background: rgba(255,255,255,0.05); }
+    .sidebar .nav-dot.active { background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); }
+
+    /* Cards */
+    .card { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; }
+    .card-hover { transform: translateY(-2px); box-shadow: 0 8px 18px -10px rgba(0,0,0,0.5); }
+
+    /* Score Arc */
+    .score-arc-wrap { display: flex; align-items: center; justify-content: center; position: relative; width: 120px; height: 120px; }
+    .score-arc-wrap svg { transform: rotate(-90deg); }
+    .score-num { position: absolute; font-size: 32px; font-weight: 700; color: #f1f5f9; font-variant-numeric: tabular-nums; }
+    .score-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: #94a3b8; }
+
+    /* Progress bar */
+    .progress-track { height: 5px; background: rgba(255,255,255,0.1); border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #10b981; border-radius: 999px; }
+
+    /* Chat bubbles */
+    .bubble { border-radius: 16px; padding: 10px 16px; max-width: 75%; font-size: 13px; line-height: 1.5; }
+    .bubble-interviewer { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); align-self: flex-start; }
+    .bubble-you { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25); align-self: flex-end; }
+    .bubble-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 4px; }
+    .bubble-label.interviewer { color: #10b981; }
+    .bubble-label.you { color: #34d399; }
+
+    /* Callout */
+    .callout { position: absolute; background: rgba(15,23,42,0.95); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 10px 14px; max-width: 260px; font-size: 12px; line-height: 1.5; color: #e2e8f0; z-index: 50; }
+    .callout::before { content: ''; position: absolute; width: 10px; height: 10px; background: rgba(15,23,42,0.95); border-left: 1px solid rgba(16,185,129,0.3); border-top: 1px solid rgba(16,185,129,0.3); transform: rotate(-45deg); }
+    .callout-left::before { left: -5px; top: 16px; }
+    .callout-right::before { right: -5px; top: 16px; transform: rotate(135deg); }
+
+    /* Cursor */
+    .cursor { position: absolute; z-index: 100; width: 24px; height: 24px; pointer-events: none; }
+    .cursor svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+    .cursor-ripple { position: absolute; top: 50%; left: 50%; width: 4px; height: 4px; border-radius: 999px; background: rgba(16,185,129,0.5); transform: translate(-50%, -50%); }
+
+    /* Typewriter */
+    .code-editor { background: #0f172a; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; }
+    .code-titlebar { background: rgba(30,41,59,0.6); padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 6px; }
+    .code-titlebar .dot { width: 9px; height: 9px; border-radius: 999px; }
+    .code-line { font-size: 12px; line-height: 1.7; padding: 0 14px; display: flex; }
+    .code-ln { color: #475569; width: 28px; text-align: right; margin-right: 10px; flex-shrink: 0; }
+    .code-txt { color: #e2e8f0; }
+    .kw { color: #7dd3fc; }
+    .fn { color: #6ee7b7; }
+    .param { color: #e2e8f0; }
+    .op { color: #fda4af; }
+    .num { color: #fcd34d; }
+    .str { color: #6ee7b7; }
+    .punct { color: #94a3b8; }
+    .cmt { color: #64748b; font-style: italic; }
+
+    /* Test panel */
+    .test-row { display: flex; align-items: center; gap: 6px; font-size: 11px; font-family: 'JetBrains Mono', monospace; padding: 4px 10px; }
+    .test-pass { color: #10b981; font-weight: 700; }
+    .test-fail { color: #ef4444; font-weight: 700; }
+    .test-fail-row { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; }
+
+    /* Orb */
+    .orb { width: 160px; height: 160px; border-radius: 999px; background: radial-gradient(circle at 30% 30%, rgba(16,185,129,0.3), rgba(16,185,129,0.05) 60%, transparent); display: flex; align-items: center; justify-content: center; position: relative; }
+    .orb-inner { width: 40px; height: 40px; border-radius: 999px; background: rgba(16,185,129,0.6); }
+    .orb-pulse { animation: orbPulse 1.5s ease-in-out infinite; }
+    @keyframes orbPulse { 0%, 100% { transform: scale(0.9); opacity: 0.5; } 50% { transform: scale(1.6); opacity: 0.8; } }
+
+    /* Waveform bars */
+    .waveform { display: flex; align-items: flex-end; gap: 2px; height: 52px; justify-content: center; }
+    .waveform .bar { width: 3px; background: #10b981; border-radius: 2px; transition: height 0.1s ease; }
+
+    /* Transitions */
+    .fade-black { position: absolute; inset: 0; background: #000; opacity: 0; z-index: 200; pointer-events: none; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; padding: 8px 18px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .btn-primary { background: linear-gradient(135deg, #2563eb, #059669); color: white; }
+    .btn-run { background: #1e293b; color: #94a3b8; border-radius: 999px; padding: 4px 14px; font-size: 10px; font-weight: 600; }
+    .btn-run.active { background: #10b981; color: white; }
+    .btn-submit { background: #1e293b; color: #94a3b8; border-radius: 999px; padding: 4px 14px; font-size: 10px; font-weight: 600; }
+    .btn-submit.active { background: #059669; color: white; box-shadow: 0 0 12px rgba(16,185,129,0.4); }
+
+    /* Mini orb for tech demo */
+    .mini-orb { width: 32px; height: 32px; border-radius: 999px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); display: flex; align-items: center; justify-content: center; }
+    .mini-orb-dot { width: 10px; height: 10px; border-radius: 999px; }
+    .mini-orb-dot.speaking { background: #10b981; animation: miniPulse 0.8s ease-in-out infinite; }
+    @keyframes miniPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.4); } }
+
+    /* Section labels */
+    .section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; font-weight: 600; }
+    .section-title { font-size: 28px; font-weight: 700; color: #f1f5f9; }
+  </style>
+</head>
+<body>
+
+<div id="root" data-composition-id="mockly-demo" data-start="0" data-duration="38" data-width="1920" data-height="1080">
+
+<!-- ============ SCENE 1: DASHBOARD (0s–12s) ============ -->
+<div class="scene scene-dashboard clip" data-start="0" data-duration="12" data-track-index="0" style="position:absolute;inset:0;">
+
+  <!-- Header -->
+  <div class="header"><div class="logo">M</div><span class="brand">Mockly</span><span class="path">/ Dashboard</span><span class="user">Alex <div class="avatar">A</div></span></div>
+  <!-- Sidebar -->
+  <div class="sidebar"><div class="nav-dot active"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div></div>
+
+  <!-- Main content -->
+  <div style="position:absolute;left:44px;top:48px;right:0;bottom:0;padding:24px;display:flex;gap:20px;">
+
+    <!-- Left: Score card + sub-stats -->
+    <div style="width:360px;display:flex;flex-direction:column;gap:16px;">
+      <div class="card" id="dash-score-card" style="display:flex;align-items:center;justify-content:center;height:200px;">
+        <div class="score-arc-wrap" style="width:130px;height:130px;">
+          <svg width="130" height="130"><circle cx="65" cy="65" r="56" stroke="rgba(255,255,255,0.08)" stroke-width="8" fill="none"/><circle id="dash-score-ring" cx="65" cy="65" r="56" stroke="#10b981" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="352" stroke-dashoffset="352"/></svg>
+          <div style="position:absolute;display:flex;flex-direction:column;align-items:center;"><span class="score-num" id="dash-score-num">0</span><span class="score-label">Score</span></div>
+        </div>
+      </div>
+      <div class="card" id="dash-goal" style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:13px;font-weight:500;color:#cbd5e1;">Practice 5 behavioural</span><span style="font-size:12px;color:#94a3b8;" id="dash-goal-num">3 / 5</span></div>
+        <div class="progress-track"><div class="progress-fill" id="dash-goal-bar" style="width:60%;"></div></div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div class="card" style="flex:1;padding:12px;"><div class="section-label" style="margin-bottom:2px;">Sessions</div><div style="font-size:22px;font-weight:700;color:#f1f5f9;">12</div></div>
+        <div class="card" style="flex:1;padding:12px;"><div class="section-label" style="margin-bottom:2px;">Streak</div><div style="font-size:22px;font-weight:700;color:#f1f5f9;">5d</div></div>
+      </div>
+    </div>
+
+    <!-- Right: Recent sessions -->
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px;">
+      <div class="section-label">Recent sessions</div>
+      <div class="card" id="dash-session-0" style="padding:14px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;color:#cbd5e1;">Influence without authority</span><span style="font-size:16px;font-weight:700;color:#10b981;">82</span>
+      </div>
+      <div class="card" id="dash-session-1" style="padding:14px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;color:#cbd5e1;">Cross-functional conflict</span><span style="font-size:16px;font-weight:700;color:#cbd5e1;">74</span>
+      </div>
+      <div class="card" id="dash-session-2" style="padding:14px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;color:#cbd5e1;">Two-pointer optimization</span><span style="font-size:16px;font-weight:700;color:#cbd5e1;">71</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cursor -->
+  <div class="cursor" id="cursor-s1" style="left:1600px;top:600px;">
+    <svg width="24" height="24" viewBox="0 0 20 20"><path d="M3 2L17 9.5L10 11L7 18L3 2Z" fill="white" stroke="#0f172a" stroke-width="1.2" stroke-linejoin="round"/></svg>
+    <div class="cursor-ripple" id="cursor-ripple-s1" style="display:none;"></div>
+  </div>
+
+  <!-- Callouts -->
+  <div class="callout callout-right" id="callout-d1" style="left:450px;top:340px;">Your interview practice, tracked — every session scored and analyzed</div>
+  <div class="callout callout-left" id="callout-d2" style="left:900px;top:380px;">STAR breakdown on every answer you give</div>
+  <div class="callout callout-right" id="callout-d3" style="left:400px;top:590px;">Set weekly goals, watch yourself improve</div>
+</div>
+
+<!-- ============ SCENE 2: BEHAVIOURAL (12s–24s) ============ -->
+<div class="scene scene-behavioural clip" data-start="12" data-duration="12" data-track-index="0" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+
+  <!-- Transcript bubbles container -->
+  <div style="position:absolute;top:80px;left:0;right:0;display:flex;flex-direction:column;gap:12px;padding:0 300px;">
+    <div class="bubble bubble-interviewer" id="b2-q">
+      <div class="bubble-label interviewer">Interviewer</div>
+      <span id="b2-q-text"></span><span class="cursor-blink" id="b2-q-cursor" style="display:inline-block;width:2px;height:16px;background:#10b981;margin-left:2px;vertical-align:text-bottom;animation:blink 0.7s step-end infinite;">&nbsp;</span>
+    </div>
+    <div class="bubble bubble-you" id="b2-a" style="display:none;">
+      <div class="bubble-label you">You</div>
+      <span id="b2-a-text"></span>
+    </div>
+    <div class="bubble bubble-interviewer" id="b2-f" style="display:none;">
+      <div class="bubble-label interviewer">Interviewer</div>
+      <span id="b2-f-text"></span>
+    </div>
+  </div>
+
+  <!-- Orb -->
+  <div class="orb" id="b2-orb" style="margin-top:60px;"><div class="orb-inner orb-pulse" id="b2-orb-inner"></div></div>
+
+  <!-- Waveform -->
+  <div class="waveform" id="b2-waveform" style="margin-top:40px;opacity:0.3;"></div>
+
+  <!-- Callouts -->
+  <div class="callout callout-right" id="callout-b1" style="right:180px;top:240px;">A live voice interview, just like the real thing</div>
+  <div class="callout callout-right" id="callout-b2" style="right:180px;top:240px;">Real-time response — no script reading, natural conversation</div>
+  <div class="callout callout-right" id="callout-b3" style="right:180px;top:240px;">Studied behavioural questions, role and company specific</div>
+</div>
+
+<!-- ============ SCENE 3: TECHNICAL (24s–38s) ============ -->
+<div class="scene scene-technical clip" data-start="24" data-duration="14" data-track-index="0" style="position:absolute;inset:0;display:flex;flex-direction:column;">
+
+  <!-- Header -->
+  <div class="header" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+    <div class="logo">M</div><span class="brand">Mockly</span><span class="path">/ Technical Interview</span>
+  </div>
+
+  <!-- Main area: problem left, code right -->
+  <div style="flex:1;display:flex;min-height:0;">
+    <!-- Problem panel -->
+    <div style="width:42%;border-right:1px solid rgba(255,255,255,0.06);padding:24px;overflow:hidden;background:rgba(2,6,23,0.4);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:999px;background:#10b981;"></span>
+        <span class="section-label" style="color:#e2e8f0;">Two-Sum</span>
+      </div>
+      <p style="font-size:13px;line-height:1.6;color:#94a3b8;">Given an array of integers and a target, return indices of the two numbers that add to the target. You may assume exactly one solution and you cannot use the same element twice.</p>
+    </div>
+
+    <!-- Code panel -->
+    <div style="flex:1;display:flex;flex-direction:column;padding:0;background:#0f172a;">
+      <div class="code-titlebar">
+        <div class="dot" style="background:#ef4444;opacity:0.6;"></div><div class="dot" style="background:#f59e0b;opacity:0.6;"></div><div class="dot" style="background:#10b981;opacity:0.6;"></div>
+        <span style="font-size:10px;color:#64748b;margin-left:8px;">twoSum.js</span>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:14px 0;" id="t3-code-area">
+        <div class="code-line"><span class="code-ln">1</span><span class="code-txt"><span class="kw">function</span> <span class="fn">twoSum</span><span class="punct">(</span><span class="param">nums</span><span class="punct">,</span> <span class="param">target</span><span class="punct">) {</span></span></div>
+        <div class="code-line"><span class="code-ln">2</span><span class="code-txt">  <span class="kw">const</span> seen <span class="op">=</span> <span class="kw">new</span> <span class="fn">Map</span><span class="punct">();</span></span></div>
+        <div class="code-line"><span class="code-ln">3</span><span class="code-txt">  <span class="kw">for</span> <span class="punct">(</span><span class="kw">let</span> i <span class="op">=</span> <span class="num">0</span><span class="punct">;</span> i <span class="op">&lt;</span> nums<span class="punct">.</span>length<span class="punct">;</span> i<span class="op">++</span><span class="punct">) {</span></span></div>
+        <div class="code-line"><span class="code-ln">4</span><span class="code-txt">    <span class="kw">const</span> need <span class="op">=</span> target <span class="op">-</span> nums<span class="punct">[</span>i<span class="punct">];</span></span></div>
+        <div class="code-line"><span class="code-ln">5</span><span class="code-txt">    <span class="kw">if</span> <span class="punct">(</span>seen<span class="punct">.</span><span class="fn">has</span><span class="punct">(</span>need<span class="punct">))</span> <span class="kw">return</span> <span class="punct">[</span>seen<span class="punct">.</span><span class="fn">get</span><span class="punct">(</span>need<span class="punct">),</span> i<span class="punct">];</span></span></div>
+        <div class="code-line"><span class="code-ln">6</span><span class="code-txt">    seen<span class="punct">.</span><span class="fn">set</span><span class="punct">(</span>nums<span class="punct">[</span>i<span class="punct">],</span> i<span class="punct">);</span></span></div>
+        <div class="code-line"><span class="code-ln">7</span><span class="code-txt">  <span class="punct">}</span></span></div>
+        <div class="code-line"><span class="code-ln">8</span><span class="code-txt"><span class="punct">}</span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom bar + test panel -->
+  <div style="border-top:1px solid rgba(255,255,255,0.06);background:rgba(30,41,59,0.5);">
+    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;">
+      <div class="btn-run active" id="t3-run-btn">Run tests</div>
+      <div class="btn-submit" id="t3-submit-btn">Submit</div>
+      <!-- Mini agent orb -->
+      <div class="mini-orb" id="t3-agent-orb" style="margin-left:auto;opacity:0;">
+        <div class="mini-orb-dot speaking" id="t3-orb-dot"></div>
+      </div>
+      <span style="font-size:10px;color:#10b981;max-width:200px;overflow:hidden;white-space:nowrap;" id="t3-hint-text"></span>
+    </div>
+    <!-- Test results -->
+    <div style="padding:4px 16px 10px;" id="t3-test-panel">
+      <div class="section-label" style="margin-bottom:4px;">Test Results</div>
+      <div class="test-row"><span class="test-pass">✓</span><span style="color:#cbd5e1;">nums=[2,7,11,15], target=9</span><span style="color:#64748b;margin:0 4px;">→</span><span style="color:#cbd5e1;">[0,1]</span></div>
+      <div class="test-row"><span class="test-pass">✓</span><span style="color:#cbd5e1;">nums=[3,2,4], target=6</span><span style="color:#64748b;margin:0 4px;">→</span><span style="color:#cbd5e1;">[1,2]</span></div>
+      <div class="test-row"><span class="test-pass">✓</span><span style="color:#cbd5e1;">nums=[3,3], target=6</span><span style="color:#64748b;margin:0 4px;">→</span><span style="color:#cbd5e1;">[0,1]</span></div>
+      <div class="test-row test-fail-row" id="t3-fail-row"><span class="test-fail">✗</span><span style="color:#fca5a5;">nums=[], target=0 →</span><span style="color:#fca5a5;">Error: null pointer</span></div>
+      <div class="test-row" id="t3-fix-row" style="display:none;"><span class="test-pass">✓</span><span style="color:#cbd5e1;">nums=[], target=0</span><span style="color:#64748b;margin:0 4px;">→</span><span style="color:#cbd5e1;">undefined</span></div>
+    </div>
+  </div>
+
+  <!-- Callouts -->
+  <div class="callout callout-right" id="callout-t1" style="right:180px;top:220px;">Code in real time with voice on the side</div>
+  <div class="callout callout-left" id="callout-t2" style="left:60px;bottom:220px;">See your code run against real test cases</div>
+  <div class="callout callout-right" id="callout-t3" style="right:180px;bottom:180px;">Iterate fast — ship the cleaner solution</div>
+</div>
+
+<!-- Fade-to-black transition overlay -->
+<div class="fade-black" id="fade-overlay"></div>
+
+</div><!-- /root -->
+
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+
+/** SCENE 1: DASHBOARD (0s–12s) **/
+
+// Score arc: animate stroke-dashoffset from 352 (empty) to ~77 (78/100 * 352 = 274.56, offset = 352 - 274.56 = 77.44)
+tl.to("#dash-score-ring", { strokeDashoffset: 77, duration: 1.5, ease: "power2.out" }, 0.5);
+tl.to("#dash-score-num", { textContent: 78, duration: 1.5, ease: "none", snap: { textContent: 1 } }, 0.5);
+
+// Score card entrance
+tl.from("#dash-score-card", { opacity: 0, y: 24, duration: 0.5, ease: "power2.out" }, 0.5);
+
+// Session cards stagger
+tl.from("#dash-session-0", { opacity: 0, y: 16, duration: 0.35 }, 2.2);
+tl.from("#dash-session-1", { opacity: 0, y: 16, duration: 0.35 }, 2.35);
+tl.from("#dash-session-2", { opacity: 0, y: 16, duration: 0.35 }, 2.5);
+
+// Cursor moves to session card 1 (middle)
+tl.to("#cursor-s1", { left: 1100, top: 440, duration: 1.2, ease: "power2.inOut" }, 4.5);
+// Click ripple
+tl.call(() => { document.getElementById("cursor-ripple-s1").style.display = "block"; }, null, 5.7);
+tl.to("#cursor-ripple-s1", { scale: 8, opacity: 0, duration: 0.4 }, 5.7);
+tl.call(() => { document.getElementById("cursor-ripple-s1").style.display = "none"; document.getElementById("cursor-ripple-s1").style.opacity = 1; document.getElementById("cursor-ripple-s1").style.scale = 1; }, null, 6.1);
+// Card hover
+tl.to("#dash-session-1", { y: -4, boxShadow: "0 10px 24px -8px rgba(0,0,0,0.6)", duration: 0.3 }, 5.7);
+
+// Cursor moves to goal
+tl.to("#cursor-s1", { left: 420, top: 610, duration: 1, ease: "power2.inOut" }, 7.8);
+tl.call(() => { document.getElementById("cursor-ripple-s1").style.display = "block"; }, null, 8.8);
+tl.to("#cursor-ripple-s1", { scale: 8, opacity: 0, duration: 0.4 }, 8.8);
+tl.call(() => { document.getElementById("cursor-ripple-s1").style.display = "none"; document.getElementById("cursor-ripple-s1").style.opacity = 1; document.getElementById("cursor-ripple-s1").style.scale = 1; }, null, 9.2);
+// Goal progress animates
+tl.to("#dash-goal-bar", { width: "80%", duration: 0.8, ease: "power2.out" }, 8.8);
+tl.to("#dash-goal-num", { textContent: "4 / 5", duration: 0.1 }, 9.0);
+
+// Callouts
+tl.from("#callout-d1", { opacity: 0, x: -20, duration: 0.5 }, 1.2);
+tl.to("#callout-d1", { opacity: 0, duration: 0.3 }, 3.5);
+tl.from("#callout-d2", { opacity: 0, x: -20, duration: 0.5 }, 3.8);
+tl.to("#callout-d2", { opacity: 0, duration: 0.3 }, 7.0);
+tl.from("#callout-d3", { opacity: 0, x: -20, duration: 0.5 }, 7.3);
+tl.to("#callout-d3", { opacity: 0, duration: 0.3 }, 11.0);
+
+/** SCENE 2: BEHAVIOURAL (12s–24s) **/
+
+// Orb pulse
+tl.to("#b2-orb-inner", { scale: 1.8, opacity: 0.7, duration: 0.6, ease: "power2.out" }, 12.8);
+// AI question types
+const b2q = "Tell me about a time you led a project through ambiguity and still delivered a measurable outcome.";
+let b2qi = 0;
+const b2qInterval = setInterval(() => { if(b2qi<b2q.length){document.getElementById("b2-q-text").textContent+=b2q[b2qi];b2qi++;}else{clearInterval(b2qInterval);document.getElementById("b2-q-cursor").style.display="none";} }, 30);
+tl.call(() => {}, null, 12.8);
+
+// Orb listening + waveform
+tl.to("#b2-orb-inner", { scale: 0.7, opacity: 0.4, duration: 0.5 }, 16.0);
+tl.to("#b2-waveform", { opacity: 0.8, duration: 0.5 }, 16.0);
+// Candidate response appears
+tl.call(() => { document.getElementById("b2-a").style.display = "flex"; document.getElementById("b2-a-text").textContent = "Last year our checkout flow was dropping users right before Black Friday. I pulled together engineering and design to triage the bottlenecks."; }, null, 16.5);
+tl.from("#b2-a", { opacity: 0, y: 10, duration: 0.4 }, 16.5);
+
+// Orb thinking then speaking + followup
+tl.to("#b2-waveform", { opacity: 0.3, duration: 0.5 }, 19.0);
+tl.to("#b2-orb-inner", { scale: 1.4, opacity: 0.6, duration: 0.5 }, 19.5);
+tl.call(() => { document.getElementById("b2-f").style.display = "flex"; document.getElementById("b2-f-text").textContent = "What was the first thing you did?"; }, null, 20.0);
+tl.from("#b2-f", { opacity: 0, y: 10, duration: 0.4 }, 20.0);
+
+// Orb idle
+tl.to("#b2-orb-inner", { scale: 1, opacity: 0.5, duration: 0.6 }, 22.0);
+
+// Callouts
+tl.from("#callout-b1", { opacity: 0, x: -20, duration: 0.5 }, 13.2);
+tl.to("#callout-b1", { opacity: 0, duration: 0.3 }, 16.0);
+tl.from("#callout-b2", { opacity: 0, x: -20, duration: 0.5 }, 16.3);
+tl.to("#callout-b2", { opacity: 0, duration: 0.3 }, 19.5);
+tl.from("#callout-b3", { opacity: 0, x: -20, duration: 0.5 }, 19.8);
+tl.to("#callout-b3", { opacity: 0, duration: 0.3 }, 23.0);
+
+/** SCENE 3: TECHNICAL (24s–38s) **/
+
+// Code lines appear (they're already in DOM, just reveal with staggering)
+// Agent orb + hint
+tl.to("#t3-agent-orb", { opacity: 1, duration: 0.4 }, 28.0);
+let hintText = "Consider using a hash map to track seen values";
+let hi = 0;
+const hintInterval = setInterval(() => { if(hi<hintText.length){document.getElementById("t3-hint-text").textContent+=hintText[hi];hi++;}else{clearInterval(hintInterval);} }, 35);
+tl.call(() => {}, null, 28.0);
+tl.to("#t3-agent-orb", { opacity: 0, duration: 0.3 }, 30.5);
+
+// Run tests button pulses
+tl.to("#t3-run-btn", { scale: 1.05, duration: 0.3 }, 31.0);
+tl.to("#t3-run-btn", { scale: 1, duration: 0.3 }, 31.3);
+// Test results appear (already in DOM, just highlight the fail)
+tl.from("#t3-fail-row", { opacity: 0, x: -10, duration: 0.4 }, 31.5);
+
+// Diff fix: hide fail row, show fix row
+tl.to("#t3-fail-row", { opacity: 0, duration: 0.3 }, 34.0);
+tl.call(() => { document.getElementById("t3-fix-row").style.display = "flex"; }, null, 34.3);
+tl.from("#t3-fix-row", { opacity: 0, x: -10, duration: 0.4 }, 34.3);
+
+// Run tests again + Submit
+tl.to("#t3-run-btn", { scale: 1.05, duration: 0.3 }, 35.0);
+tl.to("#t3-run-btn", { scale: 1, duration: 0.3 }, 35.3);
+tl.to("#t3-submit-btn", { backgroundColor: "#059669", color: "white", boxShadow: "0 0 14px rgba(16,185,129,0.4)", duration: 0.5 }, 36.0);
+
+// Callouts
+tl.from("#callout-t1", { opacity: 0, x: -20, duration: 0.5 }, 25.0);
+tl.to("#callout-t1", { opacity: 0, duration: 0.3 }, 28.5);
+tl.from("#callout-t2", { opacity: 0, x: -20, duration: 0.5 }, 28.8);
+tl.to("#callout-t2", { opacity: 0, duration: 0.3 }, 33.0);
+tl.from("#callout-t3", { opacity: 0, x: -20, duration: 0.5 }, 33.3);
+tl.to("#callout-t3", { opacity: 0, duration: 0.3 }, 37.0);
+
+/** SCENE TRANSITIONS: fade to black at 11.5s, 23.5s **/
+tl.to("#fade-overlay", { opacity: 1, duration: 0.5 }, 11.5);
+tl.to("#fade-overlay", { opacity: 0, duration: 0.5 }, 12.0);
+tl.to("#fade-overlay", { opacity: 1, duration: 0.5 }, 23.5);
+tl.to("#fade-overlay", { opacity: 0, duration: 0.5 }, 24.0);
+
+window.__timelines["mockly-demo"] = tl;
+</script>
+
+</body>
+</html>
