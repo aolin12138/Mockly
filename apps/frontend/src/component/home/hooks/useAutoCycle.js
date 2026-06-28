@@ -21,7 +21,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 export function useAutoCycle({ tabCount, reducedMotion, sectionRef }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoverPaused, setHoverPaused] = useState(false);
-  const [inView, setInView] = useState(false);
+  const [inView, setInView] = useState(true); // optimistic — pause only when proven out of view
   const [docVisible, setDocVisible] = useState(
     typeof document === 'undefined' ? true : !document.hidden,
   );

@@ -99,7 +99,7 @@ export default function LiveDemoSection() {
           {...panelHandlers}
           className="relative"
         >
-          <DemoFrame ariaLabel={`${activeTab.label} demo`}>
+          <DemoFrame ariaLabel={`${activeTab.label} demo`} paused={paused}>
             {TABS.map((tab, i) => {
               const isActive = i === activeIndex;
               const Component = tab.Component;
