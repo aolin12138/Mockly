@@ -46,6 +46,14 @@ export default function SyntheticCursor({
           strokeLinejoin="round"
         />
       </svg>
+      {clicking && (
+        <span
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-emerald-500/40"
+          style={{
+            animation: 'ripple 300ms ease-out forwards',
+          }}
+        />
+      )}
     </div>
   );
 }
