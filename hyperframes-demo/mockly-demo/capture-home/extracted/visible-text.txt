@@ -1,0 +1,51 @@
+[a] Skip to main content
+[h1] Mockly
+[a] Get Started
+[h1] Practice Interviews,
+[span] Real Improvement
+[p] Train with realistic prompts, get structured AI feedback, and build confidence before the real interview.
+[span] Get Started Free
+[a] Try Question Lab
+[span] Live Product Tour
+[h2] See how Mockly trains you
+[p] Three practice modes, one focused loop: voice, code, and the dashboard that ties them together.
+[a] Try a sample question yourself
+[span] Interactive Practice
+[h2] Try a Real Interview Prompt
+[p] Watch a prompt appear, write your answer, then analyze it in your dashboard.
+[p] Mock Interview Console
+[p] Live prompt simulation
+[button] New question
+[p] Interviewer
+[p] Tell me about a time you led a project through ambiguity and still delivered a measurable outcome.
+[label] Your response
+[p] words
+[a] Analyze answer
+[span] Practice Tracks
+[h2] Prepare for behavioral and technical interviews
+[p] Mockly focuses on the two interview areas that matter most: strong behavioral stories and clear technical communication.
+[h3] Behavioral Practice
+[p] Storytelling, leadership, and decision making
+[p] Use STAR structure to turn experiences into clear, high-signal answers.
+[p] Practice ownership, conflict resolution, ambiguity, and impact framing.
+[p] Improve communication quality with concise, outcome-driven responses.
+[h3] Technical Practice
+[p] Coding depth and technical communication
+[p] Train on system design, debugging, trade-offs, and performance reasoning.
+[p] Practice explaining technical ideas to both engineers and non-technical stakeholders.
+[p] Strengthen structured thinking under pressure with realistic interview prompts.
+[span] How It Works
+[h2] A focused loop for interview growth
+[p] 1. Read the prompt
+[p] Start with one realistic interview question that appears in a focused practice canvas.
+[p] 2. Write your answer
+[p] Structure your response clearly and include context, actions, and measurable outcomes.
+[p] 3. Analyze in dashboard
+[p] Send your answer for full AI analysis after login, with tailored coaching and next actions.
+[h2] Ready to interview with confidence?
+[p] Start practicing with realistic prompts now, then unlock full coaching as your prep gets serious.
+[a] Start Practicing Free
+[p] AI-powered interview practice and structured feedback.
+[a] Dashboard
+[a] Register
+[p] © 2026 Mockly. All rights reserved.

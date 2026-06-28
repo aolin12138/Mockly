@@ -1,0 +1,14 @@
+{
+  "summary": {
+    "webAnimations": 0,
+    "cssDeclarations": 257,
+    "scrollTargets": 10,
+    "cdpAnimations": 1041,
+    "canvases": 1
+  },
+  "namedAnimations": [
+    "twinkle"
+  ],
+  "scrollTriggeredElements": 10,
+  "representativeAnimations": []
+}

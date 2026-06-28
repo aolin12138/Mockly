@@ -1,0 +1,13 @@
+[
+  {
+    "index": 0,
+    "url": "http://localhost:5175/mockly-demo.mp4",
+    "filename": "mockly-demo.mp4",
+    "width": 1278,
+    "height": 719,
+    "heading": "See how Mockly trains you",
+    "caption": "Three practice modes, one focused loop: voice, code, and the dashboard that ties them together.",
+    "ariaLabel": "Mockly product demo showing dashboard, behavioural interview, and technical interview",
+    "preview": "assets/videos/previews/video-0-preview.png"
+  }
+]
