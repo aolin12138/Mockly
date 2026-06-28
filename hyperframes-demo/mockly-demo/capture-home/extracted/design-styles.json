@@ -1,0 +1,150 @@
+{
+  "typography": [
+    {
+      "role": "display",
+      "fontFamily": "system-ui",
+      "fontSize": "60px",
+      "fontWeight": "700",
+      "lineHeight": "64.8px",
+      "letterSpacing": "-1.5px",
+      "color": "#FFFFFF",
+      "sampleText": "Practice Interviews,Real Improvement"
+    },
+    {
+      "role": "heading",
+      "fontFamily": "system-ui",
+      "fontSize": "48px",
+      "fontWeight": "700",
+      "lineHeight": "48px",
+      "letterSpacing": "-1.2px",
+      "color": "#FFFFFF",
+      "sampleText": "See how Mockly trains you"
+    },
+    {
+      "role": "heading-2",
+      "fontFamily": "system-ui",
+      "fontSize": "36px",
+      "fontWeight": "700",
+      "lineHeight": "40px",
+      "letterSpacing": "normal",
+      "color": "#FFFFFF",
+      "sampleText": "Prepare for behavioral and technical interviews"
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "system-ui",
+      "fontSize": "24px",
+      "fontWeight": "600",
+      "lineHeight": "32px",
+      "letterSpacing": "normal",
+      "color": "#FFFFFF",
+      "sampleText": "Behavioral Practice"
+    },
+    {
+      "role": "body",
+      "fontFamily": "system-ui",
+      "fontSize": "24px",
+      "fontWeight": "500",
+      "lineHeight": "39px",
+      "letterSpacing": "normal",
+      "color": "oklch(0.968 0.007 247.896)",
+      "sampleText": "Tell me about a time you led a project through ambiguity and"
+    },
+    {
+      "role": "link",
+      "fontFamily": "system-ui",
+      "fontSize": "16px",
+      "fontWeight": "600",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "#FFFFFF",
+      "sampleText": "Get Started Free"
+    }
+  ],
+  "spacing": {
+    "observed": [
+      4,
+      6,
+      8,
+      10,
+      12,
+      14,
+      16,
+      20,
+      24,
+      28,
+      32,
+      40,
+      48,
+      80,
+      96
+    ],
+    "baseUnit": 8
+  },
+  "radius": [
+    "24px",
+    "3.35544e+07px"
+  ],
+  "shadows": [
+    {
+      "value": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.623 -0.0378409 -0.210628 / 0.2) 0px 10px 15px -3px, oklab(0.623 -0.0378409 -0.210628 / 0.2) 0px 4px 6px -4px",
+      "count": 2
+    },
+    {
+      "value": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "count": 2
+    }
+  ],
+  "buttons": [
+    {
+      "label": "Get Started Free",
+      "background": "#000000",
+      "color": "#FFFFFF",
+      "padding": "14px 28px",
+      "borderRadius": "3.35544e+07px",
+      "border": "0px solid oklch(1 0 0 / 0.1)",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.623 -0.0378409 -0.210628 / 0.2) 0px 10px 15px -3px, oklab(0.623 -0.0378409 -0.210628 / 0.2) 0px 4px 6px -4px",
+      "fontSize": "16px",
+      "fontWeight": "600",
+      "height": "54px"
+    },
+    {
+      "label": "New question",
+      "background": "oklab(0.208 -0.00310889 -0.0418848 / 0.4)",
+      "color": "oklch(0.809 0.105 251.813)",
+      "padding": "6px 16px",
+      "borderRadius": "3.35544e+07px",
+      "border": "1px solid oklab(0.707 -0.0437502 -0.159094 / 0.3)",
+      "boxShadow": "none",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "height": "34px"
+    }
+  ],
+  "cards": [
+    {
+      "label": "card",
+      "background": "oklab(0.999994 0.0000455678 0.0000200868 / 0.05)",
+      "color": "#FFFFFF",
+      "padding": "28px",
+      "borderRadius": "24px",
+      "border": "1px solid oklab(0.999994 0.0000455678 0.0000200868 / 0.1)",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "347.75px"
+    }
+  ],
+  "nav": {
+    "label": "navigation",
+    "background": "#000000",
+    "color": "#FFFFFF",
+    "padding": "0px",
+    "borderRadius": "0px",
+    "border": "",
+    "boxShadow": "none",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "height": "65px"
+  }
+}
