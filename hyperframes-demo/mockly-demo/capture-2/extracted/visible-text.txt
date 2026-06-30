@@ -1,0 +1,8 @@
+[a] Skip to main content
+[h1] Welcome Back
+[p] Sign in to continue your journey
+[label] Email Address
+[label] Password
+[button] Sign In
+[p] Don't have an account?
+[a] Sign up
