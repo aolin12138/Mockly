@@ -12,6 +12,7 @@ import integrationRoutes from './routes/integrationRoutes.js';
 import authMiddleware from './middleware/authMiddleware.js';
 import { mcpPostHandler, mcpGetHandler } from './lib/mcp/server.js';
 import { mcpAuthMiddleware } from './lib/mcp/auth.js';
+import testRoutes from './routes/testRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,6 +46,7 @@ app.use('/api/code', codeSyncRoutes);
 // MCP server endpoint (authenticated via shared secret, not JWT)
 app.post('/mcp', mcpAuthMiddleware, mcpPostHandler);
 app.get('/mcp', mcpAuthMiddleware, mcpGetHandler);
+app.use('/api/test', testRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

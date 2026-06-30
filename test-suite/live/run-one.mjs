@@ -6,6 +6,45 @@
  */
 import { LiveConversationClient } from './ws-client.mjs';
 import { SimulatedUser } from './sim-user.mjs';
+import { CONFIG } from '../lib/config.mjs';
+
+// Test session setup via backend API
+const BACKEND_URL = CONFIG.backendUrl;
+const TEST_API_KEY = CONFIG.testApiKey;
+
+async function setupTestSession(conversationId, liveRunId, scenario) {
+  if (!TEST_API_KEY) return;
+  const question = scenario.question_context;
+  const code = scenario.candidate_code || '';
+  if (!question) return;
+
+  const ids = [conversationId, liveRunId].filter(Boolean);
+
+  for (const sessionId of ids) {
+    try {
+      const resp = await fetch(`${BACKEND_URL}/api/test/setup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-test-api-key': TEST_API_KEY },
+        body: JSON.stringify({ sessionId, question, code, language: 'python' }),
+      });
+      if (resp.ok) console.log(`  Test session set up: ${sessionId}`);
+      else console.warn(`  Test session setup failed for ${sessionId}: ${resp.status}`);
+    } catch (e) {
+      console.warn(`  Test session setup error (backend not available?): ${e.message}`);
+      return; // Don't retry other IDs if backend is down
+    }
+  }
+}
+
+async function cleanupTestSession(conversationId) {
+  if (!TEST_API_KEY || !conversationId) return;
+  try {
+    await fetch(`${BACKEND_URL}/api/test/session/${conversationId}`, {
+      method: 'DELETE',
+      headers: { 'x-test-api-key': TEST_API_KEY },
+    });
+  } catch { /* ignore cleanup errors */ }
+}
 
 /**
  * Default dynamic variables matching CONFIG.defaultDynamicVariables.
@@ -115,11 +154,12 @@ export async function runOne(scenario, opts) {
     }
 
     // 3. Merge dynamic variables
+    const liveRunId = `live-run-${scenario.id}-${Date.now()}`;
     const dynamicVariables = {
       ...DEFAULT_DYNAMIC_VARS,
       ...(scenario.dynamic_variables || {}),
-      // Ensure unique session ID
-      secret__session_id: `live-run-${scenario.id}-${Date.now()}`,
+      // Ensure unique session ID — match what test store expects
+      secret__session_id: liveRunId,
     };
 
     // 4. Start WS conversation
@@ -136,6 +176,9 @@ export async function runOne(scenario, opts) {
 
     await client.start();
     const conversationId = client.getConversationId();
+
+    // 5a. Set up test session for MCP tools (real code + Judge0 execution)
+    await setupTestSession(conversationId, liveRunId, scenario);
 
     // 5. Warm-up: inject prior conversation as contextual_update.
     //    Agent reads this as background — no turns consumed, no agent replies.
@@ -257,10 +300,16 @@ export async function runOne(scenario, opts) {
         skipTurn: agentReply.skipTurn || false,
       });
 
-      // Did the agent end the call? Sim-user will also see this on the next
-      // iteration via the [Interviewer ended the call] annotation and return
-      // null, but break early to save a wasted sim-user round-trip.
+      // Did the agent end the call?
       if (toolCallsThisTurn.some(tc => tc.tool_name === 'end_call')) {
+        endCallDetected = true;
+        break;
+      }
+
+      // Did the agent call skip_turn with NO text? That's a prompt rule failure.
+      // End immediately — no point continuing with a silent agent.
+      if (toolCallsThisTurn.some(tc => tc.tool_name === 'skip_turn') && !agentReply.message?.trim()) {
+        console.log(`  Agent called skip_turn silently (turn ${turn}) — ending test.`);
         endCallDetected = true;
         break;
       }
@@ -268,6 +317,7 @@ export async function runOne(scenario, opts) {
 
     // 8. End session
     client.endSession();
+    await cleanupTestSession(conversationId);
 
     // 9. Fetch transcript (polls until conversation is indexed)
     let serverData;
@@ -319,6 +369,9 @@ export async function runOne(scenario, opts) {
     // Cleanup
     if (client) {
       try { client.endSession(); } catch { /* ignore */ }
+    }
+    if (client) {
+      try { await cleanupTestSession(client.getConversationId()); } catch { /* ignore */ }
     }
 
     const durationMs = Date.now() - startTime;

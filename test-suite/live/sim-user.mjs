@@ -85,16 +85,27 @@ const TOOL_ANNOTATIONS = {
   log_event:                null, // background telemetry, hide from sim-user
 };
 
+// When skip_turn is called with no text, override annotation to signal failure
+const SILENT_SKIP_ANNOTATION = '[FAIL: Agent called skip_turn with no acknowledgment text. End immediately with [END_CALL].]';
+
 function annotateAgentTurn(turn) {
   const text = (turn.message || '').trim();
   const calls = turn.tool_calls || [];
   const annotations = [];
+  
+  const hasSkipTurn = calls.some(tc => tc.tool_name === 'skip_turn');
+  
   for (const tc of calls) {
-    const a = TOOL_ANNOTATIONS[tc.tool_name];
+    const name = tc.toolName || tc.tool_name;
+    // If skip_turn was called with no text, use failure annotation
+    if (name === 'skip_turn' && !text) {
+      annotations.push(SILENT_SKIP_ANNOTATION);
+      continue;
+    }
+    const a = TOOL_ANNOTATIONS[name];
     if (a) annotations.push(a);
   }
   // If agent said nothing AND made no annotated tool call, mark explicit silence
-  // so the sim-user doesn't think the agent literally said empty string.
   if (!text && annotations.length === 0) {
     annotations.push('[Interviewer stayed silent]');
   }
@@ -162,7 +173,7 @@ export class SimulatedUser {
       else break;
     }
 
-    const turnInfo = `Turn info: ${silentStreak} consecutive silent agent turns so far. You are evaluating the agent — once you have enough evidence or the agent is clearly stuck, end with [END_CALL].`;
+    const turnInfo = `Turn info: ${silentStreak} consecutive silent agent turns so far. If the agent called skip_turn with no text (empty message + skip_turn tool), that is an immediate failure — end now with [END_CALL]. If the agent spoke text first THEN called skip_turn, continue normally. You are evaluating the agent — once you have enough evidence or the agent is clearly stuck, end with [END_CALL].`;
     const systemPrompt = `${SIM_USER_PREFIX}\n\n${turnInfo}\n\nScenario context: ${this.scenarioPrompt}\n\nYou are the candidate AND an evaluator. Given the conversation so far, produce your next spoken response (1-3 sentences). End with "[END_CALL]" when you have enough to evaluate OR the agent has been silent for 3+ consecutive turns OR the conversation has clearly stalled.`;
 
     const messages = transcriptToMessages(transcript);
