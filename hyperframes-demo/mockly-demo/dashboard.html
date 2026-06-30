@@ -307,38 +307,33 @@ tl.to("#cur", { left: 280, top: 512, duration: 1.2, ease: "power2.inOut" }, 8.8)
 tl.call(function() { clearSpotlight(document.getElementById("sessions-card")); spotlight(document.getElementById("sess-0")); }, null, 10.0);
 tl.call(clickAt, null, 10.1);
 
-/* → Feedback page transition */
-tl.to("#bt3", { opacity: 0, duration: 0.2 }, 10.3);
+/* → Feedback page transition — ALL on timeline, no setTimeout */
+tl.call(function() { clearSpotlight(document.getElementById("sess-0")); }, null, 10.25);
+tl.to("#bt3", { opacity: 0, duration: 0.2 }, 10.25);
+tl.set("#dash-wrap", { opacity: 0 }, 10.3);
+tl.set("#fb-page", { opacity: 1 }, 10.3);
+tl.call(function() { setProp("darken", "opacity", "1"); }, null, 10.3);
+/* Set ring transition, then change color at 10.5s */
+tl.call(function() { document.getElementById("fb-ring").style.transition = "background 1.5s ease-out"; }, null, 10.35);
 tl.call(function() {
-  clearSpotlight(document.getElementById("sess-0"));
-  setProp("dash-wrap", "opacity", "0");
-  setProp("fb-page", "opacity", "1");
-  setProp("fb-page", "transition", "opacity 0.4s");
-  setProp("darken", "opacity", "1");
-  var ring = document.getElementById("fb-ring");
-  ring.style.transition = "background 1.5s ease-out";
-  setTimeout(function() {
-    ring.style.background = "conic-gradient(#00bc7d 266deg, rgba(255,255,255,0.06) 0deg)";
-    document.getElementById("fb-num").textContent = "74";
-  }, 150);
-}, null, 10.3);
+  document.getElementById("fb-ring").style.background = "conic-gradient(#00bc7d 266deg, rgba(255,255,255,0.06) 0deg)";
+  document.getElementById("fb-num").textContent = "74";
+}, null, 10.5);
 
-/* 10.5s: bt4 + darkened feedback */
+/* 10.5s: bt4 */
 tl.to("#bt4", { opacity: 1, duration: 0.5 }, 10.5);
 
-/* 13.0s: restore brightness, hide bt4, then SCROLL ON TIMELINE */
+/* 13.0s: remove darken, hide bt4 */
 tl.call(function() { setProp("darken", "opacity", "0"); }, null, 13.0);
 tl.to("#bt4", { opacity: 0, duration: 0.25 }, 13.0);
-/* THIS is the scroll — on the timeline so HyperFrames renders it */
+/* Scroll on timeline */
 tl.to("#fb-inner", { top: -750, duration: 4, ease: "power2.inOut" }, 13.3);
 
-/* 19.5s: auto-return — tl.set overrides scroll tween end state */
+/* 19.5s: auto-return — ALL via tl.set, no callbacks for visibility */
 tl.set("#fb-inner", { top: 0 }, 19.5);
+tl.set("#fb-page", { opacity: 0 }, 19.5);
+tl.set("#dash-wrap", { opacity: 1 }, 19.5);
 tl.call(function() {
-  setProp("fb-page", "opacity", "0");
-  setProp("fb-page", "transition", "opacity 0.3s");
-  setProp("dash-wrap", "opacity", "1");
-  setProp("dash-wrap", "transition", "opacity 0.4s");
   setProp("fb-ring", "background", "conic-gradient(#020618 360deg, rgba(255,255,255,0.06) 0deg)");
   document.getElementById("fb-num").textContent = "0";
 }, null, 19.5);
