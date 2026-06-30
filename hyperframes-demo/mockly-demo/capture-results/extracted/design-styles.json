@@ -1,0 +1,112 @@
+{
+  "typography": [
+    {
+      "role": "display",
+      "fontFamily": "ui-sans-serif",
+      "fontSize": "36px",
+      "fontWeight": "700",
+      "lineHeight": "40px",
+      "letterSpacing": "-0.9px",
+      "color": "oklch(0.968 0.007 247.896)",
+      "sampleText": "Interview Summary"
+    },
+    {
+      "role": "heading",
+      "fontFamily": "ui-sans-serif",
+      "fontSize": "20px",
+      "fontWeight": "600",
+      "lineHeight": "28px",
+      "letterSpacing": "normal",
+      "color": "oklch(0.968 0.007 247.896)",
+      "sampleText": "STAR Breakdown"
+    },
+    {
+      "role": "body",
+      "fontFamily": "ui-sans-serif",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "26px",
+      "letterSpacing": "normal",
+      "color": "oklch(0.869 0.022 252.894)",
+      "sampleText": "Strong storytelling with clear structure. Tighten examples w"
+    },
+    {
+      "role": "link",
+      "fontFamily": "system-ui",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "oklch(0.985 0 0)",
+      "sampleText": "Skip to main content"
+    }
+  ],
+  "spacing": {
+    "observed": [
+      4,
+      6,
+      8,
+      12,
+      16,
+      20,
+      24,
+      32
+    ],
+    "baseUnit": 4
+  },
+  "radius": [
+    "3.35544e+07px"
+  ],
+  "shadows": [],
+  "buttons": [
+    {
+      "label": "See feedback",
+      "background": "#000000",
+      "color": "oklch(0.704 0.04 256.788)",
+      "padding": "0px",
+      "borderRadius": "0px",
+      "border": "0px solid oklch(1 0 0 / 0.1)",
+      "boxShadow": "none",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "height": "20px"
+    },
+    {
+      "label": "Audio unavailable",
+      "background": "oklab(0.208 -0.00310889 -0.0418848 / 0.6)",
+      "color": "oklch(0.869 0.022 252.894)",
+      "padding": "8px 16px",
+      "borderRadius": "3.35544e+07px",
+      "border": "1px solid oklab(0.999994 0.0000455678 0.0000200868 / 0.1)",
+      "boxShadow": "none",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "height": "38px"
+    },
+    {
+      "label": "0:02",
+      "background": "oklab(0.279 -0.00709772 -0.040381 / 0.4)",
+      "color": "oklch(0.554 0.046 257.417)",
+      "padding": "4px 10px",
+      "borderRadius": "3.35544e+07px",
+      "border": "1px solid oklab(0.999994 0.0000455678 0.0000200868 / 0.1)",
+      "boxShadow": "none",
+      "fontSize": "11px",
+      "fontWeight": "500",
+      "height": "27.875px"
+    }
+  ],
+  "cards": [],
+  "nav": {
+    "label": "navigation",
+    "background": "#000000",
+    "color": "oklch(0.929 0.013 255.508)",
+    "padding": "0px",
+    "borderRadius": "0px",
+    "border": "0px solid oklch(1 0 0 / 0.1)",
+    "boxShadow": "none",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "height": "168px"
+  }
+}

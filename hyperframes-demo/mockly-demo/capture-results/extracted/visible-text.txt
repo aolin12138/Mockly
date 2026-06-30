@@ -1,0 +1,184 @@
+[a] Skip to main content
+[span] Overview
+[button] Overview
+[button] Highlights
+[button] STAR Breakdown
+[button] Patterns
+[button] Strengths & Growth
+[button] CV Alignment
+[button] Next Steps
+[span] Practice
+[span] 100
+[span] high
+[span] confidence
+[h1] Interview Summary
+[p] Strong storytelling with clear structure. Tighten examples with concrete metrics and close with sharper results.
+[span] Hire
+[span] Nearly Ready
+[span] question
+[span] asked
+[span] strategic influence
+[span] cross functional leadership
+[span] conflict resolution
+[p] Recommended reading order
+[p] Review your STAR breakdown first, then move to skills and patterns to see what to repeat and what to fix next.
+[h2] STAR Breakdown
+[span] Domain:
+[span] Strategic Influence
+[p] Tell me about a time you influenced a team to adopt a new process without having direct authority.
+[span] Strong
+[button] See feedback
+[p] Excellent use of the STAR framework. The situation was clear, the action steps were specific, and the result included measurable impact.
+[span] Domain:
+[span] Cross Functional Leadership
+[p] Describe a situation where you had to coordinate across multiple departments to deliver a project.
+[span] Adequate
+[button] See feedback
+[p] Good setup and actions, but the result lacked specific metrics. Consider quantifying the project outcome next time.
+[span] Domain:
+[span] Conflict Resolution
+[p] Tell me about a time you had to resolve a conflict between team members.
+[span] Weak
+[button] See feedback
+[p] The task was unclear — it blended into the situation. Separate what you were specifically responsible for from the background context.
+[span] Best Moment
+[p] Q1: Influencing team to adopt new process
+[p] You described building a small proof-of-concept over a weekend to de-risk the proposal before presenting it. This showed initiative and reduced stakeholder resistance effectively.
+[span] Growth Opportunity
+[p] Q3: Resolving team conflict
+[p] When describing the conflict resolution, you jumped straight to your actions without explaining your specific mandate or responsibility. Anchoring the task makes the action more impressive.
+[h2] Skill Breakdown
+[tspan] Communication
+[tspan] Leadership
+[tspan] Problem Solving
+[tspan] Collaboration
+[tspan] Adaptability
+[span] Communication
+[strong] Observation:
+[p] Used clear, structured language throughout
+[strong] Reasoning:
+[p] Maintained logical flow across all three answers without losing the interviewer
+[strong] Observation:
+[p] Adapted vocabulary for a non-technical audience
+[strong] Reasoning:
+[p] Showed awareness of the interviewer context when describing system changes
+[span] Leadership
+[strong] Observation:
+[p] Described delegating work and aligning stakeholders
+[strong] Reasoning:
+[p] Demonstrated ownership of the outcome while enabling the team
+[span] Problem Solving
+[strong] Observation:
+[p] Broke down a complex problem into prioritised steps
+[strong] Reasoning:
+[p] Showed systematic thinking under time pressure
+[span] Collaboration
+[strong] Observation:
+[p] Mentioned team involvement but focused heavily on personal contribution
+[strong] Reasoning:
+[p] Could strengthen answers by crediting specific team members and their roles
+[span] Adaptability
+[strong] Observation:
+[p] Pivoted approach mid-project when requirements changed
+[strong] Reasoning:
+[p] Showed flexibility without losing sight of the goal
+[h2] Performance Patterns
+[p] Repeated behaviors observed across your answers.
+[span] Strengths
+[p] Consistently opens with strong situation framing that gives the interviewer context quickly
+[span] high
+[span] impact
+[p] Uses specific actions rather than vague descriptions of what the team did
+[span] medium
+[span] impact
+[span] Gaps
+[p] Results section often lacks quantified business impact
+[span] high
+[span] impact
+[p] Tends to under-credit team contributions, which may signal low collaboration awareness
+[span] medium
+[span] impact
+[h2] Strengths
+[span] Communication
+[span] Clear, well-structured responses that are easy to follow
+[span] Problem Solving
+[span] Demonstrates systematic thinking and prioritisation under pressure
+[span] Leadership
+[span] Takes ownership of outcomes and drives initiatives forward
+[h2] Areas for Improvement
+[span] Collaboration
+[span] High priority
+[span] Credit team members more explicitly and describe your role within the team dynamic
+[p] Better approach
+[p] Instead of "I implemented the solution", try "I proposed the approach and paired with our senior backend engineer to implement it, while our designer ran user testing in parallel."
+[span] Results
+[span] High priority
+[span] Always close with quantified business impact, not just what was delivered
+[p] Better approach
+[p] Instead of "We shipped the feature on time", try "We shipped 2 weeks early, which contributed to a 6% lift in conversion during the holiday period."
+[span] Task Framing
+[span] Medium priority
+[span] Clearly separate the task (your specific responsibility) from the situation (the background context)
+[h2] CV-Interview Alignment
+[p] How your interview evidence supports your CV claims.
+[span] Consistent
+[span] Understated
+[span] Overstated
+[span] Mixed
+[p] Your interview answers generally undersold your experience. Your CV claims strong leadership and strategic impact, but your answers focused more on execution details than strategic thinking.
+[p] Led cross-functional team of 12 to deliver platform migration on time and under budget
+[span] Understated
+[p] Interview evidence
+[p] Described coordinating across departments but focused on individual contributions rather than leadership of 12 people
+[p] Gap
+[p] Your answer made this sound like a coordination role rather than a leadership role. Emphasise the scope and your decision-making authority.
+[p] How to answer
+[p] Start with the scale: "I led a team of 12 across engineering, design, and product." Then describe a key decision YOU made that shaped the outcome.
+[p] CV suggestion
+[p] Your CV claim is strong — make sure your interview stories match this level of ownership.
+[p] Improved system performance by 40% through code-splitting and optimisation
+[span] Consistent
+[p] Interview evidence
+[p] Described the technical approach clearly with specific metrics and before/after comparison
+[p] How to answer
+[p] This was well-aligned. Keep using the before/after framing with specific numbers.
+[p] Mentored 5 junior engineers, with 3 promoted within 18 months
+[span] Not Tested
+[p] Interview evidence
+[p] Did not reference mentoring in any answers
+[p] Gap
+[p] This is a strong claim that was never tested. If asked about people development, have this story ready.
+[p] How to answer
+[p] Prepare a STAR story about a specific mentee: their challenge, your approach, their growth, and the promotion outcome.
+[p] CV suggestion
+[p] Consider adding a specific example of the mentoring methodology you used.
+[h2] Next Steps
+[p] Quantify Results
+[p] For each STAR story in your bank, write down 2-3 specific metrics that demonstrate business impact.
+[p] Team Framing
+[p] Revisit your top 5 stories and add at least one sentence crediting a specific team member or cross-functional partner.
+[p] CV Alignment
+[p] For each CV bullet point, prepare a matching STAR story that demonstrates the same level of scope and ownership.
+[h2] Transcript Replay
+[p] Play from any sentence to review specific answers quickly.
+[button] Audio unavailable
+[span] Interviewer
+[button] 0:02
+[p] Tell me about a time you influenced a team to adopt a new process without having direct authority.
+[span] You
+[button] 0:08
+[p] Sure. Last year, our deploy process was manual and error-prone. I proposed we adopt CI/CD...
+[span] Interviewer
+[button] 0:45
+[p] What was the biggest resistance you faced?
+[span] You
+[button] 0:52
+[p] The senior engineers were comfortable with the existing flow. I built a small proof-of-concept over a weekend...
+[span] Interviewer
+[button] 1:30
+[p] How did that turn out?
+[span] You
+[button] 1:35
+[p] Within a month, the whole team adopted it. Deploy failures dropped by 80% and we saved about 4 hours per week.
+[button] Back to Dashboard
+[button] Practice Again
