@@ -9,96 +9,81 @@
     html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0a0f1a; }
     body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #e2e8f0; }
 
-    /* ── App frame ── */
-    .app-area {
-      position: absolute; top: 0; left: 0; right: 0; height: 810px;
-      background: #0a0f1a; overflow: hidden;
-      border-bottom: 2px solid rgba(0,188,125,0.25);
-    }
-
-    /* Ambient orbs */
-    .ambient { position: absolute; border-radius: 999px; filter: blur(80px); pointer-events: none; z-index: 0; }
-    .ambient-1 { top: -80px; left: -80px; width: 360px; height: 360px; background: rgba(0,188,125,0.08); }
-    .ambient-2 { top: 120px; right: -40px; width: 280px; height: 280px; background: rgba(45,125,255,0.06); }
-    .ambient-3 { bottom: -60px; left: 25%; width: 300px; height: 300px; background: rgba(139,92,246,0.06); }
+    /* Ambient glows */
+    .ambient { position: absolute; border-radius: 999px; filter: blur(80px); pointer-events: none; }
+    .amb-1 { top: -60px; left: -60px; width: 320px; height: 320px; background: rgba(0,188,125,0.06); }
+    .amb-2 { bottom: -40px; right: -40px; width: 280px; height: 280px; background: rgba(99,102,241,0.05); }
 
     /* Header */
     .app-header {
-      height: 56px; background: rgba(10,15,26,0.92);
+      height: 52px; background: rgba(10,15,26,0.92);
       border-bottom: 1px solid rgba(255,255,255,0.06);
-      display: flex; align-items: center; padding: 0 24px; position: relative; z-index: 10;
+      display: flex; align-items: center; padding: 0 22px; position: relative; z-index: 10;
     }
-    .app-header .logo { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #00bc7d, #059669); color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; margin-right: 10px; }
-    .app-header .brand { font-size: 15px; font-weight: 600; color: #fff; }
-    .app-header .path { color: #64748b; font-size: 12px; margin-left: 6px; }
-    .app-header .user-area { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-    .app-header .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, #00bc7d, #059669); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .logo { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #00bc7d, #10b981); color: #fff; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; margin-right: 8px; }
+    .brand { font-size: 14px; font-weight: 600; color: #fff; }
+    .path { color: #64748b; font-size: 11px; margin-left: 5px; }
+    .user-area { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #cbd5e1; }
+    .avatar { width: 28px; height: 28px; border-radius: 999px; background: linear-gradient(135deg, #00bc7d, #059669); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 
     /* Sidebar */
     .sidebar {
-      position: absolute; left: 0; top: 56px; bottom: 0; width: 240px;
-      background: rgba(10,15,26,0.6); border-right: 1px solid rgba(255,255,255,0.05);
-      padding: 20px 16px; z-index: 5;
+      position: absolute; left: 0; top: 52px; bottom: 0; width: 210px;
+      background: rgba(10,15,26,0.5); border-right: 1px solid rgba(255,255,255,0.05);
+      padding: 18px 14px; z-index: 5;
     }
-    .side-nav-item {
-      display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px;
-      font-size: 13px; font-weight: 500; color: #94a3b8; margin-bottom: 4px;
-    }
-    .side-nav-item.active { color: #00bc7d; background: rgba(0,188,125,0.1); border: 1px solid rgba(0,188,125,0.15); }
-    .side-nav-dot { width: 18px; height: 18px; border-radius: 5px; background: rgba(255,255,255,0.1); flex-shrink: 0; }
-    .side-nav-item.active .side-nav-dot { background: rgba(0,188,125,0.3); }
+    .side-item { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; color: #94a3b8; margin-bottom: 3px; }
+    .side-item.act { color: #00bc7d; background: rgba(0,188,125,0.08); border: 1px solid rgba(0,188,125,0.12); }
+    .side-dot { width: 16px; height: 16px; border-radius: 4px; background: rgba(255,255,255,0.08); flex-shrink: 0; }
+    .side-item.act .side-dot { background: rgba(0,188,125,0.25); }
 
-    /* Main content area */
+    /* Main */
     .main-content {
-      position: absolute; left: 240px; top: 56px; right: 0; bottom: 0;
-      padding: 24px; overflow: hidden; z-index: 2;
+      position: absolute; left: 210px; top: 52px; right: 0; bottom: 0;
+      padding: 22px; overflow: hidden; z-index: 2;
     }
 
     /* Cards */
     .card {
-      background: rgba(15,22,42,0.7); border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 16px; padding: 18px;
-    }
-    .card-hover-effect {
-      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+      background: rgba(15,22,42,0.75); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px; padding: 16px;
     }
 
-    /* Stats cards */
-    .stat-card { position: relative; }
-    .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; font-weight: 600; margin-bottom: 8px; }
-    .stat-value { font-size: 40px; font-weight: 700; color: #fff; }
-    .stat-unit { font-size: 16px; color: #64748b; font-weight: 500; margin-left: 4px; }
+    /* Stat cards */
+    .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; font-weight: 600; margin-bottom: 6px; }
+    .stat-big { font-size: 38px; font-weight: 700; color: #fff; }
+    .stat-unit { font-size: 14px; color: #64748b; margin-left: 3px; }
 
-    /* Chart area */
-    .chart-area { height: 220px; display: flex; align-items: flex-end; gap: 16px; padding-top: 30px; }
-    .chart-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-    .chart-bar { width: 36px; background: rgba(0,188,125,0.15); border: 1px solid rgba(0,188,125,0.25); border-radius: 8px 8px 0 0; }
-    .chart-bar-label { font-size: 10px; color: #64748b; }
-    .chart-bar-value { font-size: 11px; font-weight: 600; color: #cbd5e1; }
-    .chart-line { position: absolute; height: 2px; background: #00bc7d; left: 0; right: 0; opacity: 0.5; }
+    /* Chart bars */
+    .chart-area { height: 180px; display: flex; align-items: flex-end; gap: 18px; padding-top: 20px; position: relative; }
+    .chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .chart-bar { width: 32px; border-radius: 6px 6px 0 0; background: rgba(0,188,125,0.2); border: 1px solid rgba(0,188,125,0.25); }
+    .chart-bar.latest { background: rgba(0,188,125,0.35); border-color: rgba(0,188,125,0.5); box-shadow: 0 0 12px rgba(0,188,125,0.15); }
+    .chart-val { font-size: 10px; font-weight: 600; color: #cbd5e1; }
+    .chart-label { font-size: 9px; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; }
+    .avg-line { position: absolute; height: 1.5px; background: rgba(0,188,125,0.4); left: 0; right: 0; }
 
     /* Session rows */
-    .session-row {
-      display: flex; align-items: center; justify-content: space-between; padding: 12px 14px;
-      border-radius: 12px; background: rgba(15,22,42,0.4); border: 1px solid rgba(255,255,255,0.04);
-      margin-bottom: 8px;
+    .sess-row {
+      display: flex; align-items: center; justify-content: space-between; padding: 11px 14px;
+      border-radius: 10px; background: rgba(15,22,42,0.4); border: 1px solid rgba(255,255,255,0.03);
+      margin-bottom: 7px; transition: all 0.3s;
     }
-    .session-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-    .session-icon.behavioural { background: rgba(139,92,246,0.15); color: #a78bfa; }
-    .session-icon.technical { background: rgba(6,182,212,0.15); color: #22d3ee; }
-    .badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 999px; }
-    .badge-completed { background: rgba(0,188,125,0.15); color: #00bc7d; }
-    .badge-behavioural { background: rgba(139,92,246,0.15); color: #a78bfa; }
-    .badge-technical { background: rgba(6,182,212,0.15); color: #22d3ee; }
-    .score-badge { font-size: 15px; font-weight: 700; padding: 4px 12px; border-radius: 999px; }
-    .score-high { background: rgba(0,188,125,0.12); color: #00bc7d; border: 1px solid rgba(0,188,125,0.2); }
-    .score-mid { background: rgba(234,179,8,0.12); color: #eab308; border: 1px solid rgba(234,179,8,0.2); }
+    .sess-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .sess-icon.beh { background: rgba(139,92,246,0.12); color: #a78bfa; }
+    .sess-icon.tech { background: rgba(6,182,212,0.12); color: #22d3ee; }
+    .badge { font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 999px; }
+    .badge-beh { background: rgba(139,92,246,0.12); color: #a78bfa; }
+    .badge-tech { background: rgba(6,182,212,0.12); color: #22d3ee; }
+    .score-pill { font-size: 14px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+    .score-hi { background: rgba(0,188,125,0.1); color: #00bc7d; border: 1px solid rgba(0,188,125,0.2); }
+    .score-md { background: rgba(234,179,8,0.1); color: #eab308; border: 1px solid rgba(234,179,8,0.2); }
 
-    /* Goal card */
-    .goal-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
-    .goal-item:last-child { border-bottom: none; }
-    .progress-bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden; width: 80px; }
-    .progress-fill { height: 100%; background: #00bc7d; border-radius: 999px; }
+    /* Goals */
+    .goal-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .goal-row:last-child { border-bottom: none; }
+    .prog-track { height: 4px; background: rgba(255,255,255,0.05); border-radius: 999px; overflow: hidden; width: 70px; }
+    .prog-fill { height: 100%; background: #00bc7d; border-radius: 999px; }
 
     /* Cursor */
     .cursor {
@@ -110,190 +95,147 @@
       background: rgba(0,188,125,0.6); transform: translate(-50%, -50%); opacity: 0;
     }
 
-    /* ═══════════════════════════════════════════════════════════ */
-    /* EXPLANATION BAR — the key addition */
-    /* ═══════════════════════════════════════════════════════════ */
-    .explanation-bar {
-      position: absolute; left: 0; right: 0; bottom: 0; height: 270px;
-      background: #060b14;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 150; padding: 0 60px;
+    /* ── OVERLAY TEXT ── */
+    .overlay-text {
+      position: absolute; z-index: 90; pointer-events: none; max-width: 440px;
     }
-    .explanation-content {
-      display: flex; align-items: flex-start; gap: 24px; max-width: 1100px; width: 100%;
+    .ov-heading {
+      font-size: 36px; font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 10px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.6);
     }
-    .explanation-icon {
-      width: 52px; height: 52px; border-radius: 14px;
-      background: rgba(0,188,125,0.12); border: 1px solid rgba(0,188,125,0.2);
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    .ov-body {
+      font-size: 17px; line-height: 1.5; color: #cbd5e1;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.5);
     }
-    .explanation-text-wrap { flex: 1; }
-    .explanation-heading {
-      font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 6px;
-    }
-    .explanation-body {
-      font-size: 16px; line-height: 1.55; color: #94a3b8;
-      max-width: 700px;
-    }
-    .explanation-step {
-      font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
-      color: #00bc7d; font-weight: 600; margin-bottom: 8px;
-    }
+    .ov-highlight { color: #00bc7d; font-weight: 600; }
 
-    /* ── Animations ── */
-    @keyframes pulse-ring {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(0,188,125,0.3); }
-      50% { box-shadow: 0 0 0 8px rgba(0,188,125,0); }
+    /* ── FEEDBACK PAGE ── */
+    .feedback-page {
+      position: absolute; inset: 0; background: #0a0f1a; z-index: 50; display: none;
     }
-    .highlight-border { animation: pulse-ring 2s ease-in-out infinite; border-color: rgba(0,188,125,0.5) !important; }
+    .fb-header { height: 52px; background: rgba(10,15,26,0.92); border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; padding: 0 22px; }
+    .fb-back { color: #94a3b8; font-size: 12px; display: flex; align-items: center; gap: 4px; }
+    .score-circle {
+      width: 110px; height: 110px; border-radius: 999px;
+      background: conic-gradient(#00bc7d 295deg, rgba(255,255,255,0.06) 0deg);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .score-inner {
+      width: 84px; height: 84px; border-radius: 999px; background: #0a0f1a;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .star-pill { padding: 4px 12px; border-radius: 999px; font-size: 10px; font-weight: 600; }
+    .star-s { background: rgba(0,188,125,0.1); color: #00bc7d; border: 1px solid rgba(0,188,125,0.2); }
+    .star-t { background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
+    .star-a { background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+    .star-r { background: rgba(45,124,255,0.1); color: #2d7cff; border: 1px solid rgba(45,124,255,0.2); }
+
+    @keyframes pulse-border {
+      0%, 100% { border-color: rgba(0,188,125,0.3); }
+      50% { border-color: rgba(0,188,125,0.7); }
+    }
+    .active-target { animation: pulse-border 1.8s ease-in-out infinite; }
   </style>
 </head>
 <body>
 
-<div id="root" data-composition-id="dashboard" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+<div id="root" data-composition-id="dashboard-v4" data-start="0" data-duration="15" data-width="1920" data-height="1080">
 
-  <!-- ═══════════ APP AREA ═══════════ -->
-  <div class="app-area">
-    <!-- Ambient glows -->
-    <div class="ambient ambient-1"></div>
-    <div class="ambient ambient-2"></div>
-    <div class="ambient ambient-3"></div>
+  <div class="ambient amb-1"></div>
+  <div class="ambient amb-2"></div>
 
-    <!-- Header -->
-    <div class="app-header">
-      <div class="logo">M</div>
-      <span class="brand">Mockly</span>
-      <span class="path">/ Dashboard</span>
-      <div class="user-area">
-        <span style="font-size:13px;color:#cbd5e1;">Alex Chen</span>
-        <div class="avatar">A</div>
-      </div>
+  <!-- ════════════ DASHBOARD ════════════ -->
+  <div class="app-header">
+    <div class="logo">M</div><span class="brand">Mockly</span><span class="path">/ Dashboard</span>
+    <div class="user-area"><span>Alex Chen</span><div class="avatar">A</div></div>
+  </div>
+
+  <div class="sidebar">
+    <div class="side-item act"><div class="side-dot"></div>Overview</div>
+    <div class="side-item"><div class="side-dot"></div>History</div>
+    <div class="side-item"><div class="side-dot"></div>Analytics</div>
+    <div class="side-item"><div class="side-dot"></div>Improve</div>
+  </div>
+
+  <div class="main-content" id="dashboard-view">
+    <!-- Welcome -->
+    <div style="margin-bottom:16px;">
+      <h1 style="font-size:28px;font-weight:700;color:#fff;margin-bottom:3px;">Welcome back, <span style="background:linear-gradient(90deg,#00bc7d,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Alex</span></h1>
+      <p style="font-size:13px;color:#64748b;">Your interview prep headquarters</p>
     </div>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="side-nav-item active"><div class="side-nav-dot"></div>Overview</div>
-      <div class="side-nav-item"><div class="side-nav-dot"></div>History</div>
-      <div class="side-nav-item"><div class="side-nav-dot"></div>Analytics</div>
-      <div class="side-nav-item"><div class="side-nav-dot"></div>Improve</div>
-    </div>
+    <div style="display:flex;gap:18px;">
+      <!-- LEFT -->
+      <div style="flex:1;display:flex;flex-direction:column;gap:14px;">
 
-    <!-- Main content -->
-    <div class="main-content">
-      <!-- Welcome header -->
-      <div style="margin-bottom:20px;">
-        <h1 style="font-size:30px;font-weight:700;color:#fff;margin-bottom:4px;">
-          Welcome back, <span style="background:linear-gradient(90deg,#00bc7d,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Alex</span>
-        </h1>
-        <p style="font-size:14px;color:#64748b;">Your interview prep headquarters</p>
-      </div>
+        <!-- Stats -->
+        <div style="display:flex;gap:12px;" id="stats-row">
+          <div class="card" id="stat-score" style="flex:1;position:relative;"><div class="stat-label">Avg Score</div><div style="display:flex;align-items:baseline;"><span class="stat-big" id="score-num">0</span><span class="stat-unit">/100</span></div></div>
+          <div class="card" id="stat-time" style="flex:1;"><div class="stat-label">Practice Time</div><div style="display:flex;align-items:baseline;"><span class="stat-big">4.2</span><span class="stat-unit">hr</span></div></div>
+          <div class="card" id="stat-sess" style="flex:1;"><div class="stat-label">Sessions</div><div style="display:flex;align-items:baseline;"><span class="stat-big">12</span><span class="stat-unit">total</span></div></div>
+          <div class="card" id="stat-voice" style="flex:1;"><div class="stat-label">Voice</div><div style="display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;border-radius:999px;background:#00bc7d;"></span><span style="font-size:12px;font-weight:600;color:#00bc7d;">Connected</span></div></div>
+        </div>
 
-      <div style="display:flex;gap:20px;">
-
-        <!-- LEFT COLUMN -->
-        <div style="flex:1;display:flex;flex-direction:column;gap:16px;">
-
-          <!-- Stats Row -->
-          <div style="display:flex;gap:14px;" id="d-stats-row">
-            <div class="card stat-card" id="d-stat-score">
-              <div class="stat-label">Average Score</div>
-              <div style="display:flex;align-items:baseline;"><span class="stat-value" id="d-score-val">0</span><span class="stat-unit">/100</span></div>
-            </div>
-            <div class="card stat-card" id="d-stat-time">
-              <div class="stat-label">Total Practice</div>
-              <div style="display:flex;align-items:baseline;"><span class="stat-value">4.2</span><span class="stat-unit">hr</span></div>
-            </div>
-            <div class="card stat-card" id="d-stat-sessions">
-              <div class="stat-label">Sessions</div>
-              <div style="display:flex;align-items:baseline;"><span class="stat-value">12</span><span class="stat-unit">total</span></div>
-            </div>
-            <div class="card stat-card" id="d-stat-voice">
-              <div class="stat-label">ElevenLabs</div>
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="width:8px;height:8px;border-radius:999px;background:#00bc7d;"></span>
-                <span style="font-size:13px;font-weight:600;color:#00bc7d;">Connected</span>
-              </div>
-            </div>
+        <!-- Chart -->
+        <div class="card" id="chart-card" style="padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h2 style="font-size:15px;font-weight:700;color:#fff;">Performance History</h2>
+            <span style="font-size:10px;color:#64748b;background:rgba(255,255,255,0.03);padding:3px 9px;border-radius:999px;">Last 6 sessions</span>
           </div>
-
-          <!-- Performance Chart -->
-          <div class="card" id="d-chart" style="padding:20px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-              <h2 style="font-size:16px;font-weight:700;color:#fff;">Performance History</h2>
-              <span style="font-size:11px;color:#64748b;background:rgba(255,255,255,0.04);padding:4px 10px;border-radius:999px;">Last 6 sessions</span>
-            </div>
-            <div class="chart-area" style="position:relative;">
-              <div class="chart-bar-group" id="chart-bar-0"><div class="chart-bar" style="height:52%;"></div><span class="chart-bar-value">52</span><span class="chart-bar-label">S1</span></div>
-              <div class="chart-bar-group" id="chart-bar-1"><div class="chart-bar" style="height:67%;"></div><span class="chart-bar-value">67</span><span class="chart-bar-label">S2</span></div>
-              <div class="chart-bar-group" id="chart-bar-2"><div class="chart-bar" style="height:61%;"></div><span class="chart-bar-value">61</span><span class="chart-bar-label">S3</span></div>
-              <div class="chart-bar-group" id="chart-bar-3"><div class="chart-bar" style="height:74%;"></div><span class="chart-bar-value">74</span><span class="chart-bar-label">S4</span></div>
-              <div class="chart-bar-group" id="chart-bar-4"><div class="chart-bar" style="height:78%;"></div><span class="chart-bar-value" style="color:#00bc7d;font-weight:700;">76</span><span class="chart-bar-label">S5</span></div>
-              <div class="chart-bar-group" id="chart-bar-5"><div class="chart-bar" style="height:82%;"></div><span class="chart-bar-value" style="color:#00bc7d;font-weight:700;">82</span><span class="chart-bar-label">S6</span></div>
-            </div>
-          </div>
-
-          <!-- Recent Sessions -->
-          <div class="card" id="d-sessions">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-              <h2 style="font-size:16px;font-weight:700;color:#fff;">Recent Sessions</h2>
-              <span style="font-size:12px;color:#00bc7d;">View all</span>
-            </div>
-            <div class="session-row" id="d-sess-0">
-              <div style="display:flex;align-items:center;gap:12px;">
-                <div class="session-icon behavioural"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-                <div><div style="font-size:13px;font-weight:500;color:#cbd5e1;">Influence without authority</div><div style="display:flex;gap:6px;margin-top:3px;"><span class="badge badge-behavioural">Behavioural</span><span style="font-size:10px;color:#475569;">2 days ago</span></div></div>
-              </div>
-              <span class="score-badge score-high">82</span>
-            </div>
-            <div class="session-row" id="d-sess-1">
-              <div style="display:flex;align-items:center;gap:12px;">
-                <div class="session-icon behavioural"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-                <div><div style="font-size:13px;font-weight:500;color:#cbd5e1;">Cross-functional conflict</div><div style="display:flex;gap:6px;margin-top:3px;"><span class="badge badge-behavioural">Behavioural</span><span style="font-size:10px;color:#475569;">3 days ago</span></div></div>
-              </div>
-              <span class="score-badge score-mid">74</span>
-            </div>
-            <div class="session-row" id="d-sess-2">
-              <div style="display:flex;align-items:center;gap:12px;">
-                <div class="session-icon technical"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
-                <div><div style="font-size:13px;font-weight:500;color:#cbd5e1;">Two-pointer optimization</div><div style="display:flex;gap:6px;margin-top:3px;"><span class="badge badge-technical">Technical</span><span style="font-size:10px;color:#475569;">5 days ago</span></div></div>
-              </div>
-              <span class="score-badge score-mid">71</span>
-            </div>
+          <div class="chart-area" style="position:relative;">
+            <div class="avg-line" style="bottom:72%;" id="avg-line"></div>
+            <div class="chart-col" id="ch-0"><div class="chart-bar" style="height:0%;"></div><span class="chart-val">52</span><span class="chart-label">S1</span></div>
+            <div class="chart-col" id="ch-1"><div class="chart-bar" style="height:0%;"></div><span class="chart-val">67</span><span class="chart-label">S2</span></div>
+            <div class="chart-col" id="ch-2"><div class="chart-bar" style="height:0%;"></div><span class="chart-val">61</span><span class="chart-label">S3</span></div>
+            <div class="chart-col" id="ch-3"><div class="chart-bar" style="height:0%;"></div><span class="chart-val">74</span><span class="chart-label">S4</span></div>
+            <div class="chart-col" id="ch-4"><div class="chart-bar" style="height:0%;"></div><span class="chart-val">76</span><span class="chart-label">S5</span></div>
+            <div class="chart-col" id="ch-5"><div class="chart-bar latest" style="height:0%;"></div><span class="chart-val" style="color:#00bc7d;font-weight:700;">82</span><span class="chart-label" style="color:#00bc7d;">Latest</span></div>
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: Goals -->
-        <div style="width:280px;display:flex;flex-direction:column;gap:14px;">
-          <div class="card" id="d-goals-card">
-            <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:14px;">Your Goals</h2>
-            <div class="goal-item">
-              <span style="font-size:12px;color:#cbd5e1;">Complete 5 behavioural</span>
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:11px;color:#64748b;">3/5</span>
-                <div class="progress-bar"><div class="progress-fill" id="d-goal-bar-1" style="width:60%;"></div></div>
-              </div>
-            </div>
-            <div class="goal-item">
-              <span style="font-size:12px;color:#cbd5e1;">Improve avg score</span>
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:11px;color:#64748b;">76/85</span>
-                <div class="progress-bar"><div class="progress-fill" style="width:89%;"></div></div>
-              </div>
-            </div>
-            <div class="goal-item">
-              <span style="font-size:12px;color:#cbd5e1;">3 technical sessions</span>
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:11px;color:#64748b;">1/3</span>
-                <div class="progress-bar"><div class="progress-fill" id="d-goal-bar-3" style="width:33%;"></div></div>
-              </div>
-            </div>
+        <!-- Sessions -->
+        <div class="card" id="sessions-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h2 style="font-size:15px;font-weight:700;color:#fff;">Recent Sessions</h2>
+            <span style="font-size:11px;color:#00bc7d;">View all</span>
           </div>
+          <div class="sess-row" id="sess-0">
+            <div style="display:flex;align-items:center;gap:10px;"><div class="sess-icon beh">👤</div><div><div style="font-size:12px;font-weight:500;color:#cbd5e1;">Influence without authority</div><div style="display:flex;gap:5px;margin-top:3px;"><span class="badge badge-beh">Behavioural</span><span style="font-size:9px;color:#475569;">2d ago</span></div></div></div>
+            <span class="score-pill score-hi">82</span>
+          </div>
+          <div class="sess-row" id="sess-1">
+            <div style="display:flex;align-items:center;gap:10px;"><div class="sess-icon beh">👤</div><div><div style="font-size:12px;font-weight:500;color:#cbd5e1;">Cross-functional conflict</div><div style="display:flex;gap:5px;margin-top:3px;"><span class="badge badge-beh">Behavioural</span><span style="font-size:9px;color:#475569;">3d ago</span></div></div></div>
+            <span class="score-pill score-md">74</span>
+          </div>
+          <div class="sess-row" id="sess-2">
+            <div style="display:flex;align-items:center;gap:10px;"><div class="sess-icon tech">&lt;/&gt;</div><div><div style="font-size:12px;font-weight:500;color:#cbd5e1;">Two-pointer optimization</div><div style="display:flex;gap:5px;margin-top:3px;"><span class="badge badge-tech">Technical</span><span style="font-size:9px;color:#475569;">5d ago</span></div></div></div>
+            <span class="score-pill score-md">71</span>
+          </div>
+        </div>
+      </div>
 
-          <div class="card" id="d-insights-card">
-            <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;">Focus Area</h2>
-            <p style="font-size:12px;line-height:1.5;color:#94a3b8;">Your confidence scores are climbing — push clarity and structure next. Each session gives you a tailored path forward.</p>
+      <!-- RIGHT: Goals -->
+      <div style="width:260px;display:flex;flex-direction:column;gap:12px;">
+        <div class="card" id="goals-card">
+          <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px;">Goals</h2>
+          <div class="goal-row">
+            <span style="font-size:11px;color:#cbd5e1;">5 behavioural</span>
+            <div style="display:flex;align-items:center;gap:7px;"><span style="font-size:10px;color:#64748b;">3/5</span><div class="prog-track"><div class="prog-fill" id="goal-bar-1" style="width:60%;"></div></div></div>
           </div>
+          <div class="goal-row">
+            <span style="font-size:11px;color:#cbd5e1;">Avg score 85</span>
+            <div style="display:flex;align-items:center;gap:7px;"><span style="font-size:10px;color:#64748b;">76/85</span><div class="prog-track"><div class="prog-fill" style="width:89%;"></div></div></div>
+          </div>
+          <div class="goal-row">
+            <span style="font-size:11px;color:#cbd5e1;">3 technical</span>
+            <div style="display:flex;align-items:center;gap:7px;"><span style="font-size:10px;color:#64748b;">1/3</span><div class="prog-track"><div class="prog-fill" id="goal-bar-3" style="width:33%;"></div></div></div>
+          </div>
+        </div>
+        <div class="card" id="insight-card">
+          <h2 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:8px;">What to improve</h2>
+          <p style="font-size:11px;line-height:1.5;color:#94a3b8;">Your scores are climbing — keep pushing clarity and structure. Mockly gives you tailored coaching notes after every session.</p>
         </div>
       </div>
     </div>
@@ -303,101 +245,171 @@
       <svg width="22" height="22" viewBox="0 0 20 20"><path d="M3 2L17 9.5L10 11L7 18L3 2Z" fill="#fff" stroke="#0f172a" stroke-width="1"/></svg>
       <div class="click-ring" id="click-ring"></div>
     </div>
-  </div><!-- /app-area -->
+  </div><!-- /dashboard-view -->
 
-  <!-- ═══════════ EXPLANATION BAR ═══════════ -->
-  <div class="explanation-bar">
-    <div class="explanation-content">
-      <div class="explanation-icon" id="exp-icon">📊</div>
-      <div class="explanation-text-wrap">
-        <div class="explanation-step" id="exp-step">1 of 3</div>
-        <div class="explanation-heading" id="exp-heading">Track every session, see real growth</div>
-        <div class="explanation-body" id="exp-body">Your interview scores are tracked and visualized over time. Each point on the chart is a practice session — watch your trend climb as you improve.</div>
+  <!-- ════════════ FEEDBACK PAGE (hidden initially) ════════════ -->
+  <div class="feedback-page" id="feedback-view">
+    <div class="fb-header">
+      <span class="fb-back">← Back to Dashboard</span>
+      <span style="margin-left:auto;font-size:11px;color:#64748b;">Influence without authority · 2 days ago</span>
+    </div>
+    <div style="padding:24px 40px;display:flex;gap:24px;align-items:flex-start;">
+      <!-- Score circle -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <div class="score-circle" id="fb-score-ring" style="background: conic-gradient(#0a0f1a 360deg, rgba(255,255,255,0.06) 0deg);">
+          <div class="score-inner"><span style="font-size:32px;font-weight:700;color:#fff;" id="fb-score-num">0</span><span style="font-size:10px;color:#64748b;">/100</span></div>
+        </div>
+        <span style="font-size:10px;font-weight:600;color:#00bc7d;background:rgba(0,188,125,0.1);padding:3px 10px;border-radius:999px;border:1px solid rgba(0,188,125,0.2);" id="fb-conf">high confidence</span>
       </div>
+
+      <!-- Feedback content -->
+      <div style="flex:1;">
+        <h1 style="font-size:24px;font-weight:700;color:#fff;margin-bottom:4px;">Interview Summary</h1>
+        <p style="font-size:13px;color:#94a3b8;line-height:1.5;margin-bottom:16px;" id="fb-oneliner">You communicated your leadership experience clearly with a strong STAR structure. Push for clearer metrics in the results section.</p>
+
+        <!-- STAR categories -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <span class="star-pill star-s"><span style="color:#fff;">S</span>ituation <span style="font-weight:700;color:#fff;">85</span></span>
+          <span class="star-pill star-t"><span style="color:#fff;">T</span>ask <span style="font-weight:700;color:#fff;">78</span></span>
+          <span class="star-pill star-a"><span style="color:#fff;">A</span>ction <span style="font-weight:700;color:#fff;">82</span></span>
+          <span class="star-pill star-r"><span style="color:#fff;">R</span>esult <span style="font-weight:700;color:#fff;">72</span></span>
+        </div>
+
+        <!-- Coaching notes -->
+        <div class="card" style="background:rgba(0,188,125,0.03);border-color:rgba(0,188,125,0.12);">
+          <h3 style="font-size:13px;font-weight:700;color:#00bc7d;margin-bottom:6px;">🎯 Coaching Notes</h3>
+          <p style="font-size:12px;line-height:1.5;color:#cbd5e1;">Your storytelling is strong. To break past 85, focus on <strong style="color:#fff;">quantifiable results</strong>: revenue impact, team size, percentage improvements. The STAR structure is solid — now add numbers.</p>
+        </div>
+
+        <!-- Next step -->
+        <div style="margin-top:14px;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;font-weight:600;color:#00bc7d;">→</span>
+          <span style="font-size:12px;color:#cbd5e1;"><strong style="color:#fff;">Next:</strong> Retake with clearer metrics. Your last improvement cycle took 4 points from 78 → 82 in one session.</span>
+        </div>
+      </div>
+
+      <!-- Right overlay area for text -->
+      <div style="width:360px;"></div>
     </div>
   </div>
+
+  <!-- ════════════ BIG OVERLAY TEXT (right side) ════════════ -->
+  <div class="overlay-text" id="overlay-1" style="right:40px;top:120px;opacity:0;">
+    <div class="ov-heading">Every session is scored and tracked</div>
+    <div class="ov-body">Mockly analyzes each interview and turns it into a <span class="ov-highlight">clear, measurable score</span> so you always know where you stand.</div>
+  </div>
+
+  <div class="overlay-text" id="overlay-2" style="right:40px;top:300px;opacity:0;">
+    <div class="ov-heading">Watch your performance improve</div>
+    <div class="ov-body">Each bar is a practice session. As you go through the <span class="ov-highlight">feedback → improve → retry cycle</span>, your scores climb. This is your growth, visualized.</div>
+  </div>
+
+  <div class="overlay-text" id="overlay-3" style="right:40px;top:120px;opacity:0;">
+    <div class="ov-heading">Check your feedback.<br/>Improve. Repeat.</div>
+    <div class="ov-body">Tap any session to see your full <span class="ov-highlight">STAR breakdown</span>, coaching notes, and the <span class="ov-highlight">exact next step</span> to improve. The cycle is your growth engine.</div>
+  </div>
+
+  <div class="overlay-text" id="overlay-4" style="right:40px;top:120px;opacity:0;">
+    <div class="ov-heading">Set goals. Get directed.</div>
+    <div class="ov-body">Mockly tracks your targets and tells you exactly <span class="ov-highlight">what to work on</span> next. No guessing — every session is a step forward.</div>
+  </div>
+
 </div>
 
 <script>
 window.__timelines = window.__timelines || {};
 const tl = gsap.timeline({ paused: true });
 
-/* ── PHASE 0: Score animates ── */
-tl.to("#d-score-val", { textContent: 76, duration: 1.0, snap: { textContent: 1 }, ease: "steps(8)" }, 0.2);
-
-/* ── PHASE 1: Cards stagger in ── */
-tl.from("#d-stats-row > div", { opacity: 0, y: 16, duration: 0.3, stagger: 0.08 }, 0.3);
-tl.from("#d-chart", { opacity: 0, y: 14, duration: 0.35 }, 0.6);
-tl.from("#d-sessions", { opacity: 0, y: 14, duration: 0.35 }, 0.8);
-tl.from("#d-goals-card", { opacity: 0, y: 14, duration: 0.35 }, 0.6);
-tl.from("#d-insights-card", { opacity: 0, y: 14, duration: 0.35 }, 0.8);
-
-/* ── PHASE 2: Cursor → score card → click ── */
-// exp: "Step 1: Track every session" (already showing)
-tl.to("#cursor", { left: 290, top: 200, duration: 1.5, ease: "power2.inOut" }, 2.0);
-tl.call(() => {
-  document.getElementById("d-stat-score").classList.add("highlight-border");
-  document.getElementById("d-stat-score").style.transform = "translateY(-2px)";
-  document.getElementById("d-stat-score").style.boxShadow = "0 8px 24px rgba(0,188,125,0.12)";
-}, null, 3.5);
-// click
-tl.call(() => {
+/* ── helpers ── */
+function clickAt() {
   const r = document.getElementById("click-ring");
   r.style.opacity = "1";
-  gsap.to(r, { scale: 12, opacity: 0, duration: 0.4 });
-}, null, 3.5);
+  gsap.to(r, { scale: 10, opacity: 0, duration: 0.4, onComplete: () => { r.style.opacity = "0"; r.style.transform = "translate(-50%, -50%) scale(1)"; } });
+}
+function highlight(el) { el.classList.add("active-target"); el.style.transform = "translateY(-2px)"; el.style.boxShadow = "0 8px 20px rgba(0,0,0,0.3)"; }
+function unhighlight(el) { el.classList.remove("active-target"); el.style.transform = ""; el.style.boxShadow = ""; }
 
-/* ── Exp 1 → 2 ── */
-tl.call(() => {
-  document.getElementById("exp-step").textContent = "2 of 3";
-  document.getElementById("exp-heading").textContent = "Spot patterns across your sessions";
-  document.getElementById("exp-body").textContent = "Every row is a completed interview. Click into any session to see a full STAR breakdown with actionable coaching notes.";
-}, null, 4.0);
-tl.from("#exp-heading", { opacity: 0, y: 8, duration: 0.35 }, 4.0);
-tl.from("#exp-body", { opacity: 0, y: 6, duration: 0.35 }, 4.15);
+/* ══════ PHASE 1: Score animates + stats stagger ══════ */
+tl.to("#score-num", { textContent: 76, duration: 0.9, snap: { textContent: 1 }, ease: "steps(8)" }, 0.2);
+tl.from("#stats-row > div", { opacity: 0, y: 12, duration: 0.25, stagger: 0.06 }, 0.2);
+tl.from("#chart-card", { opacity: 0, y: 10, duration: 0.3 }, 0.4);
+tl.from("#sessions-card", { opacity: 0, y: 10, duration: 0.3 }, 0.5);
+tl.from("#goals-card, #insight-card", { opacity: 0, y: 10, duration: 0.3, stagger: 0.06 }, 0.5);
 
-/* ── PHASE 3: Cursor → sessions → click session 1 ── */
-// Remove highlight from score card
-tl.call(() => { document.getElementById("d-stat-score").classList.remove("highlight-border"); document.getElementById("d-stat-score").style.transform = ""; document.getElementById("d-stat-score").style.boxShadow = ""; }, null, 5.5);
-tl.to("#cursor", { left: 500, top: 475, duration: 1.4, ease: "power2.inOut" }, 5.5);
-tl.call(() => {
-  document.getElementById("d-sess-1").style.borderColor = "rgba(0,188,125,0.35)";
-  document.getElementById("d-sess-1").style.background = "rgba(0,188,125,0.06)";
-}, null, 6.9);
-tl.call(() => {
-  const r = document.getElementById("click-ring");
-  r.style.opacity = "1";
-  gsap.to(r, { scale: 12, opacity: 0, duration: 0.4 });
-}, null, 7.0);
+/* Overlay 1 */
+tl.to("#overlay-1", { opacity: 1, duration: 0.4 }, 0.8);
 
-/* ── Exp 2 → 3 ── */
-tl.call(() => {
-  document.getElementById("exp-step").textContent = "3 of 3";
-  document.getElementById("exp-heading").textContent = "Set goals and get directed feedback";
-  document.getElementById("exp-body").textContent = "Mockly tells you exactly what to work on. Goals on the right track your progress — clarity, structure, confidence. Every session earns you a concrete next step to level up.";
-}, null, 7.8);
-tl.from("#exp-heading", { opacity: 0, y: 8, duration: 0.35 }, 7.8);
-tl.from("#exp-body", { opacity: 0, y: 6, duration: 0.35 }, 7.95);
+/* Cursor → score card */
+tl.to("#cursor", { left: 255, top: 185, duration: 1.3, ease: "power2.inOut" }, 1.6);
+tl.call(() => highlight(document.getElementById("stat-score")), null, 2.9);
+tl.call(clickAt, null, 3.0);
 
-/* ── PHASE 4: Cursor → goals → click goal 1 ── */
-tl.call(() => { document.getElementById("d-sess-1").style.borderColor = ""; document.getElementById("d-sess-1").style.background = ""; }, null, 9.2);
-tl.to("#cursor", { left: 870, top: 480, duration: 1.4, ease: "power2.inOut" }, 9.2);
+/* ══════ PHASE 2: Chart bars animate UP ══════ */
+tl.call(() => { document.getElementById("overlay-1").style.opacity = "0"; }, null, 3.3);
+tl.to("#overlay-2", { opacity: 1, duration: 0.4 }, 3.4);
+
+tl.to("#ch-0 .chart-bar", { height: "52%", duration: 0.4, ease: "power2.out" }, 3.6);
+tl.to("#ch-1 .chart-bar", { height: "67%", duration: 0.4, ease: "power2.out" }, 3.75);
+tl.to("#ch-2 .chart-bar", { height: "61%", duration: 0.4, ease: "power2.out" }, 3.9);
+tl.to("#ch-3 .chart-bar", { height: "74%", duration: 0.4, ease: "power2.out" }, 4.05);
+tl.to("#ch-4 .chart-bar", { height: "76%", duration: 0.4, ease: "power2.out" }, 4.2);
+tl.to("#ch-5 .chart-bar", { height: "82%", duration: 0.5, ease: "power2.out" }, 4.35);
+
+// Unhighlight score card
+tl.call(() => unhighlight(document.getElementById("stat-score")), null, 4.8);
+
+// Cursor → session 0
+tl.to("#cursor", { left: 450, top: 492, duration: 1.4, ease: "power2.inOut" }, 5.2);
+tl.call(() => highlight(document.getElementById("sess-0")), null, 6.6);
+tl.call(clickAt, null, 6.7);
+
+/* ══════ PHASE 3: TRANSITION TO FEEDBACK PAGE ══════ */
 tl.call(() => {
-  document.getElementById("d-goals-card").style.borderColor = "rgba(0,188,125,0.35)";
-  document.getElementById("d-goals-card").style.boxShadow = "0 8px 24px rgba(0,188,125,0.10)";
-}, null, 10.6);
+  document.getElementById("overlay-2").style.opacity = "0";
+  document.getElementById("dashboard-view").style.opacity = "0";
+  document.getElementById("dashboard-view").style.transition = "opacity 0.3s";
+  document.getElementById("feedback-view").style.display = "block";
+  document.getElementById("feedback-view").style.opacity = "0";
+  setTimeout(() => { document.getElementById("feedback-view").style.opacity = "1"; document.getElementById("feedback-view").style.transition = "opacity 0.3s"; }, 30);
+}, null, 7.2);
+
+// Feedback score ring animates
+tl.call(() => {
+  // Animate conic gradient fill using GSAP-like approach — we'll just set it directly
+  const ring = document.getElementById("fb-score-ring");
+  ring.style.background = "conic-gradient(#0a0f1a 360deg, rgba(255,255,255,0.06) 0deg)";
+  // Quick approach: use CSS transition + set target
+  ring.style.transition = "background 1.5s ease-out";
+  setTimeout(() => {
+    ring.style.background = "conic-gradient(#00bc7d 295deg, rgba(255,255,255,0.06) 0deg)";
+    document.getElementById("fb-score-num").textContent = "82";
+  }, 100);
+}, null, 7.5);
+
+// Overlay 3
+tl.to("#overlay-3", { opacity: 1, duration: 0.5 }, 8.0);
+
+/* ══════ PHASE 4: RETURN TO DASHBOARD, GO TO GOALS ══════ */
+tl.call(() => {
+  document.getElementById("overlay-3").style.opacity = "0";
+  document.getElementById("feedback-view").style.opacity = "0";
+  document.getElementById("feedback-view").style.display = "none";
+  document.getElementById("dashboard-view").style.opacity = "1";
+  document.getElementById("dashboard-view").style.transition = "opacity 0.3s";
+}, null, 10.5);
+
+// Cursor → goals
+tl.to("#cursor", { left: 780, top: 480, duration: 1.3, ease: "power2.inOut" }, 11.0);
+tl.call(() => highlight(document.getElementById("goals-card")), null, 12.3);
 // Animate goal bar
-tl.to("#d-goal-bar-1", { width: "80%", duration: 0.6, ease: "power2.out" }, 10.8);
-tl.call(() => {
-  const r = document.getElementById("click-ring");
-  r.style.opacity = "1";
-  gsap.to(r, { scale: 12, opacity: 0, duration: 0.4 });
-}, null, 10.8);
+tl.to("#goal-bar-1", { width: "80%", duration: 0.5, ease: "power2.out" }, 12.3);
+tl.to("#goal-bar-3", { width: "66%", duration: 0.5, ease: "power2.out" }, 12.3);
+tl.call(clickAt, null, 12.3);
 
-/* ── Hold final explanation ── */
-tl.call(() => {}, null, 14.5);
+// Overlay 4
+tl.to("#overlay-4", { opacity: 1, duration: 0.4 }, 12.6);
 
-window.__timelines["dashboard"] = tl;
+window.__timelines["dashboard-v4"] = tl;
 </script>
 </body>
 </html>
