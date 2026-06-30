@@ -122,7 +122,7 @@
 </head>
 <body>
 
-<div id="root" data-composition-id="dashboard-v11" data-start="0" data-duration="30" data-width="1920" data-height="1080">
+<div id="root" data-composition-id="dashboard-v12" data-start="0" data-duration="30" data-width="1920" data-height="1080">
 
   <div class="amb amb-1"></div><div class="amb amb-2"></div>
 
@@ -272,6 +272,8 @@ function clearSpotlight(el) {
   el.style.boxShadow = "";
 }
 
+function setProp(id, prop, val) { document.getElementById(id).style[prop] = val; }
+
 /* 0s: Cards */
 tl.to("#snum", { textContent: 76, duration: 0.8, snap: { textContent: 1 }, ease: "steps(8)" }, 0.3);
 tl.from("#stats-row > div", { opacity: 0, y: 10, duration: 0.4, stagger: 0.1, ease: "power2.out" }, 0.3);
@@ -305,36 +307,39 @@ tl.to("#cur", { left: 280, top: 512, duration: 1.2, ease: "power2.inOut" }, 8.8)
 tl.call(function() { clearSpotlight(document.getElementById("sessions-card")); spotlight(document.getElementById("sess-0")); }, null, 10.0);
 tl.call(clickAt, null, 10.1);
 
-/* → Feedback page: darken first, show bt4 text for 2s, then scroll */
+/* → Feedback page transition */
+tl.to("#bt3", { opacity: 0, duration: 0.2 }, 10.3);
 tl.call(function() {
   clearSpotlight(document.getElementById("sess-0"));
-  document.getElementById("dash-wrap").style.opacity = "0";
-  document.getElementById("fb-page").style.opacity = "1";
-  document.getElementById("fb-page").style.transition = "opacity 0.4s";
-  document.getElementById("darken").style.opacity = "1";
+  setProp("dash-wrap", "opacity", "0");
+  setProp("fb-page", "opacity", "1");
+  setProp("fb-page", "transition", "opacity 0.4s");
+  setProp("darken", "opacity", "1");
   var ring = document.getElementById("fb-ring");
   ring.style.transition = "background 1.5s ease-out";
-  setTimeout(function() { ring.style.background = "conic-gradient(#00bc7d 266deg, rgba(255,255,255,0.06) 0deg)"; document.getElementById("fb-num").textContent = "74"; }, 150);
-  document.getElementById("bt3").style.opacity = "0";
+  setTimeout(function() {
+    ring.style.background = "conic-gradient(#00bc7d 266deg, rgba(255,255,255,0.06) 0deg)";
+    document.getElementById("fb-num").textContent = "74";
+  }, 150);
 }, null, 10.3);
+
+/* 10.5s: bt4 + darkened feedback */
 tl.to("#bt4", { opacity: 1, duration: 0.5 }, 10.5);
 
-/* After 2s: restore, then GSAP-scroll further, pause 2s, auto-return */
-tl.call(function() {
-  document.getElementById("darken").style.opacity = "0";
-  document.getElementById("bt4").style.opacity = "0";
-  gsap.to(document.getElementById("fb-inner"), { top: -750, duration: 4, ease: "power2.inOut" });
-}, null, 13.0);
+/* 13.0s: restore brightness, hide bt4, then SCROLL ON TIMELINE */
+tl.call(function() { setProp("darken", "opacity", "0"); }, null, 13.0);
+tl.to("#bt4", { opacity: 0, duration: 0.25 }, 13.0);
+/* THIS is the scroll — on the timeline so HyperFrames renders it */
+tl.to("#fb-inner", { top: -750, duration: 4, ease: "power2.inOut" }, 13.3);
 
-/* Auto-return after scroll + 2s pause (13+4+2=19) */
+/* 19.5s: auto-return to dashboard (scroll ends at 17.3s, pause 2.2s) */
 tl.call(function() {
-  gsap.killTweensOf(document.getElementById("fb-inner"));
-  document.getElementById("fb-inner").style.top = "0";
-  document.getElementById("fb-page").style.opacity = "0";
-  document.getElementById("fb-page").style.transition = "opacity 0.3s";
-  document.getElementById("dash-wrap").style.opacity = "1";
-  document.getElementById("dash-wrap").style.transition = "opacity 0.4s";
-  document.getElementById("fb-ring").style.background = "conic-gradient(#020618 360deg, rgba(255,255,255,0.06) 0deg)";
+  setProp("fb-inner", "top", "0");
+  setProp("fb-page", "opacity", "0");
+  setProp("fb-page", "transition", "opacity 0.3s");
+  setProp("dash-wrap", "opacity", "1");
+  setProp("dash-wrap", "transition", "opacity 0.4s");
+  setProp("fb-ring", "background", "conic-gradient(#020618 360deg, rgba(255,255,255,0.06) 0deg)");
   document.getElementById("fb-num").textContent = "0";
 }, null, 19.5);
 
@@ -355,7 +360,7 @@ tl.to("#cur", { left: 1070, top: 1015, duration: 1.5, ease: "power2.inOut" }, 24
 tl.call(function() { var cta = document.getElementById("start-cta"); cta.style.transform = "scale(1.03)"; cta.style.background = "rgba(0,188,125,0.2)"; }, null, 25.8);
 tl.call(clickAt, null, 26.0);
 
-window.__timelines["dashboard-v10"] = tl;
+window.__timelines["dashboard-v12"] = tl;
 </script>
 </body>
 </html>
