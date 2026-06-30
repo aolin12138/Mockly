@@ -209,6 +209,37 @@ export async function runOne(scenario, opts) {
       firstMessage: scenario.simulated_user.first_message || null,
     });
 
+    // 6a. Wait for agent's auto-sent first_message (opening with problem intro).
+    //     The agent sends this automatically when the conversation starts.
+    //     Capture it so the sim-user has context before responding.
+    let agentReply;
+    try {
+      agentReply = await client.awaitAgentReply({ timeoutMs: turnTimeoutMs });
+    } catch (err) {
+      if (err.message?.includes('Timeout')) {
+        console.warn('  Agent did not send opening message (WS timeout).');
+        agentReply = { message: '', skipTurn: false };
+      } else {
+        throw err;
+      }
+    }
+    const openingTools = (client.rawEvents || [])
+      .filter(ev => ev.type === 'client_tool_call' || ev.type === 'mcp_tool_call')
+      .filter(ev => !ev._seenByRunner)
+      .map(ev => {
+        ev._seenByRunner = true;
+        const tc = ev.client_tool_call || ev.mcp_tool_call || {};
+        return { tool_name: tc.tool_name || tc.name || '(unknown)' };
+      });
+    if (agentReply.message) {
+      transcript.push({
+        role: 'agent',
+        message: agentReply.message,
+        tool_calls: openingTools,
+        skipTurn: false,
+      });
+    }
+
     // 7. Conversation loop — turn limit accounts for warm-up so tests always
     //    get their full budget. Warm-up turns are context injection only.
     const baseLimit = scenario.new_turns_limit || 6;
