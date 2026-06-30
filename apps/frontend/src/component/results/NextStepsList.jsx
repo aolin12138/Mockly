@@ -7,7 +7,7 @@ export default function NextStepsList({ nextSteps }) {
 
   return (
     <Card delay={0.35}>
-      <h2 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+      <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
         <ArrowRight className="w-5 h-5 text-emerald-700" />
         Next Steps
       </h2>
@@ -16,7 +16,7 @@ export default function NextStepsList({ nextSteps }) {
         {nextSteps.map((step, idx) => (
           <motion.div
             key={idx}
-            className="flex items-start gap-4 bg-slate-50 border border-slate-200 rounded-xl p-4 hover:border-emerald-200 transition-colors duration-300"
+            className="flex items-start gap-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-white/10 rounded-xl p-4 hover:border-emerald-200 transition-colors duration-300"
             initial={{ opacity: 0, x: -15 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -36,8 +36,8 @@ export default function NextStepsList({ nextSteps }) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-base font-semibold text-slate-900 mb-1">{step.focus}</p>
-              <p className="text-sm text-slate-600 leading-relaxed">{step.action}</p>
+              <p className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">{step.focus}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{step.action}</p>
             </div>
           </motion.div>
         ))}

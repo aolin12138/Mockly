@@ -12,7 +12,7 @@ export default function StrengthsImprovements({ strengths, areasForImprovement }
       {/* Strengths */}
       {strengths && strengths.length > 0 && (
         <Card delay={0.28}>
-          <h2 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-emerald-700" />
             Strengths
           </h2>
@@ -24,7 +24,7 @@ export default function StrengthsImprovements({ strengths, areasForImprovement }
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.05 * idx }}
-                className="flex flex-col gap-1 text-sm text-slate-700 bg-emerald-50 border border-emerald-200 rounded-lg p-3.5"
+                className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-300 bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-200 rounded-lg p-3.5"
               >
                 <div className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 flex-shrink-0" />
@@ -44,7 +44,7 @@ export default function StrengthsImprovements({ strengths, areasForImprovement }
       {/* Areas for Improvement */}
       {areasForImprovement && areasForImprovement.length > 0 && (
         <Card delay={0.32}>
-          <h2 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-amber-700" />
             Areas for Improvement
           </h2>
@@ -56,7 +56,7 @@ export default function StrengthsImprovements({ strengths, areasForImprovement }
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.05 * idx }}
-                className="flex flex-col gap-2 text-sm text-slate-700 bg-red-50 border border-red-200 rounded-lg p-3.5"
+                className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-300 bg-red-50 dark:bg-red-500/5 border border-red-200 rounded-lg p-3.5"
               >
                 <div className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-red-600 mt-1.5 flex-shrink-0" />
@@ -85,7 +85,7 @@ export default function StrengthsImprovements({ strengths, areasForImprovement }
                     <Lightbulb className="w-3.5 h-3.5 text-emerald-700 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-xs text-emerald-700 font-semibold mb-1">Better approach</p>
-                      <p className="text-sm text-slate-700 leading-relaxed">{area.example_better_response}</p>
+                      <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{area.example_better_response}</p>
                     </div>
                   </div>
                 )}

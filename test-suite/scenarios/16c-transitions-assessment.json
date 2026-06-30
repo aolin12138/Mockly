@@ -4,42 +4,16 @@
     "transitions",
     "assessment"
   ],
-  "description": "Tests that after done+passing code+walkthrough, agent enters assessment mode with direct questions. Agent should be in assessment phase.",
+  "description": "Phase 4: Candidate finished max subarray with Kadane's, tests passed, walkthrough done. Agent should enter assessment mode with direct follow-up questions then close.",
   "simulated_user": {
-    "prompt": "You're a candidate who has finished a working hash map solution and just walked the interviewer through it. The tests passed. You're waiting for their wrap-up assessment.",
-    "first_message": "Alright, so that's the full solution with the hash map. What else do you want to go over?"
+    "prompt": "You've finished the max subarray sum problem using Kadane's algorithm. All tests passed, you walked through the code. Now you're waiting for the interviewer's assessment questions. Answer whatever they ask — complexity, design, extensions. When they close, accept it.",
+    "first_message": "Alright, so that's the full solution with Kadane's algorithm — single pass, linear time. What else do you want to go over?"
   },
-  "partial_conversation_history": [
-    {
-      "role": "user",
-      "message": "I'll use a hash map — store values and check complements in one pass."
-    },
-    {
-      "role": "agent",
-      "message": "Go ahead and implement that."
-    },
-    {
-      "role": "user",
-      "message": "Done coding — I think it looks good."
-    },
-    {
-      "role": "agent",
-      "message": "Walk me through your solution."
-    },
-    {
-      "role": "user",
-      "message": "Sure. As I iterate, for each element I check if the complement is in the hash map. If yes, return the pair. Otherwise add the current value. O(n) time, O(n) space. It handles duplicates and edge cases."
-    },
-    {
-      "role": "agent",
-      "message": "Good explanation. The tests all pass."
-    }
-  ],
-  "new_turns_limit": 5,
+  "new_turns_limit": 8,
   "tool_mocks": {
     "get_current_code": {
       "default_return_value": {
-        "code": "def solve(nums, target):\n    seen={}\n    for i,n in enumerate(nums):\n        if target-n in seen: return [seen[target-n], i]\n        seen[n]=i",
+        "code": "def max_subarray_sum(nums):\n    max_so_far = nums[0]\n    max_ending = nums[0]\n    for i in range(1, len(nums)):\n        max_ending = max(nums[i], max_ending + nums[i])\n        max_so_far = max(max_so_far, max_ending)\n    return max_so_far",
         "language": "python",
         "remaining_minutes": 10,
         "hintCount": 0
@@ -47,12 +21,10 @@
     },
     "run_code_against_tests": {
       "default_return_value": {
-        "passedTests": 10,
-        "totalTests": 10,
-        "allPassed": true,
-        "failureCategory": "",
-        "compilationError": null,
-        "remainingMinutes": 10
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "failed_details": []
       }
     }
   },
@@ -63,9 +35,22 @@
     {
       "id": "enters_assessment_mode",
       "name": "Moves to assessment naturally",
-      "conversation_goal_prompt": "After a working solution was walked through and tests passed, the agent shifted to assessment/wrap-up behavior — asking direct reflective questions rather than staying in implementation mode or pushing for more code. PASS if the behavior reflected an assessment-phase mindset."
+      "conversation_goal_prompt": "Agent shifted to assessment mode: asked direct follow-up questions (complexity, design choices, extensions) rather than staying in implementation mode. PASS if behavior reflected assessment-phase mindset with direct questions. FAIL if agent asked to see/walk through code again, or stayed silent, or skipped to close without questions."
+    },
+    {
+      "id": "phase4_decisive_close",
+      "name": "Closes after assessment",
+      "conversation_goal_prompt": "After asking 1-2 follow-up questions, agent delivered a clear closing line and called end_call. PASS if closed decisively. FAIL if never closed or kept asking questions."
     }
   ],
   "target_phase": 4,
-  "target_phase_label": "Phase 4: Assessment & Close"
+  "target_phase_label": "Phase 4: Assessment & Close",
+  "warm_up": {
+    "candidate_turns": [
+      "I'll use Kadane's algorithm — single pass tracking current and max sum.",
+      "Done coding. All tests are passing.",
+      "Sure. I initialize both current_sum and max_sum to the first element. Then for each subsequent element, current_sum becomes the max of the element alone or element plus previous current_sum. Max_sum tracks the largest current_sum seen. O(n) time, O(1) space."
+    ],
+    "target_phase_label": "Phase 4"
+  }
 }

@@ -16,6 +16,10 @@ import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js/Client.js';
 import { NullAudioInterface } from './null-audio.mjs';
 
 export class LiveConversationClient {
+  static #sendPatched = false;
+  /** @type {Map<string, {nodeId: string, title: string}>} */
+  static #sessionMap = new Map();
+
   /** @type {Conversation|null} */
   #conversation = null;
 
@@ -63,6 +67,7 @@ export class LiveConversationClient {
    * @param {Object} [opts.clientToolMocks] - { toolName: () => value }
    * @param {boolean} [opts.textOnly=true]
    * @param {string} [opts.startingNodeId] - starting_workflow_node_id to attempt
+   * @param {string} [opts.title] - conversation title visible in ElevenLabs UI
    * @param {Object} [opts.extraBody] - additional fields for custom_llm_extra_body
    */
   constructor(opts) {
@@ -102,6 +107,7 @@ export class LiveConversationClient {
       extraBody,
       conversationConfigOverride: configOverride,
       dynamicVariables: opts.dynamicVariables || {},
+      title: opts.title || null,
     };
   }
 
@@ -111,28 +117,40 @@ export class LiveConversationClient {
    */
   async start() {
     const nodeId = this.#initConfig.extraBody?.starting_workflow_node_id;
+    const title = this.#initConfig.title;
     
-    // Monkey-patch the ws module's WebSocket.send to inject starting_workflow_node_id
-    // into the first conversation_initiation_client_data message.
-    let origSend = null;
-    if (nodeId) {
+    // Permanently wrap WebSocket.send to inject starting_workflow_node_id
+    // and title into the first conversation_initiation_client_data of EACH
+    // conversation (needed for parallel scenarios).
+    if (nodeId && !LiveConversationClient.#sendPatched) {
+      LiveConversationClient.#sendPatched = true;
       const WSModule = await import('ws');
       const WsClass = WSModule.default || WSModule.WebSocket || WSModule;
-      origSend = WsClass.prototype.send;
-      const self = this;
+      const origSend = WsClass.prototype.send;
       WsClass.prototype.send = function(data) {
-        // Restore immediately so only the first message is intercepted
-        WsClass.prototype.send = origSend;
         try {
           const msg = JSON.parse(data);
-          if (msg.type === 'conversation_initiation_client_data' && !msg.starting_workflow_node_id) {
-            msg.starting_workflow_node_id = nodeId;
+          if (msg.type === 'conversation_initiation_client_data') {
+            const sid = msg.dynamic_variables?.secret__session_id;
+            const wsData = sid ? LiveConversationClient.#sessionMap.get(sid) : null;
+            if (wsData?.nodeId && !msg.starting_workflow_node_id) {
+              msg.starting_workflow_node_id = wsData.nodeId;
+              console.log('[ws-client] Injected starting_workflow_node_id:', wsData.nodeId, 'for', sid?.slice(-8));
+            }
+            if (wsData?.title && !msg.custom_llm_extra_body?.title) {
+              msg.custom_llm_extra_body = msg.custom_llm_extra_body || {};
+              msg.custom_llm_extra_body.title = wsData.title;
+            }
             data = JSON.stringify(msg);
-            console.log('[ws-client] Injected starting_workflow_node_id into init message:', nodeId);
           }
         } catch {}
         return origSend.call(this, data);
       };
+    }
+    // Register by session_id so the send wrapper can find us.
+    const sessionId = this.#initConfig.dynamicVariables?.secret__session_id;
+    if (nodeId && sessionId) {
+      LiveConversationClient.#sessionMap.set(sessionId, { nodeId, title: title || '' });
     }
     
     return new Promise((resolve, reject) => {
@@ -210,6 +228,20 @@ export class LiveConversationClient {
   }
 
   /**
+   * Send a contextual_update to inject background context.
+   * Agent reads this as prior conversation without consuming a turn.
+   */
+  sendContextualUpdate(text) {
+    if (!text || !this.#conversation) return;
+    try {
+      this.#conversation._ws?.send(JSON.stringify({
+        type: 'contextual_update',
+        contextual_update: { text },
+      }));
+    } catch { /* best-effort */ }
+  }
+
+  /**
    * Wait for the next complete agent reply.
    * The SDK fires callbackAgentResponse per text chunk; we aggregate.
    * After a quiescent period with no new chunks, we resolve with the joined text.
@@ -225,17 +257,24 @@ export class LiveConversationClient {
 
     const startTime = Date.now();
     const partsBefore = this.#agentResponseParts.length;
+    // Reset skip_turn marker so it only counts a skip_turn fired *this* turn.
+    // Without this, one skip_turn early in the conversation would cause every
+    // later awaitAgentReply to short-circuit instantly.
+    const skipTurnSnapshot = this.#lastSkipTurn;
+    this.#lastSkipTurn = 0;
 
     // Wait for at least one new chunk, then wait for quiescence
     // After receiving a text chunk, keep waiting if tool activity is ongoing
     let lastAnyEvent = this.#lastAgentChunkTime;
     
     while (true) {
-      // If agent used skip_turn and we've waited long enough, treat as end-of-conversation
+      // skip_turn fired during *this* turn — agent is staying silent for this
+      // candidate turn. Return whatever text accumulated (often empty); the
+      // caller (sim-user) decides whether to continue the conversation.
       if (this.#lastSkipTurn > 0 && Date.now() - this.#lastSkipTurn >= 3000) {
         const newParts = this.#agentResponseParts.slice(partsBefore);
         const joined = newParts.map(p => p.message).join(' ').trim();
-        return { role: 'agent', message: joined || '' };
+        return { role: 'agent', message: joined, skipTurn: true };
       }
 
       // Check if we already have chunks and they've gone silent

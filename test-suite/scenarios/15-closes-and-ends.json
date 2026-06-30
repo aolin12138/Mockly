@@ -3,42 +3,16 @@
   "tags": [
     "closing"
   ],
-  "description": "Tests Phase 4 wrap-up — agent closes decisively and ends, doesn't loop 'anything else?'. Agent should be in closing phase with assessment complete.",
+  "description": "Phase 4: Walkthrough and bonus questions done. Candidate signals they're done. Agent must close decisively — no 'anything else?' loop.",
   "simulated_user": {
-    "prompt": "You're a candidate who has finished the problem, walked through the solution, answered complexity questions, and indicated you have nothing more to add. The interview is wrapping up.",
+    "prompt": "You've finished the max subarray problem, walked through Kadane's algorithm, and answered the interviewer's bonus questions. You have nothing more to add. When the interviewer gives a closing line, accept it — don't drag out the conversation.",
     "first_message": "Nope, I think that covers everything from my side."
   },
-  "partial_conversation_history": [
-    {
-      "role": "user",
-      "message": "I'll use a hash map approach — O(n) time."
-    },
-    {
-      "role": "agent",
-      "message": "Go ahead and implement."
-    },
-    {
-      "role": "user",
-      "message": "Done — I think it works."
-    },
-    {
-      "role": "agent",
-      "message": "Walk me through your solution."
-    },
-    {
-      "role": "user",
-      "message": "Sure. I iterate through, storing values in a hash map. For each element, I check if the complement exists. If yes, return the pair. O(n) time, O(n) space."
-    },
-    {
-      "role": "agent",
-      "message": "That's correct. And the tests all pass. Any questions about the role or process before we wrap up?"
-    }
-  ],
   "new_turns_limit": 5,
   "tool_mocks": {
     "get_current_code": {
       "default_return_value": {
-        "code": "def solve(nums, target):\n    seen={}\n    for i,n in enumerate(nums):\n        if target-n in seen: return [seen[target-n], i]\n        seen[n]=i",
+        "code": "def max_subarray_sum(nums):\n    max_so_far = nums[0]\n    max_ending = nums[0]\n    for i in range(1, len(nums)):\n        max_ending = max(nums[i], max_ending + nums[i])\n        max_so_far = max(max_so_far, max_ending)\n    return max_so_far",
         "language": "python",
         "remaining_minutes": 2,
         "hintCount": 0
@@ -46,12 +20,10 @@
     },
     "run_code_against_tests": {
       "default_return_value": {
-        "passedTests": 10,
-        "totalTests": 10,
-        "allPassed": true,
-        "failureCategory": "",
-        "compilationError": null,
-        "remainingMinutes": 2
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "failed_details": []
       }
     }
   },
@@ -62,14 +34,23 @@
     {
       "id": "decisive_close",
       "name": "Closes decisively",
-      "conversation_goal_prompt": "The agent brought the interview to a clear, warm close rather than repeatedly asking 'anything else?' or opening a candidate-questions round. PASS if it wrapped up decisively with a closing statement."
+      "conversation_goal_prompt": "Agent gave a clear closing line ('That is all for today, thanks for your time') and called end_call immediately. No 'anything else?' No 'do you have questions?' PASS if the close was decisive and end_call fired. FAIL if agent looped, asked for more, or didn't call end_call."
     },
     {
       "id": "ends_after_goodbye",
       "name": "Speaks goodbye then ends",
-      "conversation_goal_prompt": "The agent delivered a complete closing line with a goodbye or equivalent. PASS if the closing statement completed naturally (did not appear cut off mid-sentence)."
+      "conversation_goal_prompt": "Agent delivered the complete closing line THEN called end_call. Not cut off mid-sentence. PASS if close was complete before end_call."
     }
   ],
   "target_phase": 4,
-  "target_phase_label": "Phase 4: Assessment & Close"
+  "target_phase_label": "Phase 4: Assessment & Close",
+  "warm_up": {
+    "candidate_turns": [
+      "I'll use Kadane's algorithm — track running sum and max sum in one pass.",
+      "Done coding. All tests pass.",
+      "Sure — I maintain current_sum and max_sum. Each step I either extend the subarray or start fresh. O(n) time, O(1) space.",
+      "Time complexity is O(n), space is O(1). For all-negative arrays, it correctly returns the largest single element."
+    ],
+    "target_phase_label": "Phase 4"
+  }
 }

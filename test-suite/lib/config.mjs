@@ -51,7 +51,7 @@ export const CONFIG = {
   defaultSimUserLlm: 'gpt-4o',
   defaultSimUserTemperature: 0.3,
   // Prepended to every simulated_user prompt to prevent off-script behavior
-  simUserPrefix: 'IMPORTANT: You are SPEAKING aloud in a voice interview. NEVER write code, use code blocks, or type. Keep responses short (1-3 sentences). Stay in character — you are a coding interview candidate. Do NOT offer to paste code, share screen, or send files. If asked to show code, describe it verbally in a sentence. Do NOT volunteer extra context, ask "do you need anything else?", or check if the interviewer is still there. Just answer what was asked and stop.',
+  simUserPrefix: 'IMPORTANT: You are SPEAKING aloud in a voice interview. NEVER write code, use code blocks, or type. Keep responses short (1-3 sentences). Stay in character — you are a coding interview candidate.\n\nSILENCE = YOUR TURN: If the last agent message is empty, contains "[Interviewer stayed silent]", or shows skip_turn — the interviewer is WAITING. You MUST speak. NEVER return null when the agent is silent. NEVER return [END_CALL] just because the agent called skip_turn.\n\nEND RULES: Return [END_CALL] ONLY when the agent says: "that is all for today", "thanks for your time", "wrap up here", "closing here", "goodbye", or the transcript shows "[Interviewer ended the call]". Anything else — including "got it", "go ahead", "take your time", skip_turn, or plain silence — means KEEP GOING.',
 
   // Node IDs for each workflow phase (used to force starting phase via conversation_initiation_client_data)
   phaseNodeIds: {

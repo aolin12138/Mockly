@@ -25,8 +25,8 @@ export default function HeroBanner({ summary, meta }) {
         >
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
             meta.session_mode === 'real'
-              ? 'bg-violet-50 border-violet-200 text-violet-700'
-              : 'bg-slate-100 border-slate-200 text-slate-700'
+              ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-200 dark:border-violet-500/30 text-violet-700 dark:text-violet-300'
+              : 'bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300'
           }`}>
             {meta.session_mode === 'real' ? 'Real Interview' : 'Practice'}
           </span>
@@ -62,7 +62,7 @@ export default function HeroBanner({ summary, meta }) {
         {/* Text content */}
         <div className="flex-1 min-w-0">
           <motion.h1
-            className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900"
+            className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
@@ -73,7 +73,7 @@ export default function HeroBanner({ summary, meta }) {
           {/* One-liner */}
           {summary?.oneLiner && (
             <motion.p
-              className="mt-3 text-base text-slate-700 leading-relaxed max-w-2xl"
+              className="mt-3 text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-2xl"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
@@ -105,7 +105,7 @@ export default function HeroBanner({ summary, meta }) {
 
             {/* Questions asked */}
             {meta?.questions_asked > 0 && (
-              <span className="text-sm text-slate-500">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
                 {meta.questions_asked} question{meta.questions_asked !== 1 ? 's' : ''} asked
               </span>
             )}
@@ -122,7 +122,7 @@ export default function HeroBanner({ summary, meta }) {
               {meta.domains_covered.map((domain) => (
                 <span
                   key={domain}
-                  className="text-sm font-medium px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600"
+                  className="text-sm font-medium px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800/40 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400"
                 >
                   {domain.replace(/_/g, ' ')}
                 </span>

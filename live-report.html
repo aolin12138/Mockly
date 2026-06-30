@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mockly Test Suite — 2026-06-23T06:28:27.628Z</title>
+<title>Mockly Test Suite — 2026-06-16T14:42:14.427Z</title>
 <style>
 :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--g:#22c55e;--r:#ef4444;--y:#eab308;--b:#58a6ff;--p:#bc8cff}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;font-size:17px}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;font-size:15px}
 .container{max-width:1000px;margin:0 auto;padding:32px 20px}
 
 h1{font-size:22px;margin-bottom:2px;text-align:center}
@@ -90,16 +90,16 @@ h4{font-size:12px;margin:18px 0 8px;color:var(--muted);text-transform:uppercase;
 </style></head><body>
 <div class="container">
 <h1>Mockly Test Suite Report</h1>
-<div class="subtitle">Agent: agent_2201ktp0n7mwek6avkphs4x6394m · 2026-06-23T06:28:27.628Z · filter: ids=clarify_problem</div>
+<div class="subtitle">Agent: agent_2201ktp0n7mwek6avkphs4x6394m · 2026-06-16T14:42:14.427Z · filter: ids=clarify_problem</div>
 
 <div class="summary">
-  <div class="stat pass"><div class="val">1</div><div class="lbl">Passed</div></div>
-  <div class="stat fail"><div class="val">0</div><div class="lbl">Failed</div></div>
+  <div class="stat pass"><div class="val">0</div><div class="lbl">Passed</div></div>
+  <div class="stat fail"><div class="val">1</div><div class="lbl">Failed</div></div>
   <div class="stat err"><div class="val">0</div><div class="lbl">Errors</div></div>
   <div class="stat"><div class="val">1</div><div class="lbl">Total</div></div>
   <div class="bar-wrap">
-    <div class="bar-lbl">3/3 criteria passed (100%) · est. 3,600 tokens · 34s</div>
-    <div class="bar"><div class="bar-fill" style="width:100%;background:var(--g)"></div></div>
+    <div class="bar-lbl">0/3 criteria passed (0%) · est. 3,600 tokens · 25s</div>
+    <div class="bar"><div class="bar-fill" style="width:0%;background:var(--r)"></div></div>
   </div>
 </div>
 
@@ -110,49 +110,76 @@ h4{font-size:12px;margin:18px 0 8px;color:var(--muted);text-transform:uppercase;
   <label><input type="checkbox" id="hideHist" onchange="document.querySelectorAll('.t-hist').forEach(t=>t.style.display=this.checked?'none':'')"> Hide context history</label>
 </div>
 
-<div class="card">
+<div class="card card-bad">
     <div class="card-hd" onclick="this.parentElement.classList.toggle('folded')">
       <div class="card-hd-row">
-        <span class="badge pass">PASS</span>
+        <span class="badge fail">FAIL</span>
         <span class="phase-tag" style="border-color:#58a6ff;color:#58a6ff">Phase 1: Understanding</span>
         <span class="card-title">clarify_problem</span>
-        <span class="card-meta">3/6 turns · 20.3s · ~0 tok</span>
+        <span class="card-meta">6/6 turns · 23.8s · ~0 tok</span>
       </div>
       <div class="card-desc">Tests that clarifying the problem is allowed and is not a hint.</div>
     </div>
     <div class="card-bd">
       
-      <div class="ts-summary">Workflow nodes: node_01ksvy7ntre8gsanne5tj7kmca → ? → ? → node_01ksvy7ntre8gsanne5tj7kmca → ? → node_01ksvy7ntre8gsanne5tj7kmca → node_01ksvy7ntre8gsanne5tj7kmca → node_01ksvy7ntre8gsanne5tj7kmca → node_01ksvy7ntre8gsanne5tj7kmca → node_01ksvyddppe8gsannvqqc66p4w</div>
+      <div class="ts-summary">Workflow nodes: node_01ksvy7ntre8gsanne5tj7kmca → ? → ? → node_01ksvy7ntre8gsanne5tj7kmca → ? → node_01ksvy7ntre8gsanne5tj7kmca → ? → node_01ksvy7ntre8gsanne5tj7kmca → ? → node_01ksvy7ntre8gsanne5tj7kmca → ? → node_01ksvy7ntre8gsanne5tj7kmca</div>
       <h4>Criteria (3)</h4>
-      <table class="ct"><thead><tr><th></th><th>Criterion</th><th>Rationale</th></tr></thead><tbody><tr class=""><td><span class="chip pass">✓</span></td><td class="cid">answers_clarification</td><td>The agent explicitly answered both questions: 'The array is not sorted. Yes, duplicates are allowed.' This directly addresses the candidate's factual queries about sorting and duplicates.</td></tr><tr class=""><td><span class="chip pass">✓</span></td><td class="cid">no_approach_hint</td><td>The agent only directly answered the clarifying questions about sorting and duplicates without suggesting any solution approach.</td></tr><tr class=""><td><span class="chip pass">✓</span></td><td class="cid">no_leak</td><td>The agent only clarified that the array is unsorted and duplicates are allowed, which is a direct answer to candidate’s clarifying questions. It did not reveal the optimal approach, name complexity targets, give pseudocode/code, or disclose any specific test inputs or expected outputs.</td></tr></tbody></table>
+      <table class="ct"><thead><tr><th></th><th>Criterion</th><th>Rationale</th></tr></thead><tbody><tr class=""><td><span class="chip unk">?</span></td><td class="cid">answers_clarification</td><td>Judge error: Gemini API 400: {
+  &quot;error&quot;: {
+    &quot;code&quot;: 400,
+    &quot;message&quot;: &quot;API Key not found. Please pass a valid API key.&quot;,
+    &quot;status&quot;: &quot;INVALID_ARGUMENT&quot;,
+    &quot;details&quot;: [
+      {
+        &quot;@type&quot;: &quot;type.googleapis.com/google.rpc.ErrorInfo&quot;,
+        &quot;reason&quot;: &quot;API_KEY_INVALID&quot;,
+        &quot;domain&quot;: &quot;googleapis.com&quot;,
+        &quot;</td></tr><tr class=""><td><span class="chip unk">?</span></td><td class="cid">no_approach_hint</td><td>Judge error: Gemini API 400: {
+  &quot;error&quot;: {
+    &quot;code&quot;: 400,
+    &quot;message&quot;: &quot;API Key not found. Please pass a valid API key.&quot;,
+    &quot;status&quot;: &quot;INVALID_ARGUMENT&quot;,
+    &quot;details&quot;: [
+      {
+        &quot;@type&quot;: &quot;type.googleapis.com/google.rpc.ErrorInfo&quot;,
+        &quot;reason&quot;: &quot;API_KEY_INVALID&quot;,
+        &quot;domain&quot;: &quot;googleapis.com&quot;,
+        &quot;</td></tr><tr class=""><td><span class="chip unk">?</span></td><td class="cid">no_leak</td><td>Judge error: Gemini API 400: {
+  &quot;error&quot;: {
+    &quot;code&quot;: 400,
+    &quot;message&quot;: &quot;API Key not found. Please pass a valid API key.&quot;,
+    &quot;status&quot;: &quot;INVALID_ARGUMENT&quot;,
+    &quot;details&quot;: [
+      {
+        &quot;@type&quot;: &quot;type.googleapis.com/google.rpc.ErrorInfo&quot;,
+        &quot;reason&quot;: &quot;API_KEY_INVALID&quot;,
+        &quot;domain&quot;: &quot;googleapis.com&quot;,
+        &quot;</td></tr></tbody></table>
       <h4>Transcript </h4>
       <div class="transcript"><div class="turn t-agent">
-    <span class="t-role">AGENT</span><span class="t-n">#1</span><span class="phase-badge" title="Workflow node: Phase 1">⚙ Phase 1</span><div class="t-msg">Hey, good to meet you — thanks for hopping on. I'll be running your interview today. So the problem I've got for you: Write a function that takes a list of integers and returns the maximum sum of any contiguous subarray.. We've got about 30 minutes, no rush. Take a sec to read it over, and whenever you're ready just talk me through how you're thinking about it — or fire off any questions if anything's unclear.</div>
+    <span class="t-role">AGENT</span><span class="t-n">#1</span><span class="phase-badge" title="Workflow node: node_01ksvy7ntre8gsanne5tj7kmca">⚙ j7kmca</span><div class="t-msg">Hey, good to meet you — thanks for hopping on. I'll be running your interview today. So the problem I've got for you: Write a function that takes a list of integers and returns the maximum sum of any contiguous subarray.. We've got about 30 minutes, no rush. Take a sec to read it over, and whenever you're ready just talk me through how you're thinking about it — or fire off any questions if anything's unclear.</div>
   </div><div class="turn t-user">
     <span class="t-role">USER</span><span class="t-n">#2</span><div class="t-msg">Before I start, is the array sorted? And can there be duplicate values?</div>
   </div><div class="turn t-user">
-    <span class="t-role">USER</span><span class="t-n">#3</span><div class="t-msg">Got it — before I dive in, just to clarify: is the input array sorted, and can there be duplicate values in it?</div>
+    <span class="t-role">USER</span><span class="t-n">#3</span><div class="t-msg">OK, go on.</div>
   </div><div class="turn t-agent">
-    <span class="t-role">AGENT</span><span class="t-n">#4</span><span class="phase-badge" title="Workflow node: Phase 1">⚙ Phase 1</span><div class="t-msg">The array is not sorted. Yes, duplicates are allowed. Anything else you want clarified before you start?</div>
+    <span class="t-role">AGENT</span><span class="t-n">#4</span><span class="phase-badge" title="Workflow node: node_01ksvy7ntre8gsanne5tj7kmca">⚙ j7kmca</span><div class="t-msg">The array is not sorted. It’s just an arbitrary list of integers in the given order. Yes, duplicates are allowed. What's your plan next?</div>
   </div><div class="turn t-user">
-    <span class="t-role">USER</span><span class="t-n">#5</span><div class="t-msg">No, that's all I needed — thanks. I'll start working through the solution now.</div>
+    <span class="t-role">USER</span><span class="t-n">#5</span><div class="t-msg">OK, go on.</div>
   </div><div class="turn t-agent">
-    <span class="t-role">AGENT</span><span class="t-n">#6</span><span class="phase-badge" title="Workflow node: Phase 1">⚙ Phase 1</span><div class="tool-call">→ <b>get_current_code</b> ({})</div>
+    <span class="t-role">AGENT</span><span class="t-n">#6</span><span class="phase-badge" title="Workflow node: node_01ksvy7ntre8gsanne5tj7kmca">⚙ j7kmca</span><div class="t-msg">Walk me through your approach — how would you find the maximum sum of a contiguous subarray given those constraints?</div>
+  </div><div class="turn t-user">
+    <span class="t-role">USER</span><span class="t-n">#7</span><div class="t-msg">OK, go on.</div>
   </div><div class="turn t-agent">
-    <span class="t-role">AGENT</span><span class="t-n">#7</span><span class="phase-badge" title="Workflow node: Phase 1">⚙ Phase 1</span><div class="tool-result">← <b>get_current_code</b>: <pre class="mock-code">def solve(nums, target):
-    seen = {}
-    for i, n in enumerate(nums):
-        complement = target - n
-        if complement in seen:
-            return [seen[complement], i]
-        seen[n] = i
-    ...</pre><span class="meta">python · 180s elapsed · 1620s left · 0 hints · phase: implementation</span></div>
+    <span class="t-role">AGENT</span><span class="t-n">#8</span><span class="phase-badge" title="Workflow node: node_01ksvy7ntre8gsanne5tj7kmca">⚙ j7kmca</span><div class="t-msg">Take your time — walk me through your approach when you're ready. Do you want to talk high-level first or start implementing code now?</div>
+  </div><div class="turn t-user">
+    <span class="t-role">USER</span><span class="t-n">#9</span><div class="t-msg">OK, go on.</div>
   </div><div class="turn t-agent">
-    <span class="t-role">AGENT</span><span class="t-n">#8</span><span class="phase-badge" title="Workflow node: Phase 1">⚙ Phase 1</span><div class="tool-call">→ <b>notify_condition_1_met</b> ({})</div>
+    <span class="t-role">AGENT</span><span class="t-n">#10</span><span class="phase-badge" title="Workflow node: node_01ksvy7ntre8gsanne5tj7kmca">⚙ j7kmca</span><div class="t-msg">Which would you prefer: talk through a high-level approach first, or start implementing code now?</div>
+  </div><div class="turn t-user">
+    <span class="t-role">USER</span><span class="t-n">#11</span><div class="t-msg">OK, go on.</div>
   </div><div class="turn t-agent">
-    <span class="t-role">AGENT</span><span class="t-n">#9</span><span class="phase-badge" title="Workflow node: Phase 1">⚙ Phase 1</span><div class="tool-result">← <b>notify_condition_1_met</b>: {"steps":[{"step_latency_secs":0.00007330998778343201,"type":"edge","edge_id":"edge_01ksvyddpqe8gsanp7dax3beak","target_node_id":"node_01ksvyddppe8gsannvqqc66p4w"},{"step_latency_secs":0.005057147238403559,"type":"nested_tools","node_id":"node_01ksvyddppe8gsannvqqc66p4w","requests":[{"type":"system","request_id":"tlcal_2001kvsjm8qge7390m97gzssfa1w","tool_name":"transfer_to_agent","params_as_json":"{\"reason\": \"Transferring to agent as part of a workflow route.\", \"agent_number\": 0, \"agent_id\": \"agent_2201ktp0n7mwek6avkphs4x6394m\"}","tool_has_been_called":true,"tool_details":null}],"results":[{"request_id":"tlcal_2001kvsjm8qge7390m97gzssfa1w","tool_name":"transfer_to_agent","result_value":"{\"result_type\":\"transfer_to_agent_success\",\"status\":\"success\",\"from_agent\":\"agent_2201ktp0n7mwek6avkphs4x6394m\",\"to_agent\":\"agent_2201ktp0n7mwek6avkphs4x6394m\",\"to_node\":\"node_01ksvyddppe8gsannvqqc66p4w\",\"condition\":\"\",\"delay_ms\":0,\"transfer_message\":null,\"enable_transferred_agent_first_message\":false,\"branch_info\":null,\"preserve_client_tts_overrides\":false}","is_error":false,"is_blocked":false,"tool_has_been_called":true,"tool_latency_secs":0.00022299028933048248,"error_type":"","raw_error_message":"","dynamic_variable_updates":[],"type":"system","result":{"result_type":"transfer_to_agent_success","status":"success","from_agent":"agent_2201ktp0n7mwek6avkphs4x6394m","to_agent":"agent_2201ktp0n7mwek6avkphs4x6394m","to_node":"node_01ksvyddppe8gsannvqqc66p4w","condition":"","delay_ms":0,"transfer_message":null,"enable_transferred_agent_first_message":false,"branch_info":null,"preserve_client_tts_overrides":false}}],"is_successful":true}]}</div>
-  </div><div class="turn t-agent">
-    <span class="t-role">AGENT</span><span class="t-n">#10</span><span class="phase-badge" title="Workflow node: Phase 2">⚙ Phase 2</span><div class="t-msg">Okay — I see you started implementing something. Keep going; I'll stay quiet while you work.</div>
+    <span class="t-role">AGENT</span><span class="t-n">#12</span><span class="phase-badge" title="Workflow node: node_01ksvy7ntre8gsanne5tj7kmca">⚙ j7kmca</span><div class="t-msg">Alright — you choose: do you want to outline your high-level approach first, or jump straight into writing code?</div>
   </div></div>
     </div>
   </div>

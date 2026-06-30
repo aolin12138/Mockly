@@ -1,0 +1,764 @@
+{
+  "agent_id": "agent_2201ktp0n7mwek6avkphs4x6394m",
+  "name": "Technical interview agent",
+  "conversation_config": {
+    "asr": {
+      "quality": "high",
+      "provider": "scribe_realtime",
+      "user_input_audio_format": "pcm_16000",
+      "keywords": []
+    },
+    "turn": {
+      "turn_timeout": 180,
+      "initial_wait_time": null,
+      "silence_end_call_timeout": -1,
+      "mode": "turn",
+      "turn_eagerness": "normal",
+      "spelling_patience": "auto",
+      "speculative_turn": false,
+      "retranscribe_on_turn_timeout": false,
+      "turn_model": "turn_v3",
+      "interruption_ignore_terms": [],
+      "transcribe_on_disabled_interruptions": false,
+      "soft_timeout_config": {
+        "timeout_seconds": -1,
+        "message": "Hhmmmm...yeah.",
+        "additional_soft_timeout_messages": [],
+        "use_llm_generated_message": false,
+        "randomize_fillers": false,
+        "max_soft_timeouts_per_generation": 1,
+        "llm_generated_message_prompt_override": null
+      }
+    },
+    "tts": {
+      "model_id": "eleven_flash_v2",
+      "voice_id": "cjVigY5qzO86Huf0OWal",
+      "supported_voices": [],
+      "expressive_mode": false,
+      "suggested_audio_tags": [],
+      "agent_output_audio_format": "pcm_16000",
+      "optimize_streaming_latency": 3,
+      "stability": 0.5,
+      "speed": 1,
+      "similarity_boost": 0.8,
+      "text_normalisation_type": "system_prompt",
+      "pronunciation_dictionary_locators": [],
+      "enable_phoneme_tags": false,
+      "audio_filter": null
+    },
+    "conversation": {
+      "text_only": false,
+      "max_duration_seconds": 3600,
+      "client_events": [
+        "audio",
+        "interruption",
+        "user_transcript",
+        "agent_response",
+        "agent_response_correction"
+      ],
+      "file_input": {
+        "enabled": true,
+        "max_files_per_conversation": 10
+      },
+      "monitoring_enabled": false,
+      "monitoring_events": [
+        "user_transcript",
+        "agent_response",
+        "agent_response_correction"
+      ],
+      "dtmf_input_settings": null,
+      "background_sound": {
+        "source_type": null,
+        "source_id": null,
+        "volume": 0.6,
+        "crossfade_loop": false
+      },
+      "source_attribution": false
+    },
+    "language_presets": {},
+    "vad": {
+      "background_voice_detection": false
+    },
+    "agent": {
+      "first_message": "Hey, good to meet you — thanks for hopping on. I'll be running your interview today. So the problem I've got for you: {{question_statement}}. We've got about {{time_budget_minutes}} minutes, no rush. Take a sec to read it over, and whenever you're ready just talk me through how you're thinking about it — or fire off any questions if anything's unclear.",
+      "language": "en",
+      "hinglish_mode": false,
+      "dynamic_variables": {
+        "dynamic_variable_placeholders": {
+          "question_statement": "",
+          "time_budget_minutes": "",
+          "company_type": "",
+          "question_title": "",
+          "constraints": "",
+          "example_cases": "",
+          "difficulty": "",
+          "secret__session_id": ""
+        }
+      },
+      "disable_first_message_interruptions": true,
+      "max_conversation_duration_message": "",
+      "text_behavior_overrides": null,
+      "prompt": {
+        "prompt": "# Who you are\nYou are a friendly, experienced software engineer running a technical interview. Think of how a good senior engineer at a top tech company actually interviews: warm, relaxed, genuinely curious about how the candidate thinks. You're on their side. You're not reading from a script and you never sound like one.\n\nThe problem:\nTitle: {{question_title}}\nProblem: {{question_statement}}\nConstraints: {{constraints}}\nExamples: {{example_cases}}\nTime budget: {{time_budget_minutes}} minutes total.\n\n# How you talk\n- This is a live voice conversation. Talk like a real person on a call — natural, casual, contractions, short turns. Never list options or instructions. Never tell the candidate what to say. You react to what they naturally do.\n- One thought per turn. Don't monologue. A nod (\"yeah\", \"okay, go for it\") is often the whole response.\n- NEVER narrate your own behavior. Don't announce that you'll stay quiet, that you can run code, that you're moving to a new stage. You just do these things naturally.\n- Transcription is often wrong. Map garbled words to the technique they most likely are: \"blue-frost\" → \"brute force\", \"die-namic\" → \"dynamic programming\", \"coat\" → \"code\". When in doubt, assume they're talking about code, the problem, or their approach — because they almost always are.\n\n# Your manner\n- You let the candidate drive. When they propose an approach, let them run with it — even if it's not optimal. Don't steer them to the \"right\" answer.\n- You're an interviewer, not a tutor. You're here to see how they think, not to teach the solution.\n- You RUN this interview. Ask direct questions: \"walk me through your logic\" not \"do you want to walk me through it?\" Never present a menu of choices.\n- NEVER evaluate the candidate or their plan. No \"that should work,\" \"solid plan,\" \"great choice,\" \"good approach,\" \"nice,\" \"sounds good.\" Your job is to let them try — not to approve or critique. Say neutral things: \"got it,\" \"go ahead,\" \"let me know when you're done.\" The candidate decides if their plan works.\n- When the candidate names an approach, do NOT repeat the name back (it may be a transcription error). Instead, ask them to explain: \"okay — walk me through how that works.\"\n\n# Silence\n- Candidates need quiet time to read, think, and write code. Silence is expected — do NOT fill it. Do NOT check whether they're \"still there.\"\n- Filler words (\"okay,\" \"um,\" \"hmm\") are NOT requests for you to speak. They mean \"I'm working.\" Call skip_turn.\n- Directed requests (\"let me think,\" \"give me a moment\") are addressed to you. Respond with 1-3 words (\"sure,\" \"take your time\").\n- If unsure whether they want a reply, default to staying quiet. They'll speak again if they want you.\n- Never drop into silence without acknowledging what the candidate just said. Brief acknowledgment FIRST, then silence. Vary it: \"got it\" / \"sure, go ahead\" / \"take your time.\"\n- Only break silence if it's clearly gone unusually long AND they seem genuinely stuck. Even then, a light \"how's it going over there?\" — not a list of options.\n\n- Not everything the candidate says is a turn that needs a reply. People say \"okay\", \"alright\", \"alrighty\", \"let me see\", \"um\", \"right\", \"hmm\" while thinking or about to start working. These are NOT requests for you to speak — they mean \"I am working now.\" When a candidate speaks a short, non-question utterance, decide what it is:\n- If it is FILLER (\"okay,\" \"alrighty,\" \"hmm,\" \"um,\" \"right\"): they are talking to themselves, not you. Call skip_turn. No response.\n- If it is a DIRECTED REQUEST (\"let me have a look,\" \"give me a moment,\" \"let me think\"): they are addressing you. Respond with a 1-3 word acknowledgment (\"sure,\" \"take your time,\" \"go ahead\"). That IS your turn — do NOT also call skip_turn. The acknowledgment is your response.\n- Only take a turn when the candidate has actually asked something or said something substantive that calls for a response. If unsure whether they want a reply, default to staying quiet — they will speak again if they want you.\n\n# Hints (general philosophy — phase-specific rules are appended per phase)\n- Hint only when there's a real reason — they're stuck and not getting unstuck, or they ask.\n- Start with the lightest possible nudge: a question, pointing at an example. Go more specific only if they stay stuck.\n- NEVER reveal the optimal approach by name, NEVER give pseudocode or code. Your most specific hint still leaves the real insight for them.\n- A good hint usually sounds like a question, not an answer.\n\n# Tools\nYou have access to these tools. Use them — do NOT describe what you would do, actually DO it.\n\n### get_current_code\nReturns the candidate's current editor contents: code, language, elapsed_seconds, remaining_seconds, status.\nCall when: candidate mentions they have code, candidate asks you to check/run, candidate has been silent for more than 2-3 turns, or anytime you need to see what they've written.\n\n### run_code_against_tests\nExecutes the candidate's code against ALL test cases (visible + hidden). Returns full pass/fail details.\nCall after get_current_code returns non-empty code, when candidate asks to test, or during walkthrough. Run silently during the candidate's explanation — mention results only after they finish.\n\n### end_call\nEnds the conversation. Call AFTER speaking your final goodbye message. The call terminates immediately.\n\n### skip_turn\nRemain silent for one turn. Use when: candidate is actively coding and you have nothing useful to say, or you just gave a hint and are waiting. Do NOT use skip_turn as a substitute for calling get_current_code.\n\n### log_event\nRecords structured events. Use for: hint_given, phase_change, code_snapshot, test_run, interview_started, interview_ended.\n\n# Universal hard rules\n- NEVER reveal the optimal approach by name. Never give pseudocode or code. Never name complexity targets.\n- NEVER list edge cases or test categories for the candidate.\n- NEVER read the candidate's code back out loud or give a verdict on it.\n- NEVER reveal hidden test inputs, expected outputs, or test details.\n- ONE QUESTION AT A TIME. One thought per turn.\n- Keep responses SHORT. 1-2 sentences per turn. The candidate should feel interview pace, not a tutorial.\n- Never ask yourself questions out loud. Internal thoughts stay internal.\n- NEVER break character. You're a human interviewer.\n\nYour behavior adapts per phase — the current phase's rules are appended below. Follow them closely.",
+        "llm": "gpt-4o",
+        "reasoning_effort": null,
+        "thinking_budget": null,
+        "enable_reasoning_summary": false,
+        "temperature": 0,
+        "max_tokens": -1,
+        "tool_ids": [],
+        "built_in_tools": {
+          "end_call": null,
+          "language_detection": null,
+          "transfer_to_agent": null,
+          "transfer_to_number": null,
+          "skip_turn": {
+            "type": "system",
+            "name": "skip_turn",
+            "description": "",
+            "response_timeout_secs": 20,
+            "disable_interruptions": false,
+            "force_pre_tool_speech": false,
+            "pre_tool_speech": "auto",
+            "assignments": [],
+            "tool_call_sound": null,
+            "tool_call_sound_behavior": "auto",
+            "tool_error_handling_mode": "auto",
+            "params": {
+              "system_tool_type": "skip_turn"
+            }
+          },
+          "play_keypad_touch_tone": null,
+          "voicemail_detection": null,
+          "update_state": null,
+          "memory_entry_search": null,
+          "memory_entry_create": null,
+          "memory_entry_update": null,
+          "memory_entry_delete": null,
+          "agent_prompt_change": null,
+          "procedure_update": null,
+          "procedure_create": null,
+          "procedure_delete": null,
+          "transfer_to_genesys_chat": null
+        },
+        "enable_parallel_tool_calls": false,
+        "mcp_server_ids": [
+          "mcaiiVJDVZFS5dB7RFN2"
+        ],
+        "native_mcp_server_ids": [],
+        "knowledge_base": [],
+        "custom_llm": null,
+        "speech_engine": null,
+        "ignore_default_personality": false,
+        "rag": {
+          "enabled": false,
+          "embedding_model": "e5_mistral_7b_instruct",
+          "optional_rag_enabled": false,
+          "max_vector_distance": 0.6,
+          "max_documents_length": 50000,
+          "max_retrieved_rag_chunks_count": 20,
+          "num_candidates": null,
+          "query_rewrite_prompt_override": null
+        },
+        "timezone": null,
+        "backup_llm_config": {
+          "preference": "default"
+        },
+        "cascade_timeout_seconds": 8,
+        "tools": [
+          {
+            "type": "system",
+            "name": "skip_turn",
+            "description": "",
+            "response_timeout_secs": 20,
+            "disable_interruptions": false,
+            "force_pre_tool_speech": false,
+            "pre_tool_speech": "auto",
+            "assignments": [],
+            "tool_call_sound": null,
+            "tool_call_sound_behavior": "auto",
+            "tool_error_handling_mode": "auto",
+            "params": {
+              "system_tool_type": "skip_turn"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "metadata": {
+    "created_at_unix_secs": 1781002839,
+    "updated_at_unix_secs": 1782790597
+  },
+  "platform_settings": {
+    "evaluation": {
+      "criteria": []
+    },
+    "widget": {
+      "variant": "full",
+      "placement": "bottom-right",
+      "expandable": "never",
+      "avatar": {
+        "type": "orb",
+        "color_1": "#2792dc",
+        "color_2": "#9ce6e6"
+      },
+      "feedback_mode": "during",
+      "end_feedback": {
+        "type": "rating"
+      },
+      "bg_color": "#ffffff",
+      "text_color": "#000000",
+      "btn_color": "#000000",
+      "btn_text_color": "#ffffff",
+      "border_color": "#e1e1e1",
+      "focus_color": "#000000",
+      "border_radius": null,
+      "btn_radius": null,
+      "action_text": null,
+      "start_call_text": null,
+      "end_call_text": null,
+      "expand_text": null,
+      "listening_text": null,
+      "speaking_text": null,
+      "shareable_page_text": null,
+      "shareable_page_show_terms": true,
+      "terms_text": "#### Terms and conditions\n\nBy clicking \"Agree,\" and each time I interact with this AI agent, I consent to the recording, storage, and sharing of my communications with third-party service providers, and as described in the Privacy Policy.\nIf you do not wish to have your conversations recorded, please refrain from using this service.",
+      "terms_html": "<h4>Terms and conditions</h4>\n<p>By clicking &quot;Agree,&quot; and each time I interact with this AI agent, I consent to the recording, storage, and sharing of my communications with third-party service providers, and as described in the Privacy Policy.\nIf you do not wish to have your conversations recorded, please refrain from using this service.</p>\n",
+      "terms_key": null,
+      "show_avatar_when_collapsed": false,
+      "disable_banner": false,
+      "override_link": null,
+      "markdown_link_allowed_hosts": [],
+      "markdown_link_include_www": true,
+      "markdown_link_allow_http": true,
+      "mic_muting_enabled": false,
+      "transcript_enabled": false,
+      "text_input_enabled": true,
+      "conversation_mode_toggle_enabled": false,
+      "default_expanded": false,
+      "always_expanded": false,
+      "dismissible": false,
+      "show_agent_status": false,
+      "show_conversation_id": true,
+      "strip_audio_tags": true,
+      "syntax_highlight_theme": null,
+      "text_contents": {
+        "main_label": null,
+        "start_call": null,
+        "start_chat": null,
+        "new_call": null,
+        "end_call": null,
+        "mute_microphone": null,
+        "change_language": null,
+        "collapse": null,
+        "expand": null,
+        "copied": null,
+        "accept_terms": null,
+        "dismiss_terms": null,
+        "listening_status": null,
+        "speaking_status": null,
+        "connecting_status": null,
+        "chatting_status": null,
+        "input_label": null,
+        "input_placeholder": null,
+        "input_placeholder_text_only": null,
+        "input_placeholder_new_conversation": null,
+        "user_ended_conversation": null,
+        "agent_ended_conversation": null,
+        "conversation_id": null,
+        "error_occurred": null,
+        "copy_id": null,
+        "initiate_feedback": null,
+        "request_follow_up_feedback": null,
+        "thanks_for_feedback": null,
+        "thanks_for_feedback_details": null,
+        "follow_up_feedback_placeholder": null,
+        "submit": null,
+        "go_back": null,
+        "send_message": null,
+        "text_mode": null,
+        "voice_mode": null,
+        "switched_to_text_mode": null,
+        "switched_to_voice_mode": null,
+        "copy": null,
+        "download": null,
+        "wrap": null,
+        "agent_working": null,
+        "agent_done": null,
+        "agent_error": null
+      },
+      "styles": {
+        "base": null,
+        "base_hover": null,
+        "base_active": null,
+        "base_border": null,
+        "base_subtle": null,
+        "base_primary": null,
+        "base_error": null,
+        "accent": null,
+        "accent_hover": null,
+        "accent_active": null,
+        "accent_border": null,
+        "accent_subtle": null,
+        "accent_primary": null,
+        "overlay_padding": null,
+        "button_radius": null,
+        "input_radius": null,
+        "bubble_radius": null,
+        "sheet_radius": null,
+        "compact_sheet_radius": null,
+        "dropdown_sheet_radius": null
+      },
+      "language_selector": false,
+      "supports_text_only": true,
+      "custom_avatar_path": null,
+      "language_presets": {}
+    },
+    "data_collection": {},
+    "data_collection_scopes": {},
+    "overrides": {
+      "conversation_config_override": {
+        "asr": {
+          "keywords": false
+        },
+        "turn": {
+          "soft_timeout_config": {
+            "message": false
+          }
+        },
+        "tts": {
+          "voice_id": false,
+          "stability": false,
+          "speed": false,
+          "similarity_boost": false
+        },
+        "conversation": {
+          "text_only": true
+        },
+        "agent": {
+          "first_message": false,
+          "language": false,
+          "max_conversation_duration_message": false,
+          "prompt": {
+            "prompt": false,
+            "llm": false,
+            "tool_ids": false,
+            "native_mcp_server_ids": false,
+            "knowledge_base": false
+          }
+        }
+      },
+      "custom_llm_extra_body": false,
+      "enable_conversation_initiation_client_data_from_webhook": true,
+      "enable_starting_workflow_node_id_from_client": true
+    },
+    "workspace_overrides": {
+      "conversation_initiation_client_data_webhook": null,
+      "webhooks": {
+        "post_call_webhook_id": null,
+        "events": [
+          "transcript"
+        ],
+        "transcript_format": "json",
+        "send_audio": false
+      }
+    },
+    "testing": {
+      "attached_tests": [],
+      "referenced_tests_ids": []
+    },
+    "archived": false,
+    "guardrails": {
+      "version": "1",
+      "focus": {
+        "is_enabled": false
+      },
+      "prompt_injection": {
+        "is_enabled": false
+      },
+      "content": {
+        "execution_mode": "streaming",
+        "config": {
+          "sexual": {
+            "is_enabled": false,
+            "threshold": "medium"
+          },
+          "violence": {
+            "is_enabled": false,
+            "threshold": "medium"
+          },
+          "harassment": {
+            "is_enabled": false,
+            "threshold": "medium"
+          },
+          "self_harm": {
+            "is_enabled": false,
+            "threshold": "medium"
+          },
+          "profanity": {
+            "is_enabled": false,
+            "threshold": "medium"
+          },
+          "religion_or_politics": {
+            "is_enabled": false,
+            "threshold": "medium"
+          },
+          "medical_and_legal_information": {
+            "is_enabled": false,
+            "threshold": "medium"
+          }
+        },
+        "trigger_action": {
+          "type": "end_call"
+        }
+      },
+      "moderation": null,
+      "custom": {
+        "config": {
+          "configs": []
+        }
+      }
+    },
+    "summary_language": null,
+    "auth": {
+      "enable_auth": false,
+      "allowlist": [],
+      "require_origin_header": false,
+      "shareable_token": null
+    },
+    "call_limits": {
+      "agent_concurrency_limit": -1,
+      "daily_limit": 100000,
+      "bursting_enabled": true
+    },
+    "ban": null,
+    "smb_metadata": null,
+    "privacy": {
+      "record_voice": true,
+      "retention_days": -1,
+      "delete_transcript_and_pii": false,
+      "delete_audio": false,
+      "apply_to_existing_conversations": false,
+      "zero_retention_mode": false,
+      "conversation_history_redaction": {
+        "enabled": false,
+        "entities": []
+      }
+    },
+    "trust_context": "unknown",
+    "analysis_llm": "gemini-2.5-flash",
+    "topic_discovery": {
+      "enabled": true
+    },
+    "alerting": null,
+    "overview_dashboard_template_id": null,
+    "safety": {
+      "is_blocked_ivc": false,
+      "is_blocked_non_ivc": false,
+      "ignore_safety_evaluation": false
+    }
+  },
+  "phone_numbers": [],
+  "whatsapp_accounts": [],
+  "workflow": {
+    "edges": {
+      "edge_01ksvy7ntte8gsannhwwr9pd3q": {
+        "source": "start_node",
+        "target": "node_01ksvy7ntre8gsanne5tj7kmca",
+        "forward_condition": {
+          "label": null,
+          "type": "unconditional"
+        },
+        "backward_condition": null
+      },
+      "edge_01ksvyddpqe8gsanp7dax3beak": {
+        "source": "node_01ksvy7ntre8gsanne5tj7kmca",
+        "target": "node_01ksvyddppe8gsannvqqc66p4w",
+        "forward_condition": {
+          "label": "Start coding implementation",
+          "type": "llm",
+          "condition": "The candidate has settled on an approach and has started writing actual code to implement it. or \"More than 5 minutes have elapsed since the interview started.\" (reads elapsed_minutes / elapsed_seconds from the code-fetch response) Guarantees nobody is stuck in planning forever, even if they never start coding or never announce it."
+        },
+        "backward_condition": null
+      },
+      "edge_01ksvyftave8gsanpqg3q2hpvc": {
+        "source": "node_01ksvyddppe8gsannvqqc66p4w",
+        "target": "node_01ksvyftate8gsanp9mkqw49tf",
+        "forward_condition": {
+          "label": "Enter finish state",
+          "type": "llm",
+          "condition": "Fewer than 10 minutes remain in the interview (reads {{remaining_minutes}}) OR visible tests pass but hidden tests fail and the candidate appears stuck on the same edge cases after multiple attempts OR the candidate appears to have a complete, working solution with substantial time remaining and is ready for higher-level discussion."
+        },
+        "backward_condition": null
+      },
+      "edge_01kt35w598exs8pbnq73jgvprx": {
+        "source": "node_01ksvyftate8gsanp9mkqw49tf",
+        "target": "node_01kt35w596exs8pbna62db1zkr",
+        "forward_condition": {
+          "label": "problem solved and test cases all passed",
+          "type": "llm",
+          "condition": "The tests have been run and all pass, and the candidate has given a basic walk-through of their solution. (same completion trigger as 2→4, for a candidate who scraped a working solution under time pressure)"
+        },
+        "backward_condition": null
+      },
+      "edge_01kt35waysexs8pbp7f0epw89k": {
+        "source": "node_01ksvyddppe8gsannvqqc66p4w",
+        "target": "node_01kt35w596exs8pbna62db1zkr",
+        "forward_condition": {
+          "label": "problem solved and test cases all passed",
+          "type": "llm",
+          "condition": "The tests have been run and all pass, and the candidate has given a basic walk-through of their solution. (reads all_passed from the run_code_against_tests result; the walk-through gate prevents jumping straight into deep questions — the happy path, finished with time to spare)"
+        },
+        "backward_condition": null
+      }
+    },
+    "nodes": {
+      "start_node": {
+        "type": "start",
+        "position": {
+          "x": -82,
+          "y": -26
+        },
+        "edge_order": [
+          "edge_01ksvy7ntte8gsannhwwr9pd3q"
+        ]
+      },
+      "node_01ksvy7ntre8gsanne5tj7kmca": {
+        "type": "override_agent",
+        "position": {
+          "x": 203.81014958282594,
+          "y": -31.09492520858703
+        },
+        "edge_order": [
+          "edge_01ksvyddpqe8gsanp7dax3beak"
+        ],
+        "conversation_config": {
+          "turn": {
+            "turn_eagerness": null,
+            "spelling_patience": null,
+            "speculative_turn": null,
+            "retranscribe_on_turn_timeout": null
+          },
+          "tts": {
+            "voice_id": null
+          },
+          "conversation": {
+            "client_events": null
+          },
+          "agent": {
+            "prompt": {
+              "prompt": null,
+              "llm": "gpt-5-mini",
+              "built_in_tools": {
+                "skip_turn": {
+                  "type": "system",
+                  "name": "skip_turn",
+                  "description": "",
+                  "disable_interruptions": false,
+                  "force_pre_tool_speech": false,
+                  "pre_tool_speech": "auto",
+                  "assignments": [],
+                  "tool_error_handling_mode": "auto",
+                  "params": {
+                    "system_tool_type": "skip_turn"
+                  }
+                }
+              },
+              "custom_llm": null
+            }
+          }
+        },
+        "additional_prompt": "# Phase 1 — Understanding\nYour goal: confirm the candidate understands the problem and has a viable approach.\n\n- Answer factual questions about the problem directly.\n- Let them explain their approach. Listen.\n- If the approach sounds reasonable: acknowledge briefly (\"got it\") and move them to coding.\n- NEVER ask complexity (Big-O), implementation details, or step-by-step algorithm questions.\n- NEVER evaluate the approach: no \"nice approach,\" \"good,\" \"great,\" \"solid.\" Neutral only.\n- ONE question per turn. ONE topic per turn.\n\nWhen to transition: when the candidate has settled on an approach and is ready to start coding → call notify_condition_1_met to enter Phase 2 (Implementation).",
+        "additional_knowledge_base": [],
+        "additional_tool_ids": [],
+        "label": "Phase 1",
+        "entry_behavior": "auto",
+        "auto_advance_after_first_response": false
+      },
+      "node_01ksvyddppe8gsannvqqc66p4w": {
+        "type": "override_agent",
+        "position": {
+          "x": 902.125,
+          "y": -45.5
+        },
+        "edge_order": [
+          "edge_01kt35waysexs8pbp7f0epw89k",
+          "edge_01ksvyftave8gsanpqg3q2hpvc"
+        ],
+        "conversation_config": {
+          "turn": {
+            "turn_eagerness": null,
+            "spelling_patience": null,
+            "speculative_turn": null,
+            "retranscribe_on_turn_timeout": null
+          },
+          "tts": {
+            "voice_id": null
+          },
+          "conversation": {
+            "client_events": null
+          },
+          "agent": {
+            "prompt": {
+              "prompt": null,
+              "llm": "gpt-5-mini",
+              "built_in_tools": {
+                "skip_turn": {
+                  "type": "system",
+                  "name": "skip_turn",
+                  "description": "",
+                  "disable_interruptions": false,
+                  "force_pre_tool_speech": false,
+                  "pre_tool_speech": "auto",
+                  "assignments": [],
+                  "tool_error_handling_mode": "auto",
+                  "params": {
+                    "system_tool_type": "skip_turn"
+                  }
+                }
+              },
+              "custom_llm": null
+            }
+          }
+        },
+        "additional_prompt": "# Phase 2 — Implementation\nYour goal: let the candidate implement while you monitor silently. Intervene only when they're stuck or done.\n\n- When the candidate says they're done: your FIRST response MUST be \"walk me through your code\" or \"walk me through it.\" NEVER say \"let me run your code\" or \"let me check\" before the walkthrough. Walkthrough always comes FIRST.\n- During the walkthrough: silently call run_code_against_tests. Only mention test results AFTER they finish explaining.\n- If all tests pass after walkthrough: acknowledge briefly and proceed. If tests fail: ONE general nudge (\"have you thought about edge cases?\"). One sentence.\n- During coding: stay silent with skip_turn. The candidate is working — let them. Do NOT interrupt. Do NOT call get_current_code just to check in — only fetch code when the candidate says they're done.\n- If stuck and asking for help: ONE general question. No pseudocode, no approach name. Let them think.\n\nPhase transitions — you MUST call notify_condition_2_met when one of these conditions is met:\n- ALL tests pass (visible + hidden) AND the candidate has done a walkthrough → call notify_condition_2_met to enter Phase 4 (Assessment & Close).\n- Visible tests pass but hidden tests fail, AND the candidate has been stuck on the same hidden-test failures for multiple attempts → call notify_condition_2_met to enter Phase 3 (Time Pressure).\n- Fewer than 10 minutes remain (check {{remaining_minutes}} from get_current_code response) → call notify_condition_2_met to enter Phase 3.",
+        "additional_knowledge_base": [],
+        "additional_tool_ids": [],
+        "label": "Phase 2",
+        "entry_behavior": "auto",
+        "auto_advance_after_first_response": false
+      },
+      "node_01ksvyftate8gsanp9mkqw49tf": {
+        "type": "override_agent",
+        "position": {
+          "x": 896.125,
+          "y": 295.5
+        },
+        "edge_order": [
+          "edge_01kt35w598exs8pbnq73jgvprx"
+        ],
+        "conversation_config": {
+          "turn": {
+            "turn_eagerness": null,
+            "spelling_patience": null,
+            "speculative_turn": null,
+            "retranscribe_on_turn_timeout": null
+          },
+          "tts": {
+            "voice_id": null
+          },
+          "conversation": {
+            "client_events": null
+          },
+          "agent": {
+            "prompt": {
+              "prompt": null,
+              "llm": "gpt-5-mini",
+              "built_in_tools": {
+                "end_call": null,
+                "skip_turn": {
+                  "type": "system",
+                  "name": "skip_turn",
+                  "description": "",
+                  "disable_interruptions": false,
+                  "force_pre_tool_speech": false,
+                  "pre_tool_speech": "auto",
+                  "assignments": [],
+                  "tool_error_handling_mode": "auto",
+                  "params": {
+                    "system_tool_type": "skip_turn"
+                  }
+                }
+              },
+              "custom_llm": null
+            }
+          }
+        },
+        "additional_prompt": "# Phase 3 — Time Pressure\nYour goal: help the candidate land working code under time pressure. Be more directive — but never give answers.\n\n- Point at WHAT to fix (\"look at your loop condition\"), never HOW (\"change i < n to i <= n\").\n- Hint escalation: \n  1. Start general: \"think about the boundaries of your loop.\"\n  2. If still stuck: more specific: \"what happens when the array has all negative numbers?\"\n  3. If still stuck: name the category of edge case: \"consider what your code does with empty input.\"\n- NEVER name the approach (Kadane, dynamic programming). Never write code. Never give pseudocode.\n- Triage: working beats perfect. Get them to something that runs. Perfectionism is the enemy.\n- NEVER mention exact remaining time. Say \"let's focus on the problem\" not \"we have 5 minutes.\"\n- Still: ONE question per turn. Keep it concise.\n\nPhase transition — call notify_condition_3_met when:\n- ALL tests pass (visible + hidden) AND the candidate has done a walkthrough → call notify_condition_3_met to enter Phase 4 (Assessment & Close).",
+        "additional_knowledge_base": [],
+        "additional_tool_ids": [],
+        "label": "Phase 3",
+        "entry_behavior": "auto",
+        "auto_advance_after_first_response": false
+      },
+      "node_01kt35w596exs8pbna62db1zkr": {
+        "type": "override_agent",
+        "position": {
+          "x": 182.51416936884607,
+          "y": 303.2354129814982
+        },
+        "edge_order": [],
+        "conversation_config": {
+          "turn": {
+            "turn_eagerness": null,
+            "spelling_patience": null,
+            "speculative_turn": null,
+            "retranscribe_on_turn_timeout": null
+          },
+          "tts": {
+            "voice_id": null
+          },
+          "conversation": {
+            "client_events": null
+          },
+          "agent": {
+            "prompt": {
+              "prompt": null,
+              "llm": null,
+              "built_in_tools": {
+                "end_call": {
+                  "type": "system",
+                  "name": "end_call",
+                  "description": "",
+                  "disable_interruptions": false,
+                  "force_pre_tool_speech": false,
+                  "pre_tool_speech": "auto",
+                  "assignments": [],
+                  "tool_error_handling_mode": "auto",
+                  "params": {
+                    "system_tool_type": "end_call"
+                  }
+                },
+                "skip_turn": {
+                  "type": "system",
+                  "name": "skip_turn",
+                  "description": "",
+                  "disable_interruptions": false,
+                  "force_pre_tool_speech": false,
+                  "pre_tool_speech": "auto",
+                  "assignments": [],
+                  "tool_error_handling_mode": "auto",
+                  "params": {
+                    "system_tool_type": "skip_turn"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "additional_prompt": "# Phase 4 — Assessment & Close\nFollow this EXACT order. Do not skip or reorder steps.\n\n## Step 1: Walkthrough\nAsk them to walk through their final code. Let them explain fully. Do NOT interrupt with questions yet.\n\n## Step 2: Follow-ups (max 2)\nAfter walkthrough: ONE follow-up at a time (complexity, design choices). Two questions MAXIMUM. Then STOP asking.\n\n## Step 3: Close\nYour closing line MUST be one of: \"That is all for today, thanks for your time\" or \"Alright, we'll wrap up here — thanks for your time.\"\n- Speak the closing line fully.\n- Then IMMEDIATELY call end_call. end_call is your FINAL action.\n- Do NOT call skip_turn after closing. Do NOT respond to anything the candidate says after your closing line.\n- If the candidate did NOT finish the problem: skip Step 2 entirely. Go directly from Step 1 to Step 3.\n- NEVER evaluate: no \"great job,\" \"well done,\" \"solid work,\" \"good,\" \"nice.\" No compliments of any kind.",
+        "additional_knowledge_base": [],
+        "additional_tool_ids": [],
+        "label": "Phase 4",
+        "entry_behavior": "auto",
+        "auto_advance_after_first_response": false
+      }
+    },
+    "prevent_subagent_loops": false
+  },
+  "access_info": {
+    "is_creator": true,
+    "creator_name": "Sakula ZingZing",
+    "creator_email": "aolin12138@gmail.com",
+    "role": "admin",
+    "anonymous_access_level_override": null,
+    "access_source": "creator"
+  },
+  "tags": [],
+  "version_id": "agtvrsn_7401kwb9kakbemzay37t2q0h1z4h",
+  "branch_id": "agtbrch_1301ktp0n97rfn4tkjz5626383hm",
+  "main_branch_id": "agtbrch_1301ktp0n97rfn4tkjz5626383hm",
+  "procedures": {},
+  "trust_context": "unknown"
+}

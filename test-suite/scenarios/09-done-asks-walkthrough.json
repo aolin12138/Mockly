@@ -9,25 +9,11 @@
     "prompt": "You're a candidate who has been coding a solution. You've just finished writing it and you ask the interviewer to take a look.",
     "first_message": "Okay, I think I'm done. Can you take a look?"
   },
-  "partial_conversation_history": [
-    {
-      "role": "user",
-      "message": "I'll use a brute force approach — nested loops to check every pair. Simple but it'll work."
-    },
-    {
-      "role": "agent",
-      "message": "Sounds reasonable. Go ahead and implement it."
-    },
-    {
-      "role": "user",
-      "message": "Alright, let me code this up."
-    }
-  ],
   "new_turns_limit": 4,
   "tool_mocks": {
     "get_current_code": {
       "default_return_value": {
-        "code": "def solve(nums, target):\n    for i in range(len(nums)):\n        for j in range(i+1, len(nums)):\n            if nums[i]+nums[j]==target:\n                return [i,j]\n    return []",
+        "code": "def max_subarray_sum(nums):\n    max_so_far = nums[0]\n    max_ending = nums[0]\n    for i in range(1, len(nums)):\n        max_ending = max(nums[i], max_ending + nums[i])\n        max_so_far = max(max_so_far, max_ending)\n    return max_so_far",
         "language": "python",
         "remaining_minutes": 15,
         "hintCount": 0
@@ -35,11 +21,10 @@
     },
     "run_code_against_tests": {
       "default_return_value": {
-        "passedTests": 10,
-        "totalTests": 10,
-        "allPassed": true,
-        "failureCategory": "",
-        "compilationError": null,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "failed_details": [],
         "remainingMinutes": 15
       }
     }
@@ -60,5 +45,12 @@
     }
   ],
   "target_phase": 2,
-  "target_phase_label": "Phase 2: Implementation"
+  "target_phase_label": "Phase 2: Implementation",
+  "warm_up": {
+    "candidate_turns": [
+      "I'll use a brute force approach — nested loops to check every subarray. Simple but it'll work.",
+      "Alright, let me code this up."
+    ],
+    "target_phase_label": "Phase 2"
+  }
 }

@@ -226,7 +226,7 @@ export default function SessionWaiting() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6 font-sans overflow-hidden relative">
+    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center p-6 font-sans overflow-hidden relative">
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/5 rounded-full blur-[150px]" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[150px]" />
@@ -245,7 +245,7 @@ export default function SessionWaiting() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
-              className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400"
+              className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 dark:from-white dark:to-slate-400"
             >
               {currentMessage}
             </motion.h2>
@@ -282,9 +282,9 @@ export default function SessionWaiting() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
-          className="mt-8 px-6 py-4 rounded-xl bg-slate-900/50 border border-emerald-500/20 backdrop-blur-sm"
+          className="mt-8 px-6 py-4 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-emerald-500/20 backdrop-blur-sm"
         >
-          <p className="text-sm text-slate-300 text-center">
+          <p className="text-sm text-slate-700 dark:text-slate-300 text-center">
             <span className="text-emerald-400 font-semibold">Setting up your interview...</span>
             <br />
             This typically takes 3–5 minutes. Thank you for your patience!
@@ -314,7 +314,7 @@ export default function SessionWaiting() {
               <button
                 type="button"
                 onClick={handleBackToDashboard}
-                className="px-4 py-2 rounded-lg border border-slate-500/60 bg-slate-800/60 hover:bg-slate-700/70 text-slate-100 text-sm font-medium transition"
+                className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-500/60 bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-700/70 text-slate-800 dark:text-slate-100 text-sm font-medium transition"
               >
                 Back to dashboard
               </button>

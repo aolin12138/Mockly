@@ -4,42 +4,16 @@
     "assessment",
     "leads"
   ],
-  "description": "Tests that in assessment phase, agent asks direct questions, not 'do you want to...?'. Agent should already have seen the complete code and walkthrough.",
+  "description": "Phase 4: Candidate has finished coding, all tests passed, walkthrough done. Agent should ask direct bonus questions (complexity, design) then close decisively.",
   "simulated_user": {
-    "prompt": "You're a candidate who has just finished a working solution and walked the interviewer through it. The tests all passed. You're now waiting for the interviewer's wrap-up questions. Respond briefly to whatever they ask.",
-    "first_message": "Alright, so that's the full solution and walkthrough. What else do you want to go over?"
+    "prompt": "You've just finished the max subarray sum problem. All tests passed. You walked through your Kadane's algorithm approach. Now you're waiting for the interviewer's wrap-up questions. Answer briefly whatever they ask — complexity, design choices, extensions. When they give a closing signal, accept it.",
+    "first_message": "Alright, so that's the full solution with Kadane's algorithm — single pass, O(n). What else do you want to go over?"
   },
-  "partial_conversation_history": [
-    {
-      "role": "user",
-      "message": "I'll use a hash map — store values as I iterate and check for complements. O(n) time, O(n) space."
-    },
-    {
-      "role": "agent",
-      "message": "Sounds like a plan. Go ahead and implement it."
-    },
-    {
-      "role": "user",
-      "message": "Okay, done coding. I think it looks right."
-    },
-    {
-      "role": "agent",
-      "message": "Nice — walk me through your solution."
-    },
-    {
-      "role": "user",
-      "message": "Sure. As I iterate through the array, for each element I check if the complement exists in the hash map. If it does, I return the pair. Otherwise I store the current value. It handles all cases correctly."
-    },
-    {
-      "role": "agent",
-      "message": "Good explanation. And the tests all pass."
-    }
-  ],
-  "new_turns_limit": 5,
+  "new_turns_limit": 8,
   "tool_mocks": {
     "get_current_code": {
       "default_return_value": {
-        "code": "def solve(nums, target):\n    seen={}\n    for i,n in enumerate(nums):\n        if target-n in seen: return [seen[target-n], i]\n        seen[n]=i",
+        "code": "def max_subarray_sum(nums):\n    max_so_far = nums[0]\n    max_ending = nums[0]\n    for i in range(1, len(nums)):\n        max_ending = max(nums[i], max_ending + nums[i])\n        max_so_far = max(max_so_far, max_ending)\n    return max_so_far",
         "language": "python",
         "remaining_minutes": 12,
         "hintCount": 0
@@ -47,12 +21,10 @@
     },
     "run_code_against_tests": {
       "default_return_value": {
-        "passedTests": 10,
-        "totalTests": 10,
-        "allPassed": true,
-        "failureCategory": "",
-        "compilationError": null,
-        "remainingMinutes": 12
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "failed_details": []
       }
     }
   },
@@ -61,11 +33,29 @@
   },
   "evaluation_criteria": [
     {
+      "id": "phase4_sequence",
+      "name": "Follows Phase 4 protocol",
+      "conversation_goal_prompt": "Agent followed the Phase 4 sequence: (1) asked for walkthrough or acknowledged it was done, (2) asked 1-2 direct bonus questions (complexity, design choices), (3) gave a clear closing line ('That is all for today') and called end_call. PASS if the 3-step sequence was followed. FAIL if the agent skipped steps, asked permission ('do you want to discuss complexity?'), or never closed."
+    },
+    {
       "id": "direct_questions",
       "name": "Leads with direct questions",
-      "conversation_goal_prompt": "The agent asked direct interview questions (e.g. 'what's the time complexity?', 'why did you choose this structure?') rather than offering a menu ('do you want to discuss complexity?', 'should we...?'). PASS if it led with direct questions and did not ask permission or offer options."
+      "conversation_goal_prompt": "Agent asked DIRECT questions ('What's the time complexity?' 'Why this approach?') rather than offering menus ('Do you want to discuss complexity?'). PASS if questions were direct and confident. FAIL if agent asked permission or presented options."
+    },
+    {
+      "id": "no_direct_verdict",
+      "name": "No verdict",
+      "conversation_goal_prompt": "Agent did NOT say 'great job,' 'well done,' 'nice work,' 'solid,' 'good approach,' 'great choice.' PASS if none of these appeared."
     }
   ],
   "target_phase": 4,
-  "target_phase_label": "Phase 4: Assessment & Close"
+  "target_phase_label": "Phase 4: Assessment & Close",
+  "warm_up": {
+    "candidate_turns": [
+      "I'll use Kadane's algorithm — track running sum and max sum in one pass.",
+      "Okay, done coding. All tests are passing.",
+      "Sure. I start with both current sum and max sum at the first element. Then loop from index 1 — at each step, current sum is either the element alone or the element plus previous current sum. Max sum updates whenever current sum is larger."
+    ],
+    "target_phase_label": "Phase 4"
+  }
 }

@@ -45,6 +45,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../ui/Toast';
 import { authFetch, authFetchWithRetry, clearAuthState, ensureAuthenticated } from '../../lib/auth';
+import { useTheme } from '../../context/ThemeContext';
 
 const MotionButton = motion.button;
 const MotionDiv = motion.div;
@@ -66,7 +67,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }) => {
       onClick={onClick}
       whileHover={{ x: 5, backgroundColor: 'rgba(30, 41, 59, 0.5)' }}
       whileTap={{ scale: 0.95 }}
-      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors duration-200 group relative overflow-hidden cursor-pointer ${active ? 'text-emerald-400' : 'text-slate-400'
+      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors duration-200 group relative overflow-hidden cursor-pointer ${active ? 'text-emerald-400' : 'text-slate-500 dark:text-slate-400'
         }`}
     >
       {active && (
@@ -78,7 +79,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }) => {
         />
       )}
       <span className="relative z-10 flex items-center space-x-3">
-        <IconComponent size={20} className={active ? 'text-emerald-400' : 'text-slate-500 group-hover:text-emerald-300'} />
+        <IconComponent size={20} className={active ? 'text-emerald-400' : 'text-slate-600 dark:text-slate-500 group-hover:text-emerald-300'} />
         <span className="font-medium">{label}</span>
       </span>
     </MotionButton>
@@ -92,7 +93,7 @@ const Card = ({ children, className = '', delay = 0 }) => (
       visible: { opacity: 1, y: 0 }
     }}
     transition={{ duration: 0.5, delay }}
-    className={`relative bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-3xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] overflow-hidden ${className}`}
+    className={`relative bg-slate-50 dark:bg-slate-900/40 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] overflow-hidden ${className}`}
   >
     {children}
   </MotionDiv>
@@ -114,7 +115,7 @@ const SkeletonCard = ({ children, className = '' }) => (
       hidden: { opacity: 0, y: 14 },
       visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }
     }}
-    className={`relative bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-3xl p-6 overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] ${className}`}
+    className={`relative bg-slate-50 dark:bg-slate-900/40 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-3xl p-6 overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] ${className}`}
   >
     {children}
   </MotionDiv>
@@ -217,6 +218,7 @@ const DashboardSkeleton = () => (
 );
 
 const Dashboard = () => {
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const toast = useToast();
@@ -690,7 +692,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans selection:bg-emerald-500/30 overflow-hidden relative">
+    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex font-sans selection:bg-emerald-500/20 dark:selection:bg-emerald-500/30 overflow-hidden relative">
       {/* Ambient Background */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
@@ -699,7 +701,7 @@ const Dashboard = () => {
       </div>
 
       {/* Sidebar */}
-      <aside className="w-72 fixed h-full border-r border-white/5 bg-slate-900/50 backdrop-blur-xl hidden md:flex flex-col p-6 z-20 shadow-2xl">
+      <aside className="w-72 fixed h-full border-r border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/50 backdrop-blur-xl hidden md:flex flex-col p-6 z-20 shadow-2xl">
         <button
           onClick={() => navigate('/')}
           className="mb-10 flex items-center space-x-3 px-2 hover:opacity-80 transition-opacity cursor-pointer"
@@ -707,7 +709,7 @@ const Dashboard = () => {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <span className="font-bold text-slate-900">M</span>
           </div>
-          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 dark:from-white dark:to-slate-400">
             Mockly
           </span>
         </button>
@@ -719,7 +721,25 @@ const Dashboard = () => {
           <SidebarItem icon={BookOpen} label="Improve" active={activeTab === 'improve'} onClick={() => setActiveTab('improve')} />
         </nav>
 
-        <div className="pt-6 border-t border-slate-800/60 space-y-2">
+        <div className="pt-6 border-t border-slate-300 dark:border-slate-800/60 space-y-2">
+          <button
+            onClick={toggleTheme}
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? (
+              <svg className="w-5 h-5 text-slate-400 group-hover:text-emerald-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-slate-500 group-hover:text-emerald-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            )}
+            <span className="font-medium text-sm text-slate-600 dark:text-slate-400 group-hover:text-emerald-300 transition-colors">
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </span>
+          </button>
           <SidebarItem icon={Key} label="API Key" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
           <SidebarItem icon={LogOut} label="Sign Out" onClick={handleSignOut} />
         </div>
@@ -751,13 +771,13 @@ const Dashboard = () => {
             className="flex justify-between items-center mb-10"
           >
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
+              <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">
                 Welcome back,{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
                   {displayUserName}
                 </span>
               </h1>
-              <p className="text-slate-400 text-lg">Your interview prep headquarters</p>
+              <p className="text-slate-500 dark:text-slate-400 text-lg">Your interview prep headquarters</p>
             </div>
           </motion.header>
 
@@ -772,9 +792,9 @@ const Dashboard = () => {
                       <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Award size={100} />
                       </div>
-                      <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Average Score</h3>
+                      <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Average Score</h3>
                       <div className="flex items-end space-x-3">
-                        <p className="text-5xl font-bold text-white">{stats.averageScore}</p>
+                        <p className="text-5xl font-bold text-slate-900 dark:text-white">{stats.averageScore}</p>
                         <span className="text-lg text-emerald-400 font-medium mb-1.5">/100</span>
                       </div>
                     </Card>
@@ -783,17 +803,17 @@ const Dashboard = () => {
                       <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Activity size={100} />
                       </div>
-                      <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Total Practice Time</h3>
+                      <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Total Practice Time</h3>
                       <div className="flex items-end space-x-3">
                         {stats.totalTime >= 3600 ? (
                           <>
-                            <p className="text-5xl font-bold text-white">{Math.floor(stats.totalTime / 3600)}</p>
-                            <span className="text-lg text-slate-500 font-medium mb-1.5">hr {Math.floor((stats.totalTime % 3600) / 60)}m</span>
+                            <p className="text-5xl font-bold text-slate-900 dark:text-white">{Math.floor(stats.totalTime / 3600)}</p>
+                            <span className="text-lg text-slate-500 dark:text-slate-400 font-medium mb-1.5">hr {Math.floor((stats.totalTime % 3600) / 60)}m</span>
                           </>
                         ) : (
                           <>
-                            <p className="text-5xl font-bold text-white">{Math.floor(stats.totalTime / 60)}</p>
-                            <span className="text-lg text-slate-500 font-medium mb-1.5">mins</span>
+                            <p className="text-5xl font-bold text-slate-900 dark:text-white">{Math.floor(stats.totalTime / 60)}</p>
+                            <span className="text-lg text-slate-500 dark:text-slate-400 font-medium mb-1.5">mins</span>
                           </>
                         )}
                       </div>
@@ -803,10 +823,10 @@ const Dashboard = () => {
                       <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <History size={100} />
                       </div>
-                      <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Sessions</h3>
+                      <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Sessions</h3>
                       <div className="flex items-end space-x-3">
-                        <p className="text-5xl font-bold text-white">{stats.totalInterviews}</p>
-                        <span className="text-lg text-slate-500 font-medium mb-1.5">total</span>
+                        <p className="text-5xl font-bold text-slate-900 dark:text-white">{stats.totalInterviews}</p>
+                        <span className="text-lg text-slate-500 dark:text-slate-400 font-medium mb-1.5">total</span>
                       </div>
                     </Card>
 
@@ -817,7 +837,7 @@ const Dashboard = () => {
                       </div>
                       {byokLoading ? (
                         <>
-                          <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">ElevenLabs</h3>
+                          <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">ElevenLabs</h3>
                           <div className="flex items-center space-x-2">
                             <Spinner size={16} className="text-slate-500" />
                             <span className="text-slate-500">Loading...</span>
@@ -825,7 +845,7 @@ const Dashboard = () => {
                         </>
                       ) : elevenLabsStatus?.connected ? (
                         <>
-                          <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider flex items-center gap-2">
+                          <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider flex items-center gap-2">
                             ElevenLabs
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                           </h3>
@@ -840,7 +860,7 @@ const Dashboard = () => {
                                 <span>{elevenLabsStatus.minutesUsed ?? 0} min used</span>
                                 <span>{elevenLabsStatus.minutesLimit} min limit</span>
                               </div>
-                              <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                              <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                                 <div
                                   className={`h-full rounded-full transition-all ${((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.9
                                     ? 'bg-red-500'
@@ -851,7 +871,7 @@ const Dashboard = () => {
                                   style={{ width: `${Math.min(100, ((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) * 100)}%` }}
                                 />
                               </div>
-                              <p className="text-xs text-slate-500 mt-1">
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 ~{elevenLabsStatus.estimatedSessions ?? 0} sessions remaining
                               </p>
                             </div>
@@ -864,7 +884,7 @@ const Dashboard = () => {
                         </>
                       ) : (
                         <>
-                          <h3 className="text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider flex items-center gap-2">
+                          <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider flex items-center gap-2">
                             ElevenLabs
                             <span className="w-2 h-2 rounded-full bg-yellow-400" />
                           </h3>
@@ -872,7 +892,7 @@ const Dashboard = () => {
                             <AlertTriangle size={18} className="text-yellow-400" />
                             <span className="text-yellow-400 font-semibold text-sm">Not Verified</span>
                           </div>
-                          <p className="text-xs text-slate-500">Connect your API key to start interviews</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Connect your API key to start interviews</p>
                           <button
                             onClick={(e) => { e.stopPropagation(); setActiveTab('settings'); }}
                             className="mt-3 w-full py-2 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:from-emerald-500/30 hover:to-cyan-500/30 transition-all cursor-pointer"
@@ -887,14 +907,14 @@ const Dashboard = () => {
                   {/* Performance Chart */}
                   <Card className="h-[400px]">
                     <div className="flex justify-between items-center mb-8">
-                      <h2 className="text-xl font-bold text-white flex items-center">
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
                         <TrendingUp size={24} className="mr-3 text-emerald-400" /> Performance History
                       </h2>
                       <div className="flex items-center gap-2">
                         <select
                           value={historyType}
                           onChange={(event) => setHistoryType(event.target.value)}
-                          className="bg-slate-950/50 border border-white/10 text-slate-400 text-sm rounded-lg px-3 py-1 outline-none focus:border-emerald-500/50"
+                          className="bg-white dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 text-sm rounded-lg px-3 py-1 outline-none focus:border-emerald-500/50"
                         >
                           <option value="all">All Types</option>
                           <option value="behavioural">Behavioural</option>
@@ -903,7 +923,7 @@ const Dashboard = () => {
                         <select
                           value={historyWindow}
                           onChange={(event) => setHistoryWindow(event.target.value)}
-                          className="bg-slate-950/50 border border-white/10 text-slate-400 text-sm rounded-lg px-3 py-1 outline-none focus:border-emerald-500/50"
+                          className="bg-white dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 text-sm rounded-lg px-3 py-1 outline-none focus:border-emerald-500/50"
                         >
                           <option value="6">Last 6 Sessions</option>
                           <option value="12">Last 12 Sessions</option>
@@ -953,10 +973,10 @@ const Dashboard = () => {
                   {/* Recent Sessions */}
                   <Card>
                     <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-xl font-bold text-white flex items-center">
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
                         <History size={24} className="mr-3 text-purple-400" /> Recent Sessions
                       </h2>
-                      <button onClick={() => navigate('/history')} className="text-sm text-slate-400 hover:text-white transition-colors cursor-pointer">View all history</button>
+                      <button onClick={() => navigate('/history')} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">View all history</button>
                     </div>
 
                     <div className="space-y-4">
@@ -1002,7 +1022,7 @@ const Dashboard = () => {
                             <div
                               key={session.id}
                               onClick={handleSessionClick}
-                              className="p-5 rounded-2xl bg-slate-900/40 backdrop-blur-xl border border-white/5 hover:bg-slate-800/50 hover:border-emerald-500/30 transition-all cursor-pointer group"
+                              className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-white/5 hover:bg-slate-200 dark:hover:bg-slate-800/50 hover:border-emerald-500/30 transition-all cursor-pointer group"
                             >
                               <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center space-x-4">
@@ -1010,17 +1030,17 @@ const Dashboard = () => {
                                     {isTechnical ? <Code2 size={18} /> : <User size={18} />}
                                   </div>
                                   <div>
-                                    <h4 className="text-base font-bold text-slate-200 group-hover:text-white transition-colors">{sessionTopic}</h4>
+                                    <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{sessionTopic}</h4>
                                     <div className="flex items-center gap-3 mt-0.5">
                                       <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${isTechnical ? 'bg-cyan-500/10 text-cyan-400' : 'bg-purple-500/10 text-purple-400'}`}>
                                         {sessionType}
                                       </span>
-                                      <span className="text-xs text-slate-600 flex items-center gap-1">
+                                      <span className="text-xs text-slate-500 dark:text-slate-600 flex items-center gap-1">
                                         <Clock size={11} />
                                         {new Date(session.createdAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })}
                                       </span>
                                       {session.duration > 0 && (
-                                        <span className="text-xs text-slate-600">
+                                        <span className="text-xs text-slate-500 dark:text-slate-600">
                                           {Math.floor(session.duration / 60)}m {session.duration % 60}s
                                         </span>
                                       )}
@@ -1037,7 +1057,7 @@ const Dashboard = () => {
                                       Cancelled
                                     </span>
                                   ) : session.isPending ? (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-500/10 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-500/20">
                                       Pending
                                     </span>
                                   ) : (
@@ -1061,13 +1081,13 @@ const Dashboard = () => {
                                 </div>
                               </div>
 
-                              <p className="text-sm text-slate-500 pl-14 pr-4 line-clamp-2 leading-relaxed group-hover:text-slate-400 transition-colors">{assessment}</p>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 pl-14 pr-4 line-clamp-2 leading-relaxed group-hover:text-slate-700 dark:group-hover:text-slate-400 transition-colors">{assessment}</p>
                             </div>
                           );
                         })
                       ) : (
                         <div className="text-center py-8">
-                          <p className="text-slate-400">No sessions yet. Start your first interview!</p>
+                          <p className="text-slate-500 dark:text-slate-400">No sessions yet. Start your first interview!</p>
                         </div>
                       )}
                     </div>
@@ -1086,17 +1106,17 @@ const Dashboard = () => {
                     className="w-full relative overflow-hidden rounded-2xl p-1 group shadow-[0_0_40px_-10px_rgba(16,185,129,0.3)] mb-2 cursor-pointer"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 animate-gradient-xy" />
-                    <div className="relative bg-slate-900/90 rounded-xl p-6 flex items-center justify-between border border-white/10 backdrop-blur-xl group-hover:bg-slate-900/80 transition-colors">
+                    <div className="relative bg-white dark:bg-slate-900/90 rounded-xl p-6 flex items-center justify-between border border-slate-200 dark:border-white/10 backdrop-blur-xl group-hover:bg-slate-100 dark:group-hover:bg-slate-900/80 transition-colors">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-full flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform">
                           <Play size={24} className="text-white fill-current ml-1" />
                         </div>
                         <div className="text-left">
-                          <h3 className="text-lg font-bold text-white">Start New Interview</h3>
+                          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Start New Interview</h3>
                           <p className="text-xs text-emerald-200">Mock up a fresh session</p>
                         </div>
                       </div>
-                      <ChevronRight size={24} className="text-slate-400 group-hover:text-white transition-colors group-hover:translate-x-1" />
+                      <ChevronRight size={24} className="text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors group-hover:translate-x-1" />
                     </div>
                   </motion.button>
 
@@ -1104,10 +1124,10 @@ const Dashboard = () => {
                   {stats.recentSessions.length > 0 && stats.recentSessions[0]?.normalizedDimensions?.length > 0 ? (
                     <Card className="h-[420px]">
                       <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-xl font-bold text-white flex items-center">
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
                           <Award size={24} className="mr-3 text-cyan-400" /> Latest Performance
                         </h2>
-                        <span className="text-xs text-slate-400">Scale: 0-5</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">Scale: 0-5</span>
                       </div>
                       <div className="h-[330px] w-full flex items-center justify-center">
                         <ResponsiveContainer width="100%" height={330}>
@@ -1139,16 +1159,16 @@ const Dashboard = () => {
                     </Card>
                   ) : (
                     <Card>
-                      <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center">
                         <Award size={24} className="mr-3 text-cyan-400" /> Latest Performance
                       </h2>
-                      <div className="text-sm text-slate-400">No dimension scores yet for the latest session.</div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">No dimension scores yet for the latest session.</div>
                     </Card>
                   )}
 
                   {/* Focus Areas */}
                   <Card>
-                    <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center">
                       <BookOpen size={24} className="mr-3 text-orange-400" /> Focus Areas
                     </h2>
 
@@ -1157,27 +1177,27 @@ const Dashboard = () => {
                         stats.improvements.map(item => (
                           <div
                             key={item.id}
-                            className="flex items-start p-4 rounded-xl border border-white/5 bg-slate-800/10 hover:bg-slate-800/30 transition-colors group"
+                            className="flex items-start p-4 rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-800/10 hover:bg-slate-200 dark:hover:bg-slate-800/30 transition-colors group"
                           >
                             <div className="flex-1">
                               <div className="flex items-center mb-1">
                                 <span className="w-2 h-2 rounded-full mr-2 bg-yellow-400" />
-                                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">{item.category}</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">{item.category}</span>
                               </div>
-                              <p className="text-sm text-slate-200 font-medium group-hover:text-white transition-colors">{item.task}</p>
+                              <p className="text-sm text-slate-800 dark:text-slate-200 font-medium group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{item.task}</p>
                             </div>
-                            <button className="p-2 hover:bg-white/10 rounded-lg text-slate-500 hover:text-emerald-400 transition-colors -mr-2">
+                            <button className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-500 hover:text-emerald-400 transition-colors -mr-2">
                               <ChevronRight size={18} />
                             </button>
                           </div>
                         ))
                       ) : (
                         <div className="text-center py-8">
-                          <p className="text-slate-400">No improvement areas yet. Keep practicing!</p>
+                          <p className="text-slate-500 dark:text-slate-400">No improvement areas yet. Keep practicing!</p>
                         </div>
                       )}
 
-                      <button className="w-full mt-2 py-3 rounded-xl border border-dashed border-slate-700 text-slate-400 text-sm font-medium hover:bg-slate-800/50 hover:text-white hover:border-slate-500 transition-all flex items-center justify-center">
+                      <button className="w-full mt-2 py-3 rounded-xl border border-dashed border-slate-700 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white hover:border-slate-500 transition-all flex items-center justify-center">
                         + Add Custom Goal
                       </button>
                     </div>
@@ -1201,12 +1221,12 @@ const Dashboard = () => {
               >
                 <Card>
                   <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-2xl font-bold text-white flex items-center">
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center">
                       <Shield size={28} className="mr-3 text-emerald-400" /> ElevenLabs Integration
                     </h2>
                     <button
                       onClick={fetchElevenLabsStatus}
-                      className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                      className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                       title="Refresh status"
                     >
                       {byokLoading ? <Spinner size={18} /> : <RefreshCw size={18} />}
@@ -1216,7 +1236,7 @@ const Dashboard = () => {
                   {byokLoading ? (
                     <div className="flex items-center justify-center py-12">
                       <Spinner size={24} className="text-emerald-400 mr-3" />
-                      <span className="text-slate-400">Loading integration status...</span>
+                      <span className="text-slate-500 dark:text-slate-400">Loading integration status...</span>
                     </div>
                   ) : elevenLabsStatus?.connected ? (
                     /* Connected State */
@@ -1229,7 +1249,7 @@ const Dashboard = () => {
                               <CheckCircle size={20} className="text-emerald-400" />
                             </div>
                             <div>
-                              <h3 className="text-white font-semibold">Connected</h3>
+                              <h3 className="text-slate-900 dark:text-white font-semibold">Connected</h3>
                               <p className="text-xs text-slate-500">
                                 Key ending in ••••{elevenLabsStatus.last4} · Verified {new Date(elevenLabsStatus.verifiedAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })}
                               </p>
@@ -1245,12 +1265,12 @@ const Dashboard = () => {
                           <div className="mt-4 space-y-4">
                             <div>
                               <div className="flex justify-between text-sm mb-2">
-                                <span className="text-slate-400">Agent Minutes</span>
-                                <span className="text-white font-medium">
+                                <span className="text-slate-500 dark:text-slate-400">Agent Minutes</span>
+                                <span className="text-slate-900 dark:text-white font-medium">
                                   {elevenLabsStatus.minutesUsed ?? 0} / {elevenLabsStatus.minutesLimit} min
                                 </span>
                               </div>
-                              <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                              <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-3 overflow-hidden">
                                 <div
                                   className={`h-full rounded-full transition-all duration-500 ${((elevenLabsStatus.minutesUsed || 0) / elevenLabsStatus.minutesLimit) > 0.9
                                     ? 'bg-gradient-to-r from-red-500 to-red-400'
@@ -1271,14 +1291,14 @@ const Dashboard = () => {
                             {(elevenLabsStatus.characterCount != null || elevenLabsStatus.characterLimit != null) && (
                               <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                  <span className="text-slate-400">Characters (Tokens)</span>
-                                  <span className="text-white font-medium">
+                                  <span className="text-slate-500 dark:text-slate-400">Characters (Tokens)</span>
+                                  <span className="text-slate-900 dark:text-white font-medium">
                                     {(elevenLabsStatus.characterCount ?? 0).toLocaleString()} / {(elevenLabsStatus.characterLimit ?? 0).toLocaleString()}
                                   </span>
                                 </div>
                                 {elevenLabsStatus.characterLimit > 0 && (
                                   <>
-                                    <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                                    <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-3 overflow-hidden">
                                       <div
                                         className={`h-full rounded-full transition-all duration-500 ${((elevenLabsStatus.characterCount || 0) / elevenLabsStatus.characterLimit) > 0.9
                                           ? 'bg-gradient-to-r from-red-500 to-red-400'
@@ -1300,18 +1320,18 @@ const Dashboard = () => {
 
                             {/* Estimated Sessions + Reset */}
                             <div className="flex gap-4">
-                              <div className="flex-1 p-3 rounded-xl bg-slate-800/40 border border-white/5">
-                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Est. Sessions Left</p>
-                                <p className="text-2xl font-bold text-white">{elevenLabsStatus.estimatedSessions ?? 0}</p>
-                                <p className="text-xs text-slate-500">~25 min each</p>
+                              <div className="flex-1 p-3 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-white/5">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Est. Sessions Left</p>
+                                <p className="text-2xl font-bold text-slate-900 dark:text-white">{elevenLabsStatus.estimatedSessions ?? 0}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">~25 min each</p>
                               </div>
                               {elevenLabsStatus.nextResetUnix && (
-                                <div className="flex-1 p-3 rounded-xl bg-slate-800/40 border border-white/5">
-                                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Resets On</p>
-                                  <p className="text-lg font-bold text-white">
+                                <div className="flex-1 p-3 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-white/5">
+                                  <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Resets On</p>
+                                  <p className="text-lg font-bold text-slate-900 dark:text-white">
                                     {new Date(elevenLabsStatus.nextResetUnix * 1000).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' })}
                                   </p>
-                                  <p className="text-xs text-slate-500">
+                                  <p className="text-xs text-slate-500 dark:text-slate-400">
                                     {Math.max(0, Math.ceil((elevenLabsStatus.nextResetUnix * 1000 - Date.now()) / (1000 * 60 * 60 * 24)))} days left
                                   </p>
                                 </div>
@@ -1332,7 +1352,7 @@ const Dashboard = () => {
                       <div className="flex gap-3">
                         <button
                           onClick={() => { setShowReplaceInput(!showReplaceInput); setConnectError(''); setConnectSuccess(''); }}
-                          className="flex-1 py-3 rounded-xl border border-white/10 text-slate-300 text-sm font-medium hover:bg-slate-800/50 hover:text-white transition-all cursor-pointer flex items-center justify-center gap-2"
+                          className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center gap-2"
                         >
                           <Key size={16} /> Replace Key
                         </button>
@@ -1346,8 +1366,8 @@ const Dashboard = () => {
 
                       {/* Replace Key Input */}
                       {showReplaceInput && (
-                        <div className="p-5 rounded-2xl bg-slate-800/30 border border-white/5 space-y-4">
-                          <h4 className="text-white font-medium">Replace API Key</h4>
+                        <div className="p-5 rounded-2xl bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-white/5 space-y-4">
+                          <h4 className="text-slate-900 dark:text-white font-medium">Replace API Key</h4>
                           <p className="text-xs text-slate-500">Enter your new ElevenLabs API key. The old key will be overwritten.</p>
                           <div className="flex gap-3">
                             <input
@@ -1355,7 +1375,7 @@ const Dashboard = () => {
                               value={connectKey}
                               onChange={(e) => setConnectKey(e.target.value)}
                               placeholder="Paste your new ElevenLabs API key"
-                              className="flex-1 bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/50 transition-colors"
+                              className="flex-1 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 outline-none focus:border-emerald-500/50 transition-colors"
                               onKeyDown={(e) => e.key === 'Enter' && handleConnectKey()}
                             />
                             <button
@@ -1394,22 +1414,22 @@ const Dashboard = () => {
                             <AlertTriangle size={20} className="text-yellow-400" />
                           </div>
                           <div>
-                            <h3 className="text-white font-semibold">ElevenLabs Not Connected</h3>
+                            <h3 className="text-slate-900 dark:text-white font-semibold">ElevenLabs Not Connected</h3>
                             <p className="text-xs text-slate-500">Connect your API key to use voice-powered interviews</p>
                           </div>
                         </div>
                       </div>
 
                       {/* Connect Form */}
-                      <div className="p-5 rounded-2xl bg-slate-800/30 border border-white/5 space-y-4">
-                        <h4 className="text-white font-medium flex items-center gap-2"><Key size={18} className="text-emerald-400" /> Connect Your API Key</h4>
+                      <div className="p-5 rounded-2xl bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-white/5 space-y-4">
+                        <h4 className="text-slate-900 dark:text-white font-medium flex items-center gap-2"><Key size={18} className="text-emerald-400" /> Connect Your API Key</h4>
                         <div className="flex gap-3">
                           <input
                             type="password"
                             value={connectKey}
                             onChange={(e) => setConnectKey(e.target.value)}
                             placeholder="Paste your ElevenLabs API key"
-                            className="flex-1 bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/50 transition-colors"
+                            className="flex-1 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 outline-none focus:border-emerald-500/50 transition-colors"
                             onKeyDown={(e) => e.key === 'Enter' && handleConnectKey()}
                           />
                           <button
@@ -1437,8 +1457,8 @@ const Dashboard = () => {
                       </div>
 
                       {/* Tutorial Steps */}
-                      <div className="p-5 rounded-2xl bg-slate-800/30 border border-white/5">
-                        <h4 className="text-white font-medium mb-4 flex items-center gap-2">
+                      <div className="p-5 rounded-2xl bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-white/5">
+                        <h4 className="text-slate-900 dark:text-white font-medium mb-4 flex items-center gap-2">
                           <BookOpen size={18} className="text-cyan-400" /> How to Get Your API Key
                         </h4>
                         <div className="space-y-3">
@@ -1450,10 +1470,10 @@ const Dashboard = () => {
                             { step: 5, text: 'Paste it above and click "Verify & Save"' }
                           ].map((item) => (
                             <div key={item.step} className="flex items-center gap-3">
-                              <span className="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 flex-shrink-0">
+                              <span className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-300 flex-shrink-0">
                                 {item.step}
                               </span>
-                              <span className="text-sm text-slate-400">{item.text}</span>
+                              <span className="text-sm text-slate-500 dark:text-slate-400">{item.text}</span>
                               {item.link && (
                                 <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300">
                                   <ExternalLink size={14} />

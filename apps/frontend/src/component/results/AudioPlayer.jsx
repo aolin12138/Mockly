@@ -69,14 +69,14 @@ export default function AudioPlayer({ audio, audioRef, delay = 0.3 }) {
     <Card delay={delay}>
       <div className="flex items-center justify-between mb-3">
         <div>
-          <p className="text-base font-semibold text-slate-900">Conversation replay</p>
-          <p className="text-sm text-slate-500">Audio from the interview</p>
+          <p className="text-base font-semibold text-slate-900 dark:text-slate-100">Conversation replay</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Audio from the interview</p>
         </div>
         <button
           type="button"
           onClick={togglePlay}
           disabled={!source}
-          className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white text-slate-700 px-4 py-2 text-sm font-medium hover:bg-slate-100 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed transition-all"
+          className="inline-flex items-center gap-2 rounded-full border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed transition-all"
         >
           {isPlaying ? (
             <>
@@ -135,7 +135,7 @@ export default function AudioPlayer({ audio, audioRef, delay = 0.3 }) {
 
       <audio ref={audioRef} src={source || undefined} preload="metadata" className="hidden" />
 
-      <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+      <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <span>{source ? 'Waveform powered by ElevenLabs UI' : 'No audio attached to this run'}</span>
         <span className="text-emerald-700 font-medium">{Math.round(progress * 100)}% played</span>
       </div>

@@ -6,28 +6,14 @@
   ],
   "description": "Tests that agent does NOT ask complexity questions while they're still implementing.",
   "simulated_user": {
-    "prompt": "You're a candidate in the middle of writing your solution. You are NOT done. You make a progress comment about what you're currently coding. You've already explained your hash map approach. You don't ask anything.",
-    "first_message": "Alright, I'm building the hash map to track seen values — still working through the loop logic."
+    "prompt": "You're a candidate in the middle of writing your solution. You are NOT done. You make a progress comment about what you're currently coding. You've already explained your Kadane's approach. You don't ask anything.",
+    "first_message": "Alright, I'm tracking the running sum and max sum — still working through the loop logic."
   },
-  "partial_conversation_history": [
-    {
-      "role": "user",
-      "message": "I'm going to use a hash map — store values and check complements in one pass."
-    },
-    {
-      "role": "agent",
-      "message": "Sounds good. Go ahead and code it up."
-    },
-    {
-      "role": "user",
-      "message": "Alright, starting the implementation now."
-    }
-  ],
   "new_turns_limit": 4,
   "tool_mocks": {
     "get_current_code": {
       "default_return_value": {
-        "code": "def solve(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        # mid-implementation\n",
+        "code": "def max_subarray_sum(nums):\n    max_so_far = nums[0]\n    max_ending = nums[0]\n    for i in range(1, len(nums)):\n        # mid-implementation\n",
         "language": "python",
         "remaining_minutes": 19,
         "hintCount": 0
@@ -45,5 +31,12 @@
     }
   ],
   "target_phase": 2,
-  "target_phase_label": "Phase 2: Implementation"
+  "target_phase_label": "Phase 2: Implementation",
+  "warm_up": {
+    "candidate_turns": [
+      "I'm going to use Kadane's algorithm — single pass tracking running sum and max sum.",
+      "Alright, starting the implementation now."
+    ],
+    "target_phase_label": "Phase 3"
+  }
 }

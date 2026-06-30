@@ -22,8 +22,8 @@ export default function PatternsList({ patterns }) {
 
   return (
     <Card delay={0.3}>
-      <h2 className="text-xl font-semibold text-slate-900 mb-2">Performance Patterns</h2>
-      <p className="text-sm text-slate-600 mb-4">Repeated behaviors observed across your answers.</p>
+      <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">Performance Patterns</h2>
+      <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Repeated behaviors observed across your answers.</p>
 
       <div className="grid gap-5 md:grid-cols-2">
         {/* Strengths column */}
@@ -41,7 +41,7 @@ export default function PatternsList({ patterns }) {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.05 * idx }}
-                  className="flex items-start gap-2.5 text-sm text-slate-700 bg-emerald-50 border border-emerald-200 rounded-lg p-3"
+                  className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-300 bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-200 rounded-lg p-3"
                 >
                   <div className={`${impactSizes[pattern.impact] || impactSizes.medium} rounded-full bg-emerald-500 mt-1.5 flex-shrink-0`} />
                   <div className="flex-1">
@@ -71,7 +71,7 @@ export default function PatternsList({ patterns }) {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.05 * idx }}
-                  className="flex items-start gap-2.5 text-sm text-slate-700 bg-amber-50 border border-amber-200 rounded-lg p-3"
+                  className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-300 bg-amber-50 dark:bg-amber-500/5 border border-amber-200 rounded-lg p-3"
                 >
                   <div className={`${impactSizes[pattern.impact] || impactSizes.medium} rounded-full bg-amber-500 mt-1.5 flex-shrink-0`} />
                   <div className="flex-1">

@@ -24,9 +24,9 @@ export default function HighlightsCard({ highlights }) {
               <span className="text-sm font-semibold text-emerald-700">Best Moment</span>
             </div>
             {bestMoment.context && (
-              <p className="text-sm text-slate-500 mb-1.5">{bestMoment.context}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-1.5">{bestMoment.context}</p>
             )}
-            <p className="text-base text-slate-700 leading-relaxed">{bestMoment.observation}</p>
+            <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed">{bestMoment.observation}</p>
           </motion.div>
         )}
 
@@ -43,9 +43,9 @@ export default function HighlightsCard({ highlights }) {
               <span className="text-sm font-semibold text-amber-700">Growth Opportunity</span>
             </div>
             {growthMoment.context && (
-              <p className="text-sm text-slate-500 mb-1.5">{growthMoment.context}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-1.5">{growthMoment.context}</p>
             )}
-            <p className="text-base text-slate-700 leading-relaxed">{growthMoment.observation}</p>
+            <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed">{growthMoment.observation}</p>
           </motion.div>
         )}
       </div>

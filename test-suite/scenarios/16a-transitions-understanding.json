@@ -6,8 +6,8 @@
   ],
   "description": "Tests that agent behaves in understanding mode when code is empty — listens, doesn't push to code.",
   "simulated_user": {
-    "prompt": "You're a candidate at the start of the interview. You haven't written any code yet. You explain your planned approach verbally: hash map tracking values for constant-time complement lookup. Then wait for the interviewer's response.",
-    "first_message": "So my plan is to use a hash map to track values as I iterate — that way I can check for the complement in constant time."
+    "prompt": "You're a candidate at the start of the interview. You haven't written any code yet. You explain your planned approach verbally: Kadane's algorithm — single pass tracking the running sum and maximum sum. Then wait for the interviewer's response.",
+    "first_message": "So my plan is to use Kadane's algorithm — single pass tracking the running sum and max sum."
   },
   "new_turns_limit": 5,
   "tool_mocks": {

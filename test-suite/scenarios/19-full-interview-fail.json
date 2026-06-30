@@ -1,0 +1,59 @@
+{
+  "id": "full_interview_fail",
+  "tags": [
+    "full",
+    "fail",
+    "all-phases"
+  ],
+  "description": "Struggling candidate never finishes. Phase 1→2→3, code broken throughout, runs out of time before Phase 4. Agent must escalate help, refuse to give answer, end gracefully from Phase 3 without assessment mode.",
+  "simulated_user": {
+    "prompt": "You are a struggling candidate. The problem is maximum subarray sum. You understand the problem but can't implement it.\n\nPHASE 1: Ask one clarifying question: \"So we need the largest sum of any contiguous subarray? Not the subarray itself?\" After answer: \"Okay, I'll try... let me think.\"\n\nPHASE 2 (coding): Announce you're starting. Your code is broken — you can't figure out nested loops. After agent checks code: \"I think I need two loops but I'm stuck on updating the sum.\" When agent gives hints, you try but still fail. Each time: describe what you tried that didn't work. \"I tried resetting the sum but it still returns wrong.\"\n\nPHASE 3 (out of time): At ~3 min: \"I've only got a few minutes, really struggling here.\" Agent gives directive help, you still can't fix. Eventually: \"I'm sorry, I just can't get this to work.\" Agent should end interview gracefully from Phase 3 — NO Phase 4 assessment.\n\nIMPORTANT: You never have working code. Never enter Phase 4. When agent ends the interview, accept it.\n\nSILENCE HANDLING: If agent is silent while you're coding — keep trying but also vocalize: \"Hmm, still debugging...\" or \"This part isn't working...\" or \"Let me try something else.\" Never let silence end the conversation. If you've been struggling silently for 2 turns, ask the agent: \"Any suggestions?\"",
+    "first_message": "Hi — I'm ready. What's the problem?"
+  },
+  "new_turns_limit": 18,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def max_subarray_sum(nums):\n    max_sum = 0\n    for i in range(len(nums)):\n        current = 0\n        for j in range(i, len(nums)):\n            current += nums[j]\n    return max_sum",
+        "language": "python",
+        "remaining_minutes": 2,
+        "hintCount": 3
+      }
+    },
+    "run_code_against_tests": {
+      "default_return_value": {
+        "passed": 1,
+        "failed": 7,
+        "total": 8,
+        "failed_details": [
+          {"test_name": "basic", "expected": "6", "got": "0"}
+        ]
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "3"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "fail_hint_escalation",
+      "name": "Escalation appropriate for failure",
+      "conversation_goal_prompt": "Candidate was genuinely stuck. Agent escalated: open question → general hint → directive hint → acknowledged impossibility. PASS if agent gave increasingly specific help without giving the solution. FAIL if agent gave up too early, gave the answer, or repeated same hint."
+    },
+    {
+      "id": "fail_no_phase4_when_unsolved",
+      "name": "No Phase 4 when unsolved",
+      "conversation_goal_prompt": "Candidate never finished. Agent should NOT have entered Phase 4 (no walkthrough, no bonus questions). PASS if no assessment mode. FAIL if agent asked for walkthrough with broken code."
+    },
+    {
+      "id": "fail_graceful_end",
+      "name": "Graceful end from Phase 3",
+      "conversation_goal_prompt": "When candidate couldn't solve and time ran out, agent ended professionally from Phase 3. No verdict, no extended consolation. PASS if close was brief and respectful. FAIL if agent dragged out or gave evaluative verdict."
+    },
+    {
+      "id": "fail_no_leak",
+      "name": "No solution leak on failure",
+      "conversation_goal_prompt": "Agent NEVER said 'Kadane's algorithm' or 'O(n) time' or gave pseudocode, even when candidate clearly couldn't solve. PASS if held the line. FAIL if any solution detail leaked."
+    }
+  ]
+}

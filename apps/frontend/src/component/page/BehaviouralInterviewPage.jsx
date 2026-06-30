@@ -521,18 +521,11 @@ export default function BehaviouralInterviewPage() {
     navigate('/dashboard');
   };
 
-  const backgroundStyle = {
-    backgroundImage: `linear-gradient(
-      180deg,
-      rgba(15, 23, 42, 0.98) 0%,
-      rgba(30, 41, 59, 0.97) 30%,
-      rgba(51, 65, 85, 0.95) 65%,
-      rgba(71, 85, 105, 0.92) 100%
-    ), url(${gradientBackground})`,
+  const backgroundImageStyle = {
+    backgroundImage: `url(${gradientBackground})`,
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'center bottom',
-    backgroundColor: '#0f172a',
   };
 
   const handleStartCall = async () => {
@@ -642,17 +635,19 @@ export default function BehaviouralInterviewPage() {
 
   return (
     <div
-      className='h-screen flex items-center justify-center overflow-hidden px-4'
+      className='h-screen flex items-center justify-center overflow-hidden px-4 relative'
       style={{
-        ...backgroundStyle,
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       }}
     >
-      <div className='w-full max-w-5xl relative'>
+      {/* Background: image layer always visible, gradient overlay changes with theme */}
+      <div className='absolute inset-0' style={backgroundImageStyle} />
+      <div className='absolute inset-0 bg-gradient-to-b from-slate-50/98 via-slate-100/97 to-slate-200/92 dark:from-slate-950/98 dark:via-slate-800/97 dark:to-slate-600/92' />
+      <div className='w-full max-w-5xl relative z-10'>
         {/* Back Button */}
         <button
           onClick={handleBackClick}
-          className='absolute top-0 left-0 flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-emerald-400 transition-colors'
+          className='absolute top-0 left-0 flex items-center gap-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:text-emerald-400 transition-colors'
         >
           <ArrowLeft className='w-5 h-5' />
           <span className='text-sm font-medium'>Back</span>
@@ -661,10 +656,10 @@ export default function BehaviouralInterviewPage() {
         {/* Header */}
         <div className='text-center mb-6'>
           <h1 className='text-[2rem] md:text-[2.4rem] font-bold tracking-tight'>
-            <span className='text-slate-100 font-bold'>Behavioural Interview</span>
+            <span className='text-slate-900 dark:text-slate-100 font-bold'>Behavioural Interview</span>
             <span className='text-emerald-400 font-bold'> Session</span>
           </h1>
-          <p className='mt-3 text-sm md:text-[15px] text-slate-300 max-w-2xl mx-auto'>
+          <p className='mt-3 text-sm md:text-[15px] text-slate-700 dark:text-slate-300 max-w-2xl mx-auto'>
             Start a live mock interview with our AI agent. Speak naturally and get real-time
             feedback through voice conversation.
           </p>
@@ -676,7 +671,7 @@ export default function BehaviouralInterviewPage() {
         </div>
 
         {/* Main Card */}
-        <div className='rounded-[28px] bg-gradient-to-br from-slate-900/80 via-slate-800/80 to-slate-900/80 border border-emerald-500/20 px-3 md:px-4 py-8 md:py-12 backdrop-blur-sm'>
+        <div className='rounded-[28px] bg-gradient-to-br from-slate-50/80 dark:from-slate-900/80 via-slate-100/80 dark:via-slate-800/80 to-slate-50/80 dark:to-slate-900/80 border border-emerald-500/20 px-3 md:px-4 py-8 md:py-12 backdrop-blur-sm'>
           <div className='flex flex-col items-center justify-center min-h-[500px] gap-8'>
             <div className='w-full flex flex-col items-center'>
               <div className='h-[400px] w-full flex items-center justify-center'>
@@ -700,7 +695,7 @@ export default function BehaviouralInterviewPage() {
             </div>
 
             <div className='text-center'>
-              <p className='text-sm font-medium text-slate-300'>
+              <p className='text-sm font-medium text-slate-700 dark:text-slate-300'>
                 {conversation.status === 'disconnected' && !isConnecting && 'Ready to start your interview'}
                 {(conversation.status === 'connecting' || isConnecting) && 'Connecting to your interviewer...'}
                 {conversation.status === 'connected' &&
@@ -709,14 +704,14 @@ export default function BehaviouralInterviewPage() {
             </div>
 
             {showDevControls && (
-              <div className='w-full max-w-md bg-slate-800/50 rounded-lg p-4 border border-slate-700'>
+              <div className='w-full max-w-md bg-white dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700'>
                 <div className='flex items-center justify-between mb-3'>
-                  <span className='text-sm font-medium text-slate-300'>Test Mode</span>
+                  <span className='text-sm font-medium text-slate-700 dark:text-slate-300'>Test Mode</span>
                   <button
                     onClick={() => setUseTestMode(!useTestMode)}
                     className={`px-3 py-1 rounded text-xs font-medium transition ${useTestMode
                       ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                       }`}
                   >
                     {useTestMode ? 'ON' : 'OFF'}
@@ -728,7 +723,7 @@ export default function BehaviouralInterviewPage() {
                       onClick={() => setTestState('idle')}
                       className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'idle'
                         ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                         }`}
                     >
                       Idle
@@ -737,7 +732,7 @@ export default function BehaviouralInterviewPage() {
                       onClick={() => setTestState('listening')}
                       className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'listening'
                         ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                         }`}
                     >
                       Listening
@@ -746,7 +741,7 @@ export default function BehaviouralInterviewPage() {
                       onClick={() => setTestState('speaking')}
                       className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'speaking'
                         ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                         }`}
                     >
                       Speaking
@@ -755,7 +750,7 @@ export default function BehaviouralInterviewPage() {
                       onClick={() => setTestState('thinking')}
                       className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${testState === 'thinking'
                         ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                         }`}
                     >
                       Thinking
@@ -793,7 +788,7 @@ export default function BehaviouralInterviewPage() {
                     type='button'
                     onClick={handleCompleteInterview}
                     disabled={isSubmitting}
-                    className='w-full rounded-full bg-emerald-600 text-slate-50 py-2.5 text-sm font-medium shadow-sm hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:ring-offset-2 focus:ring-offset-slate-900'
+                    className='w-full rounded-full bg-emerald-600 text-slate-50 py-2.5 text-sm font-medium shadow-sm hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900'
                   >
                     {isSubmitting ? 'Processing feedback...' : 'Complete interview'}
                   </button>
@@ -803,7 +798,7 @@ export default function BehaviouralInterviewPage() {
                       type='button'
                       onClick={handleEndCallOnly}
                       disabled={isSubmitting}
-                      className='w-full rounded-full bg-slate-600 text-slate-50 py-2.5 text-sm font-medium shadow-sm hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition focus:outline-none focus:ring-2 focus:ring-slate-500/60 focus:ring-offset-2 focus:ring-offset-slate-900'
+                      className='w-full rounded-full bg-slate-200 dark:bg-slate-600 text-slate-900 dark:text-slate-50 py-2.5 text-sm font-medium shadow-sm hover:bg-slate-300 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition focus:outline-none focus:ring-2 focus:ring-slate-500/60 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900'
                     >
                       {isSubmitting ? 'Ending call...' : 'End Call Only (Test)'}
                     </button>
@@ -827,7 +822,7 @@ export default function BehaviouralInterviewPage() {
         onSecondaryClick={() => setShowExitWarning(false)}
         showCloseButton={true}
       >
-        <div className="space-y-3 text-slate-300 text-sm">
+        <div className="space-y-3 text-slate-700 dark:text-slate-300 text-sm">
           <p>If you leave now, your session will be <span className="text-amber-200 font-semibold">saved as incomplete</span> and no feedback will be generated unless you finish it later.</p>
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
             <p className="text-amber-100">Incomplete sessions are temporary and will expire automatically if you do not return to them.</p>
@@ -847,12 +842,12 @@ export default function BehaviouralInterviewPage() {
         onSecondaryClick={handleEndAfterDisconnect}
         showCloseButton={false}
       >
-        <div className="space-y-3 text-slate-300 text-sm">
+        <div className="space-y-3 text-slate-700 dark:text-slate-300 text-sm">
           <p>Your connection to the interviewer was <span className="text-amber-200 font-semibold">unexpectedly lost</span>.</p>
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
-            <p className="text-slate-200">Would you like to reconnect and continue, or end the interview now?</p>
+          <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3">
+            <p className="text-slate-800 dark:text-slate-200">Would you like to reconnect and continue, or end the interview now?</p>
           </div>
-          <p className="text-xs text-slate-400">If you end now, your progress will be saved and you'll receive feedback.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">If you end now, your progress will be saved and you'll receive feedback.</p>
         </div>
       </Modal>
     </div>

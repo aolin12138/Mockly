@@ -27,30 +27,30 @@ function DimensionDetailCard({ dimension, index, maxScore }) {
       className={`${colors.bg} border ${colors.border} rounded-2xl p-4`}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-base font-medium text-slate-900">{formatDimensionName(dimension.dimension)}</span>
+        <span className="text-base font-medium text-slate-900 dark:text-slate-100">{formatDimensionName(dimension.dimension)}</span>
         <span className={`text-sm font-bold ${colors.text}`}>{score}/{maxScore}</span>
       </div>
 
-      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden mb-3">
+      <div className="w-full bg-slate-200 dark:bg-slate-700/60 rounded-full h-2 overflow-hidden mb-3">
         <motion.div
           initial={{ width: 0 }}
           whileInView={{ width: `${percentage}%` }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 + 0.05 * index, duration: 0.8, ease: 'easeOut' }}
-          className={`h-full bg-gradient-to-r ${colors.gradient} shadow-lg`}
+          className={`h-full bg-gradient-to-r ${colors.gradient} shadow-lg dark:shadow-none`}
         />
       </div>
 
       {dimension.evidence && dimension.evidence.length > 0 && (
         <div className="space-y-2 mt-3">
           {dimension.evidence.map((ev, evIdx) => (
-            <div key={evIdx} className="text-sm bg-white rounded-lg p-3 border border-slate-200">
-              <p className="text-slate-700">
-                <strong className="text-slate-900">Observation:</strong> {ev.observation}
+            <div key={evIdx} className="text-sm bg-white dark:bg-slate-900/60 rounded-lg p-3 border border-slate-200 dark:border-white/10">
+              <p className="text-slate-700 dark:text-slate-300">
+                <strong className="text-slate-900 dark:text-slate-100">Observation:</strong> {ev.observation}
               </p>
               {ev.reasoning && (
-                <p className="text-slate-600 mt-1">
-                  <strong className="text-slate-700">Reasoning:</strong> {ev.reasoning}
+                <p className="text-slate-600 dark:text-slate-400 mt-1">
+                  <strong className="text-slate-700 dark:text-slate-300">Reasoning:</strong> {ev.reasoning}
                 </p>
               )}
             </div>
@@ -65,8 +65,8 @@ function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const data = payload[0].payload;
   return (
-    <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-lg">
-      <p className="text-sm font-semibold text-slate-800">{data.dimension}</p>
+    <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 shadow-lg dark:shadow-none">
+      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{data.dimension}</p>
       <p className="text-sm text-emerald-700 font-medium">{data.rawScore}/{data.maxScore}</p>
     </div>
   );

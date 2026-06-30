@@ -252,42 +252,32 @@ function clickAt() {
   }});
 }
 
-// Bring element above darken + make it brighter
+// Dim all cards EXCEPT the target, making the target pop bright
+var allCards = null;
 function spotlight(el) {
-  var darken = document.getElementById("darken");
-  darken.style.opacity = "1";
-  el.style.zIndex = "98";
-  el.style.position = "relative";
-  el.style.background = "rgba(20,30,54,0.95)";
-  el.style.borderColor = "rgba(0,188,125,0.55)";
-  el.style.boxShadow = "0 0 24px rgba(0,188,125,0.2), 0 0 0 2px rgba(0,188,125,0.3)";
-}
-
-function clearSpot(el) {
-  el.style.zIndex = "";
-  el.style.position = "";
-  el.style.background = "";
-  el.style.borderColor = "";
-  el.style.boxShadow = "";
-  document.getElementById("darken").style.opacity = "0";
-}
-
-function clearAll() {
-  ["stat-score", "stats-row", "chart-card", "sessions-card", "sess-0", "goals-card", "start-cta"].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) {
-      el.style.zIndex = "";
-      el.style.position = "";
-      el.style.background = "";
-      el.style.borderColor = "";
-      el.style.boxShadow = "";
+  if (!allCards) allCards = document.querySelectorAll('.card, #start-cta, #sess-0, #sess-1, #sess-2');
+  allCards.forEach(function(c) {
+    if (c !== el) c.style.filter = 'brightness(0.25)';
+    else {
+      c.style.filter = 'brightness(1.15)';
+      c.style.background = 'rgba(26,38,62,0.95)';
+      c.style.borderColor = 'rgba(0,188,125,0.55)';
+      c.style.boxShadow = '0 0 28px rgba(0,188,125,0.25), 0 0 0 3px rgba(0,188,125,0.3)';
     }
   });
+  // Also dim the session rows
+  document.querySelectorAll('.sr').forEach(function(s) { if (s !== el) s.style.filter = 'brightness(0.25)'; });
+}
+
+function clearSpotlight() {
+  var all = document.querySelectorAll('.card, #start-cta, .sr, #sess-0, #sess-1, #sess-2');
+  all.forEach(function(c) {
+    c.style.filter = '';
+    c.style.background = '';
+    c.style.borderColor = '';
+    c.style.boxShadow = '';
+  });
   document.getElementById("darken").style.opacity = "0";
-  document.getElementById("sess-0").style.border = "";
-  document.getElementById("start-cta").style.transform = "";
-  document.getElementById("start-cta").style.zIndex = "";
-  document.getElementById("start-cta").style.position = "";
 }
 
 /* 0s: Cards */
@@ -296,16 +286,15 @@ tl.from("#stats-row > div", { opacity: 0, y: 10, duration: 0.4, stagger: 0.1, ea
 tl.from("#chart-card, #sessions-card, #goals-card, #insight-card", { opacity: 0, y: 10, duration: 0.4, stagger: 0.08, ease: "power2.out" }, 0.6);
 tl.from("#start-cta", { opacity: 0, y: 12, duration: 0.5, ease: "power2.out" }, 0.9);
 
-/* PHASE 1: bt1 "Every session is tracked" + spotlight stats-row */
+/* PHASE 1: bt1 + spotlight stats-row */
 tl.to("#bt1", { opacity: 1, duration: 0.4 }, 1.2);
 tl.call(function() { spotlight(document.getElementById("stats-row")); }, null, 1.5);
-// Cursor: stats row, first card center ~ left:220+95=315, top:52+20+50+14=136 → ~152
 tl.to("#cur", { left: 280, top: 158, duration: 1.2, ease: "power2.inOut" }, 2.0);
 tl.call(clickAt, null, 3.2);
 tl.to("#bt1", { opacity: 0, duration: 0.25 }, 4.0);
-tl.call(function() { clearSpot(document.getElementById("stats-row")); }, null, 4.2);
+tl.call(clearSpotlight, null, 4.2);
 
-/* PHASE 2: bt2 "Your growth, visualized" + spotlight chart-card + SVG bars */
+/* PHASE 2: bt2 + spotlight chart-card + SVG bars */
 tl.to("#bt2", { opacity: 1, duration: 0.4 }, 4.5);
 tl.call(function() { spotlight(document.getElementById("chart-card")); }, null, 5.0);
 tl.to("#r0", { attr: { y: 88, height: 82 }, duration: 0.35, ease: "power2.out" }, 5.2);
@@ -315,25 +304,25 @@ tl.to("#r3", { attr: { y: 68, height: 102 }, duration: 0.35, ease: "power2.out" 
 tl.to("#r4", { attr: { y: 62, height: 108 }, duration: 0.35, ease: "power2.out" }, 5.8);
 tl.to("#r5", { attr: { y: 55, height: 115 }, duration: 0.45, ease: "power2.out" }, 5.95);
 tl.to("#bt2", { opacity: 0, duration: 0.25 }, 8.0);
-tl.call(function() { clearSpot(document.getElementById("chart-card")); }, null, 8.2);
+tl.call(clearSpotlight, null, 8.2);
 
-/* PHASE 3: bt3 "Tap any session" + spotlight sessions-card → sess-0 */
+/* PHASE 3: bt3 + spotlight sessions-card → sess-0 */
 tl.to("#bt3", { opacity: 1, duration: 0.4 }, 8.3);
 tl.call(function() { spotlight(document.getElementById("sessions-card")); }, null, 8.5);
-// Cursor: sess-0 left:200+20+10=230, top:52+20+50+14+55+12+255+12+42+3=515
 tl.to("#cur", { left: 280, top: 512, duration: 1.2, ease: "power2.inOut" }, 8.8);
 tl.call(function() {
-  clearSpot(document.getElementById("sessions-card"));
+  clearSpotlight();
   spotlight(document.getElementById("sess-0"));
 }, null, 10.0);
 tl.call(clickAt, null, 10.1);
 
-/* → Feedback page: darken first, show fb-page + bt4, then after 1.5s remove darken */
+/* → Feedback page: show darkened first, then restore */
 tl.call(function() {
+  clearSpotlight();
   document.getElementById("dash-wrap").style.opacity = "0";
   document.getElementById("fb-page").style.opacity = "1";
   document.getElementById("fb-page").style.transition = "opacity 0.4s";
-  document.getElementById("darken").style.opacity = "1"; // darken feedback initially
+  document.getElementById("darken").style.opacity = "1";
   var ring = document.getElementById("fb-ring");
   ring.style.transition = "background 1.5s ease-out";
   setTimeout(function() {
@@ -341,79 +330,55 @@ tl.call(function() {
     document.getElementById("fb-num").textContent = "74";
   }, 150);
   document.getElementById("bt3").style.opacity = "0";
-  document.getElementById("sess-0").style.zIndex = "";
-  document.getElementById("sess-0").style.position = "";
-  document.getElementById("sess-0").style.background = "";
-  document.getElementById("sess-0").style.borderColor = "";
-  document.getElementById("sess-0").style.boxShadow = "";
-  document.getElementById("darken").style.opacity = "1";
 }, null, 10.3);
 
-/* bt4: show text while feedback page is darkened */
+/* bt4: show text while feedback is darkened */
 tl.to("#bt4", { opacity: 1, duration: 0.5 }, 10.5);
 
-/* After 2s: remove darken, restore brightness, scroll */
+/* After 2s: restore brightness, then GSAP-scroll feedback */
 tl.call(function() {
   document.getElementById("darken").style.opacity = "0";
   document.getElementById("bt4").style.opacity = "0";
-  document.getElementById("fb-inner").style.transition = "top 3s ease-in-out";
-  document.getElementById("fb-inner").style.top = "-650px";
+  // Use GSAP to animate scroll — no CSS transition conflicts
+  gsap.to(document.getElementById("fb-inner"), { top: -650, duration: 3, ease: "power2.inOut" });
 }, null, 13.0);
 
-/* Cursor → Back button (in feedback page, near the nav area) */
-tl.to("#cur", { left: 200, top: 600, duration: 1.0, ease: "power2.inOut" }, 16.5);
-tl.call(clickAt, null, 17.5);
-tl.to("#cur", { left: 400, top: 260, duration: 0.5, ease: "power2.inOut" }, 17.8);
-/* Actually click the back button */
-tl.to("#cur", { left: 380, top: 350, duration: 0.6, ease: "power2.inOut" }, 18.3);
-tl.call(clickAt, null, 18.9);
+/* Cursor → Back button in feedback, then return to dashboard */
+tl.to("#cur", { left: 200, top: 600, duration: 0.8, ease: "power2.inOut" }, 16.5);
+tl.call(clickAt, null, 17.3);
+tl.to("#cur", { left: 380, top: 350, duration: 0.6, ease: "power2.inOut" }, 17.8);
+tl.call(clickAt, null, 18.4);
 
-/* Return to dashboard */
+/* Return to dashboard — kill any running scroll tween, reset instantly */
 tl.call(function() {
+  gsap.killTweensOf(document.getElementById("fb-inner"));
+  document.getElementById("fb-inner").style.top = "0";
   document.getElementById("fb-page").style.opacity = "0";
   document.getElementById("fb-page").style.transition = "opacity 0.3s";
   document.getElementById("dash-wrap").style.opacity = "1";
   document.getElementById("dash-wrap").style.transition = "opacity 0.4s";
-  document.getElementById("fb-inner").style.top = "0";
-  document.getElementById("fb-inner").style.transition = "none";
   document.getElementById("fb-ring").style.background = "conic-gradient(#020618 360deg, rgba(255,255,255,0.06) 0deg)";
   document.getElementById("fb-num").textContent = "0";
-}, null, 19.2);
+}, null, 19.0);
 
-/* PHASE 5: bt5 "Set goals" + spotlight goals-card */
-tl.to("#bt5", { opacity: 1, duration: 0.4 }, 19.6);
-tl.call(function() { spotlight(document.getElementById("goals-card")); }, null, 19.9);
-// goals-card: left edge ~200+20=220, card width 250 → center ~345
-// But right column is at left=200+20+left_col(~734)+16=970, so center is 970+125=1095
-// Goals card: in right column, ~1770px from left
+/* PHASE 5: bt5 + spotlight goals-card */
+tl.to("#bt5", { opacity: 1, duration: 0.4 }, 19.4);
+tl.call(function() { spotlight(document.getElementById("goals-card")); }, null, 19.7);
 tl.to("#cur", { left: 1775, top: 158, duration: 1.3, ease: "power2.inOut" }, 20.0);
 tl.to("#gb1", { width: "80%", duration: 0.5, ease: "power2.out" }, 21.3);
 tl.to("#gb3", { width: "60%", duration: 0.5, ease: "power2.out" }, 21.3);
 tl.call(clickAt, null, 21.3);
 tl.to("#bt5", { opacity: 0, duration: 0.25 }, 22.5);
-tl.call(function() { clearSpot(document.getElementById("goals-card")); }, null, 22.7);
+tl.call(clearSpotlight, null, 22.7);
 
-/* PHASE 6: bt6 "Ready when you are" + spotlight ONLY start-cta */
+/* PHASE 6: bt6 + spotlight start-cta */
 tl.to("#bt6", { opacity: 1, duration: 0.5 }, 23.0);
-tl.call(function() {
-  var cta = document.getElementById("start-cta");
-  cta.style.zIndex = "98";
-  cta.style.position = "relative";
-  cta.style.background = "rgba(0,188,125,0.12)";
-  cta.style.borderColor = "rgba(0,188,125,0.55)";
-  cta.style.boxShadow = "0 0 30px rgba(0,188,125,0.25), 0 0 0 2px rgba(0,188,125,0.3)";
-  document.getElementById("darken").style.opacity = "1";
-}, null, 23.3);
-
-// Cursor to start-cta: button is at bottom:18px, left:220px, right:20px
-// Center X: 220 + (1920-220-20)/2 = 220 + 840 = 1060
-// Center Y: 1080 - 18 - 30(half button height ~60px) = 1032
-tl.to("#cur", { left: 1060, top: 1030, duration: 1.5, ease: "power2.inOut" }, 24.3);
+tl.call(function() { spotlight(document.getElementById("start-cta")); }, null, 23.3);
+tl.to("#cur", { left: 1060, top: 1015, duration: 1.5, ease: "power2.inOut" }, 24.3);
 tl.call(function() {
   var cta = document.getElementById("start-cta");
   cta.style.transform = "scale(1.03)";
-  cta.style.boxShadow = "0 0 40px rgba(0,188,125,0.4), 0 0 0 3px rgba(0,188,125,0.4)";
-  cta.style.background = "rgba(0,188,125,0.18)";
+  cta.style.background = "rgba(0,188,125,0.2)";
 }, null, 25.8);
 tl.call(clickAt, null, 26.0);
 

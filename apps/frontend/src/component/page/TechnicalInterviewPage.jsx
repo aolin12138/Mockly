@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '../ui/Modal.jsx';
 import { ArrowLeft, Play, RotateCcw, Check, X, ChevronDown, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useConversation } from '@elevenlabs/react';
+import { useTheme } from '../../context/ThemeContext';
 import ParticleOrb from '../ui/particle-orb.jsx';
 import { LiveWaveform } from '../ui/live-waveform.jsx';
 import { authFetch, ensureAuthenticated } from '../../lib/auth';
@@ -26,7 +27,7 @@ const Card = ({ children, className = '', delay = 0 }) => (
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5, delay }}
-    className={`relative bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-2xl p-6 shadow-lg overflow-hidden ${className}`}
+    className={`relative bg-slate-50/40 dark:bg-slate-900/40 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-2xl p-6 shadow-lg overflow-hidden ${className}`}
   >
     {children}
   </motion.div>
@@ -57,6 +58,7 @@ const getStarterCode = (lang, question) => {
 };
 
 const TechnicalInterviewPage = () => {
+  const { theme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const { sessionId: urlSessionId } = useParams();
@@ -566,10 +568,10 @@ const TechnicalInterviewPage = () => {
   // Render loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 flex items-center justify-center">
         <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="text-center">
           <div className="text-emerald-400 text-4xl mb-4">⟳</div>
-          <p className="text-slate-300">Loading question...</p>
+          <p className="text-slate-700 dark:text-slate-300">Loading question...</p>
         </motion.div>
       </div>
     );
@@ -578,13 +580,13 @@ const TechnicalInterviewPage = () => {
   // Render error state
   if (error && !question) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 flex items-center justify-center">
         <Card className="max-w-md">
           <div className="flex items-center gap-3 mb-4">
             <AlertCircle className="w-6 h-6 text-red-400" />
-            <h2 className="text-lg font-semibold text-slate-100">Error Loading Question</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Error Loading Question</h2>
           </div>
-          <p className="text-slate-300 mb-4">{error}</p>
+          <p className="text-slate-700 dark:text-slate-300 mb-4">{error}</p>
           <button
             onClick={() => navigate('/dashboard')}
             className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
@@ -601,7 +603,7 @@ const TechnicalInterviewPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 text-slate-900 dark:text-slate-100 p-4">
       <div className="h-screen flex flex-col">
         {/* Header - Title only */}
         <motion.div
@@ -612,7 +614,7 @@ const TechnicalInterviewPage = () => {
           <div className="flex-1">
             <button
               onClick={handleBack}
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-slate-400 hover:text-emerald-400 transition-colors mb-1"
+              className="inline-flex items-center gap-2 px-3 py-1.5 text-slate-500 dark:text-slate-400 hover:text-emerald-400 transition-colors mb-1"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="text-xs">Back</span>
@@ -620,7 +622,7 @@ const TechnicalInterviewPage = () => {
             <h1 className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent line-clamp-2">
               {question.title}
             </h1>
-            <p className="text-slate-400 mt-0.5 text-xs">
+            <p className="text-slate-500 dark:text-slate-400 mt-0.5 text-xs">
               Difficulty: <span className="text-emerald-400 font-medium">{question.difficulty}</span>
             </p>
           </div>
@@ -636,12 +638,12 @@ const TechnicalInterviewPage = () => {
                 animate={{ width: '560px', opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="relative bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-lg p-3 overflow-hidden flex flex-col flex-shrink-0 self-start max-h-[75vh]"
+                className="relative bg-slate-50/40 dark:bg-slate-900/40 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-lg p-3 overflow-hidden flex flex-col flex-shrink-0 self-start max-h-[75vh]"
               >
                 <div className="space-y-3 overflow-y-auto pr-2 text-sm max-h-[60vh]">
                   <div>
                     <h2 className="text-sm font-semibold text-emerald-400 mb-1 uppercase tracking-wide">Problem</h2>
-                    <p className="text-slate-300 whitespace-pre-wrap text-sm leading-relaxed">
+                    <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap text-sm leading-relaxed">
                       {question.problem_statement}
                     </p>
                   </div>
@@ -651,7 +653,7 @@ const TechnicalInterviewPage = () => {
                       <h3 className="text-sm font-semibold text-cyan-400 mb-1 uppercase tracking-wide">Constraints</h3>
                       <ul className="space-y-0.5">
                         {question.constraints.map((constraint, idx) => (
-                          <li key={idx} className="text-slate-400 text-sm">
+                          <li key={idx} className="text-slate-500 dark:text-slate-400 text-sm">
                             • {constraint}
                           </li>
                         ))}
@@ -664,7 +666,7 @@ const TechnicalInterviewPage = () => {
                       <h3 className="text-sm font-semibold text-cyan-400 mb-1 uppercase tracking-wide">Examples</h3>
                       <div className="space-y-1">
                         {question.examples.map((test, idx) => (
-                          <div key={idx} className="bg-slate-800/50 rounded p-1 text-sm font-mono text-slate-300">
+                          <div key={idx} className="bg-white dark:bg-slate-800/50 rounded p-1 text-sm font-mono text-slate-700 dark:text-slate-300">
                             <div>I: <span className="text-cyan-300">{String(test.input)}</span></div>
                             <div>O: <span className="text-emerald-300">{String(test.output)}</span></div>
                           </div>
@@ -676,9 +678,9 @@ const TechnicalInterviewPage = () => {
 
                 <button
                   onClick={() => setPanelOpen(false)}
-                  className="absolute top-2 right-2 p-1 hover:bg-slate-800 rounded transition-colors"
+                  className="absolute top-2 right-2 p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition-colors"
                 >
-                  <ChevronLeft className="w-3.5 h-3.5 text-slate-400" />
+                  <ChevronLeft className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                 </button>
               </motion.div>
             )}
@@ -690,9 +692,9 @@ const TechnicalInterviewPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               onClick={() => setPanelOpen(true)}
-              className="w-9 h-9 flex items-center justify-center bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-lg hover:bg-slate-900/60 transition-colors flex-shrink-0"
+              className="w-9 h-9 flex items-center justify-center bg-slate-50/40 dark:bg-slate-900/40 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900/60 transition-colors flex-shrink-0"
             >
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <ChevronRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
             </motion.button>
           )}
 
@@ -703,9 +705,9 @@ const TechnicalInterviewPage = () => {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="inline-flex items-center gap-3 bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-lg px-4 py-2 mb-2 w-fit"
+                className="inline-flex items-center gap-3 bg-slate-50/40 dark:bg-slate-900/40 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-lg px-4 py-2 mb-2 w-fit"
               >
-                <label className="text-sm font-medium text-slate-300">Language:</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Language:</label>
                 <div className="flex gap-2">
                   {['javascript', 'python', 'java'].map((lang) => (
                     <button
@@ -713,7 +715,7 @@ const TechnicalInterviewPage = () => {
                       onClick={() => handleLanguageChange(lang)}
                       className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${language === lang
                         ? 'bg-emerald-500 text-white'
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                         }`}
                     >
                       {lang === 'javascript' ? 'JS' : lang === 'python' ? 'Python' : 'Java'}
@@ -726,13 +728,13 @@ const TechnicalInterviewPage = () => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="w-full bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-lg p-0 overflow-hidden flex-shrink-0 h-[520px]"
+                className="w-full bg-slate-50/40 dark:bg-slate-900/40 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-lg p-0 overflow-hidden flex-shrink-0 h-[520px]"
               >
                 <MonacoEditor
                   value={code}
                   language={language}
                   onChange={setCode}
-                  theme="vs-dark"
+                  theme={theme === 'dark' ? 'vs-dark' : 'light'}
                   options={{
                     selectOnLineNumbers: true,
                     fontSize: 16,
@@ -755,7 +757,7 @@ const TechnicalInterviewPage = () => {
                   onClick={handleReset}
                   disabled={running}
                   title="Reset"
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   <RotateCcw className="w-4 h-4" />
                 </motion.button>
@@ -840,7 +842,7 @@ const TechnicalInterviewPage = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-lg p-3 mt-2 flex-shrink-0"
+                    className="bg-slate-50/40 dark:bg-slate-900/40 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-lg p-3 mt-2 flex-shrink-0"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wide">Test Results</h3>
@@ -912,7 +914,7 @@ const TechnicalInterviewPage = () => {
                             <span className="text-lg">
                               {testResults.hiddenPassedTests === testResults.totalHiddenTests ? '🔒✓' : '🔒'}
                             </span>
-                            <span className="text-sm font-semibold text-slate-200">Hidden Tests</span>
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Hidden Tests</span>
                           </div>
                           <span className={`text-sm font-bold px-2 py-1 rounded ${testResults.hiddenPassedTests === testResults.totalHiddenTests
                             ? 'bg-emerald-500/20 text-emerald-400'
@@ -923,7 +925,7 @@ const TechnicalInterviewPage = () => {
                             {testResults.hiddenPassedTests}/{testResults.totalHiddenTests} Passed
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                           {testResults.hiddenPassedTests === testResults.totalHiddenTests
                             ? 'All hidden tests passed! Your solution handles edge cases well.'
                             : testResults.hiddenPassedTests > 0
@@ -952,7 +954,7 @@ const TechnicalInterviewPage = () => {
                   colors={['#2792DC', '#9CE6E6']}
                 />
               </motion.div>
-              <p className="text-sm font-semibold text-slate-400">
+              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
                 {conversation.status === 'connected'
                   ? conversation.isSpeaking ? 'Speaking' : 'Listening'
                   : conversation.status === 'connecting' ? 'Connecting' : 'Ready'}
@@ -980,10 +982,10 @@ const TechnicalInterviewPage = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-slate-900 border border-red-500/20 rounded-lg p-4 max-w-md w-full"
+                className="bg-white dark:bg-slate-900 border border-red-500/20 rounded-lg p-4 max-w-md w-full"
               >
                 <h2 className="text-red-400 font-semibold mb-2 text-sm">Error</h2>
-                <p className="text-slate-300 text-xs mb-3 whitespace-pre-wrap">{error}</p>
+                <p className="text-slate-700 dark:text-slate-300 text-xs mb-3 whitespace-pre-wrap">{error}</p>
                 <button
                   onClick={() => setError(null)}
                   className="w-full px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs rounded transition-colors"
@@ -1006,7 +1008,7 @@ const TechnicalInterviewPage = () => {
         onSecondaryClick={() => setShowExitWarning(false)}
         showCloseButton={true}
       >
-        <div className="space-y-3 text-slate-300 text-sm">
+        <div className="space-y-3 text-slate-700 dark:text-slate-300 text-sm">
           <p>If you leave now, this technical session will be <span className="text-amber-200 font-semibold">saved as incomplete</span> and no final evaluation will run.</p>
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
             <p className="text-amber-100">Incomplete sessions expire automatically later if you do not return to them.</p>
