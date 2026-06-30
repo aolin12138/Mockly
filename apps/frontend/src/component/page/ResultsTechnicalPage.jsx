@@ -6,6 +6,7 @@ import { Waveform } from '../ui/waveform';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { LoadingPage } from './LoadingPage';
 import Editor from '@monaco-editor/react';
+import { useTheme } from '../../context/ThemeContext';
 import {
   CheckCircle2,
   XCircle,
@@ -104,7 +105,7 @@ function Card({ children, delay = 0, className = '' }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
-      className={`bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl ${className}`}
+      className={`bg-slate-50 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-2xl ${className}`}
     >
       {children}
     </motion.div>
@@ -124,12 +125,12 @@ function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false, 
       >
         <div className="flex items-center gap-3">
           {Icon && <Icon className="w-5 h-5 text-emerald-400" />}
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h2>
         </div>
         {isOpen ? (
-          <ChevronUp className="w-5 h-5 text-slate-400" />
+          <ChevronUp className="w-5 h-5 text-slate-500 dark:text-slate-400" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-slate-400" />
+          <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400" />
         )}
       </button>
       <motion.div
@@ -219,8 +220,8 @@ function AudioPlayer({ audio, audioRef }) {
     <Card delay={0.5}>
       <div className="flex items-center justify-between mb-3">
         <div>
-          <p className="text-sm font-semibold text-white">Conversation Replay</p>
-          <p className="text-xs text-slate-400">Audio from your technical interview</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-white">Conversation Replay</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Audio from your technical interview</p>
         </div>
         <button
           type="button"
@@ -285,7 +286,7 @@ function AudioPlayer({ audio, audioRef }) {
 
       <audio ref={audioRef} src={source || undefined} preload="metadata" className="hidden" />
 
-      <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500">
+      <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
         <span>{source ? 'Waveform powered by ElevenLabs UI' : 'No audio attached'}</span>
         <span className="text-emerald-400 font-medium">{Math.round(progress * 100)}% played</span>
       </div>
@@ -395,10 +396,10 @@ function ScoreCircle({ score, size = 'lg' }) {
 function QuickFact({ icon: Icon, label, value }) {
   if (value == null) return null;
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
-      {Icon && <Icon className="w-4 h-4 text-slate-400" />}
-      <span className="text-xs text-slate-400">{label}:</span>
-      <span className="text-xs font-semibold text-white">{value}</span>
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/5">
+      {Icon && <Icon className="w-4 h-4 text-slate-500 dark:text-slate-400" />}
+      <span className="text-xs text-slate-500 dark:text-slate-400">{label}:</span>
+      <span className="text-xs font-semibold text-slate-900 dark:text-white">{value}</span>
     </div>
   );
 }
@@ -429,10 +430,10 @@ function DimensionCard({ dimension, index }) {
       className={`${colors.bg} border ${colors.border} rounded-2xl p-4`}
     >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-semibold text-white">{formatDimensionName(dimension.name)}</span>
+        <span className="text-sm font-semibold text-slate-900 dark:text-white">{formatDimensionName(dimension.name)}</span>
         <div className="flex items-center gap-2">
           {hintsUsed != null && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-white/10">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
               {hintsUsed} hint{hintsUsed !== 1 ? 's' : ''}
             </span>
           )}
@@ -461,7 +462,7 @@ function DimensionCard({ dimension, index }) {
       {whatWentWell && (
         <div className="mb-2">
           <p className="text-xs text-emerald-400 font-medium mb-1">What went well</p>
-          <p className="text-xs text-slate-300 leading-relaxed">{whatWentWell}</p>
+          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{whatWentWell}</p>
         </div>
       )}
 
@@ -469,7 +470,7 @@ function DimensionCard({ dimension, index }) {
       {whatToImprove && (
         <div>
           <p className="text-xs text-amber-400 font-medium mb-1">What to improve</p>
-          <p className="text-xs text-slate-300 leading-relaxed">{whatToImprove}</p>
+          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{whatToImprove}</p>
         </div>
       )}
     </motion.div>
@@ -496,7 +497,7 @@ function NextStepCard({ step, index }) {
           <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
             <span className="text-xs font-bold text-emerald-400">{index + 1}</span>
           </div>
-          <p className="text-sm text-slate-300">{text}</p>
+          <p className="text-sm text-slate-700 dark:text-slate-300">{text}</p>
         </div>
       </motion.div>
     );
@@ -515,18 +516,18 @@ function NextStepCard({ step, index }) {
         </div>
         <div className="flex-1 space-y-2">
           {action && (
-            <p className="text-sm font-semibold text-white">{action}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">{action}</p>
           )}
           {why && (
             <div>
-              <p className="text-xs text-slate-400 font-medium">Why</p>
-              <p className="text-xs text-slate-300">{why}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Why</p>
+              <p className="text-xs text-slate-700 dark:text-slate-300">{why}</p>
             </div>
           )}
           {how && (
             <div>
-              <p className="text-xs text-slate-400 font-medium">How</p>
-              <p className="text-xs text-slate-300">{how}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">How</p>
+              <p className="text-xs text-slate-700 dark:text-slate-300">{how}</p>
             </div>
           )}
         </div>
@@ -565,13 +566,13 @@ function TestResultsPanel({ testResults }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FlaskConical className="w-5 h-5 text-emerald-400" />
-          <span className="text-sm text-slate-300">Test Results</span>
+          <span className="text-sm text-slate-700 dark:text-slate-300">Test Results</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-white">{passed}</span>
-          <span className="text-sm text-slate-500">/</span>
-          <span className="text-lg font-bold text-white">{total}</span>
-          <span className="text-xs text-slate-400">passed</span>
+          <span className="text-lg font-bold text-slate-900 dark:text-white">{passed}</span>
+          <span className="text-sm text-slate-500 dark:text-slate-400">/</span>
+          <span className="text-lg font-bold text-slate-900 dark:text-white">{total}</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">passed</span>
         </div>
       </div>
 
@@ -623,7 +624,7 @@ function TestResultsPanel({ testResults }) {
 
       {/* Summary note */}
       {summaryNote && (
-        <p className="text-xs text-slate-400 italic">{summaryNote}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 italic">{summaryNote}</p>
       )}
     </div>
   );
@@ -631,6 +632,7 @@ function TestResultsPanel({ testResults }) {
 
 /* --- Code Review Sandbox --- */
 function CodeReviewSandbox({ sessionId, initialCode, language }) {
+  const { theme } = useTheme();
   const [code, setCode] = useState(initialCode || '');
   const [originalCode] = useState(initialCode || '');
   const [isRunning, setIsRunning] = useState(false);
@@ -678,11 +680,11 @@ function CodeReviewSandbox({ sessionId, initialCode, language }) {
   return (
     <div className="space-y-4">
       {/* Editor */}
-      <div className="rounded-xl overflow-hidden border border-white/10">
+      <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-white/10">
         <Editor
           height="300px"
           language={language || 'javascript'}
-          theme="vs-dark"
+          theme={theme === 'dark' ? 'vs-dark' : 'light'}
           value={code}
           onChange={(value) => setCode(value || '')}
           options={{
@@ -723,13 +725,13 @@ function CodeReviewSandbox({ sessionId, initialCode, language }) {
             type="button"
             onClick={handleReset}
             disabled={isRunning}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 text-white px-4 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed transition-all"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-4 py-2 text-xs font-medium hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed transition-all"
           >
             <RotateCcw className="w-3 h-3" />
             Reset to Submission
           </button>
         </div>
-        <p className="text-[10px] text-slate-500 italic">
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 italic">
           Edits here are for practice and aren't saved — your interview submission is preserved.
         </p>
       </div>
@@ -747,7 +749,7 @@ function CodeReviewSandbox({ sessionId, initialCode, language }) {
       {/* Test Results */}
       {testResults && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-white">Test Results</p>
+          <p className="text-xs font-semibold text-slate-900 dark:text-white">Test Results</p>
           <div className="grid gap-2">
             {Array.isArray(testResults.results) && testResults.results.length > 0 ? (
               testResults.results.map((test, idx) => (
@@ -769,9 +771,9 @@ function CodeReviewSandbox({ sessionId, initialCode, language }) {
                       {test.name || `Test ${idx + 1}`}
                     </p>
                     {!test.passed && (
-                      <div className="mt-1 space-y-0.5 text-slate-400">
-                        {test.input != null && <p>Input: <code className="text-slate-300">{JSON.stringify(test.input)}</code></p>}
-                        {test.expected != null && <p>Expected: <code className="text-slate-300">{JSON.stringify(test.expected)}</code></p>}
+                      <div className="mt-1 space-y-0.5 text-slate-500 dark:text-slate-400">
+                        {test.input != null && <p>Input: <code className="text-slate-700 dark:text-slate-300">{JSON.stringify(test.input)}</code></p>}
+                        {test.expected != null && <p>Expected: <code className="text-slate-700 dark:text-slate-300">{JSON.stringify(test.expected)}</code></p>}
                         {test.actual != null && <p>Actual: <code className="text-red-300">{JSON.stringify(test.actual)}</code></p>}
                       </div>
                     )}
@@ -779,7 +781,7 @@ function CodeReviewSandbox({ sessionId, initialCode, language }) {
                 </div>
               ))
             ) : (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {testResults.passed != null
                   ? `${testResults.passed} / ${testResults.total || '?'} tests passed`
                   : 'Tests completed (no detail available).'}
@@ -811,8 +813,8 @@ function TranscriptCard({ transcript, audioRef }) {
 
   return (
     <Card delay={0.4}>
-      <h2 className="text-sm font-semibold text-white mb-1">Chat History</h2>
-      <p className="text-xs text-slate-400 mb-4">Click timestamp to jump to that moment.</p>
+      <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Chat History</h2>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Click timestamp to jump to that moment.</p>
 
       <div className="max-h-72 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
         {transcript && transcript.length > 0 ? (
@@ -826,7 +828,7 @@ function TranscriptCard({ transcript, audioRef }) {
                   'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ' +
                   (m.role === 'user'
                     ? 'bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-white border border-emerald-500/30'
-                    : 'bg-slate-800/40 text-slate-100 border border-white/5')
+                    : 'bg-slate-100 dark:bg-slate-800/40 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-white/5')
                 }
               >
                 <div className="mb-1 flex items-center justify-between gap-2">
@@ -845,7 +847,7 @@ function TranscriptCard({ transcript, audioRef }) {
                         'text-[10px] font-medium px-2 py-0.5 rounded-full transition hover:scale-105 cursor-pointer ' +
                         (m.role === 'user'
                           ? 'bg-emerald-500/30 text-emerald-300 hover:bg-emerald-500/40'
-                          : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50')
+                          : 'bg-slate-200 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600/50')
                       }
                     >
                       {formatTime(m.timestart)}
@@ -857,7 +859,7 @@ function TranscriptCard({ transcript, audioRef }) {
             </div>
           ))
         ) : (
-          <p className="text-center text-sm text-slate-500 py-8">
+          <p className="text-center text-sm text-slate-500 dark:text-slate-400 py-8">
             No transcript available for this interview.
           </p>
         )}
@@ -1054,16 +1056,16 @@ export default function TechnicalResultsPage() {
 
   if (error || !feedbackData) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md text-center">
           <div className="mb-6">
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20 border border-red-500/30 mb-4">
               <XCircle className="h-8 w-8 text-red-400" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
               {error || 'Failed to load feedback'}
             </h1>
-            <p className="text-slate-400">
+            <p className="text-slate-500 dark:text-slate-400">
               We couldn't find feedback for this technical session.
             </p>
           </div>
@@ -1080,7 +1082,7 @@ export default function TechnicalResultsPage() {
             <button
               type="button"
               onClick={() => navigate('/technical')}
-              className="inline-flex items-center justify-center rounded-full border border-white/10 text-white px-5 py-2.5 text-sm font-medium hover:bg-white/5"
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-5 py-2.5 text-sm font-medium hover:bg-slate-100 dark:hover:bg-white/5"
             >
               Start new technical interview
             </button>
@@ -1116,7 +1118,7 @@ export default function TechnicalResultsPage() {
     .reduce((sum, d) => sum + (d.hints_used ?? d.hintsUsed ?? 0), 0);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30 overflow-hidden relative">
+    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-emerald-500/20 dark:selection:bg-emerald-500/30 overflow-hidden relative">
       {/* Ambient Background */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
@@ -1137,16 +1139,16 @@ export default function TechnicalResultsPage() {
             {/* Title row */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 dark:from-white dark:to-slate-400">
                   Technical Interview Results
                 </h1>
-                <p className="mt-2 text-sm text-slate-400">
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                   Comprehensive analysis of your coding interview performance
                 </p>
                 {sessionLanguage && (
                   <div className="mt-2 flex items-center gap-2">
                     <FileCode className="w-4 h-4 text-cyan-400" />
-                    <span className="text-xs text-slate-400">{sessionLanguage}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">{sessionLanguage}</span>
                   </div>
                 )}
               </div>
@@ -1213,14 +1215,14 @@ export default function TechnicalResultsPage() {
           {/* ===== 5. THINKING & LOGIC ===== */}
           {thinkingAndLogic && (
             <CollapsibleSection title="Thinking & Logic" icon={Brain} delay={0.25}>
-              <p className="text-sm text-slate-300 leading-relaxed">{thinkingAndLogic}</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{thinkingAndLogic}</p>
             </CollapsibleSection>
           )}
 
           {/* ===== 6. CODE ASSESSMENT ===== */}
           {codeAssessment && (
             <CollapsibleSection title="Code Assessment" icon={Code2} delay={0.3}>
-              <p className="text-sm text-slate-300 leading-relaxed">{codeAssessment}</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{codeAssessment}</p>
             </CollapsibleSection>
           )}
 
@@ -1234,8 +1236,8 @@ export default function TechnicalResultsPage() {
               </div>
               {/* Patterns to study */}
               {patternsToStudy && patternsToStudy.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <p className="text-xs text-slate-400 font-medium mb-2">Patterns to Study</p>
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-2">Patterns to Study</p>
                   <div className="flex flex-wrap gap-2">
                     {patternsToStudy.map((pattern, idx) => (
                       <PatternTag key={idx} pattern={pattern} index={idx} />
@@ -1254,8 +1256,8 @@ export default function TechnicalResultsPage() {
                   <Award className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-white mb-1">Final Words</h3>
-                  <p className="text-sm text-slate-300 leading-relaxed italic">{encouragement}</p>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Final Words</h3>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed italic">{encouragement}</p>
                 </div>
               </div>
             </Card>
@@ -1281,7 +1283,7 @@ export default function TechnicalResultsPage() {
             <button
               type="button"
               onClick={() => navigate('/dashboard')}
-              className="inline-flex items-center justify-center rounded-full border border-white/10 text-white px-6 py-3 text-sm font-medium hover:bg-white/5 transition-all"
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-6 py-3 text-sm font-medium hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
             >
               Back to Dashboard
             </button>

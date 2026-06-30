@@ -8,29 +8,11 @@
     "prompt": "You're a candidate who already received one general hint but you're STILL stuck and you ask for more help. You've been coding for a while. Press for a more concrete hint.",
     "first_message": "I'm still not getting it. Can you give me something more specific to work with?"
   },
-  "partial_conversation_history": [
-    {
-      "role": "user",
-      "message": "I'm going to try a brute force approach — nested loops checking every pair."
-    },
-    {
-      "role": "agent",
-      "message": "Go for it."
-    },
-    {
-      "role": "user",
-      "message": "Okay, I've got the outer loop but I'm stuck on the inner part — can you give me a hint?"
-    },
-    {
-      "role": "agent",
-      "message": "What if you thought about what information you need at each step — is there something you could track as you go?"
-    }
-  ],
   "new_turns_limit": 5,
   "tool_mocks": {
     "get_current_code": {
       "default_return_value": {
-        "code": "def solve(nums, target):\n    for i in range(len(nums)):\n        pass",
+        "code": "def max_subarray_sum(nums):\n    max_so_far = nums[0]\n    max_ending = nums[0]\n    for i in range(1, len(nums)):\n        pass",
         "language": "python",
         "remaining_minutes": 16,
         "hintCount": 1
@@ -48,5 +30,12 @@
     }
   ],
   "target_phase": 2,
-  "target_phase_label": "Phase 2: Implementation"
+  "target_phase_label": "Phase 2: Implementation",
+  "warm_up": {
+    "candidate_turns": [
+      "I'm going to try a brute force approach — nested loops checking every subarray.",
+      "Okay, I've got the outer loop but I'm stuck on the inner part — can you give me a hint?"
+    ],
+    "target_phase_label": "Phase 2"
+  }
 }

@@ -399,7 +399,7 @@ export function LoadingPage() {
   };
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-slate-950 overflow-hidden relative px-4'>
+    <div className='min-h-screen flex items-center justify-center bg-white dark:bg-slate-950 overflow-hidden relative px-4'>
       {/* Ambient gradient blurs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-pulse" />
@@ -442,7 +442,7 @@ export function LoadingPage() {
           <motion.p
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className='text-sm text-slate-400 mt-2'
+            className='text-sm text-slate-500 dark:text-slate-400 mt-2'
           >
             {subStatus}
           </motion.p>
@@ -476,7 +476,7 @@ export function LoadingPage() {
             <button
               type='button'
               onClick={() => navigate('/dashboard', { replace: true })}
-              className='inline-flex items-center justify-center rounded-full border border-white/10 text-white px-5 py-2.5 text-sm font-medium hover:bg-white/5'
+              className='inline-flex items-center justify-center rounded-full border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-5 py-2.5 text-sm font-medium hover:bg-slate-100 dark:hover:bg-white/5'
             >
               Back to dashboard
             </button>

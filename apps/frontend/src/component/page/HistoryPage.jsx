@@ -70,7 +70,7 @@ const getStatusPill = (status) => {
   if (normalized === 'pending') {
     return {
       label: 'Pending',
-      classes: 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+      classes: 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20'
     };
   }
   if (normalized === 'completed') {
@@ -81,7 +81,7 @@ const getStatusPill = (status) => {
   }
   return {
     label: normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : 'Unknown',
-    classes: 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+    classes: 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20'
   };
 };
 
@@ -102,21 +102,21 @@ const fadeInUp = {
 const SkeletonCard = () => (
   <MotionDiv
     variants={cardVariants}
-    className="p-5 rounded-2xl bg-slate-900/40 border border-white/5 overflow-hidden"
+    className="p-5 rounded-2xl bg-slate-50/40 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 overflow-hidden"
   >
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center space-x-4">
-        <div className="w-10 h-10 rounded-xl bg-slate-800/80 animate-pulse" />
+        <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800/80 animate-pulse" />
         <div className="space-y-2">
-          <div className="w-40 h-4 rounded-lg bg-slate-800/80 animate-pulse" />
-          <div className="w-28 h-3 rounded-lg bg-slate-800/60 animate-pulse" />
+          <div className="w-40 h-4 rounded-lg bg-white dark:bg-slate-800/80 animate-pulse" />
+          <div className="w-28 h-3 rounded-lg bg-white dark:bg-slate-800/60 animate-pulse" />
         </div>
       </div>
-      <div className="w-16 h-7 rounded-full bg-slate-800/80 animate-pulse" />
+      <div className="w-16 h-7 rounded-full bg-white dark:bg-slate-800/80 animate-pulse" />
     </div>
     <div className="pl-14 pr-4 space-y-2">
-      <div className="w-full h-3 rounded-lg bg-slate-800/60 animate-pulse" />
-      <div className="w-3/4 h-3 rounded-lg bg-slate-800/60 animate-pulse" />
+      <div className="w-full h-3 rounded-lg bg-white dark:bg-slate-800/60 animate-pulse" />
+      <div className="w-3/4 h-3 rounded-lg bg-white dark:bg-slate-800/60 animate-pulse" />
     </div>
   </MotionDiv>
 );
@@ -144,7 +144,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
     onClick={onClick}
     whileHover={{ x: 5, backgroundColor: 'rgba(30, 41, 59, 0.5)' }}
     whileTap={{ scale: 0.95 }}
-    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors duration-200 group relative overflow-hidden cursor-pointer ${active ? 'text-emerald-400' : 'text-slate-400'
+    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors duration-200 group relative overflow-hidden cursor-pointer ${active ? 'text-emerald-400' : 'text-slate-500 dark:text-slate-400'
       }`}
   >
     {active && (
@@ -254,7 +254,7 @@ const HistoryPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans selection:bg-emerald-500/30 overflow-hidden relative">
+    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex font-sans selection:bg-emerald-500/20 dark:selection:bg-emerald-500/30 overflow-hidden relative">
       {/* Ambient Background */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
@@ -263,7 +263,7 @@ const HistoryPage = () => {
       </div>
 
       {/* Sidebar — matches Dashboard */}
-      <aside className="w-72 fixed h-full border-r border-white/5 bg-slate-900/50 backdrop-blur-xl hidden md:flex flex-col p-6 z-20 shadow-2xl">
+      <aside className="w-72 fixed h-full border-r border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-xl hidden md:flex flex-col p-6 z-20 shadow-2xl">
         <button
           onClick={() => navigate('/')}
           className="mb-10 flex items-center space-x-3 px-2 hover:opacity-80 transition-opacity cursor-pointer"
@@ -271,7 +271,7 @@ const HistoryPage = () => {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <span className="font-bold text-slate-900">M</span>
           </div>
-          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 dark:from-white to-slate-500 dark:to-slate-400">
             Mockly
           </span>
         </button>
@@ -283,7 +283,7 @@ const HistoryPage = () => {
           <SidebarItem icon={BookOpen} label="Improve" onClick={() => navigate('/dashboard')} />
         </nav>
 
-        <div className="pt-6 border-t border-slate-800/60 space-y-2">
+        <div className="pt-6 border-t border-slate-200 dark:border-slate-800/60 space-y-2">
           <SidebarItem icon={Key} label="API Key" onClick={() => navigate('/dashboard?tab=settings')} />
           <SidebarItem icon={LogOut} label="Sign Out" onClick={handleSignOut} />
         </div>
@@ -304,12 +304,12 @@ const HistoryPage = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate('/dashboard')}
-                className="p-2 rounded-xl bg-slate-800/40 border border-white/5 text-slate-400 hover:text-white hover:border-emerald-500/30 transition-all cursor-pointer"
+                className="p-2 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-emerald-500/30 transition-all cursor-pointer"
               >
                 <ArrowLeft size={18} />
               </MotionButton>
               <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
                     Interview History
                   </span>
@@ -326,7 +326,7 @@ const HistoryPage = () => {
             variants={fadeInUp}
             className="flex items-center gap-3 mb-8 flex-wrap"
           >
-            <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-2xl px-4 py-2.5">
+            <div className="flex items-center gap-2 bg-slate-50/60 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-white/5 rounded-2xl px-4 py-2.5">
               <span className="text-slate-500 text-sm">Sort by</span>
               {SORT_OPTIONS.map((opt) => (
                 <MotionButton
@@ -336,7 +336,7 @@ const HistoryPage = () => {
                   whileTap={{ scale: 0.96 }}
                   className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${sortBy === opt.value
                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : 'text-slate-400 hover:text-white border border-transparent'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-transparent'
                     }`}
                 >
                   {opt.label}
@@ -346,7 +346,7 @@ const HistoryPage = () => {
             <MotionButton
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.92 }}
-              className="p-2.5 rounded-xl border border-white/5 bg-slate-900/60 backdrop-blur-xl text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 transition-all cursor-pointer"
+              className="p-2.5 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-50/60 dark:bg-slate-900/60 backdrop-blur-xl text-slate-500 dark:text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 transition-all cursor-pointer"
               onClick={handleSortDirToggle}
               aria-label="Toggle sort direction"
             >
@@ -359,7 +359,7 @@ const HistoryPage = () => {
                 {sortDir === 'asc' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </motion.div>
             </MotionButton>
-            <div className="ml-auto text-xs text-slate-600">
+            <div className="ml-auto text-xs text-slate-500 dark:text-slate-600">
               {!initialLoading && `${interviews.length} interview${interviews.length !== 1 ? 's' : ''} shown`}
             </div>
           </motion.div>
@@ -389,11 +389,11 @@ const HistoryPage = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-center py-20"
                 >
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-800/40 border border-white/5 flex items-center justify-center">
-                    <Search size={24} className="text-slate-600" />
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-white/5 flex items-center justify-center">
+                    <Search size={24} className="text-slate-500 dark:text-slate-600" />
                   </div>
-                  <p className="text-slate-400 text-lg font-medium">No interviews found</p>
-                  <p className="text-slate-600 text-sm mt-1">
+                  <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">No interviews found</p>
+                  <p className="text-slate-500 dark:text-slate-600 text-sm mt-1">
                     Complete an interview to see it here
                   </p>
                   <MotionButton
@@ -427,7 +427,7 @@ const HistoryPage = () => {
                           borderColor: 'rgba(16, 185, 129, 0.3)',
                           transition: { duration: 0.2 }
                         }}
-                        className="p-5 rounded-2xl bg-slate-900/40 backdrop-blur-xl border border-white/5 hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                        className="p-5 rounded-2xl bg-slate-50/40 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
                         onClick={() =>
                           navigate(
                             isTechnical
@@ -449,7 +449,7 @@ const HistoryPage = () => {
                               {isTechnical ? <Code2 size={18} /> : <User size={18} />}
                             </div>
                             <div>
-                              <h4 className="text-base font-bold text-slate-200 group-hover:text-white transition-colors">
+                              <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                                 {interview.topic || 'Interview'}
                               </h4>
                               <div className="flex items-center gap-3 mt-0.5">
@@ -461,7 +461,7 @@ const HistoryPage = () => {
                                 >
                                   {interview.interviewType}
                                 </span>
-                                <span className="text-xs text-slate-600 flex items-center gap-1">
+                                <span className="text-xs text-slate-500 dark:text-slate-600 flex items-center gap-1">
                                   <Clock size={11} />
                                   {new Date(interview.createdAt).toLocaleDateString('en-NZ', {
                                     day: 'numeric',
@@ -470,7 +470,7 @@ const HistoryPage = () => {
                                   })}
                                 </span>
                                 {interview.duration > 0 && (
-                                  <span className="text-xs text-slate-600">
+                                  <span className="text-xs text-slate-500 dark:text-slate-600">
                                     {Math.floor(interview.duration / 60)}m {interview.duration % 60}s
                                   </span>
                                 )}
@@ -495,7 +495,7 @@ const HistoryPage = () => {
                             </div>
                           </div>
                         </div>
-                        <p className="text-sm text-slate-500 pl-14 pr-4 line-clamp-2 leading-relaxed group-hover:text-slate-400 transition-colors">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 pl-14 pr-4 line-clamp-2 leading-relaxed group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors">
                           {interview.assessment || 'Interview session completed.'}
                         </p>
                       </MotionDiv>
@@ -518,8 +518,8 @@ const HistoryPage = () => {
                   animate={{ opacity: 1 }}
                   className="text-center py-6"
                 >
-                  <div className="inline-block w-12 h-px bg-slate-800 mb-3" />
-                  <p className="text-xs text-slate-600">You've reached the end</p>
+                  <div className="inline-block w-12 h-px bg-slate-200 dark:bg-slate-800 mb-3" />
+                  <p className="text-xs text-slate-500 dark:text-slate-600">You've reached the end</p>
                 </motion.div>
               )}
             </AnimatePresence>

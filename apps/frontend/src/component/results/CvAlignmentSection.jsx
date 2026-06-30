@@ -21,26 +21,26 @@ export default function CvAlignmentSection({ cvAlignment }) {
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
-      <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_12px_34px_-24px_rgba(15,23,42,0.35)]">
+      <div className="relative rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/60 p-6 shadow-[0_12px_34px_-24px_rgba(15,23,42,0.35)] dark:shadow-none">
           <div className="flex items-center gap-3 mb-5">
             <div className="p-2 rounded-full bg-emerald-50 border border-emerald-200">
               <FileText className="w-5 h-5 text-emerald-700" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-slate-900">CV-Interview Alignment</h2>
-              <p className="text-sm text-slate-600">How your interview evidence supports your CV claims.</p>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">CV-Interview Alignment</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400">How your interview evidence supports your CV claims.</p>
             </div>
           </div>
 
           {/* Overall assessment bar */}
           <div className="mb-5">
-            <div className="flex rounded-lg overflow-hidden h-2 bg-slate-100">
+            <div className="flex rounded-lg overflow-hidden h-2 bg-slate-100 dark:bg-slate-800/40">
               {SEGMENTS.map((seg) => {
                 const isActive = cvAlignment.overall === seg;
                 return (
                   <motion.div
                     key={seg}
-                    className={`flex-1 ${isActive ? overallStyles[seg].bg : 'bg-slate-200'} transition-colors duration-500`}
+                    className={`flex-1 ${isActive ? overallStyles[seg].bg : 'bg-slate-200 dark:bg-slate-700/60'} transition-colors duration-500`}
                     initial={{ scaleX: 0 }}
                     whileInView={{ scaleX: 1 }}
                     viewport={{ once: true }}
@@ -56,7 +56,7 @@ export default function CvAlignmentSection({ cvAlignment }) {
                 return (
                   <span
                     key={seg}
-                    className={`text-[11px] ${isActive ? 'text-slate-900 font-semibold' : 'text-slate-500'}`}
+                    className={`text-[11px] ${isActive ? 'text-slate-900 dark:text-slate-100 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}
                   >
                     {overallStyles[seg].label}
                   </span>
@@ -67,7 +67,7 @@ export default function CvAlignmentSection({ cvAlignment }) {
 
           {/* Summary */}
           {cvAlignment.summary && (
-            <p className="text-base text-slate-700 leading-relaxed mb-5 border-l-2 border-slate-300 pl-3">
+            <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed mb-5 border-l-2 border-slate-300 dark:border-white/10 pl-3">
               {cvAlignment.summary}
             </p>
           )}

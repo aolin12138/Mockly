@@ -13,7 +13,7 @@
  *   node test-suite/live/runner.mjs --all --dry-run     Estimate cost only
  *   node test-suite/live/runner.mjs --all --yes         Skip cost confirmation
  *
- * Report: live-report.html (use --output to change)
+ * Output: test-suite/runs/<run-id>/ (manifest, agent-config, scenarios, report.html, summary.md)
  */
 
 import { loadAllScenarios } from '../lib/loader.mjs';
@@ -21,8 +21,10 @@ import { CONFIG } from '../lib/config.mjs';
 import { loadEnv } from './_env.mjs';
 import { runOne, PHASE_NODE_IDS } from './run-one.mjs';
 import { judgeCriteria, overallResult } from './judge.mjs';
+import { mergeCriteria } from '../lib/criteria-layers.mjs';
 import { collectNodeIds } from './verify.mjs';
-import { writeReport } from '../lib/report.mjs';
+import { startRun, writeScenarioResult, finalizeRun } from '../lib/run-output.mjs';
+import { syncAgent, printSyncResult } from '../lib/auto-sync.mjs';
 
 // Node ID → label mapping for readable output
 const NODE_LABELS = {};
@@ -41,14 +43,21 @@ function parseArgs() {
     dryRun: false,
     yes: false,
     concurrency: 2,
-    output: 'live-report.html',
     timeout: 120,
   };
 
+  opts.allowRestricted = false;
+  opts.skipSync = false;
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
       case '--all':
         opts.all = true;
+        break;
+      case '--allow-restricted':
+        opts.allowRestricted = true;
+        break;
+      case '--skip-sync':
+        opts.skipSync = true;
         break;
       case '--tag':
         opts.tags.push(args[++i]);
@@ -65,9 +74,6 @@ function parseArgs() {
         break;
       case '--concurrency':
         opts.concurrency = parseInt(args[++i], 10) || 2;
-        break;
-      case '--output':
-        opts.output = args[++i] || 'live-report.html';
         break;
       case '--timeout':
         opts.timeout = parseInt(args[++i], 10) || 120;
@@ -106,15 +112,22 @@ Options:
   --yes, -y              Skip cost confirmation prompt
   --concurrency <n>      Max parallel scenarios (default: 2)
   --timeout <secs>       Per-scenario timeout in seconds (default: 120)
-  --output <path>        Report output path (default: live-report.html)
+  --allow-restricted     Allow auto-push even when Restricted fields differ
+  --skip-sync            Skip local→live sync check (eval against current live state)
   --help, -h             Show this help
+
+Output:
+  Each run writes to test-suite/runs/<run-id>/ with manifest.json,
+  agent-config.json, scenarios/, report.html, and summary.md.
+  See test-suite/scripts/README.md for the full eval loop.
 
 Exit codes:
   0   All criteria passed
   1   One or more scenarios failed
   2   Suite error (config, API unreachable)
 
-Note: Scenarios with partial_conversation_history are skipped (live limitation).
+Note: Scenarios with partial_conversation_history but NO warm_up are skipped.
+Scenarios with warm_up are run live (context injected at start).
 `);
 }
 
@@ -125,14 +138,19 @@ function estimateCost(scenario) {
   const turns = scenario.new_turns_limit || 6;
   const tokensPerTurn = 500;
   const simUserTokens = turns * tokensPerTurn;
-  const judgeTokens = (scenario.evaluation_criteria?.length || 2) * 200;
+  const merged = mergeCriteria(scenario);
+  const judgeTokens = merged.length * 200;
   return simUserTokens + judgeTokens;
 }
 
 function hasPrefilledHistory(scenario) {
-  return scenario.partial_conversation_history &&
+  // Scenarios with warm_up can run live (warm-up turns are injected at session start).
+  // Only skip scenarios that have partial_conversation_history WITHOUT warm_up.
+  const hasHistory = scenario.partial_conversation_history &&
     Array.isArray(scenario.partial_conversation_history) &&
     scenario.partial_conversation_history.length > 0;
+  const hasWarmUp = scenario.warm_up && scenario.warm_up.candidate_turns;
+  return hasHistory && !hasWarmUp;
 }
 
 // ─── Progress display ───────────────────────────────────────────
@@ -171,6 +189,34 @@ async function main() {
   if (!deepseekKey) {
     console.error('Error: No DeepSeek API key found. Set DEEPSEEK_API_KEY in .env');
     process.exit(2);
+  }
+
+  // ─── Auto-sync: ensure live agent matches local agent/config.json ───
+  // Skipped on dry-run (no point pushing if we're not running scenarios).
+  if (!opts.dryRun && !opts.skipSync) {
+    try {
+      const sync = await syncAgent({
+        confirm: opts.yes,           // only auto-PATCH if user passed --yes
+        allowRestricted: opts.allowRestricted,
+      });
+      printSyncResult(sync);
+      if (sync.action === 'forbidden') {
+        console.error('\nAborting: Forbidden field change. Fix test-suite/agent/config.json and retry.');
+        process.exit(3);
+      }
+      if (sync.action === 'restricted') {
+        console.error('\nAborting: Restricted field change. Pass --allow-restricted to proceed.');
+        process.exit(4);
+      }
+      if (sync.action === 'patch' && !sync.patched) {
+        console.error('\nAborting: would auto-push but --yes was not passed. Re-run with --yes to apply.');
+        process.exit(0);
+      }
+      console.log();
+    } catch (e) {
+      console.error(`Sync check failed: ${e.message}`);
+      process.exit(2);
+    }
   }
 
   // Quick DeepSeek key validation
@@ -268,53 +314,80 @@ async function main() {
   console.log(`Running ${runnable.length} live conversation(s) (concurrency: ${opts.concurrency})...`);
   console.log();
 
-  // Simple sequential runner (concurrency via pool for future)
-  for (const scenario of runnable) {
-    completed++;
-    console.log(`\n─── Scenario: ${scenario.id} (${completed}/${runnable.length}) ───`);
+  // Capture agent config snapshot + create run folder before any conversation.
+  const run = await startRun({ filter });
+  console.log(`Run folder: ${run.runDir}`);
+  console.log();
 
-    const result = await runOne(scenario, {
-      apiKey,
-      agentId: CONFIG.agentId,
-      turnTimeoutMs: 120000,
-      conversationTimeoutMs: opts.timeout * 1000,
-    });
+  // ── Parallel runner with concurrency pool ──
+  let running = 0;
+  const runQueue = [...runnable];
 
-    // If conversation succeeded, run judge
-    if (result.result !== 'error') {
-      try {
-        const criteriaResults = await judgeCriteria({
-          scenarioId: scenario.id,
-          scenarioDescription: scenario.description || '',
-          criteria: scenario.evaluation_criteria || [],
-          transcript: result.transcript,
-          apiKey: deepseekKey,
-        });
-        result.criteria = criteriaResults;
-        result.result = overallResult(criteriaResults);
-      } catch (err) {
-        console.warn(`  Judge error for ${scenario.id}: ${err.message}. Criteria will be empty.`);
-        result.criteria = (scenario.evaluation_criteria || []).map(c => ({
-          id: c.id,
-          result: 'unknown',
-          rationale: 'Judge unavailable',
-        }));
-        result.result = 'fail';
+  async function runWorker() {
+    while (runQueue.length > 0) {
+      const scenario = runQueue.shift();
+      if (!scenario) break; // another worker took the last item
+      let idx;
+      {
+        running++;
+        idx = completed + 1;
+        completed++;
       }
+      const label = `${scenario.id} (${idx}/${runnable.length})`;
+
+      const scenarioStart = Date.now();
+      console.log(`─── Scenario: ${label} [started, ${running} active] ───`);
+
+      const result = await runOne(scenario, {
+        apiKey,
+        agentId: CONFIG.agentId,
+        turnTimeoutMs: 120000,
+        conversationTimeoutMs: opts.timeout * 1000,
+      });
+
+      // If conversation succeeded, run judge
+      if (result.result !== 'error') {
+        try {
+          const allCriteria = mergeCriteria(scenario);
+          const criteriaResults = await judgeCriteria({
+            scenarioId: scenario.id,
+            scenarioDescription: scenario.description || '',
+            criteria: allCriteria,
+            transcript: result.transcript,
+            apiKey: deepseekKey,
+          });
+          result.criteria = criteriaResults;
+          result.result = overallResult(criteriaResults);
+        } catch (err) {
+          console.warn(`  Judge error for ${scenario.id}: ${err.message}. Criteria will be empty.`);
+          const allCriteria = mergeCriteria(scenario, { skipLayer3: false });
+          result.criteria = allCriteria.map(c => ({
+            id: c.id,
+            result: 'unknown',
+            rationale: 'Judge unavailable',
+          }));
+          result.result = 'fail';
+        }
+      }
+
+      result.nodesWalked = collectNodeIds(result.transcript);
+      const elapsed = ((Date.now() - scenarioStart) / 1000).toFixed(1);
+
+      running--;
+      const icon = result.result === 'pass' ? '✓' : result.result === 'fail' ? '✗' : '⚠';
+      console.log(`  [${completed}/${runnable.length}] ${icon} ${scenario.id} (${result.result}, ${elapsed}s, ${running} active)`);
+
+      progress({ scenarioId: scenario.id, result: result.result, index: completed, total: runnable.length });
+
+      try { writeScenarioResult(run, result); }
+      catch (e) { console.warn(`  Warning: could not write scenario JSON for ${scenario.id}: ${e.message}`); }
+
+      allResults.push(result);
     }
-
-    // Add node ID info for the report
-    result.nodesWalked = collectNodeIds(result.transcript);
-
-    progress({
-      scenarioId: scenario.id,
-      result: result.result,
-      index: completed,
-      total: runnable.length,
-    });
-
-    allResults.push(result);
   }
+
+  const workers = Math.min(opts.concurrency, runnable.length);
+  await Promise.all(Array.from({ length: workers }, () => runWorker()));
 
   // Add skipped results
   for (const s of skipped) {
@@ -433,18 +506,25 @@ async function main() {
     timestamp: new Date().toISOString(),
   };
 
-  const reportPath = writeReport(reportResults, metadata, opts.output);
-  console.log(`Report written: ${reportPath}`);
+  // ─── Finalize run: manifest, summary, report, INDEX, gate verdict ──
+  const finalized = finalizeRun(run, {
+    results: allResults,
+    reportResults,
+    reportMetadata: metadata,
+  });
+
+  console.log(`Run folder: ${finalized.runDir}`);
+  console.log(`  Report:   ${finalized.paths.reportPath}`);
+  console.log(`  Manifest: ${finalized.paths.manifestPath}`);
+  console.log(`  Summary:  ${finalized.paths.summaryPath}`);
+  console.log();
+  console.log(`Gate verdict: ${finalized.verdict} (exit ${finalized.exitCode})`);
+  for (const reason of finalized.reasons) console.log(`  - ${reason}`);
   console.log();
 
-  // ─── Exit code ──────────────────────────────────────────────
-  if (errored.length > 0) {
-    process.exit(1);
-  }
-  if (failed.length > 0) {
-    process.exit(1);
-  }
-  process.exit(0);
+  // Exit codes per EVAL-PLAN.md §F:
+  //   0 promotable · 1 behaviour fail/regression · 2 harness error · 3 leak
+  process.exit(finalized.exitCode);
 }
 
 main().catch(e => {

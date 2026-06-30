@@ -1,0 +1,41 @@
+{
+  "bootstrapped_at": "2026-06-25T04:39:06.519Z",
+  "agent_id": "agent_2201ktp0n7mwek6avkphs4x6394m",
+  "branch_id": "agtbrch_1301ktp0n97rfn4tkjz5626383hm",
+  "version_id": "agtvrsn_1801kvpvrrtdehxssrece4mhg8zc",
+  "workflow_nodes": [
+    {
+      "id": "start_node",
+      "label": null,
+      "tool_count": 0,
+      "prompt_chars": 0
+    },
+    {
+      "id": "node_01ksvy7ntre8gsanne5tj7kmca",
+      "label": "Phase 1",
+      "tool_count": 0,
+      "prompt_chars": 1440
+    },
+    {
+      "id": "node_01ksvyddppe8gsannvqqc66p4w",
+      "label": "Phase 2",
+      "tool_count": 0,
+      "prompt_chars": 2274
+    },
+    {
+      "id": "node_01ksvyftate8gsanp9mkqw49tf",
+      "label": "Phase 3",
+      "tool_count": 0,
+      "prompt_chars": 1469
+    },
+    {
+      "id": "node_01kt35w596exs8pbna62db1zkr",
+      "label": "Phase 4",
+      "tool_count": 0,
+      "prompt_chars": 2297
+    }
+  ],
+  "mcp_server_ids": [
+    "mcaiiVJDVZFS5dB7RFN2"
+  ]
+}

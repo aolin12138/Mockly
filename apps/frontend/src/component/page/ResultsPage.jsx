@@ -404,7 +404,7 @@ export default function ResultsPage() {
   const sections = buildSections(feedbackData);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased selection:bg-emerald-100 overflow-hidden relative">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans antialiased selection:bg-emerald-100 dark:selection:bg-emerald-500/30 overflow-hidden relative">
       <AmbientBackground />
 
       <SectionNav sections={sections} />
@@ -430,7 +430,7 @@ export default function ResultsPage() {
               <Card delay={0.2}>
                 <div className="flex items-center gap-2 mb-5">
                   <Clipboard className="w-5 h-5 text-emerald-600" />
-                  <h2 className="text-xl font-semibold text-slate-900">STAR Breakdown</h2>
+                  <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">STAR Breakdown</h2>
                 </div>
                 <div className="space-y-4">
                   {answerBreakdown.map((answer, idx) => (
@@ -500,14 +500,14 @@ export default function ResultsPage() {
             <button
               type="button"
               onClick={() => navigate('/dashboard')}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 px-6 py-3 text-sm font-medium hover:bg-slate-100 transition-all cursor-pointer"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 px-6 py-3 text-sm font-medium hover:bg-slate-100 dark:hover:bg-white/10 transition-all cursor-pointer"
             >
               Back to Dashboard
             </button>
             <button
               type="button"
               onClick={() => navigate('/setup')}
-              className="inline-flex items-center justify-center rounded-full bg-slate-900 text-white px-6 py-3 text-sm font-medium hover:bg-slate-800 transition-all cursor-pointer"
+              className="inline-flex items-center justify-center rounded-full bg-slate-900 dark:bg-slate-700 text-white px-6 py-3 text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-600 transition-all cursor-pointer"
             >
               Practice Again
             </button>

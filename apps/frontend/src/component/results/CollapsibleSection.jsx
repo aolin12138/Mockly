@@ -15,12 +15,12 @@ export default function CollapsibleSection({ title, icon: Icon, children, defaul
       >
         <div className="flex items-center gap-3">
           {Icon && <Icon className="w-5 h-5 text-emerald-700" />}
-          <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
         </div>
         {isOpen ? (
-          <ChevronUp className="w-5 h-5 text-slate-500" />
+          <ChevronUp className="w-5 h-5 text-slate-500 dark:text-slate-400" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-slate-500" />
+          <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400" />
         )}
       </button>
       <motion.div

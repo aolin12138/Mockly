@@ -22,8 +22,8 @@ export default function StarPipeline({ star, animated = true }) {
               <motion.div
                 className={`h-0.5 rounded-full ${
                   passed && prevPassed
-                    ? 'bg-emerald-300'
-                    : 'bg-slate-300'
+                    ? 'bg-emerald-300 dark:bg-emerald-400/50'
+                    : 'bg-slate-300 dark:bg-slate-600'
                 }`}
                 style={{ width: '16px' }}
                 initial={animated ? { scaleX: 0 } : false}
@@ -36,8 +36,8 @@ export default function StarPipeline({ star, animated = true }) {
             <motion.div
               className={`relative flex items-center justify-center rounded-full ${
                 passed
-                  ? 'bg-emerald-50 border-2 border-emerald-300'
-                  : 'bg-white border-2 border-dashed border-slate-300'
+                  ? 'bg-emerald-50 dark:bg-emerald-500/10 border-2 border-emerald-300 dark:border-emerald-500/30'
+                  : 'bg-white dark:bg-slate-900/60 border-2 border-dashed border-slate-300 dark:border-white/10'
               }`}
               style={{ width: '32px', height: '32px' }}
               initial={animated ? { scale: 0.5, opacity: 0 } : false}
@@ -53,13 +53,13 @@ export default function StarPipeline({ star, animated = true }) {
               {passed ? (
                 <Check className="w-3.5 h-3.5 text-emerald-600" />
               ) : (
-                <X className="w-3 h-3 text-slate-500" />
+                <X className="w-3 h-3 text-slate-500 dark:text-slate-400" />
               )}
 
               {/* Label below */}
               <span
                 className={`absolute -bottom-4 text-[9px] font-bold tracking-wider ${
-                  passed ? 'text-emerald-700' : 'text-slate-500'
+                  passed ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
                 {step.label}

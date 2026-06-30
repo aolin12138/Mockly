@@ -1,0 +1,12 @@
+# Per-run artefacts. Trend file (INDEX.md) is git-tracked manually if you
+# want to keep historic context — uncomment the negation below to keep it.
+runs/
+# !runs/INDEX.md
+
+# Legacy checkpoint files (now superseded by runs/<id>/agent-config.json).
+# Keep historical checkpoints in git for revert references.
+# checkpoints/
+
+# Loose report from older runner; new runs go in runs/<id>/report.html
+live-report.html
+report.html

@@ -6,28 +6,14 @@
   ],
   "description": "Tests that agent stays quiet during active coding phase. Agent should be in implementation phase.",
   "simulated_user": {
-    "prompt": "You're a candidate mid-implementation. You have partial code with a hash map approach and you're focused on completing the loop logic. You make a brief progress comment then go quiet to code.",
+    "prompt": "You're a candidate mid-implementation. You have partial code with Kadane's algorithm and you're focused on completing the loop logic. You make a brief progress comment then go quiet to code.",
     "first_message": "Just working through the loop logic now — almost there."
   },
-  "partial_conversation_history": [
-    {
-      "role": "user",
-      "message": "I'm going with a hash map approach — store values and check complements."
-    },
-    {
-      "role": "agent",
-      "message": "Sounds good. Go ahead and implement."
-    },
-    {
-      "role": "user",
-      "message": "Alright, starting the implementation."
-    }
-  ],
   "new_turns_limit": 4,
   "tool_mocks": {
     "get_current_code": {
       "default_return_value": {
-        "code": "def solve(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        # building the hash map approach\n",
+        "code": "def max_subarray_sum(nums):\n    max_so_far = nums[0]\n    max_ending = nums[0]\n    for i in range(1, len(nums)):\n        # building the Kadane's approach\n",
         "language": "python",
         "remaining_minutes": 20,
         "hintCount": 0
@@ -45,5 +31,12 @@
     }
   ],
   "target_phase": 2,
-  "target_phase_label": "Phase 2: Implementation"
+  "target_phase_label": "Phase 2: Implementation",
+  "warm_up": {
+    "candidate_turns": [
+      "I'm going with Kadane's algorithm — track running sum and max sum in one pass.",
+      "Alright, starting the implementation."
+    ],
+    "target_phase_label": "Phase 2"
+  }
 }

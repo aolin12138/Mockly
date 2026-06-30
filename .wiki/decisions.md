@@ -65,16 +65,28 @@ working MCP tools. Removing the duplicates resolved the conflict.
 **Forecloses:** Running the agent without an active MCP server. The MCP
 server at `mcaiiVJDVZFS5dB7RFN2` is now a hard dependency.
 
-## Branch strategy: `agtbrch_1301ktp0n97rfn4tkjz5626383hm` = main
+## Test agent vs production agents
 
-**Decided 2026-06-23.** This branch IS production. Edits to the agent on
-this branch ship live without an additional promotion step.
+**Decided 2026-06-24** (supersedes the earlier "branch IS production" note).
 
-**Why:** No staging environment exists for the ElevenLabs agent. Branch-
-based deploys are the only deploy mechanism.
+- **Test agent** `agent_2201ktp0n7mwek6avkphs4x6394m` on branch
+  `agtbrch_1301ktp0n97rfn4tkjz5626383hm` is the **eval sandbox**. The test
+  harness PATCHes it freely; real users never connect to it.
+- **Production** is the per-user agents that `apps/backend/routes/interviewRoutes.js`
+  provisions via the n8n `agent-create` webhook on first session and updates via
+  `agent-config` on template-version drift (Batch 2 — pending implementation).
+- The `agent-config` n8n workflow holds the canonical template prompt + workflow
+  definition. Promotion = update that template + bump
+  `TECHNICAL_AGENT_TEMPLATE_VERSION` env var; existing user agents lazily
+  re-PATCH on their next session.
 
-**Forecloses:** Pre-prod testing of agent prompt changes. Use the test
-suite as the gate before edits.
+**Why:** This separation lets prompt changes be evaluated end-to-end against
+the real ElevenLabs + MCP stack without any production user being exposed to
+candidate behaviour.
+
+**Forecloses:** Treating the test agent as production-grade for any user-facing
+workflow. Anyone running real interview sessions through the test agent will
+see whatever the latest in-progress prompt is.
 
 ## Phase tracking: scenario `target_phase`, not API `workflow_node_id`
 

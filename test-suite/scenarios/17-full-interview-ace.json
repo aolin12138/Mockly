@@ -1,0 +1,62 @@
+{
+  "id": "full_interview_ace",
+  "tags": [
+    "full",
+    "ace",
+    "all-phases"
+  ],
+  "description": "A strong candidate who knows Kadane's algorithm. Phase 1→2→4 naturally. Agent should stay out of their way, give brief handoffs, progress phases, close decisively after walkthrough + bonus.",
+  "simulated_user": {
+    "prompt": "You are a very strong candidate AND an evaluator. The problem is maximum subarray sum.\n\nYOUR GOAL: Test that the agent transitions Phase 1→2→4, gives a walkthrough, and closes properly.\n\nSTART: When agent introduces the problem, say \"Got it — I'll use Kadane's algorithm: single pass, track current and max sum. Ready to code?\"\n\nPHASE 2: Announce coding. Wait 1-2 turns of agent silence, then say \"Done — run the tests.\" When agent asks walkthrough, explain clearly. After tests pass: \"All green — what's next?\"\n\nPHASE 4: Answer walkthrough/bonus confidently. Know the all-negative edge case. If agent closes: respond and end. If agent does NOT close after bonus, push: \"That cover everything?\"\n\nDRIVE THE CONVERSATION: You are the active party. If the agent goes silent for 2+ consecutive turns, advance to the next step yourself. Never wait for the agent to prompt you.\n\nEND CONDITIONS: End with [END_CALL] when: (a) the agent says a clear closing line and calls end_call, OR (b) you have seen enough behavior to evaluate — agent reached Phase 4 and you answered the bonus question, OR (c) the agent has been completely silent for 3+ consecutive turns — you have enough to judge. If stuck in Phase 2 without progress for 4+ turns, end too.",
+    "first_message": "Hey! Ready to go — what's the problem?"
+  },
+  "new_turns_limit": 15,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def max_subarray_sum(nums):\n    max_so_far = nums[0]\n    max_ending = nums[0]\n    for i in range(1, len(nums)):\n        max_ending = max(nums[i], max_ending + nums[i])\n        max_so_far = max(max_so_far, max_ending)\n    return max_so_far",
+        "language": "python",
+        "remaining_minutes": 32,
+        "hintCount": 0
+      }
+    },
+    "run_code_against_tests": {
+      "default_return_value": {
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "failed_details": []
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "45"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "ace_phase1_light",
+      "name": "Phase 1 stays light",
+      "conversation_goal_prompt": "Agent did NOT ask complexity questions or heavy evaluation questions in Phase 1. PASS if Phase 1 focused on understanding and moved to coding. FAIL if agent asked about Big-O, implementation details, or evaluated the approach."
+    },
+    {
+      "id": "ace_progresses_phases",
+      "name": "Agent progresses through phases",
+      "conversation_goal_prompt": "The agent transitioned from Phase 1 through Phase 2 to Phase 4 (assessment). PASS if the transcript shows at least 3 distinct workflow node IDs (phase transitions). FAIL if the agent stayed in one phase the entire time."
+    },
+    {
+      "id": "ace_phase4_clean_close",
+      "name": "Phase 4 clean close",
+      "conversation_goal_prompt": "Agent entered assessment mode, asked for walkthrough, asked at most 1-2 bonus questions, then delivered a clear closing signal. No verdict. PASS if close was clean and decisive. FAIL if agent kept talking, gave no close, or gave a verdict."
+    },
+    {
+      "id": "ace_no_verdict",
+      "name": "No verdict or compliment",
+      "conversation_goal_prompt": "Agent never said 'great job,' 'well done,' 'nice work,' 'good approach,' 'great choice,' 'solid,' or any evaluative compliment. PASS if no verdict phrases appear. FAIL if any appeared."
+    }
+  ],
+  "end_conditions": {
+    "success": "Agent transitions through Phase 1→2→4, gives walkthrough, then closes decisively with end_call or a clear closing line.",
+    "max_turns_silent": 3,
+    "min_turns": 4
+  }
+}

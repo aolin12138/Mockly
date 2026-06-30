@@ -20,17 +20,17 @@ export default function AnswerCard({ answer, index }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ delay: 0.05 * index, duration: 0.4 }}
-      className="bg-slate-50 border border-slate-200 rounded-2xl p-5 hover:border-slate-300 transition-colors duration-300"
+      className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-white/10 rounded-2xl p-5 hover:border-slate-300 dark:hover:border-white/10 transition-colors duration-300"
     >
       {/* Domain tag */}
       {answer.domain && (
-        <span className="text-sm font-medium text-slate-500 mb-2 block">
+        <span className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 block">
           Domain: {formatDimensionName(answer.domain)}
         </span>
       )}
 
       {/* Question */}
-      <p className="text-base font-medium text-slate-900 mb-4 leading-relaxed">{answer.question}</p>
+      <p className="text-base font-medium text-slate-900 dark:text-slate-100 mb-4 leading-relaxed">{answer.question}</p>
 
       {/* STAR Pipeline + Quality badge row */}
       <div className="flex items-center justify-between flex-wrap gap-4 mb-2">
@@ -55,7 +55,7 @@ export default function AnswerCard({ answer, index }) {
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 transition-colors cursor-pointer mt-1"
+            className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer mt-1"
           >
             <MessageSquare className="w-3 h-3" />
             {expanded ? 'Hide feedback' : 'See feedback'}
@@ -68,7 +68,7 @@ export default function AnswerCard({ answer, index }) {
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <p className="text-sm text-slate-700 leading-relaxed mt-3 pl-3 border-l-2 border-slate-300">
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mt-3 pl-3 border-l-2 border-slate-300 dark:border-white/10">
               {answer.observation}
             </p>
           </motion.div>

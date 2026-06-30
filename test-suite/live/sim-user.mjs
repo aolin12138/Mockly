@@ -33,6 +33,11 @@ async function callLLM(systemPrompt, messages, opts = {}) {
   const model = opts.model || DEEPSEEK_SIM_MODEL;
   const temperature = opts.temperature ?? 0.3;
 
+  // Reasoning models (thinking=true) consume tokens internally before output.
+  // Long transcripts can exhaust a small budget mid-JSON. Give judge a much
+  // bigger ceiling. Sim-user stays small (no thinking, short responses).
+  const max_tokens = opts.thinking ? 8192 : 1024;
+
   const body = {
     model,
     messages: [
@@ -40,7 +45,7 @@ async function callLLM(systemPrompt, messages, opts = {}) {
       ...messages,
     ],
     temperature,
-    max_tokens: 1024,
+    max_tokens,
   };
 
   // Enable V4 thinking mode for judge
@@ -69,20 +74,47 @@ async function callLLM(systemPrompt, messages, opts = {}) {
   return text.trim();
 }
 
+// Tool-call → candidate-visible annotation. Sim-user reads the conversation
+// and needs to know what the agent did with tools (silence, end-call, code
+// check, etc.) so it can react naturally and decide when the interview is over.
+const TOOL_ANNOTATIONS = {
+  skip_turn:                '[Interviewer stayed silent — waiting for you to continue]',
+  end_call:                 '[Interviewer ended the call]',
+  get_current_code:         '[Interviewer is checking your code]',
+  run_code_against_tests:   '[Interviewer is running your code against the tests]',
+  log_event:                null, // background telemetry, hide from sim-user
+};
+
+function annotateAgentTurn(turn) {
+  const text = (turn.message || '').trim();
+  const calls = turn.tool_calls || [];
+  const annotations = [];
+  for (const tc of calls) {
+    const a = TOOL_ANNOTATIONS[tc.tool_name];
+    if (a) annotations.push(a);
+  }
+  // If agent said nothing AND made no annotated tool call, mark explicit silence
+  // so the sim-user doesn't think the agent literally said empty string.
+  if (!text && annotations.length === 0) {
+    annotations.push('[Interviewer stayed silent]');
+  }
+  const parts = [];
+  if (text) parts.push(text);
+  if (annotations.length) parts.push(annotations.join(' '));
+  return parts.join(' ').trim();
+}
+
 /**
  * Build a running transcript into OpenAI-compatible messages format.
- * @param {Array<{role: string, message: string}>} transcript
- * @returns {Array<{role: string, parts: Array<{text: string}>}>}
- */
-/**
- * Build a running transcript into OpenAI-compatible messages format.
- * @param {Array<{role: string, message: string}>} transcript
+ * Agent turns include tool-call annotations so the sim-user can react to
+ * skip_turn, end_call, etc.
+ * @param {Array<{role: string, message: string, tool_calls?: Array}>} transcript
  * @returns {Array<{role: string, content: string}>}
  */
 function transcriptToMessages(transcript) {
   return transcript.map(turn => ({
     role: turn.role === 'user' ? 'user' : 'assistant',
-    content: turn.message,
+    content: turn.role === 'user' ? (turn.message || '') : annotateAgentTurn(turn),
   }));
 }
 
@@ -105,6 +137,7 @@ export class SimulatedUser {
     this.firstMessage = opts.firstMessage || null;
     this.apiKey = opts.apiKey || DEEPSEEK_API_KEY;
     this.firstTurnDone = false;
+    this.endedBySimUser = false;  // sim-user decided enough info gathered
   }
 
   /**
@@ -117,7 +150,20 @@ export class SimulatedUser {
     }
     this.firstTurnDone = true;
 
-    const systemPrompt = `${SIM_USER_PREFIX}\n\nScenario context: ${this.scenarioPrompt}\n\nYou are the candidate. Given the conversation so far, produce your next spoken response (1-3 sentences). If the interview appears to be ending naturally or the interviewer is wrapping up, respond with "[END_CALL]" as your entire response.`;
+    // Count consecutive silent agent turns
+    let silentStreak = 0;
+    for (let i = transcript.length - 1; i >= 0; i--) {
+      const t = transcript[i];
+      if (t.role !== 'agent') continue;
+      const hasMsg = t.message && t.message.trim();
+      const hasTool = t.tool_calls && t.tool_calls.length > 0;
+      if (!hasMsg && !hasTool) silentStreak++;
+      else if (!hasMsg && hasTool) silentStreak++;
+      else break;
+    }
+
+    const turnInfo = `Turn info: ${silentStreak} consecutive silent agent turns so far. You are evaluating the agent — once you have enough evidence or the agent is clearly stuck, end with [END_CALL].`;
+    const systemPrompt = `${SIM_USER_PREFIX}\n\n${turnInfo}\n\nScenario context: ${this.scenarioPrompt}\n\nYou are the candidate AND an evaluator. Given the conversation so far, produce your next spoken response (1-3 sentences). End with "[END_CALL]" when you have enough to evaluate OR the agent has been silent for 3+ consecutive turns OR the conversation has clearly stalled.`;
 
     const messages = transcriptToMessages(transcript);
     if (messages.length === 0) {
@@ -140,10 +186,13 @@ export class SimulatedUser {
   }
 
   #clean(text) {
-    if (!text || !text.trim()) return null;
+    if (!text || !text.trim()) return 'Still working…';
     const cleaned = text.trim();
-    if (cleaned.includes('[END_CALL]')) return null;
-    if (cleaned.length < 3) return null;
+    if (cleaned.includes('[END_CALL]')) {
+      this.endedBySimUser = true;
+      return null;
+    }
+    if (cleaned.length < 3) return 'Okay, go on.';
     return cleaned;
   }
 }
@@ -156,7 +205,10 @@ export async function evaluateCriterion(opts) {
   const apiKey = opts.apiKey || DEEPSEEK_API_KEY;
 
   const transcriptText = transcript
-    .map((t, i) => `[${i}] ${t.role.toUpperCase()}: ${t.message || ''}`)
+    .map((t, i) => {
+      const tag = t.warmup ? '[CONTEXT]' : '[EVAL]';
+      return `${tag} [${i}] ${t.role.toUpperCase()}: ${t.message || ''}`;
+    })
     .join('\n');
 
   const systemPrompt = `You are an evaluator judging an AI interviewer in a coding interview. The scenario goal is: "${scenarioGoal}".
@@ -164,7 +216,7 @@ export async function evaluateCriterion(opts) {
 Criterion to evaluate (id: ${criterionId}):
 ${criterionPrompt}
 
-Analyse the transcript below and determine whether the criterion PASSES or FAILS. Be strict but fair. Return your verdict as a JSON object with exactly two fields:
+Analyse the transcript below. [CONTEXT] turns are pre-conversation setup for context only — do NOT evaluate them. Evaluate ONLY the [EVAL] turns and determine whether the criterion PASSES or FAILS. Be strict but fair. Return your verdict as a JSON object with exactly two fields:
 - "result": "success" or "failure" or "unknown"
 - "rationale": a brief explanation (1-3 sentences)`;
 

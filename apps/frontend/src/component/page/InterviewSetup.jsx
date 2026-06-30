@@ -19,13 +19,13 @@ import {
 
 const InputField = ({ label, value, onChange, placeholder, type = "text", textarea = false }) => (
   <div className="space-y-2">
-    <label className="text-sm font-medium text-slate-400">{label}</label>
+    <label className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</label>
     {textarea ? (
       <textarea
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all min-h-[100px] resize-none"
+        className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all min-h-[100px] resize-none"
       />
     ) : (
       <input
@@ -33,7 +33,7 @@ const InputField = ({ label, value, onChange, placeholder, type = "text", textar
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all"
+        className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all"
       />
     )}
   </div>
@@ -41,15 +41,15 @@ const InputField = ({ label, value, onChange, placeholder, type = "text", textar
 
 const Toggle = ({ label, checked, onChange, helperText }) => (
   <div className="space-y-2">
-    <div className="flex items-center justify-between bg-slate-800/40 border border-white/10 rounded-xl px-4 py-3">
+    <div className="flex items-center justify-between bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3">
       <div>
-        <p className="text-sm font-medium text-slate-200">{label}</p>
-        {helperText && <p className="text-xs text-slate-500 mt-0.5">{helperText}</p>}
+        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{label}</p>
+        {helperText && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{helperText}</p>}
       </div>
       <button
         type="button"
         onClick={() => onChange(!checked)}
-        className={`w-12 h-7 rounded-full p-1 transition-all ${checked ? 'bg-emerald-500' : 'bg-slate-700'}`}
+        className={`w-12 h-7 rounded-full p-1 transition-all ${checked ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}
       >
         <div className={`w-5 h-5 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
@@ -62,10 +62,10 @@ const SelectButton = ({ active, onClick, children, icon: Icon }) => (
     onClick={onClick}
     className={`flex items-center space-x-3 px-4 py-3 rounded-xl border transition-all duration-200 w-full ${active
       ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_-3px_rgba(16,185,129,0.2)]'
-      : 'bg-slate-800/30 border-white/5 text-slate-400 hover:bg-slate-800/50 hover:border-white/10'
+      : 'bg-white dark:bg-slate-800/30 border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:border-slate-300 dark:hover:border-white/10'
       }`}
   >
-    {Icon && <Icon size={20} className={active ? 'text-emerald-400' : 'text-slate-500'} />}
+    {Icon && <Icon size={20} className={active ? 'text-emerald-400' : 'text-slate-600 dark:text-slate-500'} />}
     <span className="font-medium">{children}</span>
   </button>
 );
@@ -83,10 +83,10 @@ const TagInput = ({ label, tags, onAdd, onRemove, placeholder }) => {
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-400">{label}</label>
-      <div className="bg-slate-800/50 border border-white/10 rounded-xl p-2 flex flex-wrap gap-2 min-h-[50px]">
+      <label className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</label>
+      <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl p-2 flex flex-wrap gap-2 min-h-[50px]">
         {tags.map((tag, i) => (
-          <span key={i} className="inline-flex items-center bg-slate-700/50 text-slate-200 px-2.5 py-1 rounded-lg text-sm border border-white/10">
+          <span key={i} className="inline-flex items-center bg-slate-200 dark:bg-slate-700/50 text-slate-800 dark:text-slate-200 px-2.5 py-1 rounded-lg text-sm border border-slate-200 dark:border-white/10">
             {tag}
             <button
               onClick={() => onRemove(tag)}
@@ -101,7 +101,7 @@ const TagInput = ({ label, tags, onAdd, onRemove, placeholder }) => {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={tags.length === 0 ? placeholder : ""}
-          className="bg-transparent text-slate-100 placeholder:text-slate-600 focus:outline-none flex-1 min-w-[120px] px-2"
+          className="bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none flex-1 min-w-[120px] px-2"
         />
       </div>
     </div>
@@ -116,21 +116,21 @@ const FileUpload = ({ file, onFileSelect }) => {
 
   return (
     <div className="w-full">
-      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-800/30 hover:border-emerald-500/30 transition-all group">
+      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:border-emerald-500/30 transition-all group">
         <div className="flex flex-col items-center justify-center pt-5 pb-6">
           {file ? (
             <>
               <CheckCircle className="w-8 h-8 text-emerald-500 mb-2" />
-              <p className="text-sm text-slate-300 font-medium">{file.name}</p>
-              <p className="text-xs text-slate-500 mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 font-medium">{file.name}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
             </>
           ) : (
             <>
-              <Upload className="w-8 h-8 text-slate-500 mb-2 group-hover:text-emerald-400 transition-colors" />
-              <p className="text-sm text-slate-400">
+              <Upload className="w-8 h-8 text-slate-500 dark:text-slate-400 mb-2 group-hover:text-emerald-400 transition-colors" />
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 <span className="font-semibold text-emerald-400">Click to upload CV</span> or drag and drop
               </p>
-              <p className="text-xs text-slate-600 mt-1">PDF only (MAX. 10MB)</p>
+              <p className="text-xs text-slate-500 dark:text-slate-600 mt-1">PDF only (MAX. 10MB)</p>
             </>
           )}
         </div>
@@ -571,7 +571,7 @@ const InterviewSetup = () => {
     : [{ title: "Type" }, { title: "Role & Focus" }, { title: "Candidate" }];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6 font-sans selection:bg-emerald-500/30 overflow-hidden relative">
+    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center p-6 font-sans selection:bg-emerald-500/20 dark:selection:bg-emerald-500/30 overflow-hidden relative">
       {/* Ambient Background */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/5 rounded-full blur-[150px]" />
@@ -586,7 +586,7 @@ const InterviewSetup = () => {
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className='absolute -top-12 left-4 flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-emerald-400 transition-colors'
+          className='absolute -top-12 left-4 flex items-center gap-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:text-emerald-400 transition-colors'
         >
           <ArrowLeft className='w-5 h-5' />
           <span className='text-sm font-medium'>Back</span>
@@ -596,9 +596,9 @@ const InterviewSetup = () => {
         <div className="flex items-center justify-between mb-8 px-4">
           <div className="flex items-center space-x-4">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <span className="font-bold text-slate-900">M</span>
+              <span className="font-bold text-white dark:text-slate-900">M</span>
             </div>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 dark:from-white dark:to-slate-400">
               Setup
             </span>
             {!loadingAgent && lastAgent && (
@@ -620,12 +620,12 @@ const InterviewSetup = () => {
               <div key={i} className="flex items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step > i + 1 ? 'bg-emerald-500 text-slate-900' :
                   step === i + 1 ? 'bg-white text-slate-900' :
-                    'bg-slate-800 text-slate-500 border border-white/10'
+                    'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-500 border border-slate-300 dark:border-white/10'
                   }`}>
                   {step > i + 1 ? <CheckCircle size={14} /> : i + 1}
                 </div>
                 {i < steps.length - 1 && (
-                  <div className={`w-8 h-0.5 mx-2 rounded-full ${step > i + 1 ? 'bg-emerald-500/50' : 'bg-slate-800'}`} />
+                  <div className={`w-8 h-0.5 mx-2 rounded-full ${step > i + 1 ? 'bg-emerald-500/50' : 'bg-slate-300 dark:bg-slate-800'}`} />
                 )}
               </div>
             ))}
@@ -633,7 +633,7 @@ const InterviewSetup = () => {
         </div>
 
         {/* Main Card */}
-        <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 md:p-12 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] relative overflow-hidden">
+        <div className="bg-slate-50 dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-3xl p-8 md:p-12 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] relative overflow-hidden">
           <AnimatePresence mode="wait">
 
             {/* STEP 1: INTERVIEW TYPE FIRST */}
@@ -646,13 +646,13 @@ const InterviewSetup = () => {
                 className="space-y-8"
               >
                 <div>
-                  <h2 className="text-3xl font-bold text-white mb-2">Choose Interview Type</h2>
-                  <p className="text-slate-400">Start by selecting whether this session is behavioral or technical.</p>
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Choose Interview Type</h2>
+                  <p className="text-slate-500 dark:text-slate-400">Start by selecting whether this session is behavioral or technical.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <label className="text-sm font-medium text-slate-400 mb-2 block">Interview Type</label>
+                    <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 block">Interview Type</label>
                     <div className="space-y-3">
                       {[
                         { id: 'behavioral', label: 'Behavioral', icon: User },
@@ -672,15 +672,15 @@ const InterviewSetup = () => {
 
                   <div className="space-y-6">
                     <div>
-                      <label className="text-sm font-medium text-slate-400 mb-2 block">Session Type</label>
-                      <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
+                      <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 block">Session Type</label>
+                      <div className="flex bg-white dark:bg-slate-800/50 rounded-xl p-1 border border-slate-200 dark:border-white/5">
                         {['practice', 'real'].map(mode => (
                           <button
                             key={mode}
                             onClick={() => updateField('session', 'mode', mode)}
                             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${formData.session.mode === mode
-                              ? 'bg-slate-700 text-white shadow-sm'
-                              : 'text-slate-500 hover:text-slate-300'
+                              ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                              : 'text-slate-500 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
                               }`}
                           >
                             {mode}
@@ -690,15 +690,15 @@ const InterviewSetup = () => {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium text-slate-400 mb-2 block">Duration</label>
-                      <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
+                      <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 block">Duration</label>
+                      <div className="flex bg-white dark:bg-slate-800/50 rounded-xl p-1 border border-slate-200 dark:border-white/5">
                         {(formData.interview.mode === 'technical' ? [30, 45, 60] : [15, 30, 45]).map(mins => (
                           <button
                             key={mins}
                             onClick={() => updateField('session', 'duration_min', mins)}
                             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${formData.session.duration_min === mins
-                              ? 'bg-slate-700 text-white shadow-sm'
-                              : 'text-slate-500 hover:text-slate-300'
+                              ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                              : 'text-slate-500 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
                               }`}
                           >
                             {mins}m
@@ -713,11 +713,11 @@ const InterviewSetup = () => {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium text-slate-400 mb-2 block">Conversation Language</label>
+                      <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 block">Conversation Language</label>
                       <select
                         value={formData.session.language}
                         onChange={(e) => updateField('session', 'language', e.target.value)}
-                        className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-100 outline-none focus:border-emerald-500/50 appearance-none"
+                        className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 outline-none focus:border-emerald-500/50 appearance-none"
                       >
                         <option value="en">English (US)</option>
                         <option value="es">Spanish</option>
@@ -741,14 +741,14 @@ const InterviewSetup = () => {
                 className="space-y-8"
               >
                 <div>
-                  <h2 className="text-3xl font-bold text-white mb-2">Role Context</h2>
-                  <p className="text-slate-400">Define the role and hiring environment for this simulation.</p>
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Role Context</h2>
+                  <p className="text-slate-500 dark:text-slate-400">Define the role and hiring environment for this simulation.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-400">Company Preset</label>
+                      <label className="text-sm font-medium text-slate-500 dark:text-slate-400">Company Preset</label>
                       <div className="grid grid-cols-2 gap-3">
                         {['general_tech', 'faang', 'startup', 'finance', 'consulting'].map(type => (
                           <SelectButton
@@ -770,15 +770,15 @@ const InterviewSetup = () => {
                     />
 
                     <div>
-                      <label className="text-sm font-medium text-slate-400 mb-2 block">Seniority</label>
-                      <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
+                      <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 block">Seniority</label>
+                      <div className="flex bg-white dark:bg-slate-800/50 rounded-xl p-1 border border-slate-200 dark:border-white/5">
                         {['intern', 'junior', 'mid', 'senior', 'staff', 'lead'].map(level => (
                           <button
                             key={level}
                             onClick={() => updateField('role', 'seniority', level)}
                             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${formData.role.seniority === level
-                              ? 'bg-slate-700 text-white shadow-sm'
-                              : 'text-slate-500 hover:text-slate-300'
+                              ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                              : 'text-slate-500 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
                               }`}
                           >
                             {level}
@@ -790,7 +790,7 @@ const InterviewSetup = () => {
 
                   <div className="space-y-6">
                     <div>
-                      <label className="text-sm font-medium text-slate-400 mb-2 block">Interview Stage</label>
+                      <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 block">Interview Stage</label>
                       <div className="grid grid-cols-2 gap-2">
                         {['hr_screen', 'behavioral', 'system_design', 'final_loop'].map(stage => (
                           <SelectButton
@@ -840,13 +840,13 @@ const InterviewSetup = () => {
                 className="space-y-8"
               >
                 <div>
-                  <h2 className="text-3xl font-bold text-white mb-2">Technical Preferences</h2>
-                  <p className="text-slate-400">Set difficulty, interview style, and default coding language.</p>
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Technical Preferences</h2>
+                  <p className="text-slate-500 dark:text-slate-400">Set difficulty, interview style, and default coding language.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="text-sm font-medium text-slate-400 mb-2 block">Difficulty</label>
+                    <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 block">Difficulty</label>
                     <div className="space-y-2">
                       {['easy', 'medium', 'hard'].map(level => (
                         <SelectButton
@@ -861,7 +861,7 @@ const InterviewSetup = () => {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-slate-400 mb-2 block">Interview Style</label>
+                    <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 block">Interview Style</label>
                     <div className="space-y-2">
                       {['faang', 'startup', 'general'].map(style => (
                         <SelectButton
@@ -876,7 +876,7 @@ const InterviewSetup = () => {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-slate-400 mb-2 block">Preferred Language</label>
+                    <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 block">Preferred Language</label>
                     <div className="space-y-2">
                       {['javascript', 'python', 'java'].map(lang => (
                         <SelectButton
@@ -903,8 +903,8 @@ const InterviewSetup = () => {
                 className="space-y-8"
               >
                 <div>
-                  <h2 className="text-3xl font-bold text-white mb-2">Candidate Profile</h2>
-                  <p className="text-slate-400">Uploading your CV is highly recommended for better personalization. If you skip CV upload, please fill in as many candidate details as possible for a more comprehensive interview experience.</p>
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Candidate Profile</h2>
+                  <p className="text-slate-500 dark:text-slate-400">Uploading your CV is highly recommended for better personalization. If you skip CV upload, please fill in as many candidate details as possible for a more comprehensive interview experience.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -918,7 +918,7 @@ const InterviewSetup = () => {
 
                     {formData.candidate.cv_available && (
                       <div>
-                        <label className="text-sm font-medium text-slate-400 mb-2 block">CV Upload (Optional)</label>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 block">CV Upload (Optional)</label>
                         <FileUpload
                           file={formData.candidate.cv_file}
                           onFileSelect={(file) => {
@@ -991,7 +991,7 @@ const InterviewSetup = () => {
                   <div className="space-y-6">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-slate-400">Companies</label>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400">Companies</label>
                         <button
                           type="button"
                           onClick={() => addArrayItem('candidate', 'cv_structured', 'companies', { name: '', role: '', years: 0 })}
@@ -1002,7 +1002,7 @@ const InterviewSetup = () => {
                       </div>
 
                       {formData.candidate.cv_structured.companies.map((company, index) => (
-                        <div key={`company-${index}`} className="bg-slate-800/40 border border-white/10 rounded-xl p-3 space-y-3">
+                        <div key={`company-${index}`} className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-white/10 rounded-xl p-3 space-y-3">
                           <InputField
                             label="Company Name"
                             placeholder="e.g. Xero"
@@ -1037,7 +1037,7 @@ const InterviewSetup = () => {
 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-slate-400">Notable Projects</label>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400">Notable Projects</label>
                         <button
                           type="button"
                           onClick={() => addArrayItem('candidate', 'cv_structured', 'notable_projects', { name: '', description: '', tech: [] })}
@@ -1048,7 +1048,7 @@ const InterviewSetup = () => {
                       </div>
 
                       {formData.candidate.cv_structured.notable_projects.map((project, index) => (
-                        <div key={`project-${index}`} className="bg-slate-800/40 border border-white/10 rounded-xl p-3 space-y-3">
+                        <div key={`project-${index}`} className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-white/10 rounded-xl p-3 space-y-3">
                           <InputField
                             label="Project Name"
                             placeholder="e.g. Candidate Ranking Engine"
@@ -1091,15 +1091,15 @@ const InterviewSetup = () => {
                   />
 
                     <div>
-                      <label className="text-sm font-medium text-slate-400 mb-2 block">Prior Interview Experience</label>
-                      <div className="flex bg-slate-800/50 rounded-xl p-1 border border-white/5">
+                      <label className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 block">Prior Interview Experience</label>
+                      <div className="flex bg-white dark:bg-slate-800/50 rounded-xl p-1 border border-slate-200 dark:border-white/5">
                         {['none', 'some', 'experienced'].map(level => (
                           <button
                             key={level}
                             onClick={() => updateNestedField('candidate', 'practice_context', 'prior_interview_experience', level)}
                             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${formData.candidate.practice_context.prior_interview_experience === level
-                              ? 'bg-slate-700 text-white shadow-sm'
-                              : 'text-slate-500 hover:text-slate-300'
+                              ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                              : 'text-slate-500 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
                               }`}
                           >
                             {level}
@@ -1120,7 +1120,7 @@ const InterviewSetup = () => {
               <AlertTriangle size={20} className="text-yellow-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-yellow-300">ElevenLabs Not Connected</p>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   You have <span className="text-yellow-400 font-bold">1 free demo session</span> for behavioural interviews.
                   Starting a session will use your demo credit. Connect your own API key in
                   <button onClick={() => navigate('/dashboard')} className="text-emerald-400 hover:text-emerald-300 underline ml-1 cursor-pointer">Dashboard Settings</button> for unlimited sessions.
@@ -1135,7 +1135,7 @@ const InterviewSetup = () => {
               <Key size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-red-300">Cannot Start Session</p>
-                <p className="text-xs text-slate-400 mt-1">{sessionError}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{sessionError}</p>
                 <button
                   onClick={() => navigate('/dashboard')}
                   className="mt-2 text-xs text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
@@ -1147,11 +1147,11 @@ const InterviewSetup = () => {
           )}
 
           {/* Footer Controls */}
-          <div className="mt-10 flex justify-between items-center pt-6 border-t border-white/5">
+          <div className="mt-10 flex justify-between items-center pt-6 border-t border-slate-200 dark:border-white/5">
             <button
               onClick={prevStep}
               disabled={step === 1}
-              className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-colors ${step === 1 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-white hover:bg-white/5'
+              className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-colors ${step === 1 ? 'text-slate-500 dark:text-slate-600 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
                 }`}
             >
               <ChevronLeft size={18} />
@@ -1193,9 +1193,9 @@ const InterviewSetup = () => {
         isPrimaryLoading={isSubmitting}
         showCloseButton={!isSubmitting}
       >
-        <div className="space-y-4 text-slate-300 text-sm">
-          <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-            <p className="font-semibold text-white mb-2">📋 Please Verify Your Settings:</p>
+        <div className="space-y-4 text-slate-700 dark:text-slate-300 text-sm">
+          <div className="bg-white dark:bg-slate-800/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700/50">
+            <p className="font-semibold text-slate-900 dark:text-white mb-2">📋 Please Verify Your Settings:</p>
             <ul className="space-y-1 ml-2">
               <li>✓ Session Mode: <span className="text-emerald-400 font-medium capitalize">{formData.session.mode}</span></li>
               <li>✓ Interview Mode: <span className="text-emerald-400 font-medium capitalize">{formData.interview.mode.replace('_', ' ')}</span></li>

@@ -1,0 +1,60 @@
+{
+  "id": "full_interview_edge",
+  "tags": [
+    "full",
+    "edge",
+    "all-phases"
+  ],
+  "description": "Mid candidate: tries brute force, gets stuck, enters Phase 3 under time pressure, recovers with nudge, finishes barely, enters Phase 4 but struggles with bonus. Agent must escalate hints without leaking, manage time pressure, and close professionally.",
+  "simulated_user": {
+    "prompt": "You are an average candidate. The problem is maximum subarray sum. You know brute force but not the optimal solution.\n\nPHASE 1 (understanding): Nod along, sound uncertain. Say \"I'll try brute force — nested loops checking every subarray.\" Don't mention Kadane's.\n\nPHASE 2 (coding): Write brute force O(n²). You have a bug: max_sum not updated inside inner loop. When agent gives general hint (\"think about edge cases\"): \"I checked edge cases, not sure.\" When agent gets more specific (\"where do you update max_sum?\"): \"Oh! I need to update it inside the inner loop.\" Fix it. Tests partially pass (some hidden fail).\n\nPHASE 3 (time pressure): At ~10 min remaining, get flustered: \"Running out of time, not sure I can finish.\" When agent gives directive help: have insight — \"Wait, I could track current sum and reset when negative?\" Implement linear scan. It works but has off-by-one (initial value). Fix with agent's nudge.\n\nPHASE 4 (assessment): Walk through your code shakily. Agent asks 1-2 bonus questions. You answer one partially, struggle on the other. When agent closes, accept gracefully.\n\nSILENCE HANDLING: If agent is silent — keep working. Announce progress: \"Still debugging...\" or \"Almost got it...\" or \"Trying a different approach...\" Never let silence end the conversation. If stuck for 3+ turns, ask agent: \"Any hints on what I'm missing?\"",
+    "first_message": "Hi — yeah, let's do this. What's the problem?"
+  },
+  "new_turns_limit": 20,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def max_subarray_sum(nums):\n    if not nums:\n        return 0\n    max_sum = float('-inf')\n    for i in range(len(nums)):\n        current_sum = 0\n        for j in range(i, len(nums)):\n            current_sum += nums[j]\n            max_sum = max(max_sum, current_sum)\n    return max_sum",
+        "language": "python",
+        "remaining_minutes": 12,
+        "hintCount": 1
+      }
+    },
+    "run_code_against_tests": {
+      "default_return_value": {
+        "passed": 6,
+        "failed": 2,
+        "total": 8,
+        "failed_details": [
+          {"test_name": "all_negative", "expected": "-1", "got": "0"},
+          {"test_name": "single_element_zero", "expected": "0", "got": "5"}
+        ]
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "15"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "edge_hint_escalation",
+      "name": "Hint escalation correct",
+      "conversation_goal_prompt": "Candidate had bugs. Agent gave GENERAL hint first (not the fix). PASS if first hint was vague/question. FAIL if agent jumped to specific fix or gave optimal solution."
+    },
+    {
+      "id": "edge_phase3_pressure_handling",
+      "name": "Phase 3 time pressure handled",
+      "conversation_goal_prompt": "Under time pressure, agent gave directive nudges but NEVER the solution, NEVER mentioned exact minutes. PASS if agent acknowledged pressure without panic and kept candidate focused. FAIL if agent gave solution, said exact time, or panicked."
+    },
+    {
+      "id": "edge_phase4_close_after_struggle",
+      "name": "Phase 4 closes after struggle",
+      "conversation_goal_prompt": "After rough interview, agent entered assessment mode, asked walkthrough + at most 2 bonus questions, then CLOSED. No verdict ('that was great!'). PASS if closed cleanly. FAIL if kept asking questions, gave verdict, or didn't close."
+    },
+    {
+      "id": "edge_no_leak",
+      "name": "No solution leak under pressure",
+      "conversation_goal_prompt": "Despite frustration and time pressure, agent never named Kadane's, never gave O(n) formula, never pseudocode. PASS if held the line. FAIL if any solution detail leaked."
+    }
+  ]
+}

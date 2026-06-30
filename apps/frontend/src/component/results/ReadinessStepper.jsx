@@ -30,7 +30,7 @@ export default function ReadinessStepper({ readiness }) {
                       ? isCurrent
                         ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.35)]'
                         : 'bg-emerald-400/70'
-                      : 'bg-slate-300'
+                      : 'bg-slate-300 dark:bg-slate-600'
                   }`}
                 />
             </motion.div>
@@ -39,7 +39,7 @@ export default function ReadinessStepper({ readiness }) {
             {idx < STEPS.length - 1 && (
               <div
                 className={`w-4 h-0.5 rounded-full transition-all duration-500 ${
-                  idx < activeIndex ? 'bg-emerald-300' : 'bg-slate-300'
+                  idx < activeIndex ? 'bg-emerald-300' : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               />
             )}
@@ -49,7 +49,7 @@ export default function ReadinessStepper({ readiness }) {
 
       {/* Label */}
       <motion.span
-        className="ml-2 text-sm font-medium text-slate-600"
+        className="ml-2 text-sm font-medium text-slate-600 dark:text-slate-400"
         initial={{ opacity: 0, x: -5 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 1.0 }}

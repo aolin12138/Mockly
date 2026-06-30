@@ -1,0 +1,78 @@
+{
+  "typography": [
+    {
+      "role": "display",
+      "fontFamily": "system-ui",
+      "fontSize": "30px",
+      "fontWeight": "700",
+      "lineHeight": "36px",
+      "letterSpacing": "normal",
+      "color": "#000000",
+      "sampleText": "Welcome Back"
+    },
+    {
+      "role": "body",
+      "fontFamily": "system-ui",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "oklch(0.704 0.04 256.788)",
+      "sampleText": "Sign in to continue your journey"
+    },
+    {
+      "role": "link",
+      "fontFamily": "system-ui",
+      "fontSize": "16px",
+      "fontWeight": "600",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "oklch(0.765 0.177 163.223)",
+      "sampleText": "Sign up"
+    },
+    {
+      "role": "label",
+      "fontFamily": "system-ui",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "color": "oklch(0.869 0.022 252.894)",
+      "sampleText": "Email Address"
+    }
+  ],
+  "spacing": {
+    "observed": [
+      8,
+      16,
+      24,
+      32
+    ],
+    "baseUnit": 8
+  },
+  "radius": [
+    "14px"
+  ],
+  "shadows": [
+    {
+      "value": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.696 -0.162114 0.0511766 / 0.25) 0px 10px 15px -3px, oklab(0.696 -0.162114 0.0511766 / 0.25) 0px 4px 6px -4px",
+      "count": 1
+    }
+  ],
+  "buttons": [
+    {
+      "label": "Sign In",
+      "background": "#000000",
+      "color": "#FFFFFF",
+      "padding": "12px 24px",
+      "borderRadius": "14px",
+      "border": "0px solid oklch(1 0 0 / 0.1)",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.696 -0.162114 0.0511766 / 0.25) 0px 10px 15px -3px, oklab(0.696 -0.162114 0.0511766 / 0.25) 0px 4px 6px -4px",
+      "fontSize": "16px",
+      "fontWeight": "600",
+      "height": "48px"
+    }
+  ],
+  "cards": [],
+  "nav": null
+}
