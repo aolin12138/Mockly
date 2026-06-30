@@ -332,9 +332,9 @@ tl.to("#bt4", { opacity: 0, duration: 0.25 }, 13.0);
 /* THIS is the scroll — on the timeline so HyperFrames renders it */
 tl.to("#fb-inner", { top: -750, duration: 4, ease: "power2.inOut" }, 13.3);
 
-/* 19.5s: auto-return to dashboard (scroll ends at 17.3s, pause 2.2s) */
+/* 19.5s: auto-return — tl.set overrides scroll tween end state */
+tl.set("#fb-inner", { top: 0 }, 19.5);
 tl.call(function() {
-  setProp("fb-inner", "top", "0");
   setProp("fb-page", "opacity", "0");
   setProp("fb-page", "transition", "opacity 0.3s");
   setProp("dash-wrap", "opacity", "1");
