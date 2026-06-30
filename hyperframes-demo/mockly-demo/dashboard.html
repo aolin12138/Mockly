@@ -34,18 +34,9 @@
     .sb { font-size:36px; font-weight:700; color:#fff; }
     .su { font-size:13px; color:#64748b; margin-left:3px; }
 
-    .chart-wrap { position:relative; height:170px; margin-top:10px; }
-    .chart-grid { position:absolute; left:0; right:0; top:0; bottom:20px; display:flex; flex-direction:column; justify-content:space-between; }
-    .chart-grid-line { width:100%; height:1px; background:rgba(255,255,255,0.04); }
-    .chart-bars { position:absolute; left:0; right:0; bottom:20px; top:0; display:flex; align-items:flex-end; gap:22px; }
-    .ch-col { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; }
-    .ch-bar-wrap { width:36px; flex:1; display:flex; align-items:flex-end; }
-    .ch-bar { width:100%; border-radius:7px 7px 0 0; background:linear-gradient(180deg,rgba(0,188,125,0.45),rgba(0,188,125,0.15)); border:1px solid rgba(0,188,125,0.3); border-bottom:none; transform-origin:bottom; transform:scaleY(0); }
-    .ch-bar.cur { background:linear-gradient(180deg,rgba(0,188,125,0.6),rgba(0,188,125,0.3)); border-color:rgba(0,188,125,0.6); box-shadow:0 0 14px rgba(0,188,125,0.15); }
-    .ch-val { font-size:10px; font-weight:600; color:#cbd5e1; margin-top:4px; }
-    .ch-lbl { font-size:9px; color:#475569; text-transform:uppercase; letter-spacing:0.04em; }
-    .avg-line { position:absolute; left:0; right:0; border-top:1.5px dashed rgba(0,188,125,0.35); }
-    .avg-tag { position:absolute; font-size:9px; color:rgba(0,188,125,0.55); right:4px; top:-14px; }
+    /* SVG Chart */
+    .chart-container { position:relative; height:170px; margin-top:8px; }
+    .chart-container svg { width:100%; height:100%; }
 
     .sr { display:flex; align-items:center; justify-content:space-between; padding:10px 13px; border-radius:10px; background:rgba(15,22,42,0.4); border:1px solid rgba(255,255,255,0.03); margin-bottom:6px; }
     .sr-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; }
@@ -71,11 +62,10 @@
 
     /* Bottom text */
     .bt { position:absolute; left:50%; transform:translateX(-50%); bottom:70px; z-index:260; pointer-events:none; opacity:0; text-align:center; max-width:820px; }
-    .bt-h { font-size:34px; font-weight:700; color:#fff; line-height:1.15; margin-bottom:8px; text-shadow:0 2px 16px rgba(0,0,0,0.8); }
-    .bt-b { font-size:16px; line-height:1.5; color:#cbd5e1; text-shadow:0 1px 8px rgba(0,0,0,0.7); }
+    .bt-h { font-size:34px; font-weight:700; color:#fff; line-height:1.15; margin-bottom:8px; text-shadow:0 2px 20px rgba(0,0,0,0.9); }
+    .bt-b { font-size:16px; line-height:1.5; color:#cbd5e1; text-shadow:0 1px 10px rgba(0,0,0,0.8); }
     .bt-g { color:#00bc7d; font-weight:600; }
 
-    /* Start CTA */
     .start-cta {
       position:absolute; bottom:18px; left:220px; right:20px; z-index:95;
       padding:14px 24px; border-radius:16px;
@@ -90,46 +80,43 @@
     /* Feedback page */
     .fb-page { position:absolute; inset:0; background:#020618; z-index:150; opacity:0; display:flex; flex-direction:column; }
     .fb-hdr { height:52px; background:rgba(2,6,24,0.93); border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; padding:0 22px; }
-    .fb-nav { width:240px; background:rgba(2,6,24,0.5); border-right:1px solid rgba(255,255,255,0.04); padding:16px; overflow-y:hidden; flex-shrink:0; }
-    .fb-nav-item { padding:6px 10px; font-size:11px; color:#90a1b9; border-radius:6px; margin-bottom:2px; }
+    .fb-nav { width:220px; background:rgba(2,6,24,0.5); border-right:1px solid rgba(255,255,255,0.04); padding:14px; flex-shrink:0; }
+    .fb-nav-item { padding:5px 10px; font-size:10px; color:#90a1b9; border-radius:6px; margin-bottom:2px; }
     .fb-nav-item.ac { color:#00bc7d; background:rgba(0,188,125,0.06); }
     .fb-body { flex:1; overflow:hidden; position:relative; }
-    .fb-scroll-inner { position:absolute; left:0; right:0; top:0; padding:24px 40px 80px; }
-    .fb-section { margin-bottom:24px; padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.04); }
+    .fb-scroll-inner { position:absolute; left:0; right:0; top:0; padding:20px 36px 80px; }
+    .fb-section { margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.04); }
     .fb-section:last-child { border-bottom:none; }
-    .fb-s-title { font-size:18px; font-weight:700; color:#fff; margin-bottom:14px; }
+    .fb-s-title { font-size:17px; font-weight:700; color:#fff; margin-bottom:12px; }
 
-    /* Score ring */
-    .sc-ring { width:140px; height:140px; border-radius:999px; background:conic-gradient(#020618 360deg,rgba(255,255,255,0.06) 0deg); display:flex; align-items:center; justify-content:center; transition:background 1.5s ease-out; position:relative; }
-    .sc-inner { width:108px; height:108px; border-radius:999px; background:#020618; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.06); }
-    .sc-num { font-size:36px; font-weight:700; color:#fff; }
-    .sc-lab { font-size:10px; color:#64748b; }
+    .sc-ring { width:130px; height:130px; border-radius:999px; background:conic-gradient(#020618 360deg,rgba(255,255,255,0.06) 0deg); display:flex; align-items:center; justify-content:center; transition:background 1.5s ease-out; position:relative; }
+    .sc-inner { width:100px; height:100px; border-radius:999px; background:#020618; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.06); }
+    .sc-num { font-size:34px; font-weight:700; color:#fff; }
+    .sc-lab { font-size:9px; color:#64748b; }
 
-    /* STAR question card */
-    .sq-card { background:rgba(15,23,43,0.6); border:1px solid rgba(255,255,255,0.04); border-radius:12px; padding:14px 16px; margin-bottom:10px; }
-    .sq-star-row { display:flex; gap:12px; margin:8px 0; }
-    .sq-star-col { display:flex; align-items:center; gap:4px; font-size:11px; color:#cbd5e1; }
-    .sq-star-dot { width:16px; height:16px; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:9px; }
+    .sq-card { background:rgba(15,23,43,0.6); border:1px solid rgba(255,255,255,0.04); border-radius:12px; padding:12px 14px; margin-bottom:8px; }
+    .sq-star-row { display:flex; gap:10px; margin:7px 0; }
+    .sq-star-col { display:flex; align-items:center; gap:3px; font-size:10px; color:#cbd5e1; }
+    .sq-star-dot { width:15px; height:15px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700; }
     .sq-star-dot.yes { background:rgba(0,188,125,0.12); color:#00bc7d; }
     .sq-star-dot.no { background:rgba(239,68,68,0.1); color:#f87171; }
 
-    .tag { font-size:9px; font-weight:600; padding:3px 8px; border-radius:999px; display:inline-block; margin-right:4px; margin-bottom:4px; }
+    .tag { font-size:9px; font-weight:600; padding:3px 8px; border-radius:999px; display:inline-block; margin-right:3px; margin-bottom:3px; }
     .tag-green { background:rgba(0,188,125,0.08); color:#00bc7d; border:1px solid rgba(0,188,125,0.15); }
     .tag-red { background:rgba(239,68,68,0.08); color:#f87171; border:1px solid rgba(239,68,68,0.15); }
-    .tag-blue { background:rgba(59,130,246,0.08); color:#60a5fa; border:1px solid rgba(59,130,246,0.15); }
     .tag-amber { background:rgba(245,158,11,0.08); color:#fbbf24; border:1px solid rgba(245,158,11,0.15); }
     .tag-purple { background:rgba(139,92,246,0.08); color:#a78bfa; border:1px solid rgba(139,92,246,0.15); }
 
-    .ni { display:flex; align-items:flex-start; gap:8px; padding:5px 0; }
-    .ni-num { width:22px; height:22px; border-radius:6px; background:rgba(0,188,125,0.1); color:#00bc7d; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .ni-txt { font-size:11px; color:#cbd5e1; line-height:1.45; }
+    .ni { display:flex; align-items:flex-start; gap:8px; padding:4px 0; }
+    .ni-num { width:20px; height:20px; border-radius:6px; background:rgba(0,188,125,0.1); color:#00bc7d; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .ni-txt { font-size:11px; color:#cbd5e1; line-height:1.4; }
 
-    .back-btn { display:inline-flex; align-items:center; gap:6px; color:#00bc7d; font-size:13px; font-weight:600; padding:10px 22px; border-radius:8px; border:1px solid rgba(0,188,125,0.2); cursor:pointer; }
+    .back-btn { display:inline-flex; align-items:center; gap:6px; color:#00bc7d; font-size:13px; font-weight:600; padding:9px 20px; border-radius:8px; border:1px solid rgba(0,188,125,0.2); }
   </style>
 </head>
 <body>
 
-<div id="root" data-composition-id="dashboard" data-start="0" data-duration="32" data-width="1920" data-height="1080">
+<div id="root" data-composition-id="dashboard-v9" data-start="0" data-duration="32" data-width="1920" data-height="1080">
 
   <div class="amb amb-1"></div><div class="amb amb-2"></div>
   <div class="dark-overlay" id="darken"></div>
@@ -147,27 +134,56 @@
       <div style="margin-bottom:14px;"><h1 style="font-size:26px;font-weight:700;color:#fff;margin-bottom:2px;">Welcome back, <span style="background:linear-gradient(90deg,#00bc7d,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Alex</span></h1><p style="font-size:12px;color:#64748b;">Your interview prep headquarters</p></div>
       <div style="display:flex;gap:16px;">
         <div style="flex:1;display:flex;flex-direction:column;gap:12px;">
+          <!-- Stats row -->
           <div style="display:flex;gap:10px;" id="stats-row">
             <div class="card card-spot" id="stat-score" style="flex:1;"><div class="sl">Avg Score</div><div><span class="sb" id="snum">0</span><span class="su">/100</span></div></div>
             <div class="card card-spot" id="stat-time" style="flex:1;"><div class="sl">Practice Time</div><div><span class="sb">4.2</span><span class="su">hr</span></div></div>
             <div class="card card-spot" id="stat-sess" style="flex:1;"><div class="sl">Sessions</div><div><span class="sb">12</span><span class="su">total</span></div></div>
             <div class="card card-spot" id="stat-voice" style="flex:1;"><div class="sl">Voice</div><div style="display:flex;align-items:center;gap:5px;"><span style="width:6px;height:6px;border-radius:999px;background:#00bc7d;"></span><span style="font-size:11px;font-weight:600;color:#00bc7d;">Connected</span></div></div>
           </div>
+
+          <!-- SVG CHART -->
           <div class="card card-spot" id="chart-card" style="padding:16px 20px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0;"><h2 style="font-size:14px;font-weight:700;color:#fff;">Performance History</h2><span style="font-size:9px;color:#64748b;background:rgba(255,255,255,0.03);padding:2px 8px;border-radius:999px;">Last 6 sessions</span></div>
-            <div class="chart-wrap">
-              <div class="chart-grid"><div class="chart-grid-line"></div><div class="chart-grid-line"></div><div class="chart-grid-line"></div><div class="chart-grid-line"></div></div>
-              <div class="avg-line" style="bottom:65%;"><span class="avg-tag">avg 72</span></div>
-              <div class="chart-bars">
-                <div class="ch-col"><div class="ch-bar-wrap"><div class="ch-bar" id="b0"></div></div><span class="ch-val">56</span><span class="ch-lbl">Oct</span></div>
-                <div class="ch-col"><div class="ch-bar-wrap"><div class="ch-bar" id="b1"></div></div><span class="ch-val">62</span><span class="ch-lbl">Nov</span></div>
-                <div class="ch-col"><div class="ch-bar-wrap"><div class="ch-bar" id="b2"></div></div><span class="ch-val">58</span><span class="ch-lbl">Dec</span></div>
-                <div class="ch-col"><div class="ch-bar-wrap"><div class="ch-bar" id="b3"></div></div><span class="ch-val">71</span><span class="ch-lbl">Jan</span></div>
-                <div class="ch-col"><div class="ch-bar-wrap"><div class="ch-bar" id="b4"></div></div><span class="ch-val">76</span><span class="ch-lbl">Feb</span></div>
-                <div class="ch-col"><div class="ch-bar-wrap"><div class="ch-bar cur" id="b5"></div></div><span class="ch-val" style="color:#00bc7d;font-weight:700;">82</span><span class="ch-lbl" style="color:#00bc7d;">Now</span></div>
-              </div>
+            <div class="chart-container">
+              <svg viewBox="0 0 700 170" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Grid lines -->
+                <line x1="0" y1="0" x2="700" y2="0" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                <line x1="0" y1="42" x2="700" y2="42" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                <line x1="0" y1="85" x2="700" y2="85" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                <line x1="0" y1="127" x2="700" y2="127" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                <!-- Avg line at y=60 (65%) -->
+                <line x1="0" y1="60" x2="700" y2="60" stroke="rgba(0,188,125,0.35)" stroke-width="1.5" stroke-dasharray="6,4"/>
+                <text x="690" y="56" fill="rgba(0,188,125,0.5)" font-size="10" font-family="system-ui" text-anchor="end">avg 72</text>
+                <!-- Bars -->
+                <rect id="r0" x="30" y="170" width="38" height="0" rx="4" fill="rgba(0,188,125,0.22)" stroke="rgba(0,188,125,0.3)" stroke-width="1"/>
+                <text x="49" y="162" fill="#cbd5e1" font-size="10" font-family="system-ui" text-anchor="middle">56</text>
+                <text x="49" y="168" fill="#475569" font-size="8" font-family="system-ui" text-anchor="middle">Oct</text>
+
+                <rect id="r1" x="122" y="170" width="38" height="0" rx="4" fill="rgba(0,188,125,0.22)" stroke="rgba(0,188,125,0.3)" stroke-width="1"/>
+                <text x="141" y="162" fill="#cbd5e1" font-size="10" font-family="system-ui" text-anchor="middle">62</text>
+                <text x="141" y="168" fill="#475569" font-size="8" font-family="system-ui" text-anchor="middle">Nov</text>
+
+                <rect id="r2" x="214" y="170" width="38" height="0" rx="4" fill="rgba(0,188,125,0.22)" stroke="rgba(0,188,125,0.3)" stroke-width="1"/>
+                <text x="233" y="162" fill="#cbd5e1" font-size="10" font-family="system-ui" text-anchor="middle">58</text>
+                <text x="233" y="168" fill="#475569" font-size="8" font-family="system-ui" text-anchor="middle">Dec</text>
+
+                <rect id="r3" x="306" y="170" width="38" height="0" rx="4" fill="rgba(0,188,125,0.22)" stroke="rgba(0,188,125,0.3)" stroke-width="1"/>
+                <text x="325" y="162" fill="#cbd5e1" font-size="10" font-family="system-ui" text-anchor="middle">71</text>
+                <text x="325" y="168" fill="#475569" font-size="8" font-family="system-ui" text-anchor="middle">Jan</text>
+
+                <rect id="r4" x="398" y="170" width="38" height="0" rx="4" fill="rgba(0,188,125,0.22)" stroke="rgba(0,188,125,0.3)" stroke-width="1"/>
+                <text x="417" y="162" fill="#cbd5e1" font-size="10" font-family="system-ui" text-anchor="middle">76</text>
+                <text x="417" y="168" fill="#475569" font-size="8" font-family="system-ui" text-anchor="middle">Feb</text>
+
+                <rect id="r5" x="490" y="170" width="38" height="0" rx="4" fill="rgba(0,188,125,0.4)" stroke="rgba(0,188,125,0.55)" stroke-width="1.5"/>
+                <text x="509" y="162" fill="#00bc7d" font-size="10" font-family="system-ui" text-anchor="middle" font-weight="700">82</text>
+                <text x="509" y="168" fill="#00bc7d" font-size="8" font-family="system-ui" text-anchor="middle">Now</text>
+              </svg>
             </div>
           </div>
+
+          <!-- Sessions -->
           <div class="card card-spot" id="sessions-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><h2 style="font-size:14px;font-weight:700;color:#fff;">Recent Sessions</h2><span style="font-size:10px;color:#00bc7d;">View all →</span></div>
             <div class="sr" id="sess-0"><div style="display:flex;align-items:center;gap:9px;"><div class="sr-icon beh">👤</div><div><div style="font-size:11px;font-weight:500;color:#cbd5e1;">Influence without authority</div><div style="display:flex;gap:4px;margin-top:2px;"><span class="badge badge-b">Behavioural</span><span style="font-size:9px;color:#475569;">2d ago</span></div></div></div><span class="sp sp-hi">82</span></div>
@@ -175,6 +191,7 @@
             <div class="sr" id="sess-2"><div style="display:flex;align-items:center;gap:9px;"><div class="sr-icon tech">&lt;/&gt;</div><div><div style="font-size:11px;font-weight:500;color:#cbd5e1;">Two-pointer optimization</div><div style="display:flex;gap:4px;margin-top:2px;"><span class="badge badge-t">Technical</span><span style="font-size:9px;color:#475569;">5d ago</span></div></div></div><span class="sp sp-md">71</span></div>
           </div>
         </div>
+
         <div style="width:250px;display:flex;flex-direction:column;gap:10px;">
           <div class="card card-spot" id="goals-card"><h2 style="font-size:13px;font-weight:700;color:#fff;margin-bottom:10px;">Goals</h2>
             <div class="gr"><span style="font-size:11px;color:#cbd5e1;">5 behavioural</span><div style="display:flex;align-items:center;gap:5px;"><span style="font-size:9px;color:#64748b;">3/5</span><div class="pt"><div class="pf" id="gb1" style="width:60%;"></div></div></div></div>
@@ -196,7 +213,6 @@
   <div class="fb-page" id="fb-page">
     <div class="fb-hdr"><div class="hdr-logo">M</div><span class="hdr-brand" style="color:#fff;">Mockly</span><span style="font-size:11px;color:#64748b;margin-left:6px;">/ Results</span><span style="margin-left:auto;font-size:11px;color:#64748b;">Influence without authority · 30 June</span></div>
     <div style="display:flex;flex:1;min-height:0;">
-      <!-- Section nav sidebar -->
       <div class="fb-nav">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:#64748b;margin-bottom:10px;font-weight:600;">Sections</div>
         <div class="fb-nav-item ac">Overview</div>
@@ -210,8 +226,6 @@
       </div>
       <div class="fb-body" id="fb-body">
         <div class="fb-scroll-inner" id="fb-inner" style="top:0;">
-
-          <!-- HERO -->
           <div class="fb-section" style="display:flex;gap:24px;align-items:flex-start;">
             <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;">
               <div class="sc-ring" id="fb-ring"><div class="sc-inner"><span class="sc-num" id="fb-num">0</span><span class="sc-lab">Score</span></div></div>
@@ -224,17 +238,15 @@
               <span class="tag tag-green">Hire</span>
             </div>
           </div>
-
-          <!-- STAR BREAKDOWN -->
           <div class="fb-section"><div class="fb-s-title">STAR Breakdown</div>
             <div class="sq-card">
               <div style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:0.06em;margin-bottom:4px;">Strategic Influence</div>
               <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">Tell me about a time you influenced a team to adopt a new process without having direct authority.</div>
               <div class="sq-star-row">
-                <div class="sq-star-col"><span class="sq-star-dot yes">S</span> Situation</div>
-                <div class="sq-star-col"><span class="sq-star-dot yes">T</span> Task</div>
-                <div class="sq-star-col"><span class="sq-star-dot yes">A</span> Action</div>
-                <div class="sq-star-col"><span class="sq-star-dot yes">R</span> Result</div>
+                <div class="sq-star-col"><span class="sq-star-dot yes">S</span>Situation</div>
+                <div class="sq-star-col"><span class="sq-star-dot yes">T</span>Task</div>
+                <div class="sq-star-col"><span class="sq-star-dot yes">A</span>Action</div>
+                <div class="sq-star-col"><span class="sq-star-dot yes">R</span>Result</div>
                 <span class="tag tag-green" style="margin-left:8px;">Strong</span>
               </div>
               <div style="font-size:10px;color:#64748b;background:rgba(0,188,125,0.04);border-radius:8px;padding:8px 10px;">Excellent use of the STAR framework. The situation was clear, the action steps were specific, and the result included measurable impact.</div>
@@ -243,10 +255,10 @@
               <div style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:0.06em;margin-bottom:4px;">Cross Functional Leadership</div>
               <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">Describe a situation where you had to coordinate across multiple departments to deliver a project.</div>
               <div class="sq-star-row">
-                <div class="sq-star-col"><span class="sq-star-dot yes">S</span> Situation</div>
-                <div class="sq-star-col"><span class="sq-star-dot yes">T</span> Task</div>
-                <div class="sq-star-col"><span class="sq-star-dot yes">A</span> Action</div>
-                <div class="sq-star-col"><span class="sq-star-dot no">R</span> Result</div>
+                <div class="sq-star-col"><span class="sq-star-dot yes">S</span>Situation</div>
+                <div class="sq-star-col"><span class="sq-star-dot yes">T</span>Task</div>
+                <div class="sq-star-col"><span class="sq-star-dot yes">A</span>Action</div>
+                <div class="sq-star-col"><span class="sq-star-dot no">R</span>Result</div>
                 <span class="tag tag-amber" style="margin-left:8px;">Adequate</span>
               </div>
               <div style="font-size:10px;color:#64748b;background:rgba(234,179,8,0.04);border-radius:8px;padding:8px 10px;">Good setup and actions, but the result lacked specific metrics. Consider quantifying the project outcome next time.</div>
@@ -255,74 +267,45 @@
               <div style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:0.06em;margin-bottom:4px;">Conflict Resolution</div>
               <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">Tell me about a time you had to resolve a conflict between team members.</div>
               <div class="sq-star-row">
-                <div class="sq-star-col"><span class="sq-star-dot yes">S</span> Situation</div>
-                <div class="sq-star-col"><span class="sq-star-dot no">T</span> Task</div>
-                <div class="sq-star-col"><span class="sq-star-dot yes">A</span> Action</div>
-                <div class="sq-star-col"><span class="sq-star-dot yes">R</span> Result</div>
+                <div class="sq-star-col"><span class="sq-star-dot yes">S</span>Situation</div>
+                <div class="sq-star-col"><span class="sq-star-dot no">T</span>Task</div>
+                <div class="sq-star-col"><span class="sq-star-dot yes">A</span>Action</div>
+                <div class="sq-star-col"><span class="sq-star-dot yes">R</span>Result</div>
                 <span class="tag tag-red" style="margin-left:8px;">Weak</span>
               </div>
               <div style="font-size:10px;color:#64748b;background:rgba(239,68,68,0.04);border-radius:8px;padding:8px 10px;">Task was unclear — it blended into the situation. Separate what you were specifically responsible for from the background context.</div>
             </div>
           </div>
-
-          <!-- SKILL BREAKDOWN -->
           <div class="fb-section"><div class="fb-s-title">Skill Breakdown</div>
-            <div style="display:flex;gap:12px;flex-wrap:wrap;">
-              <div style="flex:1;min-width:140px;background:rgba(15,23,43,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:12px;text-align:center;">
-                <div style="font-size:24px;font-weight:700;color:#00bc7d;">8<span style="font-size:12px;color:#64748b;">/10</span></div>
-                <div style="font-size:10px;color:#cbd5e1;margin-top:2px;">Communication</div>
-              </div>
-              <div style="flex:1;min-width:140px;background:rgba(15,23,43,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:12px;text-align:center;">
-                <div style="font-size:24px;font-weight:700;color:#34d399;">7<span style="font-size:12px;color:#64748b;">/10</span></div>
-                <div style="font-size:10px;color:#cbd5e1;margin-top:2px;">Leadership</div>
-              </div>
-              <div style="flex:1;min-width:140px;background:rgba(15,23,43,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:12px;text-align:center;">
-                <div style="font-size:24px;font-weight:700;color:#00bc7d;">8<span style="font-size:12px;color:#64748b;">/10</span></div>
-                <div style="font-size:10px;color:#cbd5e1;margin-top:2px;">Problem Solving</div>
-              </div>
-              <div style="flex:1;min-width:140px;background:rgba(15,23,43,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:12px;text-align:center;">
-                <div style="font-size:24px;font-weight:700;color:#fbbf24;">6<span style="font-size:12px;color:#64748b;">/10</span></div>
-                <div style="font-size:10px;color:#cbd5e1;margin-top:2px;">Collaboration</div>
-              </div>
-              <div style="flex:1;min-width:140px;background:rgba(15,23,43,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:12px;text-align:center;">
-                <div style="font-size:24px;font-weight:700;color:#34d399;">7<span style="font-size:12px;color:#64748b;">/10</span></div>
-                <div style="font-size:10px;color:#cbd5e1;margin-top:2px;">Adaptability</div>
-              </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:130px;background:rgba(15,23,43,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#00bc7d;">8<span style="font-size:11px;color:#64748b;">/10</span></div><div style="font-size:10px;color:#cbd5e1;margin-top:2px;">Communication</div></div>
+              <div style="flex:1;min-width:130px;background:rgba(15,23,43,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#34d399;">7<span style="font-size:11px;color:#64748b;">/10</span></div><div style="font-size:10px;color:#cbd5e1;margin-top:2px;">Leadership</div></div>
+              <div style="flex:1;min-width:130px;background:rgba(15,23,43,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#00bc7d;">8<span style="font-size:11px;color:#64748b;">/10</span></div><div style="font-size:10px;color:#cbd5e1;margin-top:2px;">Problem Solving</div></div>
+              <div style="flex:1;min-width:130px;background:rgba(15,23,43,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#fbbf24;">6<span style="font-size:11px;color:#64748b;">/10</span></div><div style="font-size:10px;color:#cbd5e1;margin-top:2px;">Collaboration</div></div>
+              <div style="flex:1;min-width:130px;background:rgba(15,23,43,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#34d399;">7<span style="font-size:11px;color:#64748b;">/10</span></div><div style="font-size:10px;color:#cbd5e1;margin-top:2px;">Adaptability</div></div>
             </div>
           </div>
-
-          <!-- PATTERNS -->
-          <div class="fb-section"><div class="fb-s-title">Performance Patterns</div>
-            <div style="font-size:11px;color:#90a1b9;margin-bottom:8px;">Repeated behaviors observed across your answers.</div>
-            <div><span class="tag tag-green">✓ Opens with strong situation framing</span><span class="tag tag-green">✓ Specific actions, not vague</span></div>
-            <div style="margin-top:4px;"><span class="tag tag-red">✗ Results lack quantified business impact</span><span class="tag tag-red">✗ Under-credits team collaboration</span></div>
+          <div class="fb-section"><div class="fb-s-title">Performance Patterns</div><div style="font-size:11px;color:#90a1b9;margin-bottom:8px;">Repeated behaviors observed across your answers.</div>
+            <div style="margin-bottom:4px;"><span class="tag tag-green">✓ Strong situation framing</span><span class="tag tag-green">✓ Specific actions</span></div>
+            <div><span class="tag tag-red">✗ Results lack quantified impact</span><span class="tag tag-red">✗ Under-credits team</span></div>
           </div>
-
-          <!-- STRENGTHS + IMPROVEMENTS -->
           <div class="fb-section">
-            <div class="fb-s-title">Strengths</div>
-            <div style="font-size:11px;color:#cbd5e1;margin-bottom:10px;">Communication: Clear, well-structured responses · Problem Solving: Systematic thinking under pressure · Leadership: Takes ownership and drives initiatives</div>
-            <div class="fb-s-title" style="margin-top:12px;">Areas for Improvement</div>
+            <div class="fb-s-title">Strengths</div><div style="font-size:11px;color:#cbd5e1;margin-bottom:10px;">Communication: Clear, well-structured responses · Problem Solving: Systematic thinking under pressure · Leadership: Takes ownership and drives initiatives</div>
+            <div class="fb-s-title" style="margin-top:10px;">Areas for Improvement</div>
             <div style="font-size:11px;color:#cbd5e1;"><strong style="color:#f87171;">Collaboration</strong> — Credit team members explicitly. Instead of "I implemented", try "I proposed the approach and paired with our senior backend engineer to implement it".</div>
             <div style="font-size:11px;color:#cbd5e1;margin-top:6px;"><strong style="color:#fbbf24;">Results</strong> — Close every answer with quantified business impact. Revenue, team size, percentage improvements.</div>
           </div>
-
-          <!-- CV ALIGNMENT -->
           <div class="fb-section"><div class="fb-s-title">CV-Interview Alignment</div>
-            <div style="font-size:11px;color:#90a1b9;margin-bottom:10px;">Your answers generally undersold your CV experience. Your CV claims strong leadership — your answers focused on execution details.</div>
-            <div style="background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.12);border-radius:10px;padding:10px 14px;margin-bottom:6px;"><span class="tag tag-amber">Understated</span> <span style="font-size:11px;color:#cbd5e1;">Led cross-functional team of 12 — sounded like coordination, not leadership</span></div>
-            <div style="background:rgba(0,188,125,0.04);border:1px solid rgba(0,188,125,0.12);border-radius:10px;padding:10px 14px;margin-bottom:6px;"><span class="tag tag-green">Consistent</span> <span style="font-size:11px;color:#cbd5e1;">System performance by 40% — clear technical approach with metrics</span></div>
-            <div style="background:rgba(15,23,43,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:10px 14px;"><span class="tag tag-purple">Not Tested</span> <span style="font-size:11px;color:#cbd5e1;">Mentored 5 junior engineers — not referenced in any answer</span></div>
+            <div style="font-size:11px;color:#90a1b9;margin-bottom:10px;">Your answers generally undersold your CV experience.</div>
+            <div style="background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.12);border-radius:10px;padding:9px 12px;margin-bottom:6px;"><span class="tag tag-amber">Understated</span> <span style="font-size:11px;color:#cbd5e1;">Led cross-functional team of 12 — sounded like coordination</span></div>
+            <div style="background:rgba(0,188,125,0.04);border:1px solid rgba(0,188,125,0.12);border-radius:10px;padding:9px 12px;margin-bottom:6px;"><span class="tag tag-green">Consistent</span> <span style="font-size:11px;color:#cbd5e1;">System performance by 40% — clear metrics</span></div>
+            <div style="background:rgba(15,23,43,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:9px 12px;"><span class="tag tag-purple">Not Tested</span> <span style="font-size:11px;color:#cbd5e1;">Mentored 5 engineers — not referenced</span></div>
           </div>
-
-          <!-- NEXT STEPS -->
           <div class="fb-section"><div class="fb-s-title">Next Steps</div>
             <div class="ni"><span class="ni-num">1</span><span class="ni-txt"><strong style="color:#fff;">Quantify Results</strong> — For each STAR story, write down 2-3 specific metrics that demonstrate business impact.</span></div>
             <div class="ni"><span class="ni-num">2</span><span class="ni-txt"><strong style="color:#fff;">Team Framing</strong> — Revisit your top 5 stories and add at least one sentence crediting a specific team member.</span></div>
             <div class="ni"><span class="ni-num">3</span><span class="ni-txt"><strong style="color:#fff;">CV Alignment</strong> — For each CV bullet point, prepare a matching STAR story with the same level of scope.</span></div>
           </div>
-
-          <!-- Back button -->
           <div style="text-align:center;padding-top:12px;"><span class="back-btn" id="fb-back-btn">← Back to Dashboard</span></div>
         </div>
       </div>
@@ -332,9 +315,9 @@
   <!-- ═════ BOTTOM TEXT ═════ -->
   <div class="bt" id="bt1"><div class="bt-h">Every session is tracked and scored</div><div class="bt-b">Mockly analyzes each interview and turns it into a <span class="bt-g">measurable score</span> so you always know where you stand.</div></div>
   <div class="bt" id="bt2"><div class="bt-h">Your growth, visualized</div><div class="bt-b">Each bar is a session. Watch your scores climb through the <span class="bt-g">practice → feedback → improve cycle</span>.</div></div>
-  <div class="bt" id="bt3"><div class="bt-h">Tap any session for a full breakdown</div><div class="bt-b">Every interview gets <span class="bt-g">STAR analysis</span> with coaching notes and your next step. Click in to see the full report.</div></div>
+  <div class="bt" id="bt3"><div class="bt-h">Tap any session for a full breakdown</div><div class="bt-b">Every interview gets <span class="bt-g">STAR analysis</span> with coaching notes and your next step.</div></div>
   <div class="bt" id="bt4"><div class="bt-h">Check your feedback. Improve. Repeat.</div><div class="bt-b">STAR breakdown, skill scores, patterns, CV alignment — your <span class="bt-g">full coaching report</span> is one click away.</div></div>
-  <div class="bt" id="bt5"><div class="bt-h">Set goals. Get directed.</div><div class="bt-b">Mockly tracks your targets and tells you <span class="bt-g">exactly what to work on</span> next. No guessing.</div></div>
+  <div class="bt" id="bt5"><div class="bt-h">Set goals. Get directed.</div><div class="bt-b">Mockly tracks your targets and tells you <span class="bt-g">exactly what to work on</span> next.</div></div>
   <div class="bt" id="bt6"><div class="bt-h">Ready when you are</div><div class="bt-b">Every practice session is tracked, scored, and turned into <span class="bt-g">actionable feedback</span>. Click Start when you're ready.</div></div>
 
 </div>
@@ -343,70 +326,103 @@
 window.__timelines = window.__timelines || {};
 var tl = gsap.timeline({ paused: true });
 
-function clickAt() { var r=document.getElementById("cr"); r.style.opacity="1"; gsap.to(r,{scale:10, opacity:0, duration:0.4, onComplete:function(){r.style.opacity="0";r.style.transform="translate(-50%,-50%) scale(1)";}}); }
-function spotlight(elId) { var el=document.getElementById(elId); if(!el)return; el.style.position="relative"; el.style.zIndex="98"; el.style.transform="translateY(-3px)"; el.style.boxShadow="0 12px 30px rgba(0,0,0,0.4), 0 0 0 2px rgba(0,188,125,0.3)"; el.style.borderColor="rgba(0,188,125,0.5)"; document.getElementById("darken").style.opacity="1"; }
-function clearSpot(elId) { var el=document.getElementById(elId); if(!el)return; el.style.position=""; el.style.zIndex=""; el.style.transform=""; el.style.boxShadow=""; el.style.borderColor=""; document.getElementById("darken").style.opacity="0"; }
+function clickAt() { var r=document.getElementById("cr"); r.style.opacity="1"; gsap.to(r,{scale:10,opacity:0,duration:0.4,onComplete:function(){r.style.opacity="0";r.style.transform="translate(-50%,-50%) scale(1)";}}); }
+function spotlight(elId) { var el=document.getElementById(elId); if(!el)return; el.style.position="relative";el.style.zIndex="98";el.style.transform="translateY(-3px)";el.style.boxShadow="0 12px 30px rgba(0,0,0,0.4),0 0 0 2px rgba(0,188,125,0.3)";el.style.borderColor="rgba(0,188,125,0.5)";document.getElementById("darken").style.opacity="1"; }
+function clearSpot(elId) { var el=document.getElementById(elId); if(!el)return; el.style.position="";el.style.zIndex="";el.style.transform="";el.style.boxShadow="";el.style.borderColor="";document.getElementById("darken").style.opacity="0"; }
+function clearAll() { ["stats-row","chart-card","sessions-card","goals-card","start-cta"].forEach(function(id){clearSpot(id);}); }
 
-/* 0s: Cards */
+/* 0s: Cards appear */
 tl.to("#snum",{textContent:76,duration:0.8,snap:{textContent:1},ease:"steps(8)"},0.3);
 tl.from("#stats-row > div",{opacity:0,y:10,duration:0.4,stagger:0.1,ease:"power2.out"},0.3);
-tl.from("#chart-card, #sessions-card, #goals-card, #insight-card",{opacity:0,y:10,duration:0.4,stagger:0.08,ease:"power2.out"},0.6);
+tl.from("#chart-card,#sessions-card,#goals-card,#insight-card",{opacity:0,y:10,duration:0.4,stagger:0.08,ease:"power2.out"},0.6);
 tl.from("#start-cta",{opacity:0,y:12,duration:0.5,ease:"power2.out"},0.9);
 
-/* PHASE 1 */
+/* PHASE 1: "Every session is tracked" → highlight stats-row */
 tl.to("#bt1",{opacity:1,duration:0.4},1.2);
-tl.to("#cur",{left:222,top:162,duration:1.2,ease:"power2.inOut"},2.0);
-tl.call(function(){spotlight("stats-row");},null,3.2);
-tl.call(clickAt,null,3.3);
+tl.call(function(){spotlight("stats-row");},null,1.5);
+tl.to("#cur",{left:225,top:162,duration:1.2,ease:"power2.inOut"},2.0);
+tl.call(clickAt,null,3.2);
 tl.to("#bt1",{opacity:0,duration:0.3},4.0);
+tl.call(clearAll,null,4.2);
 
-/* PHASE 2: chart */
+/* PHASE 2: "Your growth, visualized" → highlight chart-card + animate SVG bars */
 tl.to("#bt2",{opacity:1,duration:0.4},4.5);
-tl.call(function(){clearSpot("stats-row");spotlight("chart-card");},null,5.0);
-tl.to("#b0",{scaleY:0.56,duration:0.35,ease:"power2.out"},5.2);
-tl.to("#b1",{scaleY:0.62,duration:0.35,ease:"power2.out"},5.35);
-tl.to("#b2",{scaleY:0.58,duration:0.35,ease:"power2.out"},5.5);
-tl.to("#b3",{scaleY:0.71,duration:0.35,ease:"power2.out"},5.65);
-tl.to("#b4",{scaleY:0.76,duration:0.35,ease:"power2.out"},5.8);
-tl.to("#b5",{scaleY:0.82,duration:0.45,ease:"power2.out"},5.95);
+tl.call(function(){spotlight("chart-card");},null,5.0);
+/* Animate SVG rect heights: from 170 down to target y */
+tl.to("#r0",{attr:{y:88,height:82},duration:0.35,ease:"power2.out"},5.2);
+tl.to("#r1",{attr:{y:80,height:90},duration:0.35,ease:"power2.out"},5.35);
+tl.to("#r2",{attr:{y:85,height:85},duration:0.35,ease:"power2.out"},5.5);
+tl.to("#r3",{attr:{y:68,height:102},duration:0.35,ease:"power2.out"},5.65);
+tl.to("#r4",{attr:{y:62,height:108},duration:0.35,ease:"power2.out"},5.8);
+tl.to("#r5",{attr:{y:55,height:115},duration:0.45,ease:"power2.out"},5.95);
 tl.to("#bt2",{opacity:0,duration:0.3},8.0);
+tl.call(clearAll,null,8.2);
 
-/* PHASE 3: session → feedback */
+/* PHASE 3: "Tap any session" → highlight sessions-card + sess-0 */
 tl.to("#bt3",{opacity:1,duration:0.4},8.3);
-tl.call(function(){clearSpot("chart-card");},null,8.3);
-tl.to("#cur",{left:280,top:515,duration:1.2,ease:"power2.inOut"},8.8);
-tl.call(function(){spotlight("sess-0");},null,10.0);
+tl.call(function(){spotlight("sessions-card");},null,8.5);
+tl.to("#cur",{left:280,top:512,duration:1.2,ease:"power2.inOut"},8.8);
+tl.call(function(){
+  clearSpot("sessions-card");
+  spotlight("sess-0");
+  document.getElementById("sess-0").style.border="1px solid rgba(0,188,125,0.4)";
+},null,10.0);
 tl.call(clickAt,null,10.1);
-tl.call(function(){clearSpot("sess-0");document.getElementById("dash-wrap").style.opacity="0.05";document.getElementById("fb-page").style.opacity="1";document.getElementById("fb-page").style.transition="opacity 0.4s";var r=document.getElementById("fb-ring");r.style.transition="background 1.5s ease-out";setTimeout(function(){r.style.background="conic-gradient(#00bc7d 266deg, rgba(255,255,255,0.06) 0deg)";document.getElementById("fb-num").textContent="74";},150);document.getElementById("bt3").style.opacity="0";},null,10.3);
 
-/* PHASE 4: feedback */
+/* → Feedback page */
+tl.call(function(){
+  clearAll();
+  document.getElementById("dash-wrap").style.opacity="0.04";
+  document.getElementById("fb-page").style.opacity="1";
+  document.getElementById("fb-page").style.transition="opacity 0.4s";
+  var ring=document.getElementById("fb-ring");
+  ring.style.transition="background 1.5s ease-out";
+  setTimeout(function(){ring.style.background="conic-gradient(#00bc7d 266deg, rgba(255,255,255,0.06) 0deg)";document.getElementById("fb-num").textContent="74";},150);
+  document.getElementById("bt3").style.opacity="0";
+},null,10.3);
+
+/* PHASE 4: "Check your feedback" → feedback page visible already */
 tl.to("#bt4",{opacity:1,duration:0.4},10.8);
+/* Scroll feedback page down */
 tl.call(function(){document.getElementById("bt4").style.opacity="0";document.getElementById("fb-inner").style.transition="top 3s ease-in-out";document.getElementById("fb-inner").style.top="-650px";},null,13.5);
 
-/* Click back */
+/* Cursor → Back button */
 tl.to("#cur",{left:100,duration:0.5},17.0);
 tl.to("#cur",{left:340,top:160,duration:1.2,ease:"power2.inOut"},17.5);
 tl.call(clickAt,null,18.7);
-tl.call(function(){document.getElementById("fb-page").style.opacity="0";document.getElementById("fb-page").style.transition="opacity 0.35s";document.getElementById("dash-wrap").style.opacity="1";document.getElementById("dash-wrap").style.transition="opacity 0.4s";document.getElementById("fb-inner").style.top="0";document.getElementById("fb-ring").style.background="conic-gradient(#020618 360deg,rgba(255,255,255,0.06) 0deg)";document.getElementById("fb-num").textContent="0";},null,18.9);
 
-/* PHASE 5: goals */
+/* Return to dashboard */
+tl.call(function(){
+  document.getElementById("fb-page").style.opacity="0";
+  document.getElementById("fb-page").style.transition="opacity 0.3s";
+  document.getElementById("dash-wrap").style.opacity="1";
+  document.getElementById("dash-wrap").style.transition="opacity 0.4s";
+  document.getElementById("fb-inner").style.top="0";
+  document.getElementById("fb-ring").style.background="conic-gradient(#020618 360deg,rgba(255,255,255,0.06) 0deg)";
+  document.getElementById("fb-num").textContent="0";
+},null,18.9);
+
+/* PHASE 5: "Set goals" → highlight goals-card */
 tl.to("#bt5",{opacity:1,duration:0.4},19.5);
+tl.call(function(){spotlight("goals-card");},null,19.8);
 tl.to("#cur",{left:980,top:162,duration:1.3,ease:"power2.inOut"},20.0);
-tl.call(function(){spotlight("goals-card");},null,21.3);
 tl.to("#gb1",{width:"80%",duration:0.5,ease:"power2.out"},21.3);
 tl.to("#gb3",{width:"60%",duration:0.5,ease:"power2.out"},21.3);
 tl.call(clickAt,null,21.3);
 tl.to("#bt5",{opacity:0,duration:0.3},22.5);
+tl.call(clearAll,null,22.7);
 
-/* PHASE 6: start interview */
-tl.call(function(){clearSpot("goals-card");},null,23.0);
+/* PHASE 6: "Ready when you are" → highlight ONLY start-cta */
 tl.to("#bt6",{opacity:1,duration:0.5},23.0);
-tl.call(function(){document.getElementById("darken").style.opacity="1";var cta=document.getElementById("start-cta");cta.style.position="relative";cta.style.zIndex="98";cta.style.boxShadow="0 0 30px rgba(0,188,125,0.3)";cta.style.borderColor="rgba(0,188,125,0.5)";},null,23.3);
+tl.call(function(){spotlight("start-cta");},null,23.3);
 tl.to("#cur",{left:960,top:910,duration:1.5,ease:"power2.inOut"},24.3);
-tl.call(function(){document.getElementById("start-cta").style.transform="scale(1.03)";document.getElementById("start-cta").style.boxShadow="0 0 40px rgba(0,188,125,0.4), 0 0 0 3px rgba(0,188,125,0.3)";},null,25.8);
+tl.call(function(){
+  document.getElementById("start-cta").style.transform="scale(1.03)";
+  document.getElementById("start-cta").style.boxShadow="0 0 40px rgba(0,188,125,0.4),0 0 0 3px rgba(0,188,125,0.3)";
+},null,25.8);
 tl.call(clickAt,null,26.0);
 
-window.__timelines["dashboard"] = tl;
+window.__timelines["dashboard-v9"] = tl;
 </script>
 </body>
 </html>
