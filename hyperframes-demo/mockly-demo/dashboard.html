@@ -27,7 +27,8 @@
 
     .main { position:absolute; left:200px; top:52px; right:0; bottom:0; padding:20px; overflow:hidden; z-index:85; }
 
-    .card { background:rgba(15,22,42,0.75); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:15px; position:relative; }
+    .card { background:rgba(15,22,42,0.75); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:15px; position:relative; z-index:2; }
+    .card-spot { transition:filter 0.3s, background 0.3s, border-color 0.3s, box-shadow 0.3s; }
 
     .sl { font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:#64748b; font-weight:600; margin-bottom:6px; }
     .sb { font-size:36px; font-weight:700; color:#fff; }
@@ -67,11 +68,11 @@
     .bt-g { color:#00bc7d; font-weight:600; }
 
     .start-cta {
-      position:absolute; bottom:18px; left:220px; right:20px; z-index:85;
+      position:absolute; bottom:18px; left:20px; right:20px; z-index:4;
       padding:14px 24px; border-radius:16px;
       background:rgba(0,188,125,0.04); border:1px solid rgba(0,188,125,0.18);
       display:flex; align-items:center; justify-content:space-between;
-      transition: none;
+      transition:none;
     }
     .start-cta-icon { width:44px; height:44px; border-radius:999px; background:linear-gradient(135deg,#00bc7d,#059669); display:flex; align-items:center; justify-content:center; font-size:18px; color:#fff; }
     .start-cta-text { font-size:15px; font-weight:700; color:#fff; }
@@ -121,16 +122,17 @@
 </head>
 <body>
 
-<div id="root" data-composition-id="dashboard-v10" data-start="0" data-duration="32" data-width="1920" data-height="1080">
+<div id="root" data-composition-id="dashboard-v11" data-start="0" data-duration="30" data-width="1920" data-height="1080">
 
   <div class="amb amb-1"></div><div class="amb amb-2"></div>
-  <div class="dark-overlay" id="darken"></div>
 
   <!-- ════════ DASHBOARD ════════ -->
   <div id="dash-wrap" style="position:absolute;inset:0;">
     <div class="hdr" id="dash-hdr"><div class="hdr-logo">M</div><span class="hdr-brand">Mockly</span><span class="hdr-path">/ Dashboard</span><div class="hdr-user"><span>Alex Chen</span><div class="hdr-av">A</div></div></div>
     <div class="side"><div class="si ac"><div class="si-dot"></div>Overview</div><div class="si"><div class="si-dot"></div>History</div><div class="si"><div class="si-dot"></div>Analytics</div><div class="si"><div class="si-dot"></div>Improve</div></div>
     <div class="main">
+      <!-- Darken overlay INSIDE main — cards can jump above it -->
+      <div id="darken-inner" style="position:absolute; inset:0; background:rgba(0,0,0,0.7); border-radius:14px; z-index:3; opacity:0; pointer-events:none;"></div>
       <div style="margin-bottom:14px;"><h1 style="font-size:26px;font-weight:700;color:#fff;margin-bottom:2px;">Welcome back, <span style="background:linear-gradient(90deg,#00bc7d,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Alex</span></h1><p style="font-size:12px;color:#64748b;">Your interview prep headquarters</p></div>
       <div style="display:flex;gap:16px;">
         <div style="flex:1;display:flex;flex-direction:column;gap:12px;">
@@ -174,10 +176,10 @@
           <div class="card" id="insight-card"><h2 style="font-size:13px;font-weight:700;color:#fff;margin-bottom:6px;">Focus area</h2><p style="font-size:11px;line-height:1.5;color:#94a3b8;">Clarity and structure are your next levers. Mockly gives you tailored coaching after every session.</p></div>
         </div>
       </div>
-    </div>
-    <div class="start-cta" id="start-cta">
-      <div style="display:flex;align-items:center;gap:14px;"><div class="start-cta-icon">▶</div><div><div class="start-cta-text">Start New Interview</div><div class="start-cta-sub">Mock up a fresh session</div></div></div>
-      <span class="start-cta-arrow">→</span>
+      <div class="start-cta" id="start-cta">
+        <div style="display:flex;align-items:center;gap:14px;"><div class="start-cta-icon">▶</div><div><div class="start-cta-text">Start New Interview</div><div class="start-cta-sub">Mock up a fresh session</div></div></div>
+        <span class="start-cta-arrow">→</span>
+      </div>
     </div>
     <div class="cur" id="cur" style="left:1500px;top:750px;"><svg width="22" height="22" viewBox="0 0 20 20"><path d="M3 2L17 9.5L10 11L7 18L3 2Z" fill="#fff" stroke="#0f172a" stroke-width="1"/></svg><div class="cr" id="cr"></div></div>
   </div>
@@ -252,32 +254,22 @@ function clickAt() {
   }});
 }
 
-// Dim all cards EXCEPT the target, making the target pop bright
-var allCards = null;
+// Darken overlay is INSIDE main at z-index:3. Cards at z-index:2 by default.
+// spotlight lifts the card to z-index:4 (above darken) and brightens it.
 function spotlight(el) {
-  if (!allCards) allCards = document.querySelectorAll('.card, #start-cta, #sess-0, #sess-1, #sess-2');
-  allCards.forEach(function(c) {
-    if (c !== el) c.style.filter = 'brightness(0.25)';
-    else {
-      c.style.filter = 'brightness(1.15)';
-      c.style.background = 'rgba(26,38,62,0.95)';
-      c.style.borderColor = 'rgba(0,188,125,0.55)';
-      c.style.boxShadow = '0 0 28px rgba(0,188,125,0.25), 0 0 0 3px rgba(0,188,125,0.3)';
-    }
-  });
-  // Also dim the session rows
-  document.querySelectorAll('.sr').forEach(function(s) { if (s !== el) s.style.filter = 'brightness(0.25)'; });
+  document.getElementById("darken-inner").style.opacity = "1";
+  el.style.zIndex = "4";
+  el.style.background = "rgba(26,38,62,0.95)";
+  el.style.borderColor = "rgba(0,188,125,0.55)";
+  el.style.boxShadow = "0 0 28px rgba(0,188,125,0.25), 0 0 0 3px rgba(0,188,125,0.3)";
 }
 
-function clearSpotlight() {
-  var all = document.querySelectorAll('.card, #start-cta, .sr, #sess-0, #sess-1, #sess-2');
-  all.forEach(function(c) {
-    c.style.filter = '';
-    c.style.background = '';
-    c.style.borderColor = '';
-    c.style.boxShadow = '';
-  });
-  document.getElementById("darken").style.opacity = "0";
+function clearSpotlight(el) {
+  document.getElementById("darken-inner").style.opacity = "0";
+  el.style.zIndex = "2";
+  el.style.background = "";
+  el.style.borderColor = "";
+  el.style.boxShadow = "";
 }
 
 /* 0s: Cards */
@@ -286,15 +278,15 @@ tl.from("#stats-row > div", { opacity: 0, y: 10, duration: 0.4, stagger: 0.1, ea
 tl.from("#chart-card, #sessions-card, #goals-card, #insight-card", { opacity: 0, y: 10, duration: 0.4, stagger: 0.08, ease: "power2.out" }, 0.6);
 tl.from("#start-cta", { opacity: 0, y: 12, duration: 0.5, ease: "power2.out" }, 0.9);
 
-/* PHASE 1: bt1 + spotlight stats-row */
+/* ══ PHASE 1 ══ */
 tl.to("#bt1", { opacity: 1, duration: 0.4 }, 1.2);
 tl.call(function() { spotlight(document.getElementById("stats-row")); }, null, 1.5);
 tl.to("#cur", { left: 280, top: 158, duration: 1.2, ease: "power2.inOut" }, 2.0);
 tl.call(clickAt, null, 3.2);
 tl.to("#bt1", { opacity: 0, duration: 0.25 }, 4.0);
-tl.call(clearSpotlight, null, 4.2);
+tl.call(function() { clearSpotlight(document.getElementById("stats-row")); }, null, 4.2);
 
-/* PHASE 2: bt2 + spotlight chart-card + SVG bars */
+/* ══ PHASE 2 ══ */
 tl.to("#bt2", { opacity: 1, duration: 0.4 }, 4.5);
 tl.call(function() { spotlight(document.getElementById("chart-card")); }, null, 5.0);
 tl.to("#r0", { attr: { y: 88, height: 82 }, duration: 0.35, ease: "power2.out" }, 5.2);
@@ -304,52 +296,37 @@ tl.to("#r3", { attr: { y: 68, height: 102 }, duration: 0.35, ease: "power2.out" 
 tl.to("#r4", { attr: { y: 62, height: 108 }, duration: 0.35, ease: "power2.out" }, 5.8);
 tl.to("#r5", { attr: { y: 55, height: 115 }, duration: 0.45, ease: "power2.out" }, 5.95);
 tl.to("#bt2", { opacity: 0, duration: 0.25 }, 8.0);
-tl.call(clearSpotlight, null, 8.2);
+tl.call(function() { clearSpotlight(document.getElementById("chart-card")); }, null, 8.2);
 
-/* PHASE 3: bt3 + spotlight sessions-card → sess-0 */
+/* ══ PHASE 3: session → feedback ══ */
 tl.to("#bt3", { opacity: 1, duration: 0.4 }, 8.3);
 tl.call(function() { spotlight(document.getElementById("sessions-card")); }, null, 8.5);
 tl.to("#cur", { left: 280, top: 512, duration: 1.2, ease: "power2.inOut" }, 8.8);
-tl.call(function() {
-  clearSpotlight();
-  spotlight(document.getElementById("sess-0"));
-}, null, 10.0);
+tl.call(function() { clearSpotlight(document.getElementById("sessions-card")); spotlight(document.getElementById("sess-0")); }, null, 10.0);
 tl.call(clickAt, null, 10.1);
 
-/* → Feedback page: show darkened first, then restore */
+/* → Feedback page: darken first, show bt4 text for 2s, then scroll */
 tl.call(function() {
-  clearSpotlight();
+  clearSpotlight(document.getElementById("sess-0"));
   document.getElementById("dash-wrap").style.opacity = "0";
   document.getElementById("fb-page").style.opacity = "1";
   document.getElementById("fb-page").style.transition = "opacity 0.4s";
   document.getElementById("darken").style.opacity = "1";
   var ring = document.getElementById("fb-ring");
   ring.style.transition = "background 1.5s ease-out";
-  setTimeout(function() {
-    ring.style.background = "conic-gradient(#00bc7d 266deg, rgba(255,255,255,0.06) 0deg)";
-    document.getElementById("fb-num").textContent = "74";
-  }, 150);
+  setTimeout(function() { ring.style.background = "conic-gradient(#00bc7d 266deg, rgba(255,255,255,0.06) 0deg)"; document.getElementById("fb-num").textContent = "74"; }, 150);
   document.getElementById("bt3").style.opacity = "0";
 }, null, 10.3);
-
-/* bt4: show text while feedback is darkened */
 tl.to("#bt4", { opacity: 1, duration: 0.5 }, 10.5);
 
-/* After 2s: restore brightness, then GSAP-scroll feedback */
+/* After 2s: restore, then GSAP-scroll further, pause 2s, auto-return */
 tl.call(function() {
   document.getElementById("darken").style.opacity = "0";
   document.getElementById("bt4").style.opacity = "0";
-  // Use GSAP to animate scroll — no CSS transition conflicts
-  gsap.to(document.getElementById("fb-inner"), { top: -650, duration: 3, ease: "power2.inOut" });
+  gsap.to(document.getElementById("fb-inner"), { top: -750, duration: 4, ease: "power2.inOut" });
 }, null, 13.0);
 
-/* Cursor → Back button in feedback, then return to dashboard */
-tl.to("#cur", { left: 200, top: 600, duration: 0.8, ease: "power2.inOut" }, 16.5);
-tl.call(clickAt, null, 17.3);
-tl.to("#cur", { left: 380, top: 350, duration: 0.6, ease: "power2.inOut" }, 17.8);
-tl.call(clickAt, null, 18.4);
-
-/* Return to dashboard — kill any running scroll tween, reset instantly */
+/* Auto-return after scroll + 2s pause (13+4+2=19) */
 tl.call(function() {
   gsap.killTweensOf(document.getElementById("fb-inner"));
   document.getElementById("fb-inner").style.top = "0";
@@ -359,27 +336,23 @@ tl.call(function() {
   document.getElementById("dash-wrap").style.transition = "opacity 0.4s";
   document.getElementById("fb-ring").style.background = "conic-gradient(#020618 360deg, rgba(255,255,255,0.06) 0deg)";
   document.getElementById("fb-num").textContent = "0";
-}, null, 19.0);
+}, null, 19.5);
 
-/* PHASE 5: bt5 + spotlight goals-card */
-tl.to("#bt5", { opacity: 1, duration: 0.4 }, 19.4);
-tl.call(function() { spotlight(document.getElementById("goals-card")); }, null, 19.7);
-tl.to("#cur", { left: 1775, top: 158, duration: 1.3, ease: "power2.inOut" }, 20.0);
-tl.to("#gb1", { width: "80%", duration: 0.5, ease: "power2.out" }, 21.3);
-tl.to("#gb3", { width: "60%", duration: 0.5, ease: "power2.out" }, 21.3);
-tl.call(clickAt, null, 21.3);
-tl.to("#bt5", { opacity: 0, duration: 0.25 }, 22.5);
-tl.call(clearSpotlight, null, 22.7);
+/* ══ PHASE 5: goals ══ */
+tl.to("#bt5", { opacity: 1, duration: 0.4 }, 20.0);
+tl.call(function() { spotlight(document.getElementById("goals-card")); }, null, 20.3);
+tl.to("#cur", { left: 1775, top: 158, duration: 1.3, ease: "power2.inOut" }, 20.5);
+tl.to("#gb1", { width: "80%", duration: 0.5, ease: "power2.out" }, 21.8);
+tl.to("#gb3", { width: "60%", duration: 0.5, ease: "power2.out" }, 21.8);
+tl.call(clickAt, null, 21.8);
+tl.to("#bt5", { opacity: 0, duration: 0.25 }, 23.0);
+tl.call(function() { clearSpotlight(document.getElementById("goals-card")); }, null, 23.2);
 
-/* PHASE 6: bt6 + spotlight start-cta */
-tl.to("#bt6", { opacity: 1, duration: 0.5 }, 23.0);
-tl.call(function() { spotlight(document.getElementById("start-cta")); }, null, 23.3);
-tl.to("#cur", { left: 1060, top: 1015, duration: 1.5, ease: "power2.inOut" }, 24.3);
-tl.call(function() {
-  var cta = document.getElementById("start-cta");
-  cta.style.transform = "scale(1.03)";
-  cta.style.background = "rgba(0,188,125,0.2)";
-}, null, 25.8);
+/* ══ PHASE 6: start interview ══ */
+tl.to("#bt6", { opacity: 1, duration: 0.5 }, 23.5);
+tl.call(function() { spotlight(document.getElementById("start-cta")); }, null, 23.8);
+tl.to("#cur", { left: 1070, top: 1015, duration: 1.5, ease: "power2.inOut" }, 24.3);
+tl.call(function() { var cta = document.getElementById("start-cta"); cta.style.transform = "scale(1.03)"; cta.style.background = "rgba(0,188,125,0.2)"; }, null, 25.8);
 tl.call(clickAt, null, 26.0);
 
 window.__timelines["dashboard-v10"] = tl;
