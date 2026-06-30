@@ -10,6 +10,7 @@ import { executeCode } from '../judge0.js';
 import { generateJavaScriptHarness } from '../harness/javascript.js';
 import { generatePythonHarness } from '../harness/python.js';
 import { generateJavaHarness } from '../harness/java.js';
+import { getTestSession, isTestSessionId } from '../test-store.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -128,7 +129,7 @@ export async function getCurrentCode(args, context) {
   const { sessionId, session } = context;
 
   // Check for test-mode session IDs (prefixed with "live-run-" or "test-")
-  const isTestSession = sessionId?.startsWith('live-run-') || sessionId?.startsWith('test-');
+  const isTestSession = isTestSessionId(sessionId);
 
   // Refresh session from DB to get latest code
   const fresh = await prisma.session.findUnique({
@@ -147,17 +148,34 @@ export async function getCurrentCode(args, context) {
     return { content: [{ type: 'text', text: JSON.stringify({ error: 'Session not found' }) }] };
   }
 
-  // For test sessions without a real DB entry, return mock code
+  // For test sessions without a real DB entry, read from the in-memory test store
   if (isTestSession && !fresh) {
+    const testData = getTestSession(sessionId);
+    if (testData) {
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            code: testData.code || '',
+            language: testData.language || 'python',
+            elapsed_seconds: 180,
+            remaining_seconds: 1620,
+            phase_hint: 'implementation',
+            hint_count: 0,
+            status: 'in_progress',
+          }),
+        }],
+      };
+    }
     return {
       content: [{
         type: 'text',
         text: JSON.stringify({
-          code: `def solve(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        complement = target - n\n        if complement in seen:\n            return [seen[complement], i]\n        seen[n] = i\n    return []`,
+          code: '',
           language: 'python',
-          elapsed_seconds: 180,
-          remaining_seconds: 1620,
-          phase_hint: 'implementation',
+          elapsed_seconds: 0,
+          remaining_seconds: 1800,
+          phase_hint: 'understanding',
           hint_count: 0,
           status: 'in_progress',
         }),
@@ -210,7 +228,7 @@ export async function getCurrentCode(args, context) {
 export async function runCodeAgainstTests(args, context) {
   const { sessionId, session, question } = context;
 
-  const isTestSession = sessionId?.startsWith('live-run-') || sessionId?.startsWith('test-');
+  const isTestSession = isTestSessionId(sessionId);
 
   // Refresh session for latest code
   const fresh = await prisma.session.findUnique({
@@ -218,35 +236,169 @@ export async function runCodeAgainstTests(args, context) {
     select: { latestCode: true, latestLanguage: true, startedAt: true, hintCount: true },
   });
 
-  // For test sessions, return mock test results directly
+  // For test sessions, use the in-memory test store + real Judge0 execution
   if (isTestSession && !fresh) {
+    const testData = getTestSession(sessionId);
+    
+    // If no test session set up yet, return empty
+    if (!testData || !testData.code) {
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            error: 'No code submitted yet',
+            passed: 0, total: 0, all_passed: false,
+            failure_category: 'compile_error',
+          }),
+        }],
+      };
+    }
+
+    const code = testData.code;
+    const language = testData.language || 'python';
+    const question = testData.question;
+
+    // If no question context, mock results
+    if (!question) {
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            passed: 8, total: 8, all_passed: true,
+            failure_category: null,
+            visible: { passed: 2, total: 2, results: [] },
+            hidden: { passed: 6, total: 6, results: [] },
+            elapsed_seconds: 240,
+            remaining_seconds: 1560,
+            note: 'No question context in test session — mock results',
+          }),
+        }],
+      };
+    }
+
+    // Run real Judge0 execution with the test question's test cases
+    const examples = parseJson(question.examples, []);
+    const hiddenTestsRaw = parseJson(question.hidden_tests, []);
+
+    const visibleTests = Array.isArray(examples)
+      ? examples.map((e, i) => ({
+          id: `v${i + 1}`,
+          input: parseMaybeJson(e.input),
+          expected: parseMaybeJson(e.output),
+          tags: ['visible'],
+          description: e.explanation || `example ${i + 1}`,
+        }))
+      : [];
+
+    const hiddenTests = Array.isArray(hiddenTestsRaw)
+      ? buildHiddenTests(hiddenTestsRaw)
+      : [];
+
+    const allTests = [...visibleTests, ...hiddenTests];
+
+    if (allTests.length === 0) {
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({ error: 'No test cases available for this question', passed: 0, total: 0, all_passed: false }),
+        }],
+      };
+    }
+
+    const harnessFn = HARNESS_GENERATORS[language];
+    if (!harnessFn) {
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({ error: `Unsupported language: ${language}`, failure_category: 'compile_error' }),
+        }],
+      };
+    }
+
+    let harnessCode;
+    try {
+      harnessCode = harnessFn(code, allTests);
+    } catch (err) {
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({ error: `Harness generation failed: ${err.message}`, failure_category: 'compile_error' }),
+        }],
+      };
+    }
+
+    let executionResult;
+    try {
+      executionResult = await executeCode(harnessCode, language, '');
+    } catch (err) {
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({ error: `Execution failed: ${err.message}`, passed: 0, total: allTests.length, all_passed: false, failure_category: 'runtime_error' }),
+        }],
+      };
+    }
+
+    if (executionResult.compilationError) {
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({ passed: 0, total: allTests.length, all_passed: false, failure_category: 'compile_error', error_detail: executionResult.compilationError?.substring(0, 500) || 'Compilation failed' }),
+        }],
+      };
+    }
+
+    if (executionResult.runtimeError) {
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({ passed: 0, total: allTests.length, all_passed: false, failure_category: 'runtime_error', error_detail: executionResult.runtimeError?.substring(0, 500) || 'Runtime error' }),
+        }],
+      };
+    }
+
+    const testResults = extractJsonResults(executionResult.stdout);
+    if (!testResults || !Array.isArray(testResults)) {
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({ passed: 0, total: allTests.length, all_passed: false, failure_category: 'runtime_error', error_detail: 'Could not parse test results' }),
+        }],
+      };
+    }
+
+    const visibleCount = visibleTests.length;
+    const detailedResults = testResults.map((tr, i) => {
+      const test = allTests[i] || {};
+      return {
+        id: tr.id || test.id || `t${i + 1}`,
+        name: tr.name || test.description || `Test ${i + 1}`,
+        visible: i < visibleCount,
+        passed: tr.passed,
+        input: test.input,
+        expected: tr.expected !== undefined ? tr.expected : test.expected,
+        actual: tr.actual,
+        error: tr.error || null,
+        tags: tr.tags || test.tags || [],
+      };
+    });
+
+    const visibleResults = detailedResults.filter(r => r.visible);
+    const hiddenResults = detailedResults.filter(r => !r.visible);
+    const passed = detailedResults.filter(t => t.passed).length;
+    const total = detailedResults.length;
+    const allPassed = passed === total;
+
     return {
       content: [{
         type: 'text',
         text: JSON.stringify({
-          passed: 3,
-          total: 5,
-          all_passed: false,
-          failure_category: 'edge_case',
-          visible: {
-            passed: 2,
-            total: 2,
-            results: [
-              { id: 'v1', name: 'Example 1', visible: true, passed: true, input: [2,7,11,15], expected: [0,1], actual: [0,1] },
-              { id: 'v2', name: 'Example 2', visible: true, passed: true, input: [3,2,4], expected: [1,2], actual: [1,2] },
-            ],
-          },
-          hidden: {
-            passed: 1,
-            total: 3,
-            results: [
-              { id: 'h1', name: 'Hidden 1', visible: false, passed: true },
-              { id: 'h2', name: 'Hidden 2', visible: false, passed: false },
-              { id: 'h3', name: 'Hidden 3', visible: false, passed: false },
-            ],
-          },
-          elapsed_seconds: 181,
-          remaining_seconds: 1619,
+          passed, total, all_passed: allPassed,
+          failure_category: allPassed ? null : 'edge_case',
+          visible: { passed: visibleResults.filter(t => t.passed).length, total: visibleResults.length, results: visibleResults },
+          hidden: { passed: hiddenResults.filter(t => t.passed).length, total: hiddenResults.length, results: hiddenResults },
+          elapsed_seconds: 240,
+          remaining_seconds: 1560,
         }),
       }],
     };

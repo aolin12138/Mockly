@@ -34,6 +34,8 @@ export const CONFIG = {
 
   // API
   baseUrl: 'https://api.elevenlabs.io/v1',
+  backendUrl: env.BACKEND_URL || 'http://localhost:5678',
+  testApiKey: env.TEST_API_KEY || env.DEEPSEEK_API_KEY || '',
   
   // Runner defaults
   concurrency: 5,
