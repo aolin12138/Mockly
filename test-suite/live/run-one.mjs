@@ -175,6 +175,21 @@ export async function runOne(scenario, opts) {
     });
 
     await client.start();
+
+    // 4a. Capture agent's auto-sent opening IMMEDIATELY — before any setup
+    //     work that could delay the capture and cause a stale response.
+    let agentReply;
+    try {
+      agentReply = await client.awaitAgentReply({ timeoutMs: turnTimeoutMs });
+    } catch (err) {
+      if (err.message?.includes('Timeout')) {
+        console.warn('  Agent did not send opening message (WS timeout).');
+        agentReply = { message: '', skipTurn: false };
+      } else {
+        throw err;
+      }
+    }
+
     const conversationId = client.getConversationId();
 
     // 5a. Set up test session for MCP tools (real code + Judge0 execution)
@@ -200,29 +215,10 @@ export async function runOne(scenario, opts) {
       for (const msg of turns) {
         transcript.push({ role: 'user', message: msg, warmup: true });
       }
-      warmUpCount = turns.length * 2; // account for user turns in turn limit boost
+      warmUpCount = turns.length * 2;
     }
 
-    // 6. Set up simulated user
-    const simUser = new SimulatedUser({
-      scenarioPrompt: scenario.simulated_user.prompt,
-      firstMessage: scenario.simulated_user.first_message || null,
-    });
-
-    // 6a. Wait for agent's auto-sent first_message (opening with problem intro).
-    //     The agent sends this automatically when the conversation starts.
-    //     Capture it so the sim-user has context before responding.
-    let agentReply;
-    try {
-      agentReply = await client.awaitAgentReply({ timeoutMs: turnTimeoutMs });
-    } catch (err) {
-      if (err.message?.includes('Timeout')) {
-        console.warn('  Agent did not send opening message (WS timeout).');
-        agentReply = { message: '', skipTurn: false };
-      } else {
-        throw err;
-      }
-    }
+    // Add agent opening to transcript
     const openingTools = (client.rawEvents || [])
       .filter(ev => ev.type === 'client_tool_call' || ev.type === 'mcp_tool_call')
       .filter(ev => !ev._seenByRunner)
@@ -239,6 +235,12 @@ export async function runOne(scenario, opts) {
         skipTurn: false,
       });
     }
+
+    // 6. Set up simulated user
+    const simUser = new SimulatedUser({
+      scenarioPrompt: scenario.simulated_user.prompt,
+      firstMessage: scenario.simulated_user.first_message || null,
+    });
 
     // 7. Conversation loop — turn limit accounts for warm-up so tests always
     //    get their full budget. Warm-up turns are context injection only.
