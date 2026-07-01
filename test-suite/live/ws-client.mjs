@@ -173,12 +173,25 @@ export class LiveConversationClient {
           if (message?.type === 'client_tool_call' && message.client_tool_call?.tool_name === 'skip_turn') {
             this.#lastSkipTurn = Date.now();
           }
+          // Capture agent_chat_response_part (voice/text streaming chunks)
           if (message?.type === 'agent_chat_response_part' && message.message?.trim()) {
             this.#agentResponseParts.push({ role: 'agent', message: message.message });
             this.#lastAgentChunkTime = Date.now();
-            this.#lastSkipTurn = 0; // agent spoke, reset skip
-            if (this.#pendingAgentChunk) {
-              this.#pendingAgentChunk.resolve(null);
+            this.#lastSkipTurn = 0;
+            if (this.#pendingAgentChunk) this.#pendingAgentChunk.resolve(null);
+          }
+          // Capture agent_response events — in text-only mode, follow-up
+          // responses often arrive as agent_response (final assembled text).
+          // Only push if different from what agent_chat_response_part already gave.
+          if (message?.type === 'agent_response' && message.agent_response_event?.agent_response?.trim()) {
+            const text = message.agent_response_event.agent_response;
+            // Avoid duplicates: if the last part has the same text, skip
+            const lastPart = this.#agentResponseParts[this.#agentResponseParts.length - 1];
+            if (!lastPart || lastPart.message !== text) {
+              this.#agentResponseParts.push({ role: 'agent', message: text });
+              this.#lastAgentChunkTime = Date.now();
+              this.#lastSkipTurn = 0;
+              if (this.#pendingAgentChunk) this.#pendingAgentChunk.resolve(null);
             }
           }
           this.rawEvents.push(message);
