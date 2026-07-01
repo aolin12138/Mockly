@@ -11,10 +11,10 @@
 const store = new Map();
 
 /**
- * Set up a test session with question context.
+ * Set up a test session with question context and optional mock results.
  */
-export function setupTestSession(sessionId, { code = '', language = 'python', question = null } = {}) {
-  store.set(sessionId, { code, language, question });
+export function setupTestSession(sessionId, { code = '', language = 'python', question = null, mockResults = null } = {}) {
+  store.set(sessionId, { code, language, question, mockResults });
 }
 
 /**
@@ -23,7 +23,7 @@ export function setupTestSession(sessionId, { code = '', language = 'python', qu
 export function injectTestCode(sessionId, code, language = 'python') {
   const entry = store.get(sessionId);
   if (!entry) {
-    store.set(sessionId, { code, language, question: null });
+    store.set(sessionId, { code, language, question: null, mockResults: null });
   } else {
     entry.code = code;
     if (language) entry.language = language;

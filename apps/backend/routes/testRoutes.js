@@ -41,7 +41,7 @@ function requireTestKey(req, res, next) {
  * }
  */
 router.post('/setup', requireTestKey, (req, res) => {
-  const { sessionId, question, code, language } = req.body;
+  const { sessionId, question, code, language, mockResults } = req.body;
   if (!sessionId) {
     return res.status(400).json({ error: 'sessionId is required' });
   }
@@ -49,8 +49,9 @@ router.post('/setup', requireTestKey, (req, res) => {
     code: code || '',
     language: language || 'python',
     question: question || null,
+    mockResults: mockResults || null,
   });
-  console.log(`[test] Session set up: ${sessionId}`);
+  console.log(`[test] Session set up: ${sessionId} (mock: ${!!mockResults})`);
   res.json({ ok: true, sessionId });
 });
 

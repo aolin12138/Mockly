@@ -16,22 +16,50 @@ async function setupTestSession(conversationId, liveRunId, scenario) {
   if (!TEST_API_KEY) return;
   const question = scenario.question_context;
   const code = scenario.candidate_code || '';
-  if (!question) return;
 
-  const ids = [conversationId, liveRunId].filter(Boolean);
+  // Build question context from tool_mocks even if explicit question_context
+  // is absent. Phase 2+ scenarios use MCP tools (get_current_code,
+  // run_code_against_tests) which hit the real backend — client_tool_mocks
+  // don't intercept MCP calls. The test store must have real data.
+  let questionContext = question;
+  let effectiveCode = code;
+  let mockRunResults = null;
+
+  if (scenario.tool_mocks) {
+    // Extract code from get_current_code mock
+    if (!effectiveCode) {
+      const codeMock = scenario.tool_mocks.get_current_code?.default_return_value;
+      if (typeof codeMock === 'object' && codeMock.code) effectiveCode = codeMock.code;
+    }
+    // Extract test results from run_code_against_tests mock
+    const testMock = scenario.tool_mocks.run_code_against_tests?.default_return_value;
+    if (testMock) {
+      mockRunResults = testMock;
+    }
+    // Build minimal question context if none provided
+    if (!questionContext && (effectiveCode || mockRunResults)) {
+      questionContext = {
+        examples: [],
+        hidden_tests: [],
+        function_name: 'max_subarray_sum',
+      };
+    }
+  }
+
+  if (!questionContext && !effectiveCode) return;
 
   for (const sessionId of ids) {
     try {
       const resp = await fetch(`${BACKEND_URL}/api/test/setup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-test-api-key': TEST_API_KEY },
-        body: JSON.stringify({ sessionId, question, code, language: 'python' }),
+        body: JSON.stringify({ sessionId, question: questionContext, code: effectiveCode, language: 'python', mockResults: mockRunResults }),
       });
       if (resp.ok) console.log(`  Test session set up: ${sessionId}`);
       else console.warn(`  Test session setup failed for ${sessionId}: ${resp.status}`);
     } catch (e) {
       console.warn(`  Test session setup error (backend not available?): ${e.message}`);
-      return; // Don't retry other IDs if backend is down
+      return;
     }
   }
 }
@@ -301,16 +329,21 @@ export async function runOne(scenario, opts) {
       try {
         agentReply = await client.awaitAgentReply({ timeoutMs: turnTimeoutMs });
       } catch (err) {
-        // A real WS-level timeout (no response of any kind, not even silence)
-        // is the only thing that breaks the loop now. skip_turn no longer
-        // throws — it returns { message: '', skipTurn: true } so the sim-user
-        // can decide whether to continue.
+        // Only break on WS timeout that's NOT silence.
+        // awaitAgentReply now returns {skipTurn:true} for silent timeouts,
+        // so a thrown timeout here is a genuine WS failure.
         if (err.message?.includes('Timeout')) {
           console.log(`  WS-level timeout (no chunks, no skip_turn). Breaking loop.`);
           endCallDetected = true;
           break;
         }
         throw err;
+      }
+
+      // Also treat short silent timeouts (e.g. agent in Phase 2 with no
+      // skip_turn event) as skip_turn so sim-user continues.
+      if (agentReply.skipTurn) {
+        console.log(`  Agent silent (skip_turn, turn ${turn}) — sim-user will continue.`);
       }
 
       // Collect tool calls fired during this agent turn so the sim-user can
