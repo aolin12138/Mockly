@@ -154,7 +154,7 @@ export async function runOne(scenario, opts) {
     }
 
     // 3. Merge dynamic variables
-    const liveRunId = `live-run-${scenario.id}-${Date.now()}`;
+    const liveRunId = `live-run-${scenario.id}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
     const dynamicVariables = {
       ...DEFAULT_DYNAMIC_VARS,
       ...(scenario.dynamic_variables || {}),
@@ -337,12 +337,16 @@ export async function runOne(scenario, opts) {
         break;
       }
 
-      // Did the agent call skip_turn with NO text? That's a prompt rule failure.
-      // End immediately — no point continuing with a silent agent.
+      // Did the agent call skip_turn with NO text? This is normal during
+      // Phase 2 (coding silence). Only end if skip_turn came with no message
+      // AND this is Phase 1 (opening phase shouldn't be silent).
       if (toolCallsThisTurn.some(tc => tc.tool_name === 'skip_turn') && !agentReply.message?.trim()) {
-        console.log(`  Agent called skip_turn silently (turn ${turn}) — ending test.`);
-        endCallDetected = true;
-        break;
+        // Phase 1 (opening): agent should ALWAYS speak before skip_turn
+        if (scenario.target_phase === 1 || turn <= 1) {
+          console.log(`  Agent called skip_turn silently in early/Phase 1 (turn ${turn}) — ending test.`);
+          endCallDetected = true;
+          break;
+        }
       }
     }
 

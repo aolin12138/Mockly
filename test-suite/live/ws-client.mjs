@@ -268,10 +268,10 @@ export class LiveConversationClient {
     let lastAnyEvent = this.#lastAgentChunkTime;
     
     while (true) {
-      // skip_turn fired during *this* turn — agent is staying silent for this
-      // candidate turn. Return whatever text accumulated (often empty); the
-      // caller (sim-user) decides whether to continue the conversation.
-      if (this.#lastSkipTurn > 0 && Date.now() - this.#lastSkipTurn >= 3000) {
+      // Check BOTH: pre-existing skip_turn (snapshot) AND new skip_turn that
+      // arrived during *this* turn. Either one qualifies.
+      const effectiveSkipTurn = Math.max(skipTurnSnapshot, this.#lastSkipTurn);
+      if (effectiveSkipTurn > 0 && Date.now() - effectiveSkipTurn >= 3000) {
         const newParts = this.#agentResponseParts.slice(partsBefore);
         const joined = newParts.map(p => p.message).join(' ').trim();
         return { role: 'agent', message: joined, skipTurn: true };
