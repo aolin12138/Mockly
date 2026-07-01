@@ -241,15 +241,27 @@ export async function runCodeAgainstTests(args, context) {
     const testData = getTestSession(sessionId);
     
     // If no test session set up yet, return empty
-    if (!testData || !testData.code) {
+    if (!testData) {
       return {
         content: [{
           type: 'text',
           text: JSON.stringify({
-            error: 'No code submitted yet',
+            error: 'No test session found',
             passed: 0, total: 0, all_passed: false,
             failure_category: 'compile_error',
           }),
+        }],
+      };
+    }
+
+    // If mock results are stored, return them directly (no Judge0 execution)
+    if (testData.mockResults) {
+      return {
+        content: [{
+          type: 'text',
+          text: typeof testData.mockResults === 'string'
+            ? testData.mockResults
+            : JSON.stringify(testData.mockResults),
         }],
       };
     }

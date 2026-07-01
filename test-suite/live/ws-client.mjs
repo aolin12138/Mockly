@@ -267,9 +267,13 @@ export class LiveConversationClient {
   async awaitAgentReply(opts = {}) {
     const timeoutMs = opts.timeoutMs ?? 30000;
     const quiescentMs = opts.quiescentMs ?? 1200;
+    // How long to wait with complete silence before treating as intentional skip_turn.
+    // Phase 2+ agents may go silent without explicitly calling skip_turn.
+    const silenceThresholdMs = 8000;
 
     const startTime = Date.now();
     const partsBefore = this.#agentResponseParts.length;
+    const rawEventsSnapshot = this.rawEvents.length;
     // Reset skip_turn marker so it only counts a skip_turn fired *this* turn.
     // Without this, one skip_turn early in the conversation would cause every
     // later awaitAgentReply to short-circuit instantly.
@@ -290,8 +294,17 @@ export class LiveConversationClient {
         return { role: 'agent', message: joined, skipTurn: true };
       }
 
-      // Check if we already have chunks and they've gone silent
+      // Silence threshold: if we've been waiting with ZERO new agent text
+      // and zero new events (besides pings), the agent is intentionally
+      // silent (Phase 2 coding monitoring). Treat as skip_turn.
+      const elapsedSinceStart = Date.now() - startTime;
       const newParts = this.#agentResponseParts.slice(partsBefore);
+      const newEvents = this.rawEvents.length - rawEventsSnapshot;
+      if (elapsedSinceStart >= silenceThresholdMs && newParts.length === 0 && newEvents === 0) {
+        return { role: 'agent', message: '', skipTurn: true };
+      }
+
+      // Check if we already have chunks and they've gone silent
       const elapsedSinceLastText = Date.now() - this.#lastAgentChunkTime;
 
       // Check raw events for recent tool activity (MCP calls in flight)
@@ -319,12 +332,21 @@ export class LiveConversationClient {
       }
 
       if (Date.now() - startTime >= timeoutMs) {
-        // Timeout — return what we have, or throw
-        if (newParts.length > 0) {
-          const joined = newParts.map(p => p.message).join(' ').trim();
-          if (joined.length > 0) {
-            return { role: 'agent', message: joined };
-          }
+        // Timeout — check if this might be intentional Phase 2+ silence.
+        // The agent may transition to a coding/monitoring phase without
+        // explicitly calling skip_turn. If no text arrived at all, treat
+        // it as a skip_turn so the sim-user continues the conversation.
+        const newParts = this.#agentResponseParts.slice(partsBefore);
+        const hasNewText = newParts.some(p => p.message?.trim());
+        if (!hasNewText) {
+          // No text in this turn — treat as skip_turn
+          this.#lastSkipTurn = 0;
+          return { role: 'agent', message: '', skipTurn: true };
+        }
+        // Text arrived during timeout window — return what we have
+        const joined = newParts.map(p => p.message).join(' ').trim();
+        if (joined.length > 0) {
+          return { role: 'agent', message: joined };
         }
         throw new Error(`Timeout awaiting agent reply after ${timeoutMs}ms`);
       }

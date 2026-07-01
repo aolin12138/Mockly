@@ -36,7 +36,9 @@ for test_case in test_cases:
     try:
         inp = test_case['input']
         args = inp if isinstance(inp, list) else [inp]
-        actual = ${functionName}(*args)
+        # Pass as single positional argument (not unpacked) —
+        # our problem functions take a list, not spread args.
+        actual = ${functionName}(inp)
         passed = actual == test_case['expected'] if 'expected' in test_case else True
         results.append({
             'id': test_case['id'],
