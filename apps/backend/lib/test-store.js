@@ -10,47 +10,41 @@
 /** @type {Map<string, { code: string, language: string, question: object|null }>} */
 const store = new Map();
 
-/**
- * Set up a test session with question context and optional mock results.
- */
+/** Resolve a session ID with fuzzy matching (strips quotes/whitespace). */
+function resolveId(sessionId) {
+  if (!sessionId) return null;
+  if (store.has(sessionId)) return sessionId;
+  const clean = sessionId.trim().replace(/^["']|["']$/g, '');
+  if (clean !== sessionId && store.has(clean)) return clean;
+  return null;
+}
+
 export function setupTestSession(sessionId, { code = '', language = 'python', question = null, mockResults = null } = {}) {
   store.set(sessionId, { code, language, question, mockResults });
 }
 
-/**
- * Inject code into a test session (called by sim-user during "coding").
- */
 export function injectTestCode(sessionId, code, language = 'python') {
-  const entry = store.get(sessionId);
+  const realId = resolveId(sessionId) || sessionId;
+  const entry = store.get(realId);
   if (!entry) {
-    store.set(sessionId, { code, language, question: null, mockResults: null });
+    store.set(realId, { code, language, question: null, mockResults: null });
   } else {
     entry.code = code;
     if (language) entry.language = language;
+    entry.mockResults = null;
   }
 }
 
-/**
- * Get the current state of a test session.
- * Returns null if the session doesn't exist.
- */
 export function getTestSession(sessionId) {
-  return store.get(sessionId) || null;
+  const realId = resolveId(sessionId);
+  return realId ? (store.get(realId) || null) : null;
 }
 
-/**
- * Clean up a test session after the test completes.
- */
 export function cleanupTestSession(sessionId) {
-  store.delete(sessionId);
+  const realId = resolveId(sessionId) || sessionId;
+  store.delete(realId);
 }
 
-/**
- * Check if a session ID is a test session.
- * Accepts IDs that have been explicitly set up via setupTestSession().
- */
 export function isTestSessionId(sessionId) {
-  if (!sessionId) return false;
-  // Check if we have a test session set up for this ID
-  return store.has(sessionId);
+  return resolveId(sessionId) !== null;
 }
