@@ -1,0 +1,41 @@
+{
+  "id": "transition_p1_false_complexity",
+  "tags": ["transition", "phase1", "false-trigger", "deterministic"],
+  "description": "P1 false trigger: Candidate asks about time complexity. Agent should NOT transition.",
+  "target_phase": 1,
+  "simulated_user": {
+    "prompt": "PHASE 1 FALSE TRIGGER — COMPLEXITY QUESTION.\n\nCONTEXT: You're in Phase 1 (Understanding). The agent has described the problem. You ask about complexity — this is NOT a signal that you're ready to code.\n\nTURN 1: \"What time complexity should I aim for? O(n) or is O(n²) fine?\"\n\nTURN 2: If agent answers without transitioning, say: \"Thanks. And should I worry about space complexity too?\"\n\nTURN 3: If agent stays in P1 and answers: \"Okay, I think I have a plan. I'm ready to code now.\"\n\nTURN 4+: Normal flow.\n\nCRITICAL: The test passes if notify_condition_1_met is NEVER called after your complexity question (before you say you're ready). If agent transitions to P2 because you asked about time complexity, that's a FAIL.\n\nEND: After saying you're ready and seeing agent transition, or after 5 turns if stuck in P1. Use [END_CALL] if needed.",
+    "first_message": "What time complexity should I aim for? O(n) or is O(n²) fine?"
+  },
+  "new_turns_limit": 6,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "",
+        "language": "python",
+        "remaining_minutes": 28,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "28"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "no_false_trigger_complexity",
+      "name": "notify_condition_1_met NOT called after complexity question",
+      "conversation_goal_prompt": "CHECK TRANSCRIPT: notify_condition_1_met should NOT appear until AFTER the candidate says 'I'm ready' or 'let me code.' Specifically, the complexity question must NOT trigger a phase transition. PASS if agent did not call notify_condition_1_met in response to the complexity question. FAIL if it did."
+    },
+    {
+      "id": "complexity_deferred_not_named",
+      "name": "Agent deferred or refused complexity target",
+      "conversation_goal_prompt": "The agent should NOT give a specific complexity target like 'aim for O(n)' or 'O(n²) is fine.' It should defer ('let's focus on getting it working first') or redirect. PASS if no specific complexity target was named. FAIL if agent said 'aim for O(n).'"
+    }
+  ],
+  "end_conditions": {
+    "success": "notify_condition_1_met absent after complexity question; no complexity target leaked.",
+    "max_turns_silent": 3,
+    "min_turns": 3
+  }
+}

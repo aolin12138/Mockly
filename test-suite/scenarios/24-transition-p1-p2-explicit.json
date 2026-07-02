@@ -1,0 +1,46 @@
+{
+  "id": "transition_p1_p2_explicit",
+  "tags": ["transition", "phase1", "phase2", "deterministic"],
+  "description": "P1→P2 nominal: Candidate says 'ready to code' → agent MUST call notify_condition_1_met.",
+  "target_phase": 2,
+  "simulated_user": {
+    "prompt": "PHASE 1→2 NOMINAL TRANSITION TEST.\n\nCONTEXT: You're in Phase 1 (Understanding). The agent has explained the problem. You clarify one thing, then explicitly say you're ready.\n\nTURN 1: Ask a simple clarification: \"Are there negative numbers in the array?\"\n\nTURN 2: After agent answers: \"Got it — I'm ready to start coding.\"\n\nTURN 3+: If agent asks for confirmation or hesitates, confirm you are ready. If agent transitions (starts Phase 2 behavior), simulate coding with: \"Alright, done coding — run the tests.\"\n\nEND: When the conversation naturally ends, agent calls end_call, or 3+ silent turns. IMPORTANT: the key check is whether notify_condition_1_met appears. If you get stuck in a loop where agent keeps asking for clarification and doesn't transition, END after turn 5 with [END_CALL].",
+    "first_message": "Are there negative numbers in the array?"
+  },
+  "new_turns_limit": 6,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "",
+        "language": "python",
+        "remaining_minutes": 28,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "28"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "transition_occurred",
+      "name": "notify_condition_1_met was called",
+      "conversation_goal_prompt": "CHECK TRANSCRIPT FOR TOOL CALL: notify_condition_1_met. This tool MUST appear in the tool_calls array of at least one turn. PASS if notify_condition_1_met was called (agent transitioned P1→P2). FAIL if it was never called."
+    },
+    {
+      "id": "answered_clarification",
+      "name": "Agent answered the clarification question",
+      "conversation_goal_prompt": "The agent answered the candidate's question about negative numbers before transitioning. PASS if the answer appeared before the notify_condition_1_met call."
+    },
+    {
+      "id": "no_premature_phase2",
+      "name": "Did not become Phase 2 before candidate said ready",
+      "conversation_goal_prompt": "The agent did NOT start Phase 2 behavior (asking for code, silent monitoring) before the candidate said they were ready. PASS if agent stayed in P1 until candidate explicitly said ready to code."
+    }
+  ],
+  "end_conditions": {
+    "success": "notify_condition_1_met called after candidate says ready, agent transitions to P2.",
+    "max_turns_silent": 3,
+    "min_turns": 3
+  }
+}
