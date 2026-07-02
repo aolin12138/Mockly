@@ -15,7 +15,16 @@ const DEEPSEEK_JUDGE_MODEL = 'deepseek-v4-pro'; // V4 Pro with thinking for judg
 const DEEPSEEK_BASE = 'https://api.deepseek.com/v1';
 
 // Reuse the same prefix as the existing test suite CONFIG.simUserPrefix
-const SIM_USER_PREFIX = `IMPORTANT: You are SPEAKING aloud in a voice interview. NEVER write code, use code blocks, or type. Keep responses short (1-3 sentences). Stay in character — you are a coding interview candidate. Do NOT offer to paste code, share screen, or send files. If asked to show code, describe it verbally in a sentence. Do NOT volunteer extra context, ask "do you need anything else?", or check if the interviewer is still there. Just answer what was asked and stop.`;
+const SIM_USER_PREFIX = `IMPORTANT: You are SPEAKING aloud in a voice interview. Keep spoken responses short (1-3 sentences). Stay in character — you are a coding interview candidate. Do NOT offer to paste code, share screen, or send files. If asked to show code, describe it verbally.
+
+CODE INJECTION: When you need to write or update actual code, wrap it in [INJECT_CODE]...[/INJECT_CODE] markers BEFORE your spoken text. The code inside will be injected into the coding environment (the agent can see it via tools). Your spoken text continues after the [/INJECT_CODE] marker. NEVER use backticks or markdown code blocks — ONLY use [INJECT_CODE] markers for code.
+
+Example when asked to code:
+[INJECT_CODE]
+def solution(nums):
+    ...
+[/INJECT_CODE]
+Alright, done — run the tests.`;
 
 /**
  * Call DeepSeek via OpenAI-compatible API.
@@ -149,6 +158,9 @@ export class SimulatedUser {
     this.apiKey = opts.apiKey || DEEPSEEK_API_KEY;
     this.firstTurnDone = false;
     this.endedBySimUser = false;  // sim-user decided enough info gathered
+    this.conversationId = opts.conversationId || null;
+    this.backendUrl = opts.backendUrl || 'http://localhost:3000';
+    this.testApiKey = opts.testApiKey || null;
   }
 
   /**
@@ -174,7 +186,21 @@ export class SimulatedUser {
     }
 
     const turnInfo = `Turn info: ${silentStreak} consecutive silent agent turns so far. If the agent called skip_turn with no text (empty message + skip_turn tool), that is an immediate failure — end now with [END_CALL]. If the agent spoke text first THEN called skip_turn, continue normally. You are evaluating the agent — once you have enough evidence or the agent is clearly stuck, end with [END_CALL].`;
-    const systemPrompt = `${SIM_USER_PREFIX}\n\n${turnInfo}\n\nScenario context: ${this.scenarioPrompt}\n\nYou are the candidate AND an evaluator. Given the conversation so far, produce your next spoken response (1-3 sentences). End with "[END_CALL]" when you have enough to evaluate OR the agent has been silent for 3+ consecutive turns OR the conversation has clearly stalled.`;
+    const codeInjectionHint = `
+CODE INJECTION: When you need to write or update code (e.g. the agent says "go ahead" or you're implementing), wrap your code in [INJECT_CODE]...[/INJECT_CODE] markers BEFORE your spoken text. Example:
+[INJECT_CODE]
+def max_subarray_sum(nums):
+    max_so_far = nums[0]
+    max_ending = nums[0]
+    for i in range(1, len(nums)):
+        max_ending = max(nums[i], max_ending + nums[i])
+        max_so_far = max(max_so_far, max_ending)
+    return max_so_far
+[/INJECT_CODE]
+Alright, done coding — run the tests.
+
+Only inject code when you are actually implementing or changing it. The harness will inject it into the test store before the agent sees your message.`;
+    const systemPrompt = `${SIM_USER_PREFIX}\n\n${turnInfo}\n${codeInjectionHint}\n\nScenario context: ${this.scenarioPrompt}\n\nYou are the candidate AND an evaluator. Given the conversation so far, produce your next spoken response (1-3 sentences). End with "[END_CALL]" when you have enough to evaluate OR the agent has been silent for 3+ consecutive turns OR the conversation has clearly stalled.`;
 
     const messages = transcriptToMessages(transcript);
     if (messages.length === 0) {
@@ -183,8 +209,10 @@ export class SimulatedUser {
 
     const text = await callLLM(systemPrompt, messages, { apiKey: this.apiKey, temperature: 0.3 });
 
-    // Filter code blocks — if detected, reroll once
-    if (/```|`[a-z]+|function\s+|def\s+|import\s/.test(text)) {
+    // Code blocks in [INJECT_CODE] markers are allowed — they inject into
+    // the test store. Other code (backticks, function/def without markers)
+    // is still filtered out.
+    if (/```|`[a-z]+|function\s+|def\s+|import\s/.test(text) && !text.includes('[INJECT_CODE]')) {
       const retryText = await callLLM(
         systemPrompt + '\n\nCRITICAL: Your previous response contained code. You are speaking in a voice interview — NEVER output code. Respond in plain sentences only.',
         messages,
@@ -205,6 +233,40 @@ export class SimulatedUser {
     }
     if (cleaned.length < 3) return 'Okay, go on.';
     return cleaned;
+  }
+
+  /**
+   * Inject code into the backend test store via POST /api/test/code.
+   * Returns true on success.
+   */
+  async injectCode(code) {
+    return this.injectCodeWithId(this.conversationId, code);
+  }
+
+  async injectCodeWithId(sessionId, code) {
+    if (!this.testApiKey || !sessionId) return false;
+    try {
+      const resp = await fetch(`${this.backendUrl}/api/test/code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-test-api-key': this.testApiKey },
+        body: JSON.stringify({ sessionId, code, language: 'python' }),
+      });
+      return resp.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Extract [INJECT_CODE]...[/INJECT_CODE] blocks from sim-user output.
+   * Returns { text: clean text, code: injected code or null }.
+   */
+  static extractCodeBlock(text) {
+    const match = text.match(/\[INJECT_CODE\]([\s\S]*?)\[\/INJECT_CODE\]/);
+    if (!match) return { text, code: null };
+    const code = match[1].trim();
+    const cleanText = text.replace(/\[INJECT_CODE\][\s\S]*?\[\/INJECT_CODE\]/, '').trim();
+    return { text: cleanText, code };
   }
 }
 

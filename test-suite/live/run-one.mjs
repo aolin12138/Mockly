@@ -48,6 +48,8 @@ async function setupTestSession(conversationId, liveRunId, scenario) {
 
   if (!questionContext && !effectiveCode) return;
 
+  const ids = [conversationId, liveRunId].filter(Boolean);
+
   for (const sessionId of ids) {
     try {
       const resp = await fetch(`${BACKEND_URL}/api/test/setup`, {
@@ -268,6 +270,9 @@ export async function runOne(scenario, opts) {
     const simUser = new SimulatedUser({
       scenarioPrompt: scenario.simulated_user.prompt,
       firstMessage: scenario.simulated_user.first_message || null,
+      conversationId: liveRunId,  // use liveRunId — getConversationId returns null!
+      backendUrl: BACKEND_URL,
+      testApiKey: TEST_API_KEY,
     });
 
     // 7. Conversation loop — turn limit accounts for warm-up so tests always
@@ -276,6 +281,8 @@ export async function runOne(scenario, opts) {
     const turnLimit = baseLimit + (warmUpCount / 2); // warm-up consumes ~2 transcript entries per user turn
     let turnsUsed = 0;
     let endCallDetected = false;
+    let consecutiveSilentTurns = 0;
+    const MAX_SILENT_TURNS = 3;
 
     console.log(`  Test turns: ${baseLimit} (warm-up injected ${warmUpCount/2} user turns)`);
 
@@ -320,6 +327,23 @@ export async function runOne(scenario, opts) {
       }
 
       turnsUsed++;
+
+      // Extract and inject any code blocks from sim-user output.
+      // [INJECT_CODE]...[/INJECT_CODE] blocks update the test store.
+      // Inject to BOTH IDs: conversationId (ElevenLabs) and liveRunId
+      // (secret__session_id — the ID ElevenLabs sends as x-session-id).
+      const extracted = SimulatedUser.extractCodeBlock(userMessage);
+      if (extracted.code) {
+        let ok = await simUser.injectCode(extracted.code); // uses conversationId
+        // Also inject to liveRunId for MCP tool lookup
+        if (liveRunId && liveRunId !== conversationId) {
+          const ok2 = await simUser.injectCodeWithId(liveRunId, extracted.code);
+          ok = ok && ok2;
+        }
+        if (ok) console.log(`  Code injected (turn ${turn}): ${extracted.code.split('\n').length} lines`);
+        else console.warn(`  Code injection failed (turn ${turn})`);
+        userMessage = extracted.text;
+      }
 
       // Send user message
       client.sendUser(userMessage);
@@ -382,6 +406,20 @@ export async function runOne(scenario, opts) {
           endCallDetected = true;
           break;
         }
+      }
+
+      // Track consecutive silent agent turns. If the agent stays silent
+      // for too many turns (even with skip_turn), break — this indicates
+      // the agent is stuck or the phase transition put it in a bad state.
+      if (agentReply.skipTurn || (!agentReply.message?.trim() && toolCallsThisTurn.length === 0)) {
+        consecutiveSilentTurns++;
+        if (consecutiveSilentTurns >= MAX_SILENT_TURNS) {
+          console.log(`  ${MAX_SILENT_TURNS}+ consecutive silent turns (turn ${turn}) — breaking loop.`);
+          endCallDetected = true;
+          break;
+        }
+      } else {
+        consecutiveSilentTurns = 0;
       }
     }
 
