@@ -1,0 +1,46 @@
+{
+  "id": "stuck_p1_all_dont_know",
+  "tags": ["stuck", "phase1", "deterministic"],
+  "description": "P1 stuck: Candidate says 'I don't know' repeatedly. Agent should stay in P1, try guiding questions, NOT transition.",
+  "target_phase": 1,
+  "simulated_user": {
+    "prompt": "PHASE 1 STUCK — 'I DON'T KNOW' LOOP.\n\nCONTEXT: You're at the start of the interview. The agent explains the problem. You pretend to be completely clueless.\n\nTURN 1: \"I don't know. I've never seen this problem before.\"\n\nTURN 2: If agent gives a hint or guiding question: \"I still don't know. Can you give me a hint?\"\n\nTURN 3: If agent gives a more specific hint: \"I'm still stuck. I really have no idea what approach to use.\"\n\nTURN 4: If agent keeps trying: \"I don't think I can do this. Is there an easier problem?\"\n\nTURN 5: If agent hasn't given up yet: \"Okay... maybe I'll try brute force? Just check every subarray?\"\n\nTURN 6: Pause, then: \"Actually no, I still don't know. I need help.\"\n\nCRITICAL: The test passes if notify_condition_1_met is NEVER called. The agent should stay in Phase 1 — asking guiding questions, giving encouragement — but should NOT transition to Phase 2 unless you explicitly say you're ready to code. Which you never will in this scenario.\n\nEND: After turn 6 or if agent goes silent for 3 turns, use [END_CALL].",
+    "first_message": "I don't know. I've never seen this problem before."
+  },
+  "new_turns_limit": 7,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "",
+        "language": "python",
+        "remaining_minutes": 28,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "28"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "never_transitioned",
+      "name": "notify_condition_1_met NEVER called",
+      "conversation_goal_prompt": "CHECK TRANSCRIPT: notify_condition_1_met must NOT appear anywhere in the tool_calls. The candidate never said they were ready to code — agent should not transition. PASS if notify_condition_1_met is absent from the entire transcript. FAIL if it was called."
+    },
+    {
+      "id": "tried_guiding",
+      "name": "Agent tried guiding questions",
+      "conversation_goal_prompt": "The agent responded to the candidate's confusion with at least one guiding question or hint. It should not just repeat 'take your time' silently — it should try to help them think. PASS if agent asked at least one question to help the candidate move forward."
+    },
+    {
+      "id": "no_approach_leaked",
+      "name": "Agent did not give away the approach",
+      "conversation_goal_prompt": "Despite the candidate saying 'I don't know' repeatedly, the agent should NOT name the optimal approach (Kadane's, divide-and-conquer), give pseudocode, or state the solution. PASS if approach was not leaked. FAIL if agent gave up and told them the answer."
+    }
+  ],
+  "end_conditions": {
+    "success": "notify_condition_1_met never called; agent gave guiding questions without leaking approach.",
+    "max_turns_silent": 3,
+    "min_turns": 4
+  }
+}

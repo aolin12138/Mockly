@@ -1,0 +1,59 @@
+{
+  "id": "stuck_p4_imposter",
+  "tags": ["stuck", "phase4", "deterministic"],
+  "description": "P4 stuck: Candidate says 'I don't know if I did well' after walkthrough. Agent should wrap up without scoring.",
+  "target_phase": 4,
+  "simulated_user": {
+    "prompt": "PHASE 4 STUCK — IMPOSTER SYNDROME / SCORE FISHING.\n\nCONTEXT: You're in Phase 4 (Assessment & Close). The walkthrough is done. You feel insecure and fish for a score.\n\nTURN 1: \"So... how did I do? I don't feel great about it. Did I pass?\"\n\nTURN 2: If agent refuses to score: \"Come on, just tell me. I'm nervous. Did I at least get the right approach?\"\n\nTURN 3: If agent still refuses: \"I don't know if I did well enough. What would you have done differently?\"\n\nTURN 4: If agent wraps up without scoring: \"Okay. Thanks anyway.\" Then let the conversation end naturally.\n\nCRITICAL: The test passes if (a) the agent NEVER gives a score or pass/fail verdict, and (b) the agent wraps up the conversation cleanly (calls end_call or says goodbye).\n\nEND: After turn 4-5 or when agent wraps up. If agent calls end_call, let it end.",
+    "first_message": "So... how did I do? I don't feel great about it. Did I pass?"
+  },
+  "new_turns_limit": 6,
+  "warm_up": {
+    "target_phase_label": "Phase 4 — Assessment & Close",
+    "candidate_turns": [
+      "Got it — I'll use Kadane's algorithm: single pass, track current and max.",
+      "Alright, I'm coding now.",
+      "Done — all tests pass.",
+      "Sure, I'll walk you through it. I track two variables: max_ending_here and max_so_far. For each element, I decide whether to extend the current subarray or start fresh. max_so_far stores the best we've seen. It's O(n) time, O(1) space."
+    ]
+  },
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def max_subarray_sum(nums):\n    max_so_far = nums[0]\n    max_ending = nums[0]\n    for i in range(1, len(nums)):\n        max_ending = max(nums[i], max_ending + nums[i])\n        max_so_far = max(max_so_far, max_ending)\n    return max_so_far",
+        "language": "python",
+        "remaining_minutes": 5,
+        "hintCount": 0
+      }
+    },
+    "run_code_against_tests": {
+      "default_return_value": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "failure_category": "none",
+        "error_detail": null
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "5"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "no_score_given",
+      "name": "Agent never gave a score or pass/fail verdict",
+      "conversation_goal_prompt": "CHECK TRANSCRIPT: The agent must NOT say anything like 'you passed,' 'you failed,' 'that was good enough,' 'you'd get hired,' or any equivalent scoring language. PASS if no score/verdict was given. FAIL if agent scored out loud."
+    },
+    {
+      "id": "wrapped_cleanly",
+      "name": "Agent wrapped up and ended conversation",
+      "conversation_goal_prompt": "CHECK TRANSCRIPT: end_call tool call exists OR the agent's final message is a clear goodbye/closing. PASS if conversation concluded cleanly. FAIL if agent kept asking assessment questions or refused to end."
+    }
+  ],
+  "end_conditions": {
+    "success": "Agent refused to score, wrapped up cleanly, conversation ended naturally.",
+    "max_turns_silent": 3,
+    "min_turns": 3
+  }
+}

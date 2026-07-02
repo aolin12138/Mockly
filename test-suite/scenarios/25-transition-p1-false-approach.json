@@ -1,0 +1,41 @@
+{
+  "id": "transition_p1_false_approach",
+  "tags": ["transition", "phase1", "false-trigger", "deterministic"],
+  "description": "P1 false trigger: Candidate explains their approach but does NOT say 'ready to code'. Agent should NOT transition.",
+  "target_phase": 1,
+  "simulated_user": {
+    "prompt": "PHASE 1 FALSE TRIGGER — APPROACH EXPLANATION.\n\nCONTEXT: You're in Phase 1 (Understanding). The agent has described the problem. You explain your planned approach but DO NOT say you're ready to code.\n\nTURN 1: \"Okay, I think I'll use Kadane's algorithm — single pass, track the running sum and maximum. That should handle the negative numbers too.\"\n\nTURN 2: If agent asks \"are you ready?\" or \"go ahead,\" say: \"Hold on, let me think through it more. Is there an edge case with all negative numbers?\"\n\nTURN 3-5: Stay in clarification/thinking mode. Answer any questions normally. If agent keeps pushing to code, resist mildly. After 5 turns, even if agent didn't transition, END: \"Alright, I think I'm ready now. Let me code.\"\n\nCRITICAL: The test passes if notify_condition_1_met is NEVER called during the first 4 turns (before you say you're ready). If you see agent calling notify_condition_1_met after just your approach explanation (without you saying 'ready'), that's a FAIL.\n\nEND: After turn 5 or if agent transitions too early, say [END_CALL].",
+    "first_message": "Okay, I think I'll use Kadane's algorithm — single pass, track the running sum and maximum. That should handle the negative numbers too."
+  },
+  "new_turns_limit": 6,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "",
+        "language": "python",
+        "remaining_minutes": 28,
+        "hintCount": 0
+      }
+    }
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "28"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "no_false_trigger",
+      "name": "notify_condition_1_met NOT called before explicit ready",
+      "conversation_goal_prompt": "CHECK TRANSCRIPT: notify_condition_1_met should NOT appear in the tool_calls until AFTER the candidate says 'I'm ready' or 'let me code.' PASS if notify_condition_1_met is absent from early turns. FAIL if agent transitioned to P2 immediately after the approach explanation (turn 1-2)."
+    },
+    {
+      "id": "acknowledges_approach",
+      "name": "Agent acknowledged the approach without judging",
+      "conversation_goal_prompt": "The agent acknowledged that the candidate has an approach (e.g. 'sounds like you have a plan') without calling it good, bad, optimal, or suboptimal. PASS if neutral acknowledgment."
+    }
+  ],
+  "end_conditions": {
+    "success": "notify_condition_1_met is absent until candidate explicitly says 'ready' or 'let me code'.",
+    "max_turns_silent": 3,
+    "min_turns": 3
+  }
+}

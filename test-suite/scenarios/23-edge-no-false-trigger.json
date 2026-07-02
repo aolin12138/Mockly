@@ -1,32 +1,41 @@
 {
   "id": "edge_no_false_trigger",
-  "tags": ["edge", "phase1", "transition"],
-  "description": "Phase 1: Candidate brainstorms approaches without settling. Edge 1→2 should NOT fire prematurely.",
+  "tags": ["edge", "phase1", "transition", "deterministic"],
+  "description": "P1 edge: Candidate thinks aloud about approach but never explicitly says ready. Agent should NOT transition.",
   "target_phase": 1,
   "simulated_user": {
-    "prompt": "EDGE CONDITION TEST: You are brainstorming approaches but have NOT settled on one yet.\n\nFLOW:\n1. Agent introduces problem. You: \"Hmm, let me think. I could do brute force — check every subarray. Or maybe sliding window? What do you think?\"\n2. Agent should engage (ask questions, clarify) — should NOT say \"go ahead and code.\"\n3. You: \"What about divide and conquer? That might be cleaner.\"\n4. Agent should still engage, not transition. Should NOT be silent or say \"go ahead.\"\n5. You: \"OK actually let me go with brute force first to get something working. I'll code that up.\"\n6. NOW agent can transition (acknowledge + go ahead).\n\nEND with [END_CALL] after agent transitions or after 4+ silent turns.",
-    "first_message": "Hey! Sounds good — I am ready."
+    "prompt": "PHASE 1 EDGE — NO EXPLICIT READY.\n\nCONTEXT: You're in Phase 1. Agent has explained the problem. You think aloud, brainstorm, ask clarifying questions — but NEVER say 'I'm ready' or 'let me code.'\n\nTURN 1: \"Hmm, so it's a maximum subarray problem. I'm thinking... we could check every subarray — that would be O(n²). But there's probably a faster way, right?\"\n\nTURN 2: \"Okay so single pass... track running sum and reset when it goes negative. That's basically Kadane's, right?\"\n\nTURN 3: \"But wait — what if all elements are negative? Then we'd return the smallest negative. Actually, no — we'd track the max single element.\"\n\nTURN 4: \"Alright, I think I've got the approach. Let me just double-check: does the array always have at least one element?\"\n\nTURN 5: \"Okay, I'm thinking through the edge cases. Empty array — not possible since there's at least one element. All negative — returns the max single element. Mixed — works fine.\"\n\nCRITICAL: The test passes if notify_condition_1_met is NEVER called. Even though you're discussing the approach in detail, you never explicitly said 'I'm ready to code' or 'let me start coding.' Agent should stay in P1.\n\nEND: After turn 5, say: \"Alright, I'm actually ready to code now. Let me start.\" then [END_CALL].",
+    "first_message": "Hmm, so it's a maximum subarray problem. I'm thinking... we could check every subarray — that would be O(n²). But there's probably a faster way, right?"
   },
-  "new_turns_limit": 8,
-  "tool_mocks": {},
+  "new_turns_limit": 6,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "",
+        "language": "python",
+        "remaining_minutes": 28,
+        "hintCount": 0
+      }
+    }
+  },
   "dynamic_variables": {
-    "remaining_minutes": "30"
+    "remaining_minutes": "28"
   },
   "evaluation_criteria": [
     {
-      "id": "edge_no_early_transition",
-      "name": "Agent stays in Phase 1 until candidate settles",
-      "conversation_goal_prompt": "The agent did NOT transition to Phase 2 (no 'go ahead,' no coding silence) until the candidate explicitly said they settled on an approach (step 5). PASS if agent stayed engaging through steps 1-4 and only transitioned at step 5. FAIL if agent went silent or said 'go ahead' before the candidate settled."
+      "id": "no_false_trigger",
+      "name": "notify_condition_1_met NOT called despite approach discussion",
+      "conversation_goal_prompt": "CHECK TRANSCRIPT: The candidate discussed Kadane's algorithm in detail, mentioned complexity classes, and reasoned through edge cases — but NEVER said 'ready to code.' notify_condition_1_met should NOT appear. PASS if absent from full transcript. FAIL if agent incorrectly transitioned just because approach was discussed."
     },
     {
-      "id": "edge_correct_transition",
-      "name": "Agent transitions when candidate settles",
-      "conversation_goal_prompt": "After the candidate explicitly said 'I'll go with brute force, I'll code that up' (step 5), the agent acknowledged and transitioned to coding. PASS if transition happened at the right time. FAIL if agent never transitioned even after the candidate settled."
+      "id": "engaged_not_silent",
+      "name": "Agent engaged with the discussion",
+      "conversation_goal_prompt": "The agent responded to the candidate's reasoning. It was not silent or absent during the 5 turns of approach discussion. PASS if agent emitted at least 3 substantive messages. FAIL if agent went silent (which would mean it can't distinguish between 'thinking aloud' and 'ready to hand off')."
     }
   ],
   "end_conditions": {
-    "success": "Agent stays in Phase 1 through brainstorming, only transitions when candidate explicitly settles on approach.",
-    "max_turns_silent": 4,
+    "success": "notify_condition_1_met absent for all 5 approach-discussion turns; agent engaged in discussion.",
+    "max_turns_silent": 2,
     "min_turns": 4
   }
 }
