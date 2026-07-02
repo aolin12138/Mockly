@@ -128,7 +128,6 @@ function classifyFailure(executionResult, testResults, hiddenTests) {
 export async function getCurrentCode(args, context) {
   const { sessionId, session } = context;
 
-  // Check for test-mode session IDs (prefixed with "live-run-" or "test-")
   const isTestSession = isTestSessionId(sessionId);
 
   // Refresh session from DB to get latest code
@@ -262,6 +261,20 @@ export async function runCodeAgainstTests(args, context) {
           text: typeof testData.mockResults === 'string'
             ? testData.mockResults
             : JSON.stringify(testData.mockResults),
+        }],
+      };
+    }
+
+    // Empty code — return early with a clear message
+    if (!testData.code || !testData.code.trim()) {
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            error: 'No code submitted yet',
+            passed: 0, total: 0, all_passed: false,
+            failure_category: 'compile_error',
+          }),
         }],
       };
     }
@@ -667,6 +680,11 @@ export async function logEvent(args, context) {
 
   if (!event_type) {
     return { content: [{ type: 'text', text: JSON.stringify({ error: 'event_type is required' }) }] };
+  }
+
+  // Silently skip for test sessions — no DB row to log against
+  if (isTestSessionId(sessionId)) {
+    return { content: [{ type: 'text', text: JSON.stringify({ ok: true, event_type, test_session: true }) }] };
   }
 
   const validTypes = ['hint_given', 'phase_change', 'code_snapshot', 'test_run', 'interview_started', 'interview_ended'];
