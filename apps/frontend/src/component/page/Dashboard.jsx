@@ -2,20 +2,14 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ResponsiveContainer,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ComposedChart,
+  AreaChart,
+  Area,
+  LineChart,
+  BarChart,
   Line,
   Bar,
-  CartesianGrid,
   XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ReferenceLine
+  Tooltip
 } from 'recharts';
 import {
   Play,
@@ -23,24 +17,20 @@ import {
   TrendingUp,
   Award,
   ChevronRight,
-  Zap,
-  BookOpen,
-  LayoutDashboard,
-  Settings,
-  LogOut,
-  User,
-  Activity,
-  Code2,
   Clock,
+  Code2,
   Key,
   Shield,
   AlertTriangle,
   CheckCircle,
   XCircle,
   RefreshCw,
-  Eye,
-  EyeOff,
-  ExternalLink
+  ExternalLink,
+  LayoutDashboard,
+  Settings,
+  LogOut,
+  User,
+  BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../ui/Toast';
@@ -73,7 +63,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }) => {
       {active && (
         <MotionDiv
           layoutId="activeTab"
-          className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 rounded-xl"
+          className="absolute inset-0 bg-emerald-500/10 border border-emerald-500/20 rounded-xl"
           initial={false}
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         />
@@ -93,7 +83,7 @@ const Card = ({ children, className = '', delay = 0 }) => (
       visible: { opacity: 1, y: 0 }
     }}
     transition={{ duration: 0.5, delay }}
-    className={`relative bg-slate-50 dark:bg-slate-900/40 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] overflow-hidden ${className}`}
+    className={`relative bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 rounded-xl p-6 overflow-hidden ${className}`}
   >
     {children}
   </MotionDiv>
@@ -115,7 +105,7 @@ const SkeletonCard = ({ children, className = '' }) => (
       hidden: { opacity: 0, y: 14 },
       visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }
     }}
-    className={`relative bg-slate-50 dark:bg-slate-900/40 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-3xl p-6 overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] ${className}`}
+    className={`relative bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 rounded-xl p-6 overflow-hidden ${className}`}
   >
     {children}
   </MotionDiv>
@@ -415,7 +405,7 @@ const Dashboard = () => {
         feedback.outcome !== undefined ||
         feedback.codeAssessment !== undefined ||
         feedback.actionPlan !== undefined ||
-        (Array.isArray(feedback.dimensions) && feedback.dimensions.some(d => d.label || d.key))
+        (Array.isArray(feedback.dimensions) && feedback.dimensions.length > 0)
       );
     };
 
@@ -451,7 +441,7 @@ const Dashboard = () => {
 
     // Normalize dimension scores for BEHAVIOURAL feedback
     // Normalize dimension scores for BEHAVIOURAL feedback
-    // Behavioural scores can be 0-5, 0-10, or 0-100, we normalize to 0-5 for radar chart
+    // Behavioural scores can be 0-5, 0-10, or 0-100; we normalize to 0-5 for display
     const normalizeBehaviouralDimensionScores = (feedback) => {
       const rawDimensions = Array.isArray(feedback?.dimension_scores)
         ? feedback.dimension_scores.map((dim) => ({
@@ -485,29 +475,29 @@ const Dashboard = () => {
 
     // Normalize dimension scores for TECHNICAL feedback
     // Technical scores could be 0-10 or 0-100, we normalize to 0-100 for calculations
-    // and provide a 0-5 scale version for radar chart display
+    // and provide a 0-5 scale version for display
     const normalizeTechnicalDimensionScores = (feedback) => {
-      // Technical feedback has dimensions array with: { key, label, score, ... }
-      const rawDimensions = Array.isArray(feedback?.dimensions)
-        ? feedback.dimensions.map((dim) => ({
-          label: dim?.label || dim?.key || dim?.name || 'General',
-          score: Number(dim?.score || 0)
-        }))
-        : [];
+      // Technical feedback may use either 'dimensions' or 'dimension_scores' key
+      const dims = Array.isArray(feedback?.dimensions) ? feedback.dimensions :
+                   Array.isArray(feedback?.dimension_scores) ? feedback.dimension_scores : [];
+
+      const rawDimensions = dims.map((dim) => ({
+        label: dim?.name || dim?.dimension || dim?.label || dim?.key || 'General',
+        score: Number(dim?.score || 0)
+      }));
 
       if (!rawDimensions.length) return [];
 
-      // Detect scale: if max score <= 10, assume 0-10 scale and multiply by 10
+      // Detect scale: if max score <= 10, assume 0-10 scale
       const maxScore = Math.max(...rawDimensions.map((item) => item.score || 0), 0);
       const isScaleTen = maxScore <= 10;
 
       return rawDimensions.map((item) => {
-        // Normalize to 0-100
         const normalizedTo100 = isScaleTen ? item.score * 10 : item.score;
         return {
           label: item.label,
-          score: Math.round((normalizedTo100 / 100) * 5 * 10) / 10, // Scale to 0-5 with one decimal
-          originalScore: Math.round(normalizedTo100) // Keep as 0-100 for calculations
+          score: Math.round((normalizedTo100 / 100) * 5 * 10) / 10,
+          originalScore: Math.round(normalizedTo100)
         };
       });
     };
@@ -611,50 +601,129 @@ const Dashboard = () => {
 
     // Improvements - handle both behavioural and technical
     const improvements = [];
-    parsedRecent.forEach(session => {
-      if (session.isTechnical) {
-        // Technical feedback: use actionPlan
-        const actionPlan = session.feedback?.actionPlan || [];
-        actionPlan.forEach((item, idx) => {
-          const title = item?.title || item?.suggestion || 'Improvement area';
-          const category = item?.category || 'Technical';
-          const id = `${session.id}-tech-${idx}`.replace(/\s+/g, '_');
-          if (!improvements.find(i => i.id === id)) {
-            improvements.push({
-              id,
-              category,
-              task: title,
-              priority: item?.priority === 1 ? 'High' : item?.priority === 2 ? 'Medium' : 'Low'
-            });
-          }
-        });
-      } else {
-        // Behavioural feedback: use areas_for_improvement
-        const areas = session.feedback?.areas_for_improvement || [];
-        areas.forEach(area => {
-          const dimension = area?.dimension || 'general';
-          const task = area?.suggestion || dimension;
+    const strengths = [];
 
-          const id = `${session.id}-${dimension}-${task}`.replace(/\s+/g, '_');
-          if (!improvements.find(i => i.id === id)) {
-            improvements.push({
-              id,
-              category: dimension,
-              task,
-              priority: 'Medium'
-            });
-          }
-        });
-      }
+    // Helper: standardize dimension name to display tag
+    const tagFromDimension = (name) => {
+      const map = {
+        'communication': 'Communication',
+        'leadership': 'Leadership',
+        'problem_solving': 'Problem Solving',
+        'collaboration': 'Collaboration',
+        'adaptability': 'Adaptability',
+        'Correctness & Completeness': 'Correctness',
+        'Problem-Solving & Thinking': 'Problem Solving',
+        'Technical Communication': 'Tech Communication',
+        'Complexity & Optimization': 'Optimization',
+        'Code Quality': 'Code Quality',
+        'Independence': 'Independence',
+        'problem_understanding': 'Problem Understanding',
+        'approach_quality': 'Approach Quality',
+        'code_quality': 'Code Quality',
+        'correctness_and_testing': 'Correctness',
+        'complexity_reasoning': 'Complexity',
+      };
+      return map[name] || (name ? name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'General');
+    };
+
+    parsedRecent.forEach(session => {
+      const fb = session.feedback;
+      if (!fb) return;
+
+      // --- From dimension scores (low = improvement, high = strength) ---
+      const dims = session.normalizedDimensions || [];
+      dims.forEach(dim => {
+        const tag = tagFromDimension(dim.label);
+        const pct = dim.originalScore || 0;
+        if (pct < 60) {
+          improvements.push({ id: `${session.id}-dim-${tag}`, category: tag, task: `Improve ${tag.toLowerCase()} (${pct}%)`, priority: pct < 40 ? 'High' : 'Medium', source: 'dimension' });
+        } else if (pct >= 80) {
+          strengths.push({ id: `${session.id}-str-${tag}`, category: tag, task: `Strong ${tag.toLowerCase()} (${pct}%)`, source: 'dimension' });
+        }
+      });
+
+      // --- From patterns ---
+      const patterns = fb.patterns || [];
+      patterns.forEach((p, idx) => {
+        if (p.type === 'gap') {
+          improvements.push({ id: `${session.id}-pat-${idx}`, category: 'Pattern', task: p.description, priority: p.impact === 'high' ? 'High' : 'Medium', source: 'pattern' });
+        } else if (p.type === 'strength') {
+          strengths.push({ id: `${session.id}-strp-${idx}`, category: 'Strength', task: p.description, source: 'pattern' });
+        }
+      });
+
+      // --- From areas_for_improvement (behavioural) ---
+      const areas = fb.areas_for_improvement || [];
+      areas.forEach((area, idx) => {
+        improvements.push({ id: `${session.id}-afi-${idx}`, category: tagFromDimension(area.dimension), task: area.suggestion || area.dimension, priority: area.priority === 'high' ? 'High' : 'Medium', source: 'areaForImprovement' });
+      });
+
+      // --- From actionPlan (technical) ---
+      const actionPlan = fb.actionPlan || [];
+      actionPlan.forEach((item, idx) => {
+        improvements.push({ id: `${session.id}-act-${idx}`, category: item.category || 'Technical', task: item.title || item.suggestion || 'Improvement area', priority: item.priority === 1 ? 'High' : item.priority === 2 ? 'Medium' : 'Low', source: 'actionPlan' });
+      });
+
+      // --- From nextSteps (technical) ---
+      const nextSteps = fb.nextSteps || [];
+      nextSteps.forEach((step, idx) => {
+        improvements.push({ id: `${session.id}-nxt-${idx}`, category: 'Next Step', task: step.action || String(step), priority: 'Medium', source: 'nextStep' });
+      });
     });
+
+    // Deduplicate
+    const seenIds = new Set();
+    const uniqueImprovements = improvements.filter(item => seenIds.has(item.id) ? false : (seenIds.add(item.id), true));
+    const seenStrIds = new Set();
+    const uniqueStrengths = strengths.filter(item => seenStrIds.has(item.id) ? false : (seenStrIds.add(item.id), true));
+
+    // Dimension trends across recent sessions (for before/after comparison)
+    const dimensionTrends = {};
+    const sessionsWithDims = parsedRecent.filter(s => s.normalizedDimensions?.length > 0);
+    sessionsWithDims.forEach(s => {
+      const shortDate = new Date(s.createdAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' });
+      s.normalizedDimensions.forEach(dim => {
+        const tag = tagFromDimension(dim.label);
+        if (!dimensionTrends[tag]) dimensionTrends[tag] = [];
+        dimensionTrends[tag].push({ date: shortDate, sessionId: s.id, score: dim.originalScore || 0, isLatest: s.id === sessionsWithDims[0]?.id });
+      });
+    });
+
+    // Heatmap data (last 4 weeks)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sessionDateMap = new Map();
+    sessions.forEach(s => {
+      const key = new Date(s.createdAt).toDateString();
+      if (!sessionDateMap.has(key)) sessionDateMap.set(key, []);
+      sessionDateMap.get(key).push(s);
+    });
+    const heatmapWeeks = [];
+    for (let w = 3; w >= 0; w--) {
+      const week = [];
+      for (let d = 6; d >= 0; d--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - (w * 7 + d));
+        const key = date.toDateString();
+        const daySessions = sessionDateMap.get(key) || [];
+        const bestScore = daySessions.length
+          ? Math.max(...daySessions.map(s => { const p = parseSession(s); return p.computedScore || 0; }))
+          : null;
+        week.push({ date: date.toISOString().slice(0, 10), score: bestScore, count: daySessions.length });
+      }
+      heatmapWeeks.push(week);
+    }
 
     return {
       averageScore,
       totalInterviews: sessions.length,
       recentSessions: parsedRecent,
-      improvements: improvements.slice(0, 5),
+      improvements: uniqueImprovements.slice(0, 5),
+      strengths: uniqueStrengths.slice(0, 5),
       totalTime,
-      progressHistory: progressHistoryAll
+      progressHistory: progressHistoryAll,
+      dimensionTrends,
+      heatmapWeeks
     };
   }, [sessions]);
 
@@ -693,23 +762,16 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex font-sans selection:bg-emerald-500/20 dark:selection:bg-emerald-500/30 overflow-hidden relative">
-      {/* Ambient Background */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
-        <div className="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-cyan-500/10 rounded-full blur-[100px]" />
-        <div className="absolute bottom-[-10%] left-[20%] w-[35%] h-[35%] bg-purple-500/10 rounded-full blur-[120px]" />
-      </div>
-
       {/* Sidebar */}
-      <aside className="w-72 fixed h-full border-r border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/50 backdrop-blur-xl hidden md:flex flex-col p-6 z-20 shadow-2xl">
+      <aside className="w-72 fixed h-full border-r border-slate-200 dark:border-white/10 bg-white dark:bg-slate-950 flex flex-col p-6 z-20">
         <button
           onClick={() => navigate('/')}
           className="mb-10 flex items-center space-x-3 px-2 hover:opacity-80 transition-opacity cursor-pointer"
         >
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
             <span className="font-bold text-slate-900">M</span>
           </div>
-          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 dark:from-white dark:to-slate-400">
+          <span className="text-xl font-bold text-slate-900 dark:text-white">
             Mockly
           </span>
         </button>
@@ -717,8 +779,6 @@ const Dashboard = () => {
         <nav className="space-y-2 flex-1">
           <SidebarItem icon={LayoutDashboard} label="Overview" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
           <SidebarItem icon={History} label="History" active={activeTab === 'history'} onClick={() => navigate('/history')} />
-          <SidebarItem icon={TrendingUp} label="Analytics" active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} />
-          <SidebarItem icon={BookOpen} label="Improve" active={activeTab === 'improve'} onClick={() => setActiveTab('improve')} />
         </nav>
 
         <div className="pt-6 border-t border-slate-300 dark:border-slate-800/60 space-y-2">
@@ -773,7 +833,7 @@ const Dashboard = () => {
             <div>
               <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">
                 Welcome back,{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-600">
                   {displayUserName}
                 </span>
               </h1>
@@ -788,53 +848,80 @@ const Dashboard = () => {
                 <motion.div className="flex-1 space-y-8" variants={containerVariants}>
                   {/* Stats Row */}
                   <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" variants={containerVariants}>
-                    <Card className="group">
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Award size={100} />
-                      </div>
+                    <Card>
                       <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Average Score</h3>
                       <div className="flex items-end space-x-3">
-                        <p className="text-5xl font-bold text-slate-900 dark:text-white">{stats.averageScore}</p>
+                        <p className="text-5xl font-bold text-slate-900 dark:text-white tabular-nums">{stats.averageScore}</p>
                         <span className="text-lg text-emerald-400 font-medium mb-1.5">/100</span>
                       </div>
+                      {stats.progressHistory.length >= 2 && (
+                        <div className="mt-3 h-[28px]">
+                          <ResponsiveContainer width="100%" height={28}>
+                            <LineChart data={stats.progressHistory.slice(-8)}>
+                              <Line type="monotone" dataKey="score" stroke="#10b981" strokeWidth={1.5} dot={false} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
                     </Card>
 
-                    <Card className="group">
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Activity size={100} />
-                      </div>
+                    <Card>
                       <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Total Practice Time</h3>
                       <div className="flex items-end space-x-3">
                         {stats.totalTime >= 3600 ? (
                           <>
-                            <p className="text-5xl font-bold text-slate-900 dark:text-white">{Math.floor(stats.totalTime / 3600)}</p>
+                            <p className="text-5xl font-bold text-slate-900 dark:text-white tabular-nums">{Math.floor(stats.totalTime / 3600)}</p>
                             <span className="text-lg text-slate-500 dark:text-slate-400 font-medium mb-1.5">hr {Math.floor((stats.totalTime % 3600) / 60)}m</span>
                           </>
                         ) : (
                           <>
-                            <p className="text-5xl font-bold text-slate-900 dark:text-white">{Math.floor(stats.totalTime / 60)}</p>
+                            <p className="text-5xl font-bold text-slate-900 dark:text-white tabular-nums">{Math.floor(stats.totalTime / 60)}</p>
                             <span className="text-lg text-slate-500 dark:text-slate-400 font-medium mb-1.5">mins</span>
                           </>
                         )}
                       </div>
+                      {stats.recentSessions.filter(s => s.duration > 0).length >= 2 && (
+                        <div className="mt-3 h-[28px]">
+                          <ResponsiveContainer width="100%" height={28}>
+                            <BarChart data={stats.recentSessions.filter(s => s.duration > 0).reverse().slice(-6).map(s => ({ name: '', min: Math.round((s.duration || 0) / 60) }))}>
+                              <Bar dataKey="min" fill="#94a3b8" radius={[2, 2, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
                     </Card>
 
-                    <Card className="group">
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <History size={100} />
-                      </div>
-                      <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Sessions</h3>
-                      <div className="flex items-end space-x-3">
-                        <p className="text-5xl font-bold text-slate-900 dark:text-white">{stats.totalInterviews}</p>
-                        <span className="text-lg text-slate-500 dark:text-slate-400 font-medium mb-1.5">total</span>
-                      </div>
+                    <Card>
+                      <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">Activity</h3>
+                      <p className="text-3xl font-bold text-slate-900 dark:text-white tabular-nums mb-3">{stats.totalInterviews}</p>
+                      {stats.heatmapWeeks && stats.heatmapWeeks.length > 0 && (() => {
+                        const allDays = stats.heatmapWeeks.flat();
+                        return (
+                          <div className="grid grid-cols-7 gap-0.5">
+                            {allDays.map((day, i) => {
+                              let fill = 'bg-slate-100 dark:bg-slate-800';
+                              if (day.score !== null) {
+                                const s = day.score;
+                                if (s >= 80) fill = 'bg-emerald-500';
+                                else if (s >= 60) fill = 'bg-emerald-400';
+                                else if (s >= 40) fill = 'bg-emerald-300/70';
+                                else fill = 'bg-emerald-300/40';
+                              }
+                              return (
+                                <div
+                                  key={i}
+                                  className={`aspect-square rounded-sm ${fill}`}
+                                  title={day.score !== null ? `${day.date}: ${day.score}%` : day.date}
+                                />
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
                     </Card>
 
                     {/* BYOK Status Card */}
-                    <Card className="group cursor-pointer" onClick={() => setActiveTab('settings')}>
-                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Key size={100} />
-                      </div>
+                    <Card className="cursor-pointer" onClick={() => setActiveTab('settings')}>
                       {byokLoading ? (
                         <>
                           <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-2 uppercase tracking-wider">ElevenLabs</h3>
@@ -895,7 +982,7 @@ const Dashboard = () => {
                           <p className="text-xs text-slate-500 dark:text-slate-400">Connect your API key to start interviews</p>
                           <button
                             onClick={(e) => { e.stopPropagation(); setActiveTab('settings'); }}
-                            className="mt-3 w-full py-2 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:from-emerald-500/30 hover:to-cyan-500/30 transition-all cursor-pointer"
+                            className="mt-3 w-full py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all cursor-pointer"
                           >
                             Get Verified →
                           </button>
@@ -905,10 +992,11 @@ const Dashboard = () => {
                   </motion.div>
 
                   {/* Performance Chart */}
-                  <Card className="h-[400px]">
-                    <div className="flex justify-between items-center mb-8">
-                      <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
-                        <TrendingUp size={24} className="mr-3 text-emerald-400" /> Performance History
+                  <Card>
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <TrendingUp size={20} className="text-emerald-400" />
+                        Performance
                       </h2>
                       <div className="flex items-center gap-2">
                         <select
@@ -925,47 +1013,36 @@ const Dashboard = () => {
                           onChange={(event) => setHistoryWindow(event.target.value)}
                           className="bg-white dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 text-sm rounded-lg px-3 py-1 outline-none focus:border-emerald-500/50"
                         >
-                          <option value="6">Last 6 Sessions</option>
-                          <option value="12">Last 12 Sessions</option>
+                          <option value="6">6 sessions</option>
+                          <option value="12">12 sessions</option>
                         </select>
                       </div>
                     </div>
-                    <div className="h-[300px] w-full">
-                      <ResponsiveContainer width="100%" height={300}>
-                        <ComposedChart data={historyData} margin={{ left: 0, right: 10, top: 10, bottom: 10 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.4} />
-                          <XAxis
-                            dataKey="name"
-                            stroke="#94a3b8"
-                            tick={{ fontSize: 12 }}
-                            axisLine={false}
-                            tickLine={false}
-                            dy={10}
-                            padding={{ left: 0, right: 0 }}
-                          />
-                          <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} dx={-10} domain={[0, 100]} />
+                    <div className="h-[220px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={historyData} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                          <defs>
+                            <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#10b981" stopOpacity={0.15} />
+                              <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} dy={8} />
                           <Tooltip
                             contentStyle={{
-                              backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                              backdropFilter: 'blur(10px)',
-                              borderColor: 'rgba(255,255,255,0.1)',
-                              borderRadius: '12px',
-                              color: '#fff'
+                              backgroundColor: '#0f172a',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              borderRadius: '8px',
+                              boxShadow: 'none',
+                              fontSize: '12px',
+                              padding: '6px 10px'
                             }}
-                            itemStyle={{ color: '#fff' }}
+                            labelStyle={{ color: '#94a3b8', marginBottom: 2 }}
+                            itemStyle={{ color: '#10b981' }}
+                            formatter={(value) => [`${value}%`, 'Score']}
                           />
-                          {Number.isFinite(averageHistoryScore) && (
-                            <ReferenceLine
-                              y={averageHistoryScore}
-                              stroke="#94a3b8"
-                              strokeDasharray="4 4"
-                              strokeWidth={2}
-                              label={{ value: `Avg ${averageHistoryScore}`, position: 'left', fill: '#cbd5e1', fontSize: 11 }}
-                            />
-                          )}
-                          <Bar dataKey="score" barSize={28} fill="rgba(16,185,129,0.35)" stroke="#10b981" strokeWidth={1} />
-                          <Line type="monotone" dataKey="score" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-                        </ComposedChart>
+                          <Area type="monotone" dataKey="score" stroke="#10b981" strokeWidth={2} fill="url(#scoreGradient)" dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }} activeDot={{ r: 5, fill: '#10b981', strokeWidth: 0 }} />
+                        </AreaChart>
                       </ResponsiveContainer>
                     </div>
                   </Card>
@@ -974,7 +1051,7 @@ const Dashboard = () => {
                   <Card>
                     <div className="flex justify-between items-center mb-6">
                       <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
-                        <History size={24} className="mr-3 text-purple-400" /> Recent Sessions
+                        <History size={24} className="mr-3 text-slate-400" /> Recent Sessions
                       </h2>
                       <button onClick={() => navigate('/history')} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">View all history</button>
                     </div>
@@ -1022,17 +1099,17 @@ const Dashboard = () => {
                             <div
                               key={session.id}
                               onClick={handleSessionClick}
-                              className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-white/5 hover:bg-slate-200 dark:hover:bg-slate-800/50 hover:border-emerald-500/30 transition-all cursor-pointer group"
+                              className="p-5 rounded-xl bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:border-emerald-500/30 transition-all cursor-pointer group"
                             >
                               <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center space-x-4">
-                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${isTechnical ? 'bg-cyan-500/15 text-cyan-400 shadow-cyan-500/10' : 'bg-purple-500/15 text-purple-400 shadow-purple-500/10'}`}>
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isTechnical ? 'bg-slate-500/15 text-slate-400' : 'bg-slate-500/15 text-slate-400'}`}>
                                     {isTechnical ? <Code2 size={18} /> : <User size={18} />}
                                   </div>
                                   <div>
                                     <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{sessionTopic}</h4>
                                     <div className="flex items-center gap-3 mt-0.5">
-                                      <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${isTechnical ? 'bg-cyan-500/10 text-cyan-400' : 'bg-purple-500/10 text-purple-400'}`}>
+                                      <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${isTechnical ? 'bg-slate-500/10 text-slate-500 dark:text-slate-400' : 'bg-slate-500/10 text-slate-500 dark:text-slate-400'}`}>
                                         {sessionType}
                                       </span>
                                       <span className="text-xs text-slate-500 dark:text-slate-600 flex items-center gap-1">
@@ -1103,103 +1180,60 @@ const Dashboard = () => {
                     onClick={() => navigate('/setup')}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full relative overflow-hidden rounded-2xl p-1 group shadow-[0_0_40px_-10px_rgba(16,185,129,0.3)] mb-2 cursor-pointer"
+                    className="w-full relative overflow-hidden rounded-xl p-1 group mb-2 cursor-pointer"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 animate-gradient-xy" />
-                    <div className="relative bg-white dark:bg-slate-900/90 rounded-xl p-6 flex items-center justify-between border border-slate-200 dark:border-white/10 backdrop-blur-xl group-hover:bg-slate-100 dark:group-hover:bg-slate-900/80 transition-colors">
+                    <div className="absolute inset-0 bg-emerald-500" />
+                    <div className="relative bg-white dark:bg-slate-950 rounded-lg p-6 flex items-center justify-between border border-slate-200 dark:border-white/10 group-hover:bg-slate-50 dark:group-hover:bg-slate-900/90 transition-colors">
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-full flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform">
+                        <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center transform group-hover:rotate-12 transition-transform">
                           <Play size={24} className="text-white fill-current ml-1" />
                         </div>
                         <div className="text-left">
                           <h3 className="text-lg font-bold text-slate-900 dark:text-white">Start New Interview</h3>
-                          <p className="text-xs text-emerald-200">Mock up a fresh session</p>
+                          <p className="text-xs text-emerald-600 dark:text-emerald-400">Mock up a fresh session</p>
                         </div>
                       </div>
                       <ChevronRight size={24} className="text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors group-hover:translate-x-1" />
                     </div>
                   </motion.button>
 
-                  {/* Latest Performance Radar Chart */}
-                  {stats.recentSessions.length > 0 && stats.recentSessions[0]?.normalizedDimensions?.length > 0 ? (
-                    <Card className="h-[420px]">
-                      <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
-                          <Award size={24} className="mr-3 text-cyan-400" /> Latest Performance
-                        </h2>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">Scale: 0-5</span>
-                      </div>
-                      <div className="h-[330px] w-full flex items-center justify-center">
-                        <ResponsiveContainer width="100%" height={330}>
-                          <RadarChart data={stats.recentSessions[0].normalizedDimensions}>
-                            <PolarGrid stroke="#334155" opacity={0.4} />
-                            <PolarAngleAxis dataKey="label" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#cbd5e1' }} />
-                            <PolarRadiusAxis domain={[0, 5]} tickCount={6} stroke="#64748b" tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                            <Radar name="Score" dataKey="score" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.3} domain={[0, 5]} />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                                backdropFilter: 'blur(10px)',
-                                borderColor: 'rgba(255,255,255,0.1)',
-                                borderRadius: '12px',
-                                color: '#fff'
-                              }}
-                              itemStyle={{ color: '#06b6d4' }}
-                              formatter={(value, name, props) => {
-                                const originalScore = props.payload?.originalScore;
-                                if (originalScore !== undefined) {
-                                  return [`${value.toFixed(1)} / 5 (${originalScore}/100)`, name];
-                                }
-                                return [`${value.toFixed(0)}%`, name];
-                              }}
-                            />
-                          </RadarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </Card>
-                  ) : (
-                    <Card>
-                      <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center">
-                        <Award size={24} className="mr-3 text-cyan-400" /> Latest Performance
-                      </h2>
-                      <div className="text-sm text-slate-500 dark:text-slate-400">No dimension scores yet for the latest session.</div>
-                    </Card>
-                  )}
-
                   {/* Focus Areas */}
                   <Card>
                     <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center">
-                      <BookOpen size={24} className="mr-3 text-orange-400" /> Focus Areas
+                      <BookOpen size={24} className="mr-3 text-emerald-400" /> Focus Areas
                     </h2>
 
                     <div className="space-y-3">
                       {stats.improvements && stats.improvements.length > 0 ? (
-                        stats.improvements.map(item => (
-                          <div
-                            key={item.id}
-                            className="flex items-start p-4 rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-800/10 hover:bg-slate-200 dark:hover:bg-slate-800/30 transition-colors group"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center mb-1">
-                                <span className="w-2 h-2 rounded-full mr-2 bg-yellow-400" />
-                                <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">{item.category}</span>
+                        stats.improvements.map(item => {
+                          const priorityColor = item.priority === 'High'
+                            ? 'bg-red-400'
+                            : item.priority === 'Medium'
+                              ? 'bg-amber-400'
+                              : 'bg-slate-400';
+                          return (
+                            <div
+                              key={item.id}
+                              className="flex items-start p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5"
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center mb-1 gap-2">
+                                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${priorityColor}`} />
+                                  <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">{item.category}</span>
+                                  {item.priority && (
+                                    <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${item.priority === 'High' ? 'bg-red-500/10 text-red-400' : item.priority === 'Medium' ? 'bg-amber-500/10 text-amber-400' : 'bg-slate-500/10 text-slate-400'}`}>{item.priority}</span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-slate-700 dark:text-slate-300 font-medium">{item.task}</p>
                               </div>
-                              <p className="text-sm text-slate-800 dark:text-slate-200 font-medium group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{item.task}</p>
                             </div>
-                            <button className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-500 hover:text-emerald-400 transition-colors -mr-2">
-                              <ChevronRight size={18} />
-                            </button>
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
                         <div className="text-center py-8">
-                          <p className="text-slate-500 dark:text-slate-400">No improvement areas yet. Keep practicing!</p>
+                          <p className="text-slate-500 dark:text-slate-400">Complete an interview to see your focus areas.</p>
                         </div>
                       )}
-
-                      <button className="w-full mt-2 py-3 rounded-xl border border-dashed border-slate-700 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white hover:border-slate-500 transition-all flex items-center justify-center">
-                        + Add Custom Goal
-                      </button>
                     </div>
                   </Card>
                 </motion.div>

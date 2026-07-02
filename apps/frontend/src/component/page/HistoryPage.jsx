@@ -13,9 +13,7 @@ import {
   Award,
   Search,
   Key,
-  LogOut,
-  TrendingUp,
-  BookOpen
+  LogOut
 } from 'lucide-react';
 import { authFetch, clearAuthState, ensureAuthenticated } from '../../lib/auth';
 
@@ -150,7 +148,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
     {active && (
       <MotionDiv
         layoutId="activeTab"
-        className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 rounded-xl"
+        className="absolute inset-0 bg-emerald-500/10 border border-emerald-500/20 rounded-xl"
         initial={false}
         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       />
@@ -255,23 +253,16 @@ const HistoryPage = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex font-sans selection:bg-emerald-500/20 dark:selection:bg-emerald-500/30 overflow-hidden relative">
-      {/* Ambient Background */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
-        <div className="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-cyan-500/10 rounded-full blur-[100px]" />
-        <div className="absolute bottom-[-10%] left-[20%] w-[35%] h-[35%] bg-purple-500/10 rounded-full blur-[120px]" />
-      </div>
-
-      {/* Sidebar — matches Dashboard */}
-      <aside className="w-72 fixed h-full border-r border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-xl hidden md:flex flex-col p-6 z-20 shadow-2xl">
+      {/* Sidebar */}
+      <aside className="w-72 fixed h-full border-r border-slate-200 dark:border-white/10 bg-white dark:bg-slate-950 flex flex-col p-6 z-20">
         <button
           onClick={() => navigate('/')}
           className="mb-10 flex items-center space-x-3 px-2 hover:opacity-80 transition-opacity cursor-pointer"
         >
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
             <span className="font-bold text-slate-900">M</span>
           </div>
-          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 dark:from-white to-slate-500 dark:to-slate-400">
+          <span className="text-xl font-bold text-slate-900 dark:text-white">
             Mockly
           </span>
         </button>
@@ -279,8 +270,6 @@ const HistoryPage = () => {
         <nav className="space-y-2 flex-1">
           <SidebarItem icon={LayoutDashboard} label="Overview" onClick={() => navigate('/dashboard')} />
           <SidebarItem icon={History} label="History" active onClick={() => { }} />
-          <SidebarItem icon={TrendingUp} label="Analytics" onClick={() => navigate('/dashboard')} />
-          <SidebarItem icon={BookOpen} label="Improve" onClick={() => navigate('/dashboard')} />
         </nav>
 
         <div className="pt-6 border-t border-slate-200 dark:border-slate-800/60 space-y-2">
@@ -310,7 +299,7 @@ const HistoryPage = () => {
               </MotionButton>
               <div>
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+                  <span className="text-slate-900 dark:text-white">
                     Interview History
                   </span>
                 </h1>
@@ -326,7 +315,7 @@ const HistoryPage = () => {
             variants={fadeInUp}
             className="flex items-center gap-3 mb-8 flex-wrap"
           >
-            <div className="flex items-center gap-2 bg-slate-50/60 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-white/5 rounded-2xl px-4 py-2.5">
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5">
               <span className="text-slate-500 text-sm">Sort by</span>
               {SORT_OPTIONS.map((opt) => (
                 <MotionButton
@@ -346,7 +335,7 @@ const HistoryPage = () => {
             <MotionButton
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.92 }}
-              className="p-2.5 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-50/60 dark:bg-slate-900/60 backdrop-blur-xl text-slate-500 dark:text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 transition-all cursor-pointer"
+              className="p-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-950/80 text-slate-500 dark:text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 transition-all cursor-pointer"
               onClick={handleSortDirToggle}
               aria-label="Toggle sort direction"
             >
@@ -400,7 +389,7 @@ const HistoryPage = () => {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => navigate('/interview-setup')}
-                    className="mt-6 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium text-sm shadow-lg shadow-emerald-500/20 cursor-pointer"
+                    className="mt-6 px-6 py-2.5 rounded-xl bg-emerald-500 text-white font-medium text-sm cursor-pointer"
                   >
                     Start your first interview
                   </MotionButton>
@@ -427,7 +416,7 @@ const HistoryPage = () => {
                           borderColor: 'rgba(16, 185, 129, 0.3)',
                           transition: { duration: 0.2 }
                         }}
-                        className="p-5 rounded-2xl bg-slate-50/40 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                        className="p-5 rounded-xl bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
                         onClick={() =>
                           navigate(
                             isTechnical
@@ -441,9 +430,9 @@ const HistoryPage = () => {
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-4">
                             <div
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${isTechnical
-                                  ? 'bg-cyan-500/15 text-cyan-400 shadow-cyan-500/10'
-                                  : 'bg-purple-500/15 text-purple-400 shadow-purple-500/10'
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center ${isTechnical
+                                  ? 'bg-slate-500/15 text-slate-400'
+                                  : 'bg-slate-500/15 text-slate-400'
                                 }`}
                             >
                               {isTechnical ? <Code2 size={18} /> : <User size={18} />}
@@ -455,8 +444,8 @@ const HistoryPage = () => {
                               <div className="flex items-center gap-3 mt-0.5">
                                 <span
                                   className={`text-xs font-medium px-2 py-0.5 rounded-md ${isTechnical
-                                      ? 'bg-cyan-500/10 text-cyan-400'
-                                      : 'bg-purple-500/10 text-purple-400'
+                                      ? 'bg-slate-500/10 text-slate-500 dark:text-slate-400'
+                                      : 'bg-slate-500/10 text-slate-500 dark:text-slate-400'
                                     }`}
                                 >
                                   {interview.interviewType}
