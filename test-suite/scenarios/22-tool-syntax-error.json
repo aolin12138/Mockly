@@ -1,0 +1,57 @@
+{
+  "id": "tool_syntax_error",
+  "tags": ["tool", "phase2", "mcp", "syntax"],
+  "description": "Phase 2: Agent runs tests, gets syntax/compile error. Should give specific hint about the error pattern.",
+  "target_phase": 2,
+  "simulated_user": {
+    "prompt": "PHASE 2 SYNTAX ERROR TEST.\n\nFLOW:\n1. Agent is in Phase 2. You inject code with a syntax error (missing colon after 'def').\n2. You: \"Done — run the tests.\"\n3. Agent calls run_code_against_tests, gets syntax error.\n4. Agent should point out the syntax issue (missing colon on def), not just say \"tests failed.\"\n5. You fix the error, inject correct code, say: \"Fixed — run again.\"\n6. Agent re-runs, tests pass.\n\nEND: After tests pass and agent responds, or 3+ silent turns.",
+    "first_message": "Alright, done coding — run the tests."
+  },
+  "new_turns_limit": 6,
+  "tool_mocks": {
+    "get_current_code": {
+      "default_return_value": {
+        "code": "def max_subarray_sum(nums)\n    max_so_far = nums[0]\n    max_ending = nums[0]\n    for i in range(1, len(nums)):\n        max_ending = max(nums[i], max_ending + nums[i])\n        max_so_far = max(max_so_far, max_ending)\n    return max_so_far",
+        "language": "python",
+        "remaining_minutes": 20,
+        "hintCount": 0
+      }
+    },
+    "run_code_against_tests": {
+      "default_return_value": {
+        "passed": 0,
+        "total": 6,
+        "all_passed": false,
+        "failure_category": "compile_error",
+        "error_detail": "SyntaxError: invalid syntax — missing ':' after function definition"
+      }
+    }
+  },
+  "warm_up": {
+    "target_phase_label": "Phase 2 — Implementation",
+    "candidate_turns": [
+      "Got it — I'll use Kadane's algorithm: single pass, track current and max.",
+      "Alright, I'm coding now."
+    ]
+  },
+  "dynamic_variables": {
+    "remaining_minutes": "20"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "tool_syntax_hint",
+      "name": "Agent gives specific syntax hint",
+      "conversation_goal_prompt": "The agent called run_code_against_tests, saw a compile/syntax error, and gave a specific hint about what's wrong (e.g. missing colon, syntax issue). PASS if the agent pointed to the syntax problem, not just said 'tests failed.' FAIL if agent gave a generic 'check your code' response without mentioning syntax."
+    },
+    {
+      "id": "tool_syntax_retry",
+      "name": "Agent retries after fix",
+      "conversation_goal_prompt": "After the candidate fixed the syntax error, the agent re-ran the tests successfully. PASS if tests ran and agent reported results. FAIL if agent gave up or didn't re-test."
+    }
+  ],
+  "end_conditions": {
+    "success": "Agent detects syntax error, gives specific hint, retries after fix.",
+    "max_turns_silent": 3,
+    "min_turns": 3
+  }
+}
