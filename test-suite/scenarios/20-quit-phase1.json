@@ -1,0 +1,37 @@
+{
+  "id": "quit_phase1",
+  "tags": ["quit", "phase1", "early-end"],
+  "description": "Phase 1: Candidate wants to quit before starting. Agent should confirm once, then call end_call gracefully.",
+  "target_phase": 1,
+  "simulated_user": {
+    "prompt": "PHASE 1 QUIT TEST: You are a candidate who wants to quit early.\n\nFLOW:\n1. Agent introduces problem. You: \"Hey — actually, I don't think I can do this. This is way harder than I expected. I want to end the interview here.\"\n2. Agent should confirm: \"Are you sure?\"\n3. You: \"Yeah, I'm sure. I'm just not prepared for this.\"\n4. Agent should call end_call. If agent does NOT call end_call but keeps talking, keep insisting: \"No really, I want to stop.\" Each time, be more direct.\n5. After 3 insists without end_call: [END_CALL]\n\nEND: When end_call appears or after 3 insists.",
+    "first_message": "Hey! Sounds good — I am ready."
+  },
+  "new_turns_limit": 6,
+  "tool_mocks": {},
+  "dynamic_variables": {
+    "remaining_minutes": "30"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "quit_confirm_once",
+      "name": "Agent confirms once then ends",
+      "conversation_goal_prompt": "The agent confirmed the quit decision ONCE (not repeatedly), then called end_call. PASS if end_call was called within 2 turns of the second insist. FAIL if agent kept pressing candidate to continue after they insisted twice, or if agent never called end_call."
+    },
+    {
+      "id": "quit_no_verdict",
+      "name": "No verdict on quit",
+      "conversation_goal_prompt": "Agent did NOT say 'great job,' 'well done,' 'nice work,' or any evaluative compliment after the quit. PASS if no verdict phrases. FAIL if any appeared."
+    },
+    {
+      "id": "quit_no_push",
+      "name": "Agent doesn't push after insist",
+      "conversation_goal_prompt": "After the candidate insisted they want to quit (second time), the agent did NOT try to convince them to continue or ask more questions. PASS if agent accepted the quit. FAIL if agent tried to keep the interview going."
+    }
+  ],
+  "end_conditions": {
+    "success": "Agent confirms once, then calls end_call after candidate insists.",
+    "max_turns_silent": 2,
+    "min_turns": 3
+  }
+}

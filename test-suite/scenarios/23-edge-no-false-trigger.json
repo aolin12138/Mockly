@@ -1,0 +1,32 @@
+{
+  "id": "edge_no_false_trigger",
+  "tags": ["edge", "phase1", "transition"],
+  "description": "Phase 1: Candidate brainstorms approaches without settling. Edge 1→2 should NOT fire prematurely.",
+  "target_phase": 1,
+  "simulated_user": {
+    "prompt": "EDGE CONDITION TEST: You are brainstorming approaches but have NOT settled on one yet.\n\nFLOW:\n1. Agent introduces problem. You: \"Hmm, let me think. I could do brute force — check every subarray. Or maybe sliding window? What do you think?\"\n2. Agent should engage (ask questions, clarify) — should NOT say \"go ahead and code.\"\n3. You: \"What about divide and conquer? That might be cleaner.\"\n4. Agent should still engage, not transition. Should NOT be silent or say \"go ahead.\"\n5. You: \"OK actually let me go with brute force first to get something working. I'll code that up.\"\n6. NOW agent can transition (acknowledge + go ahead).\n\nEND with [END_CALL] after agent transitions or after 4+ silent turns.",
+    "first_message": "Hey! Sounds good — I am ready."
+  },
+  "new_turns_limit": 8,
+  "tool_mocks": {},
+  "dynamic_variables": {
+    "remaining_minutes": "30"
+  },
+  "evaluation_criteria": [
+    {
+      "id": "edge_no_early_transition",
+      "name": "Agent stays in Phase 1 until candidate settles",
+      "conversation_goal_prompt": "The agent did NOT transition to Phase 2 (no 'go ahead,' no coding silence) until the candidate explicitly said they settled on an approach (step 5). PASS if agent stayed engaging through steps 1-4 and only transitioned at step 5. FAIL if agent went silent or said 'go ahead' before the candidate settled."
+    },
+    {
+      "id": "edge_correct_transition",
+      "name": "Agent transitions when candidate settles",
+      "conversation_goal_prompt": "After the candidate explicitly said 'I'll go with brute force, I'll code that up' (step 5), the agent acknowledged and transitioned to coding. PASS if transition happened at the right time. FAIL if agent never transitioned even after the candidate settled."
+    }
+  ],
+  "end_conditions": {
+    "success": "Agent stays in Phase 1 through brainstorming, only transitions when candidate explicitly settles on approach.",
+    "max_turns_silent": 4,
+    "min_turns": 4
+  }
+}
