@@ -58,6 +58,10 @@ export class LiveConversationClient {
 
   /** @type {number} timestamp of last skip_turn */
   #lastSkipTurn = 0;
+  /** @type {number} timestamp of last sendUser call */
+  #lastSendTime = 0;
+  /** @type {Array<{turn: number, sent: number, firstChunk: number, firstTool: number|null, complete: number}>} */
+  turnaroundLog = [];
 
   /**
    * @param {Object} opts
@@ -179,6 +183,9 @@ export class LiveConversationClient {
             this.#lastAgentChunkTime = Date.now();
             this.#lastSkipTurn = 0;
             if (this.#pendingAgentChunk) this.#pendingAgentChunk.resolve(null);
+            // Record first chunk time for turnaround
+            const entry = this.turnaroundLog[this.turnaroundLog.length - 1];
+            if (entry && !entry.firstChunk) entry.firstChunk = Date.now();
           }
           // Capture agent_response events — in text-only mode, follow-up
           // responses often arrive as agent_response (final assembled text).
@@ -194,7 +201,17 @@ export class LiveConversationClient {
               if (this.#pendingAgentChunk) this.#pendingAgentChunk.resolve(null);
             }
           }
+          // Stamp every event with a timestamp for turnaround tracking
+          message._ts = Date.now();
           this.rawEvents.push(message);
+
+          // Record first tool call time for turnaround
+          const entry = this.turnaroundLog[this.turnaroundLog.length - 1];
+          if (entry && !entry.firstTool) {
+            if (message?.type === 'client_tool_call' || message?.type === 'mcp_tool_call') {
+              entry.firstTool = Date.now();
+            }
+          }
         },
       });
 
@@ -237,6 +254,15 @@ export class LiveConversationClient {
    */
   sendUser(text) {
     if (!this.#conversation) throw new Error('Session not started');
+    this.#lastSendTime = Date.now();
+    // Start a new turnaround entry
+    this.turnaroundLog.push({
+      turn: this.turnaroundLog.length,
+      sent: this.#lastSendTime,
+      firstChunk: 0,
+      firstTool: null,
+      complete: 0,
+    });
     this.#conversation.sendUserMessage(text);
   }
 
