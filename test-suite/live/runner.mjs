@@ -28,6 +28,63 @@ import { syncAgent, printSyncResult } from '../lib/auto-sync.mjs';
 
 // Node ID → label mapping for readable output
 const NODE_LABELS = {};
+
+// Phase → workflow node ID mapping (inverse of PHASE_NODE_IDS)
+const PHASE_TO_NODE = {};
+for (const [phaseNum, nodeId] of Object.entries(PHASE_NODE_IDS)) {
+  PHASE_TO_NODE[parseInt(phaseNum)] = nodeId;
+}
+
+/**
+ * Trim transcript to target phase + transition turn, but exclude subsequent phases.
+ * 
+ * Rules:
+ * 1. Keep all turns in target phase (matching workflow node ID)
+ * 2. Keep turns with no explicit phase (warm-up context, first message)
+ * 3. Include exactly ONE transition turn where notify_condition_X_met fires
+ * 4. STOP after the transition turn — exclude everything in later phases
+ * 5. If no target_phase (full interview), return full transcript unchanged
+ */
+function trimTranscriptForPhase(transcript, targetPhase) {
+  if (!targetPhase || !transcript?.length) return transcript || [];
+  
+  const targetNodeId = PHASE_TO_NODE[targetPhase];
+  if (!targetNodeId) return transcript; // Unknown phase → don't trim
+
+  const result = [];
+
+  for (const turn of transcript) {
+    const nodeId = turn.workflowNodeId || turn.agent_metadata?.workflow_node_id;
+    
+    // Keep turns without an explicit phase (warm-up, opening)
+    if (!nodeId) {
+      result.push(turn);
+      continue;
+    }
+
+    // Keep turns in the target phase
+    if (nodeId === targetNodeId) {
+      result.push(turn);
+      continue;
+    }
+
+    // This turn is in a different phase. Check if it's a transition turn.
+    const toolCalls = turn.toolCalls || turn.tool_calls || [];
+    const hasTransition = toolCalls.some(tc => {
+      const name = (tc.toolName || tc.tool_name || '');
+      return name.startsWith('notify_condition');
+    });
+
+    // Only include the transition turn if it carries the transition event.
+    // Then STOP — exclude everything in later phases.
+    if (hasTransition) {
+      result.push(turn);
+    }
+    break;
+  }
+
+  return result;
+}
 for (const [phase, id] of Object.entries(PHASE_NODE_IDS)) {
   NODE_LABELS[id] = `Phase ${phase}`;
 }
@@ -349,11 +406,15 @@ async function main() {
       if (result.result !== 'error') {
         try {
           const allCriteria = mergeCriteria(scenario);
+          // Trim transcript to target phase (plus transition turn) so judge
+          // doesn't evaluate Phase 1 criteria against a Phase 4 conversation
+          const targetPhase = scenario.target_phase || null;
+          const trimmedTranscript = trimTranscriptForPhase(result.transcript, targetPhase);
           const criteriaResults = await judgeCriteria({
             scenarioId: scenario.id,
             scenarioDescription: scenario.description || '',
             criteria: allCriteria,
-            transcript: result.transcript,
+            transcript: trimmedTranscript,
             apiKey: deepseekKey,
           });
           result.criteria = criteriaResults;
