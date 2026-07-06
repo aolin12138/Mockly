@@ -42,7 +42,7 @@ const Register = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/register', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -60,8 +60,7 @@ const Register = () => {
         throw new Error(data.error || 'Registration failed');
       }
 
-      // Store token and user data
-      localStorage.setItem('token', data.token);
+      // Store user info only (JWT is now in httpOnly cookie, auto-sent by browser)
       localStorage.setItem('user', JSON.stringify(data.user));
 
       // Redirect to dashboard

@@ -1,18 +1,67 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
 import { prisma } from '../prismaClient.js';
 
 const router = express.Router();
 
-// Register endpoint
-router.post('/register', async (req, res) => {
+// Rate limiting for auth endpoints: 10 requests per 15 minutes per IP
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: { error: 'Too many attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// CSRF token generation
+const generateCsrfToken = () => crypto.randomBytes(32).toString('hex');
+
+// Set CSRF cookie helper
+const setCsrfCookie = (res) => {
+  const csrfToken = generateCsrfToken();
+  res.cookie('csrf_token', csrfToken, {
+    httpOnly: false, // Must be readable by frontend JS
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000, // 24h
+    path: '/',
+  });
+  res.setHeader('X-CSRF-Token', csrfToken); // Also send in response header for initial load
+};
+
+// Password validation: min 8 chars, uppercase, lowercase, digit
+const isValidPassword = (password) => {
+  if (!password || password.length < 8) return false;
+  if (!/[A-Z]/.test(password)) return false;
+  if (!/[a-z]/.test(password)) return false;
+  if (!/[0-9]/.test(password)) return false;
+  return true;
+};
+
+// Email validation
+const isValidEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+// Register endpoint (rate-limited)
+router.post('/register', authLimiter, async (req, res) => {
   try {
     const { email, password, name } = req.body;
 
     // Validate input
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    if (!isValidPassword(password)) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters with uppercase, lowercase, and a number' });
     }
 
     // Check if user already exists
@@ -37,11 +86,28 @@ router.post('/register', async (req, res) => {
     });
 
     // Generate JWT token
+    // Generate JWT token
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is not set');
+    }
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    // Set httpOnly cookie (primary auth — immune to XSS token theft)
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 24h
+      path: '/',
+    });
+
+    // Set CSRF token cookie (readable by JS, verified on state-changing requests)
+    setCsrfCookie(res);
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -59,7 +125,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login endpoint
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -68,28 +134,77 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user
+    // Find user with lockout fields
     const user = await prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        passwordHash: true,
+        name: true,
+        failedLoginAttempts: true,
+        lockedUntil: true,
+      },
     });
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    // Check account lockout
+    if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
+      const remainingMinutes = Math.ceil((new Date(user.lockedUntil) - new Date()) / 60000);
+      return res.status(429).json({
+        error: `Account temporarily locked. Try again in ${remainingMinutes} minute(s).`
+      });
+    }
+
     // Verify password
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordMatch) {
+      // Track failed attempt
+      const failedAttempts = (user.failedLoginAttempts || 0) + 1;
+      const LOCKOUT_THRESHOLD = 5;
+      const LOCKOUT_DURATION_MIN = 15;
+      const updateData = {
+        failedLoginAttempts: failedAttempts,
+      };
+      if (failedAttempts >= LOCKOUT_THRESHOLD) {
+        updateData.lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MIN * 60 * 1000);
+      }
+      await prisma.user.update({ where: { id: user.id }, data: updateData });
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    // Reset failed attempts on successful login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { failedLoginAttempts: 0, lockedUntil: null }
+    });
+
     // Generate JWT token
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is not set');
+    }
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    // Set httpOnly cookie (primary auth — immune to XSS token theft)
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 24h
+      path: '/',
+    });
+
+    // Set CSRF token cookie
+    setCsrfCookie(res);
 
     res.json({
       message: 'Login successful',
@@ -104,6 +219,12 @@ router.post('/login', async (req, res) => {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+// Logout endpoint — clears the httpOnly cookie
+router.post('/logout', (req, res) => {
+  res.clearCookie('token', { path: '/' });
+  res.json({ message: 'Logged out successfully' });
 });
 
 export default router;

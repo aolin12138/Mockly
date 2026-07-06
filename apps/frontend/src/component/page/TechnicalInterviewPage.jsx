@@ -83,7 +83,7 @@ const TechnicalInterviewPage = () => {
   const languageRef = useRef(initialPreferredLanguage);
   const questionRef = useRef(null);
   const testResultsRef = useRef(null);
-  const AGENT_ID = import.meta.env.VITE_TECHNICAL_INTERVIEW_AGENT_ID || 'agent_6601kc3hn3b8fbv9p4hpskza0qgm';
+  const AGENT_ID = import.meta.env.VITE_TECHNICAL_INTERVIEW_AGENT_ID || '';
   // Get agentId from route state, localStorage, or session response. NEVER fall back to env var.
   const initialAgentId = (() => {
     const fromState = location.state?.agentId;

@@ -8,8 +8,6 @@ const globalForPrisma = global;
 
 const connectionString = process.env.DATABASE_URL;
 
-console.log('PrismaClient - DATABASE_URL:', connectionString); // Debug
-
 if (!connectionString) {
   throw new Error('DATABASE_URL is not defined');
 }

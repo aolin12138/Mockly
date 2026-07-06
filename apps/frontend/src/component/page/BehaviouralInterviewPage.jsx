@@ -24,7 +24,7 @@ function getStoredCv() {
 }
 
 /* ---------- ElevenLabs Agent Config ---------- */
-const AGENT_ID = import.meta.env.VITE_GOOGLE_AGENT_ID || 'agent_0901kbyh4704effth28z4q9f684p';
+const AGENT_ID = import.meta.env.VITE_GOOGLE_AGENT_ID || '';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 /* ---------- Company Color Themes (two-color, original orb style) ---------- */

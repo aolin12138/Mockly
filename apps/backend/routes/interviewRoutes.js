@@ -43,14 +43,17 @@ import { setSessionOwner } from '../lib/sessionOwnerStore.js';
 import { setSessionProgress } from '../lib/sessionProgressStore.js';
 import { getRandomQuestion, toPublicQuestionPayload } from '../lib/technicalQuestions.js';
 
-const PROMPT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7';
-const AGENT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
+const PROMPT_SETUP_WEBHOOK_URL = process.env.PROMPT_SETUP_WEBHOOK_URL || 'http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7';
+const AGENT_SETUP_WEBHOOK_URL = process.env.AGENT_SETUP_WEBHOOK_URL || 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
 const FEEDBACK_WEBHOOK_URL = process.env.FEEDBACK_WEBHOOK_URL || 'http://localhost:5678/webhook/feedback';
-const TECHNICAL_AGENT_WEBHOOK_URL = 'http://localhost:5678/webhook/84281349-1d93-47cd-ad3d-dfcc7013ad3b';
+const TECHNICAL_AGENT_WEBHOOK_URL = process.env.TECHNICAL_AGENT_WEBHOOK_URL || 'http://localhost:5678/webhook/84281349-1d93-47cd-ad3d-dfcc7013ad3b';
 const TECHNICAL_FEEDBACK_WEBHOOK_URL = process.env.TECHNICAL_FEEDBACK_WEBHOOK_URL || 'http://localhost:5678/webhook/technical-feedback';
 const CENTRAL_AGENT_VERSION = 1;
 const FEEDBACK_CALLBACK_BASE_URL = process.env.FEEDBACK_CALLBACK_BASE_URL || '';
-const FEEDBACK_CALLBACK_SECRET = process.env.FEEDBACK_CALLBACK_SECRET || '';
+const FEEDBACK_CALLBACK_SECRET = process.env.FEEDBACK_CALLBACK_SECRET;
+if (!FEEDBACK_CALLBACK_SECRET) {
+  console.warn('[startup] FEEDBACK_CALLBACK_SECRET not set — feedback callbacks will be rejected');
+}
 const WEBHOOK_TIMEOUT_MS = 55_000;
 
 // Weighted scoring: backend computes overall from dimension scores (0-10)
@@ -1279,21 +1282,29 @@ router.post('/behavioral/save', async (req, res) => {
       };
 
       if (requestSessionId.startsWith('temp_')) {
+        // Use a transaction to safely promote temp session: delete old, create new with proper UUID
         const promotedSessionId = randomUUID();
-        await prisma.$executeRawUnsafe(
-          'UPDATE "Session" SET "id" = $1, "feedback" = CAST($2 AS jsonb), "agentId" = $3, "conversationId" = $4, "interviewPlan" = $5, "interviewPrompt" = $6, "feedbackPrompt" = $7, "status" = $8, "duration" = $9, "score" = $10, "updatedAt" = NOW() WHERE "id" = $11',
-          promotedSessionId,
-          JSON.stringify(updateData.feedback),
-          updateData.agentId,
-          updateData.conversationId,
-          updateData.interviewPlan,
-          updateData.interviewPrompt,
-          updateData.feedbackPrompt,
-          updateData.status,
-          updateData.duration,
-          updateData.score,
-          requestSessionId
-        );
+        await prisma.$transaction(async (tx) => {
+          const oldSession = await tx.session.findUnique({ where: { id: requestSessionId } });
+          if (!oldSession) throw new Error('Temp session not found');
+          await tx.session.delete({ where: { id: requestSessionId } });
+          await tx.session.create({
+            data: {
+              id: promotedSessionId,
+              userId: oldSession.userId,
+              interviewType: oldSession.interviewType,
+              feedback: updateData.feedback,
+              agentId: updateData.agentId,
+              conversationId: updateData.conversationId,
+              interviewPlan: updateData.interviewPlan,
+              interviewPrompt: updateData.interviewPrompt,
+              feedbackPrompt: updateData.feedbackPrompt,
+              status: updateData.status,
+              duration: updateData.duration,
+              score: updateData.score,
+            },
+          });
+        });
         session = await prisma.session.findUnique({
           where: { id: promotedSessionId }
         });
