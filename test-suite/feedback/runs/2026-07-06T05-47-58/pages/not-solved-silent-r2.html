@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feedback page — not-solved-silent (run 2)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<style>body{font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}</style>
+</head>
+<body class="bg-slate-950 text-slate-100">
+  <div class="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+    <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]"></div>
+    <div class="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-cyan-500/10 rounded-full blur-[100px]"></div>
+    <div class="absolute bottom-[-10%] left-[20%] w-[35%] h-[35%] bg-purple-500/10 rounded-full blur-[120px]"></div>
+  </div>
+  <div class="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
+    <div class="w-full max-w-6xl space-y-6">
+      <div class="text-[11px] uppercase tracking-widest text-slate-500">Eval preview — fixture <span class="text-emerald-400">not-solved-silent</span>, run 2 — Weak floor: incomplete code, 1/6 visible and 0/4 hidden tests, candidate barely speaks, never states an approach or complexity, only reaches phase 2. Grader must be honest — low Correctness, low Communication — without fabricating positives.</div>
+      
+      <!-- PRIMARY FOCUS BAND — the one-line takeaway users act on -->
+      <div class="bg-gradient-to-r from-emerald-500/20 via-cyan-500/15 to-emerald-500/20 border border-emerald-500/40 rounded-2xl px-5 py-4">
+        <div class="flex items-start gap-3">
+          <div class="flex-shrink-0 mt-0.5 text-2xl">🎯</div>
+          <div class="flex-1">
+            <p class="text-[11px] uppercase tracking-widest text-emerald-400/60 mb-1">Your #1 Priority</p>
+            <p class="text-lg font-bold text-white leading-snug">Master the one-pass hash-map complement approach for Two Sum and enforce an upfront example-based spec check so you don’t implement the wrong problem.</p>
+          </div>
+        </div>
+      </div>
+      
+    <!-- 1. HEADER BAND -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">Technical Interview Results</h1>
+          <p class="mt-2 text-sm text-slate-400">Comprehensive analysis of your coding interview performance</p>
+          <div class="mt-2 flex items-center gap-2"><span class="text-xs text-slate-400">⌨ python</span></div>
+        </div>
+        <div class="flex items-center gap-6">
+  <div class="flex flex-col items-center gap-1">
+    <div class="relative w-28 h-28 text-3xl flex items-center justify-center">
+      <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="url(#scoreGrad)" stroke-width="6" stroke-linecap="round" stroke-dasharray="84.48 264"/>
+        <defs><linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#06b6d4"/>
+        </linearGradient></defs>
+      </svg>
+      <span class="relative font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">3.2</span>
+    </div>
+    <span class="text-xs font-medium text-red-400">needs work</span>
+  </div><div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-red-500/20 border-red-500/40 text-red-400"><span>✕</span><span class="text-sm font-semibold">Not Solved</span></div></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Tests:</span>
+    <span class="text-xs font-semibold text-white">1/10</span>
+  </div>
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Time:</span>
+    <span class="text-xs font-semibold text-white">35 / 35 min</span>
+  </div>
+        
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Phase:</span>
+    <span class="text-xs font-semibold text-white">2</span>
+  </div>
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Completed:</span>
+    <span class="text-xs font-semibold text-white">Yes</span>
+  </div>
+      </div>
+      <p class="text-sm text-slate-300 leading-relaxed">You submitted working Python code, but it solves a different problem: it returns indices where nums[i] == target rather than indices of two numbers whose sum equals target. As a result, it failed almost all tests (only 1/10 passed), including basic and edge cases (pairs, duplicates, negatives). The biggest improvement is to slow down early to restate the requirement and validate with 1–2 example inputs before coding.</p>
+    </div>
+
+    <!-- 2. CODE (static stand-in for the interactive sandbox) -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Code Review Sandbox</h2>
+    
+      <p class="text-xs text-slate-500 mb-2">Interactive in the app (edit + run tests). Submitted code shown below.</p>
+      <pre class="text-xs bg-slate-950/70 border border-white/10 rounded-xl p-4 overflow-x-auto text-slate-200">def solve(nums, target):
+    result = []
+    for i in range(len(nums)):
+        if nums[i] == target:
+            result.append(i)
+    return result</pre>
+  </div>
+
+    <!-- 3. TEST RESULTS -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4">
+    <div class="flex items-center justify-between">
+      <span class="text-sm text-slate-300">🧪 Test Results</span>
+      <div class="flex items-center gap-2"><span class="text-lg font-bold text-white">1</span><span class="text-sm text-slate-400">/</span><span class="text-lg font-bold text-white">10</span><span class="text-xs text-slate-400">passed</span></div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-red-500 to-rose-500" style="width:10%"></div></div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2"><div class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border bg-red-500/10 border-red-500/20 text-red-300"><span>✕</span><span class="capitalize">basic</span><span class="ml-auto font-medium">3 fail</span></div><div class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border bg-red-500/10 border-red-500/20 text-red-300"><span>✕</span><span class="capitalize">edge</span><span class="ml-auto font-medium">2 fail</span></div></div>
+    <p class="text-xs text-slate-400 italic">Only 1/10 tests passed; failures show the solution searched for elements equal to target instead of finding a pair summing to target (missed basic pairs, duplicates, negatives, and two-element case).</p>
+  </div>
+
+    <!-- 4. SKILL BREAKDOWN -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Skill Breakdown</h2>
+    <div class="grid gap-4 md:grid-cols-2">
+  <div class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Correctness &amp; Completeness</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-red-400">1.5/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-red-500 to-rose-500 shadow-lg" style="width:15%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">needs work</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">The code runs and returns a list of indices in a consistent format, which is a good baseline for integration with a judge.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Implement the actual requirement: return exactly two indices i, j such that nums[i] + nums[j] == target (as shown by multiple failing tests like &quot;basic pair&quot; and &quot;negative numbers&quot;).</p></div>
+  </div>
+  <div class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Problem-Solving &amp; Thinking</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-red-400">2.5/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-red-500 to-rose-500 shadow-lg" style="width:25%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">needs work</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">You got to a complete, runnable submission within the time box.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Before coding, restate the problem in your own words and manually verify on a sample (e.g., nums=[2,7,11,15], target=9 should return [0,1]); this would have exposed the mismatch immediately.</p></div>
+  </div>
+  <div class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Technical Communication</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-red-400">3.0/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-red-500 to-rose-500 shadow-lg" style="width:30%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">needs work</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">You indicated status (“still working”, “mostly done”), which helps with time management.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Proactively narrate your intended logic (even briefly) and validate with an example out loud; in this session there was limited articulation of the approach, and the final code suggests a fundamental misinterpretation.</p></div>
+  </div>
+  <div class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Complexity &amp; Optimization</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-red-400">3.5/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-red-500 to-rose-500 shadow-lg" style="width:35%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">needs work</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Your current loop is O(n), so you were at least thinking in linear terms.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Use the canonical O(n) hash-map complement technique from the answer key (seen value -&gt; index) to solve the correct problem; your current O(n) pass optimizes the wrong computation.</p></div>
+  </div>
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Code Quality</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-amber-400">5.5/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg" style="width:55.00000000000001%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">adequate</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">The function is simple, readable, and avoids unnecessary complexity; variable naming and control flow are clear.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Align structure with the problem constraints/contract: return immediately when you find the valid pair (since exactly one valid answer exists) and avoid building an arbitrary-length result list.</p></div>
+  </div>
+  <div class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Independence</span>
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-white/10">0 hints</span>
+        <span class="text-xs font-bold text-red-400">5.0/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-red-500 to-rose-500 shadow-lg" style="width:50%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">needs work</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">You completed a full submission without using hints.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Independently verify correctness via quick self-tests before submission; despite no hints used, the outcome indicates the core requirement wasn’t validated.</p></div>
+  </div></div>
+  </div>
+
+    <!-- 5-6. NARRATIVES -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Thinking &amp; Logic</h2>
+    <p class="text-sm text-slate-300 leading-relaxed">The submitted logic scans the array and collects indices where an element equals the target. That differs from the required task of finding two distinct indices whose values sum to the target. The failing tests (basic pair, duplicates, negatives, and two elements) are all consistent with this misread: in those cases, no element equals target, so the function returns an empty list rather than a pair of indices.</p>
+  </div>
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Code Assessment</h2>
+    <p class="text-sm text-slate-300 leading-relaxed">Compared to the canonical optimal solution in the answer key (single pass with a hash map of seen values and complement checking), the final code does not attempt pair finding at all and therefore cannot satisfy the spec. The optimal approach would return as soon as it finds complement = target - nums[i] in a dictionary, guaranteeing O(n) time and correct handling of duplicates and negative numbers while preserving original indices. Your code also accumulates potentially many indices, which conflicts with the problem’s guarantee of exactly one valid pair to return.</p>
+  </div>
+
+    <!-- 7. NEXT STEPS -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Next Steps</h2>
+    
+      <div class="space-y-3">
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-xs font-bold text-emerald-400">1</span></div>
+      <div class="flex-1 space-y-2"><p class="text-sm font-semibold text-white">Practice the one-pass hash-map complement pattern for Two Sum until you can write it from memory.</p>
+       <div><p class="text-xs text-slate-400 font-medium">Why</p><p class="text-xs text-slate-300">It is the canonical optimal solution here (O(n) time, O(n) space) and directly addresses duplicates/negatives while preserving indices.</p></div>
+       <div><p class="text-xs text-slate-400 font-medium">How</p><p class="text-xs text-slate-300">Template: seen = {}; for i,x in enumerate(nums): c = target-x; if c in seen: return [seen[c], i]; seen[x]=i. Then run 3 manual tests: [2,7,11,15],9; [3,3],6; [-1,-2,-3,-4,-5],-8.</p></div></div>
+    </div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-xs font-bold text-emerald-400">2</span></div>
+      <div class="flex-1 space-y-2"><p class="text-sm font-semibold text-white">Add a 60-second “spec check” habit before coding and before submitting.</p>
+       <div><p class="text-xs text-slate-400 font-medium">Why</p><p class="text-xs text-slate-300">The main miss was interpreting the task as equality-to-target rather than sum-to-target; a quick example walkthrough prevents this class of failure.</p></div>
+       <div><p class="text-xs text-slate-400 font-medium">How</p><p class="text-xs text-slate-300">Write (or say) one sentence: “I need i!=j with nums[i]+nums[j]=target, return indices.” Then validate with one example and confirm expected output shape (exactly two indices).</p></div></div>
+    </div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-xs font-bold text-emerald-400">3</span></div>
+      <div class="flex-1 space-y-2"><p class="text-sm font-semibold text-white">Drill common Two Sum pitfalls explicitly (duplicates, using same element twice, and preserving indices).</p>
+       <div><p class="text-xs text-slate-400 font-medium">Why</p><p class="text-xs text-slate-300">These are known pitfalls listed in the answer key and commonly appear in variants and follow-ups.</p></div>
+       <div><p class="text-xs text-slate-400 font-medium">How</p><p class="text-xs text-slate-300">Do 5 short problems/variants: duplicates-heavy arrays, all negatives, target=0, and cases where complement equals current value (e.g., target=6 with [3,3]) to ensure you only pair with a prior index.</p></div></div>
+    </div>
+  </div></div>
+      <div class="mt-4 pt-4 border-t border-white/10"><p class="text-xs text-slate-400 font-medium mb-2">Patterns to Study</p><div class="flex flex-wrap gap-2"><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 font-medium"># one-pass hash map (complement lookup)</span><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 font-medium"># problem restatement + example-driven validation</span><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 font-medium"># guarding against using the same element twice</span></div></div>
+  </div>
+
+    <!-- 8. ENCOURAGEMENT -->
+    
+    <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+      <div class="flex items-start gap-3">
+        <div class="p-2 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30">🏆</div>
+        <div class="flex-1"><h3 class="text-sm font-semibold text-white mb-1">Final Words</h3><p class="text-sm text-slate-300 leading-relaxed italic">This is a very fixable gap: once you lock in the correct problem statement and the standard hash-map pattern, you should be able to turn this into a consistent pass in a single session.</p></div>
+      </div>
+    </div>
+
+    <!-- 9. TRANSCRIPT -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Transcript</h2>
+    <div class="space-y-2 max-h-80 overflow-y-auto">
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> Here's the problem: given an array of integers and a target, return the indices of the two numbers that add up to the target. Feel free to ask questions.</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> Okay.</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> Mm-hm.</div>
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> How is it going? Would you like to walk me through your approach?</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> Still working on it.</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> I think it's mostly done.</div>
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> We're at time. Let's stop here and submit what you have.</div></div>
+  </div>
+    </div>
+  </div>
+</body></html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feedback page — solved-heavy-hints (run 2)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<style>body{font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}</style>
+</head>
+<body class="bg-slate-950 text-slate-100">
+  <div class="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+    <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]"></div>
+    <div class="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-cyan-500/10 rounded-full blur-[100px]"></div>
+    <div class="absolute bottom-[-10%] left-[20%] w-[35%] h-[35%] bg-purple-500/10 rounded-full blur-[120px]"></div>
+  </div>
+  <div class="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
+    <div class="w-full max-w-6xl space-y-6">
+      <div class="text-[11px] uppercase tracking-widest text-slate-500">Eval preview — fixture <span class="text-emerald-400">solved-heavy-hints</span>, run 2 — Ordering pair with solved-clean: same question, same final code, all tests pass — but the candidate needed 3 escalating hints (general -&gt; specific -&gt; specific) and nearly ran out of time. Independence must score clearly below solved-clean.</div>
+      
+      <!-- PRIMARY FOCUS BAND — the one-line takeaway users act on -->
+      <div class="bg-gradient-to-r from-emerald-500/20 via-cyan-500/15 to-emerald-500/20 border border-emerald-500/40 rounded-2xl px-5 py-4">
+        <div class="flex items-start gap-3">
+          <div class="flex-shrink-0 mt-0.5 text-2xl">🎯</div>
+          <div class="flex-1">
+            <p class="text-[11px] uppercase tracking-widest text-emerald-400/60 mb-1">Your #1 Priority</p>
+            <p class="text-lg font-bold text-white leading-snug">Internalize the hash-map + complement lookup pattern so you can derive the O(n) approach quickly without needing targeted hints.</p>
+          </div>
+        </div>
+      </div>
+      
+    <!-- 1. HEADER BAND -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">Technical Interview Results</h1>
+          <p class="mt-2 text-sm text-slate-400">Comprehensive analysis of your coding interview performance</p>
+          <div class="mt-2 flex items-center gap-2"><span class="text-xs text-slate-400">⌨ python</span></div>
+        </div>
+        <div class="flex items-center gap-6">
+  <div class="flex flex-col items-center gap-1">
+    <div class="relative w-28 h-28 text-3xl flex items-center justify-center">
+      <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="url(#scoreGrad)" stroke-width="6" stroke-linecap="round" stroke-dasharray="211.20000000000002 264"/>
+        <defs><linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#06b6d4"/>
+        </linearGradient></defs>
+      </svg>
+      <span class="relative font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">8.0</span>
+    </div>
+    <span class="text-xs font-medium text-emerald-400">strong</span>
+  </div><div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-emerald-500/20 border-emerald-500/40 text-emerald-400"><span>✓</span><span class="text-sm font-semibold">Solved</span></div></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Tests:</span>
+    <span class="text-xs font-semibold text-white">10/10</span>
+  </div>
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Time:</span>
+    <span class="text-xs font-semibold text-white">34 / 35 min</span>
+  </div>
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Hints:</span>
+    <span class="text-xs font-semibold text-white">3 used</span>
+  </div>
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Phase:</span>
+    <span class="text-xs font-semibold text-white">4</span>
+  </div>
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Completed:</span>
+    <span class="text-xs font-semibold text-white">Yes</span>
+  </div>
+      </div>
+      <p class="text-sm text-slate-300 leading-relaxed">You finished with the canonical optimal Two Sum solution and passed all tests. The main improvement area is getting to the hash-map + complement insight earlier without needing multiple targeted hints, since that’s the core of the problem.</p>
+    </div>
+
+    <!-- 2. CODE (static stand-in for the interactive sandbox) -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Code Review Sandbox</h2>
+    
+      <p class="text-xs text-slate-500 mb-2">Interactive in the app (edit + run tests). Submitted code shown below.</p>
+      <pre class="text-xs bg-slate-950/70 border border-white/10 rounded-xl p-4 overflow-x-auto text-slate-200">def solve(nums, target):
+    seen = {}
+    for i, n in enumerate(nums):
+        complement = target - n
+        if complement in seen:
+            return [seen[complement], i]
+        seen[n] = i
+    return []</pre>
+  </div>
+
+    <!-- 3. TEST RESULTS -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4">
+    <div class="flex items-center justify-between">
+      <span class="text-sm text-slate-300">🧪 Test Results</span>
+      <div class="flex items-center gap-2"><span class="text-lg font-bold text-white">10</span><span class="text-sm text-slate-400">/</span><span class="text-lg font-bold text-white">10</span><span class="text-xs text-slate-400">passed</span></div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500" style="width:100%"></div></div>
+    
+    <p class="text-xs text-slate-400 italic">All visible and hidden tests passed; no failures.</p>
+  </div>
+
+    <!-- 4. SKILL BREAKDOWN -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Skill Breakdown</h2>
+    <div class="grid gap-4 md:grid-cols-2">
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Correctness &amp; Completeness</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-emerald-400">9.3/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-lg" style="width:93%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">strong</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Returned correct indices across all tests and handled duplicate values correctly by checking the complement before inserting the current value.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Add (or at least state) a clear contract for the unreachable case—even if the prompt guarantees an answer—e.g., raise an exception or return a sentinel consistently, rather than returning an empty list silently.</p></div>
+  </div>
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Problem-Solving &amp; Thinking</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-amber-400">7.2/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg" style="width:72%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">adequate</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">You recognized the brute-force approach would be too slow and were willing to pivot approaches once the right direction was suggested.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Practice the standard “trade space for time” move: when you notice an O(n^2) pair-search, explicitly ask yourself ‘what can I cache so each step becomes O(1) lookup?’ and try to derive the complement idea before prompting.</p></div>
+  </div>
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Technical Communication</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-amber-400">7.0/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg" style="width:70%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">adequate</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">You clearly flagged performance concerns and later stated the final time/space complexity correctly (O(n) time, O(n) space).</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">When considering a data structure (set/dict), narrate the exact lookup you intend to perform (e.g., “for value x, I want to know if target-x has appeared before, and where”), which will make your reasoning more directed and convincing.</p></div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Complexity &amp; Optimization</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-emerald-400">8.6/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-lg" style="width:86%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">strong</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Final solution matches the answer key’s optimal complexity: single pass hash map, O(n) time and O(n) space, avoiding sorting (which can lose indices) and avoiding O(n^2).</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Build the habit of doing a quick constraints-to-complexity check up front (n up to 1e5 → O(n^2) won’t work) and immediately shortlist O(n) / O(n log n) families of approaches to reduce time spent exploring dead ends.</p></div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Code Quality</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-emerald-400">8.2/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-lg" style="width:82%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">strong</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Code is clean, idiomatic, and minimal; variable names are understandable; the ordering of ‘check then insert’ is correct and prevents using the same element twice.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Consider adding a short docstring or comment capturing the invariant (“seen maps value -&gt; index among earlier elements”), which helps reviewers and reduces the chance of subtle ordering bugs in similar problems.</p></div>
+  </div>
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Independence</span>
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-white/10">3 hints</span>
+        <span class="text-xs font-bold text-amber-400">6.2/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg" style="width:62%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">adequate</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Once the complement-check pattern was pointed out, you implemented it correctly without further intervention and validated via tests.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Work on independently generating the hash-map/complement pattern for 2-sum-like tasks before asking for hints by practicing a quick ‘what lookup would make this O(1) per element?’ checklist.</p></div>
+  </div></div>
+  </div>
+
+    <!-- 5-6. NARRATIVES -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Thinking &amp; Logic</h2>
+    <p class="text-sm text-slate-300 leading-relaxed">You began with a nested-loop plan, correctly noticing it would be slow. After hints, you transitioned to the optimal approach: maintain a dictionary from previously seen value to its index; for each current value n at index i, compute complement = target - n and check whether it’s already in the dictionary, returning the stored index and i if so; otherwise store n -&gt; i and continue. This matches the expected reasoning and avoids using the same element twice by checking before inserting.</p>
+  </div>
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Code Assessment</h2>
+    <p class="text-sm text-slate-300 leading-relaxed">Your final code matches the answer key’s optimal single-pass hash-map solution (seen value -&gt; index, check complement before inserting). Compared to the brute-force canonical alternative, your approach achieves O(n) time instead of O(n^2) and correctly preserves original indices (unlike sort-based approaches). The main gap vs an ideal interview performance isn’t the implementation—it’s that the key technique (hash map + complement lookup) required multiple hints to surface.</p>
+  </div>
+
+    <!-- 7. NEXT STEPS -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Next Steps</h2>
+    
+      <div class="space-y-3">
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-xs font-bold text-emerald-400">1</span></div>
+      <div class="flex-1 space-y-2"><p class="text-sm font-semibold text-white">Drill the “complement hash map” pattern until it’s automatic for pair-sum / difference problems.</p>
+       <div><p class="text-xs text-slate-400 font-medium">Why</p><p class="text-xs text-slate-300">This is the canonical optimal technique for Two Sum and many variants; recalling it quickly improves independence and time-to-solution.</p></div>
+       <div><p class="text-xs text-slate-400 font-medium">How</p><p class="text-xs text-slate-300">Do 8–10 problems that reduce to ‘find if target - x exists’ (Two Sum variants, subarray sum equals k with prefix sums, pair difference equals k). For each, explicitly write the invariant and the exact lookup before coding.</p></div></div>
+    </div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-xs font-bold text-emerald-400">2</span></div>
+      <div class="flex-1 space-y-2"><p class="text-sm font-semibold text-white">Adopt a constraints-first triage step before coding.</p>
+       <div><p class="text-xs text-slate-400 font-medium">Why</p><p class="text-xs text-slate-300">You started with O(n^2) and only later pivoted; with n up to 1e5, you can reject O(n^2) immediately and save time.</p></div>
+       <div><p class="text-xs text-slate-400 font-medium">How</p><p class="text-xs text-slate-300">In the first minute, translate constraints into an acceptable runtime (typically ~O(n) or O(n log n)), then list 1–2 candidate patterns (hashing, two pointers if sorted) before writing code.</p></div></div>
+    </div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-xs font-bold text-emerald-400">3</span></div>
+      <div class="flex-1 space-y-2"><p class="text-sm font-semibold text-white">Practice articulating the intended lookup when choosing a data structure.</p>
+       <div><p class="text-xs text-slate-400 font-medium">Why</p><p class="text-xs text-slate-300">You considered set/dict but weren’t sure what you’d look up; being explicit tightens reasoning and communication.</p></div>
+       <div><p class="text-xs text-slate-400 font-medium">How</p><p class="text-xs text-slate-300">Use a template sentence: “As I scan left-to-right, for current value x I want to query whether y = target-x has appeared before, and retrieve its index in O(1), so I’ll store value-&gt;index in a dict.”</p></div></div>
+    </div>
+  </div></div>
+      <div class="mt-4 pt-4 border-t border-white/10"><p class="text-xs text-slate-400 font-medium mb-2">Patterns to Study</p><div class="flex flex-wrap gap-2"><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 font-medium"># hash map complement lookup (Two Sum pattern)</span><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 font-medium"># constraints-driven complexity triage</span><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 font-medium"># two pointers on sorted arrays (Two Sum follow-up variant)</span></div></div>
+  </div>
+
+    <!-- 8. ENCOURAGEMENT -->
+    
+    <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+      <div class="flex items-start gap-3">
+        <div class="p-2 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30">🏆</div>
+        <div class="flex-1"><h3 class="text-sm font-semibold text-white mb-1">Final Words</h3><p class="text-sm text-slate-300 leading-relaxed italic">You already have the correct optimal implementation—focus now on speeding up the idea discovery step, and this becomes a very solid “easy” you can complete confidently under tighter time pressure.</p></div>
+      </div>
+    </div>
+
+    <!-- 9. TRANSCRIPT -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Transcript</h2>
+    <div class="space-y-2 max-h-80 overflow-y-auto">
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> Here's the problem: given an array of integers and a target, return the indices of the two numbers that add up to the target.</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> Okay, I'll loop through every pair and check the sums. Writing that now.</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> Hmm, this feels slow but I'm not sure how to make it faster. I'm a bit stuck on how to avoid the double loop.</div>
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> Think about what kind of data structure gives you fast lookups.</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> A set? Or a dictionary... I'm not sure what I'd look up though.</div>
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> As you walk the array, consider storing the values you've already seen along with their indices.</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> Okay so I keep a dictionary of value to index. But I still don't see how that finds the pair.</div>
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> For each element, before inserting it, check whether target minus the current value is already in your dictionary.</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> Oh! Right, the complement. Okay, rewriting it with the dictionary now.</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> Done, running the tests... they pass.</div>
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> Can you state the complexity?</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> One loop, so O(n) time, and O(n) space for the dictionary.</div>
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> That's time. Let's wrap up here.</div></div>
+  </div>
+    </div>
+  </div>
+</body></html>

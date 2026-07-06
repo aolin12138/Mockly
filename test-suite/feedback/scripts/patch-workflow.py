@@ -216,6 +216,64 @@ else:
     model["parameters"]["responses"]["values"][0]["content"] = sysmsg
     print("system prompt: patched (coaching completeness + attribution ban)")
 
+# --- fix 9: primary_focus — a single highest-leverage takeaway surfaced prominently
+# (users act on one thing; six equal dimension cards is a report, not coaching) ---
+sysmsg = model["parameters"]["responses"]["values"][0]["content"]
+FOCUS_RULE = (
+    "\n- Add a field \"primary_focus\" to the output JSON: a single-sentence, concrete, "
+    "actionable takeaway that identifies the ONE highest-leverage thing the candidate "
+    "should work on next. It must be backed by the strongest signal in the session "
+    "(worst dimension, most impactful missed pattern vs canonical solution, or clearest "
+    "repeated mistake). The sentence must start with an imperative verb — e.g. \"Master "
+    "the hash-map lookup pattern before your next interview\", not \"You could improve "
+    "hash maps\"."
+)
+if "primary_focus" in sysmsg and "imperative verb" in sysmsg:
+    print("system prompt (primary_focus): already patched, skipping")
+else:
+    # Insert before the output schema example
+    anchor7 = "# Output (valid JSON only, no markdown, no preamble):"
+    assert anchor7 in sysmsg, "output schema anchor not found"
+    sysmsg = sysmsg.replace(anchor7, FOCUS_RULE + "\n" + anchor7)
+    model["parameters"]["responses"]["values"][0]["content"] = sysmsg
+    print("system prompt: patched (primary_focus field)")
+
+# Also patch the schema example to include primary_focus at the top — AND make it
+# explicitly non-optional
+OLD_SCHEMA = '\n{\n  "summary"'
+if '"primary_focus"' in sysmsg and 'ALWAYS include' in sysmsg:
+    print("system prompt (primary_focus in schema): already patched, skipping")
+else:
+    REPLACEMENT = '\n{\n  "primary_focus": "Master the hash-map lookup pattern before your next interview.",' + OLD_SCHEMA
+    if '"primary_focus"' in sysmsg:
+        # Already has the field in schema; add a stronger requirement
+        REQUIREMENT = "\n- ALWAYS include primary_focus in the output. If the session evidence is limited (e.g. very short transcript), use the strongest available signal — even imperfect guidance is better than an empty field. The sentence must start with an imperative verb regardless."
+        anchor_r = "- Make next_steps concrete: specific patterns, problem types, habits."
+        sysmsg = sysmsg.replace(anchor_r, REQUIREMENT + "\n" + anchor_r)
+        print("system prompt: patched (primary_focus always-required rule)")
+    else:
+        sysmsg = sysmsg.replace(OLD_SCHEMA, REPLACEMENT)
+        print("system prompt: patched (primary_focus in schema example)")
+    model["parameters"]["responses"]["values"][0]["content"] = sysmsg
+
+# --- fix 10: Parse & wrap fallback: if the model omits primary_focus, inject a
+# placeholder so the page always has a headline (the user shouldn't see a broken
+# page because of an LLM formatting quirk). ---
+js2 = fmt["parameters"]["jsCode"] # reuse variable name; Format prompt is fmt, Parse is find
+parse_node = next(n for n in nodes if n["name"] == "Parse & wrap")
+parse_js = parse_node["parameters"]["jsCode"]
+FALLBACK = "if (!fb.primary_focus) fb.primary_focus = 'Review the skill breakdown below for your highest-leverage area to improve.';"
+OLD_PARSE_RETURN = "return [{json: { ...fb, transcript: fp.transcript || [], audio: fp.audio || null, callDurationSecs: fp.callDurationSecs || null }}];"
+FALLBACK_RETURN = FALLBACK + "\n" + OLD_PARSE_RETURN
+if "!fb.primary_focus" in parse_js:
+    print("parse & wrap (primary_focus fallback): already patched, skipping")
+else:
+    old_return = OLD_PARSE_RETURN
+    assert old_return in parse_js, "parse node return not found"
+    parse_js = parse_js.replace(old_return, FALLBACK_RETURN)
+    parse_node["parameters"]["jsCode"] = parse_js
+    print("parse & wrap: patched (primary_focus fallback)")
+
 # --- PUT back (only fields the API accepts) ---
 payload = {k: wf[k] for k in ("name", "nodes", "connections", "settings") if k in wf}
 updated = req("PUT", BASE, payload)
@@ -233,6 +291,10 @@ ok5 = "JSON.stringify(q.solutions" in js2
 ok6 = "contrast the candidate's final code with the canonical" in sys2
 ok7 = "PROGRESS ACHIEVED WITHOUT HELP" in sys2
 ok8 = "even for a 9-10 score give a stretch goal" in sys2
+ok9 = '"primary_focus"' in sys2
+parse_node2 = next(n for n in check["nodes"] if n["name"] == "Parse & wrap")
+parse_node2_js = parse_node2["parameters"]["jsCode"]
+ok10 = '!fb.primary_focus' in parse_node2_js
 print("verify system prompt:", "OK" if ok1 else "MISSING")
 print("verify format prompt:", "OK" if ok2 else "MISSING")
 print("verify test-totals fix:", "OK" if ok3 else "MISSING")
@@ -241,4 +303,6 @@ print("verify answer-key stringify:", "OK" if ok5 else "MISSING")
 print("verify canonical gap rule:", "OK" if ok6 else "MISSING")
 print("verify independence rule:", "OK" if ok7 else "MISSING")
 print("verify coaching/attribution rules:", "OK" if ok8 else "MISSING")
-sys.exit(0 if ok1 and ok2 and ok3 and ok4 and ok5 and ok6 and ok7 and ok8 else 1)
+print("verify primary_focus:", "OK" if ok9 else "MISSING")
+print("verify primary_focus fallback:", "OK" if ok10 else "MISSING")
+sys.exit(0 if ok1 and ok2 and ok3 and ok4 and ok5 and ok6 and ok7 and ok8 and ok9 and ok10 else 1)

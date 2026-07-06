@@ -1,0 +1,156 @@
+{
+  "summary": "You finished with the canonical optimal Two Sum solution and passed all tests. The main improvement area is getting to the hash-map + complement insight earlier without needing multiple targeted hints, since that’s the core of the problem.",
+  "outcome": "solved",
+  "completed": true,
+  "reached_phase": 4,
+  "test_results": {
+    "passed": 10,
+    "total": 10,
+    "by_category": {},
+    "summary_note": "All visible and hidden tests passed; no failures."
+  },
+  "time": {
+    "taken_minutes": 34,
+    "budget_minutes": 35
+  },
+  "dimensions": [
+    {
+      "name": "Correctness & Completeness",
+      "score": 9.3,
+      "label": "strong",
+      "what_went_well": "Returned correct indices across all tests and handled duplicate values correctly by checking the complement before inserting the current value.",
+      "what_to_improve": "Add (or at least state) a clear contract for the unreachable case—even if the prompt guarantees an answer—e.g., raise an exception or return a sentinel consistently, rather than returning an empty list silently."
+    },
+    {
+      "name": "Problem-Solving & Thinking",
+      "score": 7.2,
+      "label": "adequate",
+      "what_went_well": "You recognized the brute-force approach would be too slow and were willing to pivot approaches once the right direction was suggested.",
+      "what_to_improve": "Practice the standard “trade space for time” move: when you notice an O(n^2) pair-search, explicitly ask yourself ‘what can I cache so each step becomes O(1) lookup?’ and try to derive the complement idea before prompting."
+    },
+    {
+      "name": "Technical Communication",
+      "score": 7,
+      "label": "adequate",
+      "what_went_well": "You clearly flagged performance concerns and later stated the final time/space complexity correctly (O(n) time, O(n) space).",
+      "what_to_improve": "When considering a data structure (set/dict), narrate the exact lookup you intend to perform (e.g., “for value x, I want to know if target-x has appeared before, and where”), which will make your reasoning more directed and convincing."
+    },
+    {
+      "name": "Complexity & Optimization",
+      "score": 8.6,
+      "label": "strong",
+      "what_went_well": "Final solution matches the answer key’s optimal complexity: single pass hash map, O(n) time and O(n) space, avoiding sorting (which can lose indices) and avoiding O(n^2).",
+      "what_to_improve": "Build the habit of doing a quick constraints-to-complexity check up front (n up to 1e5 → O(n^2) won’t work) and immediately shortlist O(n) / O(n log n) families of approaches to reduce time spent exploring dead ends."
+    },
+    {
+      "name": "Code Quality",
+      "score": 8.2,
+      "label": "strong",
+      "what_went_well": "Code is clean, idiomatic, and minimal; variable names are understandable; the ordering of ‘check then insert’ is correct and prevents using the same element twice.",
+      "what_to_improve": "Consider adding a short docstring or comment capturing the invariant (“seen maps value -> index among earlier elements”), which helps reviewers and reduces the chance of subtle ordering bugs in similar problems."
+    },
+    {
+      "name": "Independence",
+      "score": 6.2,
+      "label": "adequate",
+      "hints_used": 3,
+      "what_went_well": "Once the complement-check pattern was pointed out, you implemented it correctly without further intervention and validated via tests.",
+      "what_to_improve": "Work on independently generating the hash-map/complement pattern for 2-sum-like tasks before asking for hints by practicing a quick ‘what lookup would make this O(1) per element?’ checklist."
+    }
+  ],
+  "thinking_and_logic": "You began with a nested-loop plan, correctly noticing it would be slow. After hints, you transitioned to the optimal approach: maintain a dictionary from previously seen value to its index; for each current value n at index i, compute complement = target - n and check whether it’s already in the dictionary, returning the stored index and i if so; otherwise store n -> i and continue. This matches the expected reasoning and avoids using the same element twice by checking before inserting.",
+  "code_assessment": "Your final code matches the answer key’s optimal single-pass hash-map solution (seen value -> index, check complement before inserting). Compared to the brute-force canonical alternative, your approach achieves O(n) time instead of O(n^2) and correctly preserves original indices (unlike sort-based approaches). The main gap vs an ideal interview performance isn’t the implementation—it’s that the key technique (hash map + complement lookup) required multiple hints to surface.",
+  "next_steps": [
+    {
+      "action": "Drill the “complement hash map” pattern until it’s automatic for pair-sum / difference problems.",
+      "why": "This is the canonical optimal technique for Two Sum and many variants; recalling it quickly improves independence and time-to-solution.",
+      "how": "Do 8–10 problems that reduce to ‘find if target - x exists’ (Two Sum variants, subarray sum equals k with prefix sums, pair difference equals k). For each, explicitly write the invariant and the exact lookup before coding."
+    },
+    {
+      "action": "Adopt a constraints-first triage step before coding.",
+      "why": "You started with O(n^2) and only later pivoted; with n up to 1e5, you can reject O(n^2) immediately and save time.",
+      "how": "In the first minute, translate constraints into an acceptable runtime (typically ~O(n) or O(n log n)), then list 1–2 candidate patterns (hashing, two pointers if sorted) before writing code."
+    },
+    {
+      "action": "Practice articulating the intended lookup when choosing a data structure.",
+      "why": "You considered set/dict but weren’t sure what you’d look up; being explicit tightens reasoning and communication.",
+      "how": "Use a template sentence: “As I scan left-to-right, for current value x I want to query whether y = target-x has appeared before, and retrieve its index in O(1), so I’ll store value->index in a dict.”"
+    }
+  ],
+  "patterns_to_study": [
+    "hash map complement lookup (Two Sum pattern)",
+    "constraints-driven complexity triage",
+    "two pointers on sorted arrays (Two Sum follow-up variant)"
+  ],
+  "primary_focus": "Internalize the hash-map + complement lookup pattern so you can derive the O(n) approach quickly without needing targeted hints.",
+  "encouragement": "You already have the correct optimal implementation—focus now on speeding up the idea discovery step, and this becomes a very solid “easy” you can complete confidently under tighter time pressure.",
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Here's the problem: given an array of integers and a target, return the indices of the two numbers that add up to the target.",
+      "timestart": 5
+    },
+    {
+      "role": "user",
+      "text": "Okay, I'll loop through every pair and check the sums. Writing that now.",
+      "timestart": 60
+    },
+    {
+      "role": "user",
+      "text": "Hmm, this feels slow but I'm not sure how to make it faster. I'm a bit stuck on how to avoid the double loop.",
+      "timestart": 480
+    },
+    {
+      "role": "agent",
+      "text": "Think about what kind of data structure gives you fast lookups.",
+      "timestart": 500
+    },
+    {
+      "role": "user",
+      "text": "A set? Or a dictionary... I'm not sure what I'd look up though.",
+      "timestart": 560
+    },
+    {
+      "role": "agent",
+      "text": "As you walk the array, consider storing the values you've already seen along with their indices.",
+      "timestart": 580
+    },
+    {
+      "role": "user",
+      "text": "Okay so I keep a dictionary of value to index. But I still don't see how that finds the pair.",
+      "timestart": 700
+    },
+    {
+      "role": "agent",
+      "text": "For each element, before inserting it, check whether target minus the current value is already in your dictionary.",
+      "timestart": 720
+    },
+    {
+      "role": "user",
+      "text": "Oh! Right, the complement. Okay, rewriting it with the dictionary now.",
+      "timestart": 800
+    },
+    {
+      "role": "user",
+      "text": "Done, running the tests... they pass.",
+      "timestart": 1700
+    },
+    {
+      "role": "agent",
+      "text": "Can you state the complexity?",
+      "timestart": 1800
+    },
+    {
+      "role": "user",
+      "text": "One loop, so O(n) time, and O(n) space for the dictionary.",
+      "timestart": 1830
+    },
+    {
+      "role": "agent",
+      "text": "That's time. Let's wrap up here.",
+      "timestart": 2000
+    }
+  ],
+  "audio": null,
+  "callDurationSecs": 2040
+}

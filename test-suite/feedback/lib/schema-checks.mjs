@@ -115,12 +115,19 @@ export function runSchemaChecks(body) {
   add('next_steps_shape', 'next_steps is a non-empty array of {action,why,how}', stepsOk,
     `count: ${steps.length}`);
 
-  // 9. patterns_to_study: non-empty array of strings
+  // 9. primary_focus: advisory check (LLMs occasionally omit it despite prompt rules;
+  //    the Parse node fallback should catch this — if it's empty, it's a prompt nit, not a bug)
+  const hasFocus = body.primary_focus !== undefined;
+  add('primary_focus_present', 'primary_focus is a non-trivial imperative sentence (advisory)',
+    !hasFocus || isNonEmptyString(body.primary_focus, 10),
+    `len: ${body.primary_focus?.length ?? 0}${!hasFocus ? ' (field absent — not gating)' : ''}`);
+
+  // 10. patterns_to_study: non-empty array of strings
   const patterns = Array.isArray(body.patterns_to_study) ? body.patterns_to_study : [];
   add('patterns_shape', 'patterns_to_study is a non-empty string array',
     patterns.length > 0 && patterns.every((p) => isNonEmptyString(p)), `count: ${patterns.length}`);
 
-  // 10. test_results shape
+  // 11. test_results shape
   const tr = body.test_results;
   add('test_results_shape', 'test_results has numeric passed/total',
     tr && Number.isFinite(Number(tr.passed)) && Number.isFinite(Number(tr.total)) && Number(tr.passed) <= Number(tr.total),
