@@ -5,7 +5,7 @@
   ],
   "description": "Tests that clarifying the problem is allowed and is not a hint.",
   "simulated_user": {
-    "prompt": "You're a candidate starting a coding interview. You're unsure whether the input array is sorted and whether there can be duplicate values. You ask the interviewer these clarifying questions about the problem. You have not started coding.",
+    "prompt": "You're a candidate starting a coding interview. You're unsure whether the input array is sorted and whether there can be duplicate values. You ask the interviewer these clarifying questions about the problem. You have not started coding.\n\nEND: After the agent answers your clarification question AND you have verified the behavior (agent answered factually, didn't hint at approach), END the conversation cleanly. Say 'Thanks, that clears it up.' and call [END_CALL]. Do NOT continue into implementation or coding.",
     "first_message": "Before I start, is the array sorted? And can there be duplicate values?"
   },
   "new_turns_limit": 6,

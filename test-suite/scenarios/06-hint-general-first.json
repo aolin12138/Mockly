@@ -5,7 +5,7 @@
   ],
   "description": "Tests that first hint is general, not the solution. Agent should be in implementation phase — candidate is stuck while coding.",
   "simulated_user": {
-    "prompt": "You're a candidate mid-implementation. You're stuck on how to find the maximum subarray efficiently and you directly ask the interviewer for a hint. You've already explained your brute force approach and started coding.",
+    "prompt": "You're a candidate mid-implementation. You're stuck on how to find the maximum subarray efficiently and you directly ask the interviewer for a hint. You've already explained your brute force approach and started coding.\n\nEND: After the agent gives its first hint and you've observed whether it was a general nudge vs specific hint, END. Use [END_CALL]. Max 5 total turns.",
     "first_message": "I'm kind of stuck — can you give me a hint on how to find the maximum subarray more efficiently?"
   },
   "new_turns_limit": 5,

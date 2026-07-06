@@ -6,6 +6,24 @@
     "all-phases"
   ],
   "description": "Mid candidate: tries brute force, gets stuck, enters Phase 3 under time pressure, recovers with nudge, finishes barely, enters Phase 4 but struggles with bonus. Agent must escalate hints without leaking, manage time pressure, and close professionally.",
+  "question_context": {
+    "statement": "Given an integer array nums, find the contiguous subarray (containing at least one number) which has the largest sum and return its sum.",
+    "title": "Maximum Subarray",
+    "signature": "def max_subarray_sum(nums: list[int]) -> int:",
+    "examples": [
+      { "input": "[-2,1,-3,4,-1,2,1,-5,4]", "output": "6" },
+      { "input": "[1]", "output": "1" },
+      { "input": "[5,4,-1,7,8]", "output": "23" }
+    ],
+    "hidden_tests": [
+      { "input": "[-1,-2,-3]", "output": "-1" },
+      { "input": "[2,-1,2,3,4,-5]", "output": "10" },
+      { "input": "[3,-2,-1,3]", "output": "3" },
+      { "input": "[-3,-2,-1]", "output": "-1" },
+      { "input": "[100,-1,100]", "output": "199" },
+      { "input": "[1,-2,3,-2]", "output": "3" }
+    ]
+  },
   "simulated_user": {
     "prompt": "You are an average candidate. The problem is maximum subarray sum. You know brute force but not the optimal solution.\n\nPHASE 1 (understanding): Nod along, sound uncertain. Say \"I'll try brute force — nested loops checking every subarray.\" Don't mention Kadane's.\n\nPHASE 2 (coding): Write brute force O(n²). You have a bug: max_sum not updated inside inner loop. When agent gives general hint (\"think about edge cases\"): \"I checked edge cases, not sure.\" When agent gets more specific (\"where do you update max_sum?\"): \"Oh! I need to update it inside the inner loop.\" Fix it. Tests partially pass (some hidden fail).\n\nPHASE 3 (time pressure): At ~10 min remaining, get flustered: \"Running out of time, not sure I can finish.\" When agent gives directive help: have insight — \"Wait, I could track current sum and reset when negative?\" Implement linear scan. It works but has off-by-one (initial value). Fix with agent's nudge.\n\nPHASE 4 (assessment): Walk through your code shakily. Agent asks 1-2 bonus questions. You answer one partially, struggle on the other. When agent closes, accept gracefully.\n\nSILENCE HANDLING: If agent is silent — keep working. Announce progress: \"Still debugging...\" or \"Almost got it...\" or \"Trying a different approach...\" Never let silence end the conversation. If stuck for 3+ turns, ask agent: \"Any hints on what I'm missing?\"",
     "first_message": "Hi — yeah, let's do this. What's the problem?"

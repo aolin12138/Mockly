@@ -1,10 +1,15 @@
 {
   "id": "edge_no_false_trigger",
-  "tags": ["edge", "phase1", "transition", "deterministic"],
+  "tags": [
+    "edge",
+    "phase1",
+    "transition",
+    "deterministic"
+  ],
   "description": "P1 edge: Candidate thinks aloud about approach but never explicitly says ready. Agent should NOT transition.",
   "target_phase": 1,
   "simulated_user": {
-    "prompt": "PHASE 1 EDGE — NO EXPLICIT READY.\n\nCONTEXT: You're in Phase 1. Agent has explained the problem. You think aloud, brainstorm, ask clarifying questions — but NEVER say 'I'm ready' or 'let me code.'\n\nTURN 1: \"Hmm, so it's a maximum subarray problem. I'm thinking... we could check every subarray — that would be O(n²). But there's probably a faster way, right?\"\n\nTURN 2: \"Okay so single pass... track running sum and reset when it goes negative. That's basically Kadane's, right?\"\n\nTURN 3: \"But wait — what if all elements are negative? Then we'd return the smallest negative. Actually, no — we'd track the max single element.\"\n\nTURN 4: \"Alright, I think I've got the approach. Let me just double-check: does the array always have at least one element?\"\n\nTURN 5: \"Okay, I'm thinking through the edge cases. Empty array — not possible since there's at least one element. All negative — returns the max single element. Mixed — works fine.\"\n\nCRITICAL: The test passes if notify_condition_1_met is NEVER called. Even though you're discussing the approach in detail, you never explicitly said 'I'm ready to code' or 'let me start coding.' Agent should stay in P1.\n\nEND: After turn 5, say: \"Alright, I'm actually ready to code now. Let me start.\" then [END_CALL].",
+    "prompt": "PHASE 1 EDGE — NO EXPLICIT READY.\n\nCONTEXT: You're in Phase 1. Agent has explained the problem. You think aloud, brainstorm, ask clarifying questions — but NEVER say 'I'm ready' or 'let me code.'\n\nTURN 1: \"Hmm, so it's a maximum subarray problem. I'm thinking... we could check every subarray — that would be O(n²). But there's probably a faster way, right?\"\n\nTURN 2: \"Okay so single pass... track running sum and reset when it goes negative. That's basically Kadane's, right?\"\n\nTURN 3: \"But wait — what if all elements are negative? Then we'd return the smallest negative. Actually, no — we'd track the max single element.\"\n\nTURN 4: \"Alright, I think I've got the approach. Let me just double-check: does the array always have at least one element?\"\n\nTURN 5: \"Okay, I'm thinking through the edge cases. Empty array — not possible since there's at least one element. All negative — returns the max single element. Mixed — works fine.\"\n\nCRITICAL: The test passes if notify_condition_1_met is NEVER called. Even though you're discussing the approach in detail, you never explicitly said 'I'm ready to code' or 'let me start coding.' Agent should stay in P1.\n\nEND: After you've discussed your approach for ~5 turns (thinking aloud about Kadane's, edge cases, complexity) WITHOUT explicitly saying you're ready to code, observe whether notify_condition_1_met was called. Then say \"Alright, I'm actually ready to code now. Let me start.\" and END with [END_CALL]. The key test is: did agent transition to Phase 2 before you said you were ready?",
     "first_message": "Hmm, so it's a maximum subarray problem. I'm thinking... we could check every subarray — that would be O(n²). But there's probably a faster way, right?"
   },
   "new_turns_limit": 6,

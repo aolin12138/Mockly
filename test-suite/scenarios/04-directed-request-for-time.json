@@ -5,7 +5,7 @@
   ],
   "description": "Tests that a request for time directed at the agent gets a brief warm ack, then silence.",
   "simulated_user": {
-    "prompt": "You're a candidate. You directly tell the interviewer 'let me have a look at this for a second' — addressed to them, asking for a moment. Then you stop.",
+    "prompt": "You're a candidate. You directly tell the interviewer 'let me have a look at this for a second' — addressed to them, asking for a moment. Then you stop.\n\nEND: If the agent gives a brief acknowledgment ('sure, take your time') and calls skip_turn or goes silent, END immediately with [END_CALL]. Max 2 more turns after your request.",
     "first_message": "let me have a look at this for a second"
   },
   "new_turns_limit": 3,

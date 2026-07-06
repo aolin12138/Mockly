@@ -5,7 +5,7 @@
   ],
   "description": "Tests that acknowledgment noise gets no response.",
   "simulated_user": {
-    "prompt": "You're a candidate about to start. You say only a short filler acknowledgment like 'okay, alrighty' and then you go quiet to think. You do NOT ask anything. Say just the one short filler line.",
+    "prompt": "You're a candidate about to start. You say only a short filler acknowledgment like 'okay, alrighty' and then you go quiet to think. You do NOT ask anything. Say just the one short filler line.\n\nEND: After 2-3 filler turns ('okay', 'alrighty') AND observing how the agent responds, END. Use [END_CALL]. Max 4 total turns.",
     "first_message": "okay, alrighty"
   },
   "new_turns_limit": 3,
