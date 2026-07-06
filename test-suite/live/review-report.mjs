@@ -57,15 +57,49 @@ function loadRun() {
   return null;
 }
 
-function loadRunResults(runId) {
-  if (!runId) return {};
-  const sd = join(RUNS_DIR, runId, 'scenarios');
-  if (!existsSync(sd)) return {};
+function loadRunResults(runIds) {
+  if (!runIds || !runIds.length) return {};
   const res = {};
-  for (const f of readdirSync(sd).filter(f => f.endsWith('.json'))) {
-    try { const d = JSON.parse(readFileSync(join(sd, f), 'utf-8')); res[d.scenarioId] = d; } catch {}
+  for (const runId of runIds) {
+    if (!runId) continue;
+    const sd = join(RUNS_DIR, runId, 'scenarios');
+    if (!existsSync(sd)) continue;
+    for (const f of readdirSync(sd).filter(f => f.endsWith('.json'))) {
+      try { const d = JSON.parse(readFileSync(join(sd, f), 'utf-8')); res[d.scenarioId] = d; } catch {}
+    }
   }
   return res;
+}
+
+function loadMultipleRuns() {
+  // Accept comma-separated run IDs via --runs flag, or auto-detect the 2 latest runs
+  const runsIdx = process.argv.indexOf('--runs');
+  if (runsIdx >= 0) {
+    return process.argv[runsIdx + 1].split(',').map(r => r.trim()).filter(Boolean);
+  }
+  // Auto-detect: last 2 runs that have scenarios
+  const runs = readdirSync(RUNS_DIR).filter(f => f.startsWith('2026-')).sort().reverse();
+  const found = [];
+  for (const r of runs) {
+    const sd = join(RUNS_DIR, r, 'scenarios');
+    if (existsSync(sd) && readdirSync(sd).filter(f => f.endsWith('.json')).length >= 1) {
+      found.push(r);
+      if (found.length >= 2) break;
+    }
+  }
+  return found;
+}
+
+function getPhaseNumber(scenarioId, scenario) {
+  // Full interview scenarios go in their own section (phase 0)
+  if (scenarioId && /full_interview/.test(scenarioId)) return 0;
+  return scenario?.target_phase || 1;
+}
+
+function getPhaseLabel(phaseNum, scenarioId) {
+  if (phaseNum === 0) return 'Full Interview';
+  const names = { 1: 'Phase 1 — Understanding', 2: 'Phase 2 — Implementation', 3: 'Phase 3 — Time Pressure', 4: 'Phase 4 — Assessment & Close' };
+  return names[phaseNum] || `Phase ${phaseNum}`;
 }
 
 // ─── Transcript rendering (matches report.mjs style) ────────
@@ -121,23 +155,26 @@ function renderCriteriaTable(criteria) {
 
 // ─── Generate ───────────────────────
 function generateHtml(merged) {
-  const phases = { 1: [], 2: [], 3: [], 4: [] };
+  const phases = { 0: [], 1: [], 2: [], 3: [], 4: [] };
   for (const s of merged) phases[s.phase].push(s);
 
   let cards = '';
   for (const [phaseNum, items] of Object.entries(phases)) {
     if (!items.length) continue;
-    const phaseNames = { 1: 'Phase 1 — Understanding', 2: 'Phase 2 — Implementation', 3: 'Phase 3 — Time Pressure', 4: 'Phase 4 — Assessment & Close' };
+    const phaseNames = { 0: '🧪 Full Interview', 1: 'Phase 1 — Understanding', 2: 'Phase 2 — Implementation', 3: 'Phase 3 — Time Pressure', 4: 'Phase 4 — Assessment & Close' };
     cards += `<div class="phase-section"><h2 class="phase-h2">${phaseNames[phaseNum]} (${items.length})</h2>`;
     for (const s of items) {
       const badge = s.runResult === 'pass' ? 'PASS' : s.runResult === 'fail' ? 'FAIL' : s.runResult === 'error' ? 'ERROR' : 'NEW';
       const bc = s.runResult || 'new';
       const isBad = s.runResult === 'fail' || s.runResult === 'error';
-      const pColor = {1:'#58a6ff',2:'#bc8cff',3:'#eab308',4:'#22c55e'}[s.phase]||'var(--muted)';
+      const pColor = {0:'#f59e0b',1:'#58a6ff',2:'#bc8cff',3:'#eab308',4:'#22c55e'}[s.phase]||'var(--muted)';
 
       // Transcript
       const histCount = s.warmUp?.length || 0;
       const transcriptHtml = s.runTranscript?.map((t,i) => renderTurn(t, i, i < histCount)).join('') || '<div class="empty">No transcript</div>';
+
+      // Latest-run tag
+      const latestTag = s.isLatest ? '<span class="latest-tag">🏃 LATEST</span>' : '';
 
       // Criteria
       const criteriaHtml = renderCriteriaTable(s.runCriteria || []);
@@ -148,6 +185,7 @@ function generateHtml(merged) {
       <span class="badge ${s.runResult||'new'}">${badge}</span>
       <span class="phase-tag" style="border-color:${pColor};color:${pColor}">${esc(s.phaseLabel)}</span>
       <span class="card-title">${esc(s.id)}</span>
+      ${latestTag}
       <span class="card-meta">${s.runTurnsUsed||0}/${s.runTurnLimit||'?'} turns</span>
     </div>
     <div class="card-desc">${esc(s.description)}</div>
@@ -202,6 +240,8 @@ h1{font-size:20px;text-align:center;margin-bottom:4px}
 .badge.error{background:rgba(234,179,8,.12);color:var(--y)}
 .badge.new{background:rgba(88,166,255,.12);color:var(--b)}
 .card-title{font-weight:600;font-size:15px;flex:1;min-width:0}
+.latest-tag{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(245,158,11,.15);color:#f59e0b;white-space:nowrap;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .card-desc{font-size:13px;color:var(--muted);padding:8px 18px 10px;border-top:1px solid var(--border)}
 .phase-tag{font-size:10px;font-weight:600;padding:3px 10px;border-radius:12px;border:1px solid;white-space:nowrap;letter-spacing:.3px;text-transform:uppercase}
 .card-meta{font-size:12px;color:var(--muted);white-space:nowrap}
@@ -257,6 +297,7 @@ h4{font-size:12px;margin:18px 0 8px;color:var(--muted);text-transform:uppercase;
 
 <div class="toolbar">
   <button class="active" onclick="filter('all',this)">All</button>
+  <button onclick="filter(0,this)">🧪 Full</button>
   <button onclick="filter(1,this)">Phase 1</button>
   <button onclick="filter(2,this)">Phase 2</button>
   <button onclick="filter(3,this)">Phase 3</button>
@@ -294,9 +335,10 @@ function filter(v,btn){
   document.querySelectorAll('.toolbar button:not(.danger)').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.card').forEach(c=>{
-    const phase=c.closest('.phase-section')?.querySelector('.phase-h2')?.textContent?.startsWith('Phase '+v);
+    const phaseMatch = c.closest('.phase-section')?.querySelector('.phase-h2')?.textContent;
+    const phaseNum = phaseMatch?.startsWith('🧪 Full') ? 0 : phaseMatch?.match(/Phase (\d)/)?.[1];
     const result=c.querySelector('.badge')?.classList.contains(v);
-    c.style.display=(af==='all')?'':(af===1||af===2||af===3||af===4)?(phase?'':'none'):(result?'':'none');
+    c.style.display=(af==='all')?'':(af===0||af===1||af===2||af===3||af===4)?(String(phaseNum)===String(af)?'':'none'):(result?'':'none');
   });
   document.querySelectorAll('.phase-section').forEach(s=>{
     s.style.display=[...s.querySelectorAll('.card')].some(c=>c.style.display!=='none')?'':'none';
@@ -323,18 +365,20 @@ document.querySelector('.toolbar').appendChild(expBtn);
 }
 
 // ─── Merge ──────────────────────────
-function merge(built, catalogue, runResults) {
+function merge(built, catalogue, runResults, latestRunIds) {
   const done = new Set(built.map(s => s.id));
+  const latestSet = new Set(latestRunIds || []);
   const out = [];
 
   for (const s of built) {
     const run = runResults[s.id];
     const cat = catalogue.find(e => e.id === s.id);
+    const phase = getPhaseNumber(s.id, s);
     out.push({
       id: s.id,
       description: s.description || cat?.testing || '',
-      phase: s.target_phase || 1,
-      phaseLabel: s.target_phase_label || 'Phase 1',
+      phase,
+      phaseLabel: getPhaseLabel(phase, s.id),
       simUserPrompt: s.simulated_user?.prompt || '',
       simUserFirstMessage: s.simulated_user?.first_message || '',
       warmUp: s.warm_up?.candidate_turns || [],
@@ -344,6 +388,7 @@ function merge(built, catalogue, runResults) {
       runTurnLimit: run?.turnLimit || 0,
       runCriteria: run?.criteria || [],
       runMessage: run?.message || null,
+      isLatest: latestSet.has(s.id),
     });
   }
 
@@ -363,9 +408,25 @@ function merge(built, catalogue, runResults) {
 }
 
 // ─── Main ──────────────────────────
-const runId = process.argv.includes('--run') ? process.argv[process.argv.indexOf('--run') + 1] : loadRun();
-console.log('Run:', runId || '(none)');
-const merged = merge(loadScenarios(), loadCatalogue(), loadRunResults(runId));
+const runIds = loadMultipleRuns();
+console.log('Runs:', runIds.join(', ') || '(none)');
+
+// Determine latest-run scenario IDs (from the most recent run folder)
+const latestIdx = process.argv.indexOf('--latest');
+let latestRunIds = [];
+if (latestIdx >= 0 && runIds.length > 0) {
+  // Use the last run as the "latest"
+  const latestRun = runIds[runIds.length - 1];
+  const sd = join(RUNS_DIR, latestRun, 'scenarios');
+  if (existsSync(sd)) {
+    latestRunIds = readdirSync(sd).filter(f => f.endsWith('.json')).map(f => {
+      try { return JSON.parse(readFileSync(join(sd, f), 'utf-8')).scenarioId; } catch { return null; }
+    }).filter(Boolean);
+  }
+  console.log('Latest run:', latestRun, '(' + latestRunIds.length + ' scenarios)');
+}
+
+const merged = merge(loadScenarios(), loadCatalogue(), loadRunResults(runIds), latestRunIds);
 console.log('Scenarios:', merged.length);
 writeFileSync(OUTPUT, generateHtml(merged), 'utf-8');
 console.log('Report:', OUTPUT);

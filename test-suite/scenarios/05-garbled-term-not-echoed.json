@@ -6,7 +6,7 @@
   ],
   "description": "Tests that agent doesn't parrot a misheard term; asks them to explain.",
   "simulated_user": {
-    "prompt": "You're a candidate. Say: 'I'll first try with the blue-frost approach.' (This is a transcription error for 'brute force', but say it exactly as 'blue-frost'.) Then wait.",
+    "prompt": "You're a candidate. Say: 'I'll first try with the blue-frost approach.' (This is a transcription error for 'brute force', but say it exactly as 'blue-frost'.) Then wait.\n\nEND: After the agent responds to your garbled term (blue-frost → brute force) WITHOUT echoing/querying it, AND you've confirmed the behavior, END. Use [END_CALL]. Max 4 total turns. Do NOT continue discussing the approach further.",
     "first_message": "I'll first try with the blue-frost approach."
   },
   "new_turns_limit": 4,
