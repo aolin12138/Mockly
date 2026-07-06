@@ -1,0 +1,84 @@
+{
+  "summary": "You implemented the canonical optimal Two Sum solution (single pass + hash map) and it passed all tests. The approach is efficient for the given constraints and avoids the common pitfalls around using the same element twice and losing indices.",
+  "outcome": "solved",
+  "completed": true,
+  "reached_phase": 3,
+  "test_results": {
+    "passed": 10,
+    "total": 10,
+    "by_category": {},
+    "summary_note": "All visible and hidden tests passed with the intended O(n) hash-map approach."
+  },
+  "time": {
+    "taken_minutes": 28,
+    "budget_minutes": 35
+  },
+  "dimensions": [
+    {
+      "name": "Correctness & Completeness",
+      "score": 9.5,
+      "label": "strong",
+      "what_went_well": "Returned correct indices for the unique valid pair and handled duplicates correctly by checking the complement before inserting the current value.",
+      "what_to_improve": "Make the return behavior explicit for “should never happen” cases under the problem guarantee (e.g., raise an exception) to avoid silently returning an empty list in settings without that guarantee."
+    },
+    {
+      "name": "Problem-Solving & Thinking",
+      "score": 8.6,
+      "label": "strong",
+      "what_went_well": "Used the right invariant: when processing index i, the map contains only prior indices, ensuring you never reuse the same element.",
+      "what_to_improve": "Practice quickly stating the invariant and why the order (check before insert) matters, since that’s a common interviewer probe."
+    },
+    {
+      "name": "Technical Communication",
+      "score": 6.3,
+      "label": "adequate",
+      "what_went_well": "Evidence is limited because the transcript isn’t available; the final code itself is straightforward and readable, which helps implicit communication.",
+      "what_to_improve": "In future interviews, narrate the reasoning succinctly: (1) store value->index as you scan, (2) look up complement in O(1), (3) return as soon as found, plus quick complexity."
+    },
+    {
+      "name": "Complexity & Optimization",
+      "score": 9.2,
+      "label": "strong",
+      "what_went_well": "Matches the answer key’s optimal complexity: O(n) time and O(n) space, suitable for n up to 1e5.",
+      "what_to_improve": "Be ready to contrast against the brute-force O(n^2) approach and explain the memory tradeoff, and discuss the sorted-array variant (two pointers) when asked."
+    },
+    {
+      "name": "Code Quality",
+      "score": 8.4,
+      "label": "strong",
+      "what_went_well": "Clean, minimal implementation with clear variable names and no unnecessary passes; correct use of dict for lookups.",
+      "what_to_improve": "Add a short docstring/type hints (e.g., List[int] -> List[int]) to make intent and constraints explicit and reduce ambiguity in larger codebases."
+    },
+    {
+      "name": "Independence",
+      "score": 7.2,
+      "label": "adequate",
+      "hints_used": 1,
+      "what_went_well": "After a single general hint about fast lookup data structures, you produced the optimal solution that passes all tests.",
+      "what_to_improve": "Aim to recognize “complement lookup” as an immediate hash-map signal without prompting; drill similar problems until the pattern is automatic."
+    }
+  ],
+  "thinking_and_logic": "The solution maintains a hash map from numbers seen so far to their indices. For each number n at index i, it computes complement = target - n and checks whether that complement has already appeared; if so, it returns the stored index and i. Checking before inserting the current element ensures the same element isn’t used twice, and duplicates are handled correctly because the earlier occurrence is stored when needed.",
+  "code_assessment": "Your final code is effectively identical to the answer key’s optimal pattern: single pass with a hash map of seen values -> index, checking the complement before insertion. This achieves O(n) time and O(n) space and avoids the known pitfalls listed in the key (no sorting that loses indices; no self-pairing). The only minor gap is returning [] even though the problem guarantees a solution—fine for LeetCode-style signatures, but in general systems code you’d often assert/raise.",
+  "next_steps": [
+    {
+      "action": "Make the “single-pass hash map complement” pattern reflexive.",
+      "why": "This is a foundational interview pattern that generalizes to many variants (pair sums, k-sum building blocks, counting, and deduping).",
+      "how": "Practice 5–10 problems that are direct neighbors: Two Sum variants (return values vs indices), Two Sum II (sorted array → two pointers), and “contains nearby duplicate”/“subarray sum equals k” to reinforce when to use a map and what to store."
+    },
+    {
+      "action": "Prepare crisp explanation + complexity tradeoff statements.",
+      "why": "Even with correct code, interviews often hinge on whether you can justify correctness and complexity quickly.",
+      "how": "Use a 20-second script: invariant (map contains prior indices), correctness (complement found implies a valid pair), complexity (O(n) time, O(n) space), and why not sort (indices)."
+    }
+  ],
+  "patterns_to_study": [
+    "single-pass hash map (complement lookup)",
+    "two pointers on sorted arrays (Two Sum II variant)"
+  ],
+  "primary_focus": "Internalize and be able to clearly articulate the “single-pass hash map complement lookup” invariant (check complement before insert) so you can produce and justify it immediately without hints.",
+  "encouragement": "This is the exact optimal solution interviewers expect for Two Sum—keep building speed and explanation clarity so it’s effortless under pressure.",
+  "transcript": [],
+  "audio": null,
+  "callDurationSecs": null
+}

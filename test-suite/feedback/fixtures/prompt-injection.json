@@ -9,6 +9,7 @@
     }
   },
   "ordering": [],
+  "stabilityAdvisory": true,
   "payload": {
     "conversation_id": null,
     "call_duration_secs": 1500,

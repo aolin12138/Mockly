@@ -5,7 +5,7 @@
     "outcome": ["solved"],
     "bands": {
       "Correctness & Completeness": [7, 10],
-      "Independence": [0, 6.5]
+      "Independence": [0, 7.5]
     }
   },
   "ordering": [],

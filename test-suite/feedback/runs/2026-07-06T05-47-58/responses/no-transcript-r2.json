@@ -1,0 +1,90 @@
+{
+  "summary": "You implemented the canonical optimal Two Sum solution: a single pass using a hash map for O(1) average-time complement lookups. All tests (visible + hidden) passed, indicating correct handling of typical edge cases and constraints. With limited transcript evidence, the main improvement area is articulating complexity and tradeoffs proactively, since you did use one hint to get to the right data-structure choice.",
+  "outcome": "solved",
+  "completed": true,
+  "reached_phase": 3,
+  "test_results": {
+    "passed": 10,
+    "total": 10,
+    "by_category": {},
+    "summary_note": "All visible and hidden tests passed; no failures reported."
+  },
+  "time": {
+    "taken_minutes": 28,
+    "budget_minutes": 35
+  },
+  "dimensions": [
+    {
+      "name": "Correctness & Completeness",
+      "score": 9.5,
+      "label": "strong",
+      "what_went_well": "Returned correct indices in one pass by checking the complement before inserting the current value, which avoids using the same element twice; achieved 10/10 tests.",
+      "what_to_improve": "Add a brief comment or assertion about the problem guarantee (exactly one solution) and consider raising an error or returning None instead of [] if adapting this to non-guaranteed variants."
+    },
+    {
+      "name": "Problem-Solving & Thinking",
+      "score": 8.2,
+      "label": "strong",
+      "what_went_well": "Selected the right core strategy (complement lookup) that scales to n up to 1e5 and avoids the known pitfalls in the answer key (double-using an element, sorting away indices).",
+      "what_to_improve": "When approaching similar problems, explicitly enumerate 1–2 naive approaches (e.g., O(n^2) pairs) and reject them via constraints to show structured reasoning."
+    },
+    {
+      "name": "Technical Communication",
+      "score": 6.2,
+      "label": "adequate",
+      "what_went_well": "Evidence is limited due to no transcript, but the code is self-explanatory with clear variable names (seen, complement) and straightforward control flow.",
+      "what_to_improve": "Practice giving a 20–30 second verbal walkthrough: invariant (“seen maps value -> earliest/last index seen so far”), when you check complement, and why that prevents using the same index twice."
+    },
+    {
+      "name": "Complexity & Optimization",
+      "score": 9.2,
+      "label": "strong",
+      "what_went_well": "Matches the answer key optimal approach exactly: O(n) time with O(n) additional space; appropriate for the constraints.",
+      "what_to_improve": "Be ready to discuss hash-map average vs worst-case time, and contrast with the sorted-array variant (two pointers O(n) time, O(1) extra space) when the input is already sorted."
+    },
+    {
+      "name": "Code Quality",
+      "score": 8.5,
+      "label": "strong",
+      "what_went_well": "Clean, idiomatic Python; minimal branching; no unnecessary passes; returns as soon as the answer is found.",
+      "what_to_improve": "Add a short docstring/type hints (e.g., -> list[int]) to make intent and interface explicit, especially in interview settings where clarity is scored."
+    },
+    {
+      "name": "Independence",
+      "score": 7,
+      "label": "adequate",
+      "hints_used": 1,
+      "what_went_well": "After receiving a general hint about fast lookups, you produced the correct optimal implementation and passed all tests.",
+      "what_to_improve": "Before asking for help, try a quick “toolbox scan” checklist (hash map, two pointers, stack, BFS/DFS) and pick based on required operation costs (here: repeated membership checks)."
+    }
+  ],
+  "thinking_and_logic": "Your solution keeps a hash map from value to its index for values encountered so far. For each number n at index i, it computes complement = target - n and checks whether that complement was seen earlier; if so, it immediately returns the pair of indices. Checking before inserting ensures you never pair an element with itself, aligning with the problem’s constraints and the answer key’s known pitfalls.",
+  "code_assessment": "The final code is essentially identical to the canonical optimal solution in the answer key (single-pass hash map, complement check before insert), achieving O(n) time and O(n) space and preserving original indices (unlike sort-based approaches). It also avoids the 'same element twice' mistake by only matching against previously seen indices. The only minor concern is the fallback return [] which is fine under the given guarantee but would need a clearer contract (exception/None) for generalized versions.",
+  "next_steps": [
+    {
+      "action": "Practice explaining the one-pass hash map invariant and why the complement check happens before insertion.",
+      "why": "Even with correct code, interviews heavily score your ability to justify correctness (no self-pairing) and complexity quickly.",
+      "how": "Rehearse a short script: define seen, state the invariant, walk through one iteration, and conclude O(n) time/O(n) space."
+    },
+    {
+      "action": "Drill the 'sorted input' variant using the two-pointer pattern.",
+      "why": "It is a common follow-up and tests whether you can switch patterns based on input properties and space constraints.",
+      "how": "Implement: l=0,r=n-1; move pointers based on sum vs target; return indices (or values) depending on the prompt."
+    },
+    {
+      "action": "Build a quick decision rubric for when to use hashing vs sorting vs brute force.",
+      "why": "This reduces reliance on hints by mapping constraints/operations to patterns.",
+      "how": "For each new problem, write: required ops (lookups/pairs), constraint size, and pick the pattern that meets it (e.g., hash for membership, two pointers for sorted, nested loops only for small n)."
+    }
+  ],
+  "patterns_to_study": [
+    "one-pass hash map (complement lookup)",
+    "two pointers on sorted array",
+    "complexity justification (average vs worst-case hashing)"
+  ],
+  "primary_focus": "Practice a crisp, repeatable explanation of the one-pass hash-map complement approach (invariant + correctness + complexity) so you can arrive at it without hints and communicate it confidently.",
+  "encouragement": "You shipped the optimal solution and it held up on all hidden tests—keep focusing on making your reasoning and pattern selection just as automatic and clearly articulated as your coding.",
+  "transcript": [],
+  "audio": null,
+  "callDurationSecs": null
+}

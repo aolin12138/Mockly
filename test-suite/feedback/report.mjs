@@ -189,6 +189,13 @@ function nextStepCardHtml(step, idx) {
 function renderFeedbackPage({ fixture, response, repeat }) {
   const t = transformFeedbackData(response);
   const parseFailed = !t || (response?.error && response?.raw) || !t.dimensions.length;
+  const focusRaw = (response?.feedback?.primary_focus || response?.primary_focus || null);
+  // Re-read from raw since transformFeedbackData doesn't extract this new field yet
+  let primaryFocus = null;
+  try {
+    const fb = response?.feedback || response;
+    primaryFocus = fb?.primary_focus || null;
+  } catch { /* ignore */ }
   const s = fixture.payload.execution_summary || {};
   const overall = parseFailed ? null : computeOverallScore(t);
   const score100 = overall != null ? Math.round(overall * 10) : null;
@@ -274,6 +281,20 @@ function renderFeedbackPage({ fixture, response, repeat }) {
   <div class="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
     <div class="w-full max-w-6xl space-y-6">
       <div class="text-[11px] uppercase tracking-widest text-slate-500">Eval preview — fixture <span class="text-emerald-400">${esc(fixture.id)}</span>, run ${repeat} — ${esc(fixture.description || '')}</div>
+      ${primaryFocus ? `
+      <!-- PRIMARY FOCUS BAND — the one-line takeaway users act on -->
+      <div class="bg-gradient-to-r from-emerald-500/20 via-cyan-500/15 to-emerald-500/20 border border-emerald-500/40 rounded-2xl px-5 py-4">
+        <div class="flex items-start gap-3">
+          <div class="flex-shrink-0 mt-0.5 text-2xl">🎯</div>
+          <div class="flex-1">
+            <p class="text-[11px] uppercase tracking-widest text-emerald-400/60 mb-1">Your #1 Priority</p>
+            <p class="text-lg font-bold text-white leading-snug">${esc(primaryFocus)}</p>
+          </div>
+        </div>
+      </div>` : `
+      <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-3">
+        <p class="text-xs text-amber-300">⚠ primary_focus field missing — grader did not emit one (prompt may need the fix 9 patch)</p>
+      </div>`}
       ${body}
     </div>
   </div>

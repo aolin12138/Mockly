@@ -1,0 +1,90 @@
+{
+  "summary": "You implemented the canonical optimal Two Sum solution (single pass + hash map) and all tests passed. The approach is efficient for the given constraints and correctly avoids using the same element twice by checking the complement before inserting the current value.",
+  "outcome": "solved",
+  "completed": true,
+  "reached_phase": 3,
+  "test_results": {
+    "passed": 10,
+    "total": 10,
+    "by_category": {},
+    "summary_note": "All visible and hidden tests passed; no failures reported."
+  },
+  "time": {
+    "taken_minutes": 28,
+    "budget_minutes": 35
+  },
+  "dimensions": [
+    {
+      "name": "Correctness & Completeness",
+      "score": 10,
+      "label": "strong",
+      "what_went_well": "Returned correct indices for the unique valid pair and handled the full constraint range; completed with a correct fallback return (though unreachable given the prompt).",
+      "what_to_improve": "Tighten the contract to match the problem statement (exactly one answer) by omitting the final return [] or raising an error to make incorrect states explicit."
+    },
+    {
+      "name": "Problem-Solving & Thinking",
+      "score": 8.6,
+      "label": "strong",
+      "what_went_well": "Converged on the right core idea (fast complement lookup) and applied the key ordering detail (check before insert) that prevents reusing the same element.",
+      "what_to_improve": "Practice articulating (even briefly) why the check-before-insert ordering matters and how duplicates behave (e.g., [3,3], target=6) so your reasoning is explicit in an interview."
+    },
+    {
+      "name": "Technical Communication",
+      "score": 6.2,
+      "label": "adequate",
+      "what_went_well": "Evidence is limited because the transcript is not available; the code itself is readable and self-explanatory with clear variable names (seen, complement).",
+      "what_to_improve": "In future sessions, narrate a 10–15 second plan up front (approach + complexity) and call out one key edge case (duplicates / negative numbers) to make your thinking visible."
+    },
+    {
+      "name": "Complexity & Optimization",
+      "score": 9.5,
+      "label": "strong",
+      "what_went_well": "Matches the answer key’s optimal complexity: O(n) time with O(n) extra space via a hash map; appropriate for n up to 1e5.",
+      "what_to_improve": "Be ready to justify worst-case vs average-case hash map behavior and to compare against the sorted-array variant (two pointers) when the interviewer changes assumptions."
+    },
+    {
+      "name": "Code Quality",
+      "score": 9,
+      "label": "strong",
+      "what_went_well": "Clean, minimal, idiomatic Python; correct use of enumerate; avoids common pitfalls like sorting and losing indices.",
+      "what_to_improve": "Add a brief docstring/type hints (e.g., -> list[int]) and consider returning a tuple for immutability if the surrounding codebase prefers it."
+    },
+    {
+      "name": "Independence",
+      "score": 7.2,
+      "label": "adequate",
+      "hints_used": 1,
+      "what_went_well": "Used a single general hint (fast lookups) and produced the canonical optimal solution that passed all tests.",
+      "what_to_improve": "Aim to reach for the hash-map complement pattern immediately on similar problems (pair sum, subarray sum variants) without prompting by building a quick mental checklist of “lookup vs scan” triggers."
+    }
+  ],
+  "thinking_and_logic": "Your final approach uses a single pass through the array while storing previously seen values mapped to their indices. For each number n at index i, you compute complement = target - n and check if it has been seen; if so, you return the prior index and i. Checking before inserting guarantees you don’t reuse the same element, and it naturally handles duplicates by keeping an index for each seen value.",
+  "code_assessment": "Your solution is effectively identical to the answer key’s optimal approach (single-pass hash map). The key interview-critical detail—checking the complement before inserting the current element—avoids the “use the same element twice” pitfall. Compared to brute force O(n^2), your code achieves O(n) time and scales to 1e5 elements; it also avoids the common incorrect approach of sorting and losing original indices.",
+  "next_steps": [
+    {
+      "action": "Drill the “hash map complement lookup” pattern across 5–10 adjacent problems.",
+      "why": "This is a core interview primitive; mastering it makes variants (Two Sum, Two Sum II/III, k-sum stepping stones, pair-difference) faster and more automatic.",
+      "how": "Practice problems like Two Sum II (sorted, two pointers), 3Sum (sort + two pointers), and Subarray Sum Equals K (prefix sum + hash map). For each, explicitly state time/space and the key invariant (what the map stores and why)."
+    },
+    {
+      "action": "Practice communicating the solution in a crisp 30-second explanation.",
+      "why": "Even with correct code, interviews often hinge on whether you can justify correctness and complexity quickly and clearly.",
+      "how": "Use a template: (1) data structure choice, (2) per-iteration steps, (3) why it avoids pitfalls (same element, duplicates), (4) O(n) / O(n)."
+    },
+    {
+      "action": "Prepare for the sorted-array follow-up (Two Sum II) using two pointers.",
+      "why": "It’s a common extension and tests whether you can exploit sorted structure to reduce space to O(1).",
+      "how": "Implement left/right pointers, move based on sum vs target, and be explicit about returning indices in the expected 1-based or 0-based format depending on the prompt."
+    }
+  ],
+  "patterns_to_study": [
+    "hash map complement lookup",
+    "two pointers on sorted arrays",
+    "prefix sum + hash map (for sum variants)"
+  ],
+  "primary_focus": "Practice delivering a concise correctness-and-complexity explanation for the hash-map complement pattern so your reasoning is as strong as your implementation.",
+  "encouragement": "This is exactly the kind of clean, optimal solution you want to be producing under interview time pressure—now focus on making the explanation just as automatic.",
+  "transcript": [],
+  "audio": null,
+  "callDurationSecs": null
+}
