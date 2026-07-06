@@ -1,0 +1,85 @@
+{
+  "summary": "You implemented the standard one-pass hash map solution and it passed all tests. The approach is correct, efficient for the given constraints, and avoids common pitfalls like reusing the same element or losing indices via sorting.",
+  "outcome": "solved",
+  "completed": true,
+  "reached_phase": 3,
+  "test_results": {
+    "passed": 10,
+    "total": 10,
+    "by_category": {},
+    "summary_note": "All visible and hidden tests passed; no failures reported."
+  },
+  "time": {
+    "taken_minutes": 28,
+    "budget_minutes": 35
+  },
+  "dimensions": [
+    {
+      "name": "Correctness & Completeness",
+      "score": 10,
+      "label": "strong",
+      "what_went_well": "Returned correct indices for the unique valid pair and handled the full test suite (10/10). The order of operations (check complement before inserting current) prevents using the same element twice.",
+      "what_to_improve": "Given the prompt guarantee of exactly one answer, the trailing `return []` is fine defensively, but in an interview you can mention it's unreachable under constraints (or raise/return None explicitly to match expected contract)."
+    },
+    {
+      "name": "Problem-Solving & Thinking",
+      "score": 8.2,
+      "label": "strong",
+      "what_went_well": "Chose the right strategy for constraints up to 1e5: incremental scan + fast membership checks, which aligns with canonical solutions.",
+      "what_to_improve": "Without a transcript, it’s unclear if you articulated why checking before inserting avoids duplicate-use; make that reasoning explicit early next time."
+    },
+    {
+      "name": "Technical Communication",
+      "score": 6.2,
+      "label": "adequate",
+      "what_went_well": "Evidence is limited (no transcript), but the code itself communicates intent clearly via variable naming (`seen`, `complement`).",
+      "what_to_improve": "In interviews, narrate: invariant (“seen maps value->index for elements left of i”), complexity, and edge-case reasoning (duplicates, negatives) as you code."
+    },
+    {
+      "name": "Complexity & Optimization",
+      "score": 9.3,
+      "label": "strong",
+      "what_went_well": "Meets expected complexity: O(n) time and O(n) space with a hash map—appropriate for 1e5 elements.",
+      "what_to_improve": "Call out that hash lookups are average O(1) and that sorting-based approaches would be O(n log n) and risk losing original indices unless carefully tracked."
+    },
+    {
+      "name": "Code Quality",
+      "score": 8.5,
+      "label": "strong",
+      "what_went_well": "Concise, readable, and idiomatic Python. Correct placement of `seen[n] = i` after the complement check is a key quality detail.",
+      "what_to_improve": "If asked for production-quality, consider type hints and a brief docstring; also consider whether to return a tuple vs list depending on interface expectations."
+    },
+    {
+      "name": "Independence",
+      "score": 7,
+      "label": "adequate",
+      "hints_used": 1,
+      "what_went_well": "You converged on the correct data-structure-driven solution with only a single general hint.",
+      "what_to_improve": "Try to proactively identify the needed DS from constraints (n up to 1e5 suggests avoiding quadratic) before prompting/hints."
+    }
+  ],
+  "thinking_and_logic": "You used a one-pass scan maintaining a hash map from previously seen number to its index. For each number n at index i, you computed complement = target - n and checked whether it was already seen; if so, you returned the prior index and i. This directly addresses the 'exactly one answer' contract and avoids using the same element twice by checking before inserting the current element.",
+  "code_assessment": "The implementation is the canonical, correct Two Sum solution. It correctly handles duplicates (e.g., target=6 with nums=[3,3] returns [0,1]) due to the check-then-insert order. The function is straightforward, runs in linear time on large inputs, and is robust under negative/large values due to Python integer handling.",
+  "next_steps": [
+    {
+      "action": "Practice explaining invariants and edge cases out loud while coding",
+      "why": "Two Sum is often used to assess not just the solution but clarity of reasoning (why it avoids reusing the same element; how duplicates are handled).",
+      "how": "Before typing, state: (1) map meaning, (2) loop invariant, (3) why check-before-insert matters; then do a 20-second walkthrough on an example with duplicates."
+    },
+    {
+      "action": "Drill adjacent 'hash map in one pass' patterns",
+      "why": "This transfers directly to many interview variants beyond Two Sum.",
+      "how": "Solve: Two Sum II (sorted), 3Sum (dedup + two pointers), Subarray Sum Equals K (prefix sums + counts), and Contains Duplicate / Longest Consecutive Sequence."
+    }
+  ],
+  "patterns_to_study": [
+    "one-pass hash map lookup",
+    "complement/pairing pattern",
+    "reasoning about duplicates and index reuse",
+    "complexity selection from constraints"
+  ],
+  "encouragement": "This is a clean, correct baseline—focus next on making your reasoning and invariants explicit so the interviewer hears the correctness proof, not just sees it in the code.",
+  "transcript": [],
+  "audio": null,
+  "callDurationSecs": null
+}
