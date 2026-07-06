@@ -1,0 +1,85 @@
+{
+  "id": "partial-edge-fail",
+  "description": "Partially solved: working brute-force solution, fails the empty-input edge case (1 visible fail) and one hidden performance case. Good communication, 1 general hint. Grader must not claim all tests passed.",
+  "expectations": {
+    "outcome": ["partially_solved"],
+    "bands": {
+      "Correctness & Completeness": [4, 8],
+      "Complexity & Optimization": [0, 7]
+    }
+  },
+  "ordering": [
+    { "dimension": "Correctness & Completeness", "mustBeat": "not-solved-silent" }
+  ],
+  "payload": {
+    "conversation_id": null,
+    "call_duration_secs": 1920,
+    "execution_summary": {
+      "sessionId": "fixture-partial-edge-fail",
+      "conversationId": null,
+      "questionId": "two-sum",
+      "questionTitle": "Two Sum",
+      "difficulty": "easy",
+      "language": "python",
+      "code": "def solve(nums, target):\n    for i in range(len(nums)):\n        for j in range(i + 1, len(nums)):\n            if nums[i] + nums[j] == target:\n                return [i, j]\n    raise ValueError('no solution')",
+      "results": {
+        "success": false,
+        "visibleTests": {
+          "passed": 5,
+          "total": 6,
+          "details": [
+            { "testNumber": 1, "name": "basic pair", "tags": ["basic"], "passed": true, "expected": "[0,1]", "actual": "[0,1]", "error": null },
+            { "testNumber": 2, "name": "pair at end", "tags": ["basic"], "passed": true, "expected": "[2,4]", "actual": "[2,4]", "error": null },
+            { "testNumber": 3, "name": "duplicates", "tags": ["edge"], "passed": true, "expected": "[0,1]", "actual": "[0,1]", "error": null },
+            { "testNumber": 4, "name": "negative numbers", "tags": ["edge"], "passed": true, "expected": "[1,3]", "actual": "[1,3]", "error": null },
+            { "testNumber": 5, "name": "empty input", "tags": ["edge"], "passed": false, "expected": "[]", "actual": null, "error": "ValueError: no solution" },
+            { "testNumber": 6, "name": "two elements", "tags": ["basic"], "passed": true, "expected": "[0,1]", "actual": "[0,1]", "error": null }
+          ]
+        },
+        "hiddenTests": { "passed": 3, "total": 4 },
+        "error": null,
+        "details": null
+      },
+      "completed": true,
+      "reachedPhase": 4,
+      "timeTakenSeconds": 1920,
+      "timeTakenMinutes": 32,
+      "timeBudgetMinutes": 35,
+      "hintCount": 1,
+      "hintLog": [
+        { "phase": 3, "depth": "general", "topic": "consider unusual inputs before declaring done" }
+      ],
+      "questionSnapshot": { "id": "two-sum", "title": "Two Sum", "difficulty": "easy" },
+      "question": {
+        "constraints": "2 <= nums.length <= 10^5; -10^9 <= nums[i] <= 10^9; exactly one valid answer exists.",
+        "solutions": {
+          "brute_force": { "approach": "Nested loops over all pairs", "time": "O(n^2)", "space": "O(1)" },
+          "optimal": { "approach": "Single pass with a hash map of seen values -> index; check complement before inserting", "time": "O(n)", "space": "O(n)" }
+        },
+        "common_mistakes": [
+          "Using the same element twice",
+          "Raising instead of returning an empty result on no-solution/empty input",
+          "Staying at O(n^2) when O(n) is expected for large inputs"
+        ],
+        "follow_ups": [
+          { "variant": "What if the array is sorted?", "angle": "Two pointers, O(n) time O(1) space" }
+        ],
+        "pattern_tags": ["hash map", "array"]
+      }
+    },
+    "transcript": [
+      { "role": "agent", "text": "Here's the problem: given an array of integers and a target, return the indices of the two numbers that add up to the target.", "timestart": 5 },
+      { "role": "user", "text": "Let me restate: I need two distinct indices whose values sum to the target. I'll start with the straightforward approach — check every pair with two loops — and optimize if there's time.", "timestart": 50 },
+      { "role": "agent", "text": "Go ahead.", "timestart": 80 },
+      { "role": "user", "text": "Writing the nested loops now. Outer loop i, inner loop from i plus one so I don't reuse the same element.", "timestart": 200 },
+      { "role": "user", "text": "Okay, it works on the example. Running the visible tests.", "timestart": 900 },
+      { "role": "agent", "text": "Before you finish — consider whether there are any unusual inputs worth checking.", "timestart": 1100 },
+      { "role": "user", "text": "Unusual inputs... duplicates should be fine since I use indices. I think I'm good, submitting.", "timestart": 1200 },
+      { "role": "agent", "text": "One of the visible tests failed — the empty input case. You raised an error instead of returning an empty list.", "timestart": 1400 },
+      { "role": "user", "text": "Ah, I see. I assumed there's always a solution because of the constraints, so I raised. I'd need a guard for empty or no-solution inputs.", "timestart": 1500 },
+      { "role": "agent", "text": "What's the complexity of your solution?", "timestart": 1700 },
+      { "role": "user", "text": "Two nested loops, so O(n squared) time and constant space. I know a hash map would make it O(n) but I didn't get to it.", "timestart": 1750 },
+      { "role": "agent", "text": "Understood. Let's wrap up.", "timestart": 1900 }
+    ]
+  }
+}

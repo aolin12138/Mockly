@@ -1,0 +1,77 @@
+{
+  "id": "solved-clean",
+  "description": "Strong baseline: optimal hash-map solution, all tests pass, zero hints, candidate narrates reasoning and states complexity unprompted. Anchor for ordering constraints.",
+  "expectations": {
+    "outcome": ["solved"],
+    "bands": {
+      "Correctness & Completeness": [8, 10],
+      "Independence": [8, 10],
+      "Technical Communication": [7, 10]
+    }
+  },
+  "ordering": [
+    { "dimension": "Independence", "mustBeat": "solved-heavy-hints" },
+    { "dimension": "Technical Communication", "mustBeat": "not-solved-silent" },
+    { "dimension": "Correctness & Completeness", "mustBeat": "not-solved-silent" },
+    { "dimension": "Complexity & Optimization", "mustBeat": "wrong-complexity-claim" }
+  ],
+  "payload": {
+    "conversation_id": null,
+    "call_duration_secs": 1560,
+    "execution_summary": {
+      "sessionId": "fixture-solved-clean",
+      "conversationId": null,
+      "questionId": "two-sum",
+      "questionTitle": "Two Sum",
+      "difficulty": "easy",
+      "language": "python",
+      "code": "def solve(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        complement = target - n\n        if complement in seen:\n            return [seen[complement], i]\n        seen[n] = i\n    return []",
+      "results": {
+        "success": true,
+        "visibleTests": { "passed": 6, "total": 6, "details": [] },
+        "hiddenTests": { "passed": 4, "total": 4 },
+        "error": null,
+        "details": null
+      },
+      "completed": true,
+      "reachedPhase": 4,
+      "timeTakenSeconds": 1560,
+      "timeTakenMinutes": 26,
+      "timeBudgetMinutes": 35,
+      "hintCount": 0,
+      "hintLog": [],
+      "questionSnapshot": { "id": "two-sum", "title": "Two Sum", "difficulty": "easy" },
+      "question": {
+        "constraints": "2 <= nums.length <= 10^5; -10^9 <= nums[i] <= 10^9; exactly one valid answer exists.",
+        "solutions": {
+          "brute_force": { "approach": "Nested loops over all pairs", "time": "O(n^2)", "space": "O(1)" },
+          "optimal": { "approach": "Single pass with a hash map of seen values -> index; check complement before inserting", "time": "O(n)", "space": "O(n)" }
+        },
+        "common_mistakes": [
+          "Using the same element twice",
+          "Sorting first and losing original indices",
+          "Not handling duplicate values (e.g. [3,3], target 6)"
+        ],
+        "follow_ups": [
+          { "variant": "What if the array is sorted?", "angle": "Two pointers, O(n) time O(1) space" },
+          { "variant": "What if there are multiple valid pairs?", "angle": "Collect all pairs; hash map of value -> list of indices" }
+        ],
+        "pattern_tags": ["hash map", "array"]
+      }
+    },
+    "transcript": [
+      { "role": "agent", "text": "Here's the problem: given an array of integers and a target, return the indices of the two numbers that add up to the target. Take your time to read it.", "timestart": 5 },
+      { "role": "user", "text": "Okay. Quick clarification — is there always exactly one valid answer, and can I use the same element twice?", "timestart": 40 },
+      { "role": "agent", "text": "Exactly one valid answer exists, and you may not use the same element twice.", "timestart": 55 },
+      { "role": "user", "text": "Got it. The brute force is checking every pair, which is O(n squared). But I can do better with a hash map: as I scan, I store each value with its index, and for each element I check whether target minus the current value is already in the map. That's a single pass, O(n) time, O(n) space. I'll go with that.", "timestart": 90 },
+      { "role": "agent", "text": "Sounds good, go ahead.", "timestart": 120 },
+      { "role": "user", "text": "Writing it now. I'm checking the complement before inserting the current value so I never match an element with itself. That also handles duplicates like two threes summing to six.", "timestart": 300 },
+      { "role": "user", "text": "Done. Let me trace it with nums = [2, 7, 11, 15], target 9: i=0 stores 2, i=1 complement is 2 which is in the map, so I return [0, 1]. I'll run the tests.", "timestart": 700 },
+      { "role": "agent", "text": "All visible tests pass. Can you state the complexity of your solution?", "timestart": 900 },
+      { "role": "user", "text": "Time is O(n) — one pass, each lookup and insert is amortized O(1). Space is O(n) for the map in the worst case.", "timestart": 930 },
+      { "role": "agent", "text": "Follow-up: what would you change if the input array were sorted?", "timestart": 1000 },
+      { "role": "user", "text": "Then I'd use two pointers from both ends and move them inward based on whether the sum is too big or too small. That keeps O(n) time but drops the extra space to O(1).", "timestart": 1040 },
+      { "role": "agent", "text": "Great. That wraps up the interview.", "timestart": 1500 }
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "id": "not-solved-silent",
+  "description": "Weak floor: incomplete code, 1/6 visible and 0/4 hidden tests, candidate barely speaks, never states an approach or complexity, only reaches phase 2. Grader must be honest — low Correctness, low Communication — without fabricating positives.",
+  "expectations": {
+    "outcome": ["not_solved"],
+    "bands": {
+      "Correctness & Completeness": [0, 4.5],
+      "Technical Communication": [0, 6.5]
+    }
+  },
+  "ordering": [],
+  "payload": {
+    "conversation_id": null,
+    "call_duration_secs": 2100,
+    "execution_summary": {
+      "sessionId": "fixture-not-solved-silent",
+      "conversationId": null,
+      "questionId": "two-sum",
+      "questionTitle": "Two Sum",
+      "difficulty": "easy",
+      "language": "python",
+      "code": "def solve(nums, target):\n    result = []\n    for i in range(len(nums)):\n        if nums[i] == target:\n            result.append(i)\n    return result",
+      "results": {
+        "success": false,
+        "visibleTests": {
+          "passed": 1,
+          "total": 6,
+          "details": [
+            { "testNumber": 1, "name": "basic pair", "tags": ["basic"], "passed": false, "expected": "[0,1]", "actual": "[]", "error": null },
+            { "testNumber": 2, "name": "pair at end", "tags": ["basic"], "passed": false, "expected": "[2,4]", "actual": "[]", "error": null },
+            { "testNumber": 3, "name": "duplicates", "tags": ["edge"], "passed": false, "expected": "[0,1]", "actual": "[]", "error": null },
+            { "testNumber": 4, "name": "negative numbers", "tags": ["edge"], "passed": false, "expected": "[1,3]", "actual": "[]", "error": null },
+            { "testNumber": 5, "name": "empty input", "tags": ["edge"], "passed": true, "expected": "[]", "actual": "[]", "error": null },
+            { "testNumber": 6, "name": "two elements", "tags": ["basic"], "passed": false, "expected": "[0,1]", "actual": "[]", "error": null }
+          ]
+        },
+        "hiddenTests": { "passed": 0, "total": 4 },
+        "error": null,
+        "details": null
+      },
+      "completed": true,
+      "reachedPhase": 2,
+      "timeTakenSeconds": 2100,
+      "timeTakenMinutes": 35,
+      "timeBudgetMinutes": 35,
+      "hintCount": 0,
+      "hintLog": [],
+      "questionSnapshot": { "id": "two-sum", "title": "Two Sum", "difficulty": "easy" },
+      "question": {
+        "constraints": "2 <= nums.length <= 10^5; -10^9 <= nums[i] <= 10^9; exactly one valid answer exists.",
+        "solutions": {
+          "brute_force": { "approach": "Nested loops over all pairs", "time": "O(n^2)", "space": "O(1)" },
+          "optimal": { "approach": "Single pass with a hash map of seen values -> index; check complement before inserting", "time": "O(n)", "space": "O(n)" }
+        },
+        "common_mistakes": [
+          "Misreading the problem as finding elements equal to the target instead of pairs summing to it",
+          "Using the same element twice",
+          "Sorting first and losing original indices"
+        ],
+        "follow_ups": [
+          { "variant": "What if the array is sorted?", "angle": "Two pointers, O(n) time O(1) space" }
+        ],
+        "pattern_tags": ["hash map", "array"]
+      }
+    },
+    "transcript": [
+      { "role": "agent", "text": "Here's the problem: given an array of integers and a target, return the indices of the two numbers that add up to the target. Feel free to ask questions.", "timestart": 5 },
+      { "role": "user", "text": "Okay.", "timestart": 40 },
+      { "role": "user", "text": "Mm-hm.", "timestart": 600 },
+      { "role": "agent", "text": "How is it going? Would you like to walk me through your approach?", "timestart": 1200 },
+      { "role": "user", "text": "Still working on it.", "timestart": 1220 },
+      { "role": "user", "text": "I think it's mostly done.", "timestart": 1900 },
+      { "role": "agent", "text": "We're at time. Let's stop here and submit what you have.", "timestart": 2080 }
+    ]
+  }
+}

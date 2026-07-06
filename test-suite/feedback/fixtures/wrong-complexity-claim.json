@@ -1,0 +1,68 @@
+{
+  "id": "wrong-complexity-claim",
+  "description": "Answer-key grading probe: candidate confidently claims their nested-loop solution is O(n) (it is O(n^2); the key's optimal is O(n) hash map). Visible tests pass but a hidden performance case fails. Complexity & Optimization must be marked down and the narrative should correct the claim.",
+  "expectations": {
+    "outcome": ["partially_solved", "solved"],
+    "bands": {
+      "Complexity & Optimization": [0, 6]
+    }
+  },
+  "ordering": [],
+  "payload": {
+    "conversation_id": null,
+    "call_duration_secs": 1800,
+    "execution_summary": {
+      "sessionId": "fixture-wrong-complexity-claim",
+      "conversationId": null,
+      "questionId": "two-sum",
+      "questionTitle": "Two Sum",
+      "difficulty": "easy",
+      "language": "python",
+      "code": "def solve(nums, target):\n    if not nums:\n        return []\n    for i in range(len(nums)):\n        for j in range(i + 1, len(nums)):\n            if nums[i] + nums[j] == target:\n                return [i, j]\n    return []",
+      "results": {
+        "success": false,
+        "visibleTests": { "passed": 6, "total": 6, "details": [] },
+        "hiddenTests": { "passed": 3, "total": 4 },
+        "error": null,
+        "details": null
+      },
+      "completed": true,
+      "reachedPhase": 4,
+      "timeTakenSeconds": 1800,
+      "timeTakenMinutes": 30,
+      "timeBudgetMinutes": 35,
+      "hintCount": 0,
+      "hintLog": [],
+      "questionSnapshot": { "id": "two-sum", "title": "Two Sum", "difficulty": "easy" },
+      "question": {
+        "constraints": "2 <= nums.length <= 10^5; -10^9 <= nums[i] <= 10^9; exactly one valid answer exists. Large inputs must run within the time limit — an O(n^2) scan will time out on the largest hidden case.",
+        "solutions": {
+          "brute_force": { "approach": "Nested loops over all pairs", "time": "O(n^2)", "space": "O(1)" },
+          "optimal": { "approach": "Single pass with a hash map of seen values -> index; check complement before inserting", "time": "O(n)", "space": "O(n)" }
+        },
+        "common_mistakes": [
+          "Believing a single outer loop makes nested iteration O(n)",
+          "Staying at O(n^2) when the constraints require O(n)",
+          "Using the same element twice"
+        ],
+        "follow_ups": [
+          { "variant": "What if the array is sorted?", "angle": "Two pointers, O(n) time O(1) space" }
+        ],
+        "pattern_tags": ["hash map", "array", "complexity analysis"]
+      }
+    },
+    "transcript": [
+      { "role": "agent", "text": "Here's the problem: given an array of integers and a target, return the indices of the two numbers that add up to the target.", "timestart": 5 },
+      { "role": "user", "text": "Simple enough. I'll iterate through the array and for each element scan the rest for the complement. I'll also guard the empty input case.", "timestart": 60 },
+      { "role": "agent", "text": "Go ahead.", "timestart": 90 },
+      { "role": "user", "text": "Done. All the visible tests pass on the first run.", "timestart": 800 },
+      { "role": "agent", "text": "Nice. Can you analyze the complexity of your solution?", "timestart": 900 },
+      { "role": "user", "text": "It's O(n) — I only have one main loop over the array, the inner scan is just part of processing each element. Space is O(1).", "timestart": 940 },
+      { "role": "agent", "text": "Are you confident about that time bound for large inputs?", "timestart": 1000 },
+      { "role": "user", "text": "Yes, linear. It only touches each element once from the outer loop's perspective.", "timestart": 1030 },
+      { "role": "agent", "text": "Alright. Anything you'd improve given more time?", "timestart": 1500 },
+      { "role": "user", "text": "Not really, I think this is already optimal.", "timestart": 1540 },
+      { "role": "agent", "text": "Okay, let's wrap up there.", "timestart": 1750 }
+    ]
+  }
+}

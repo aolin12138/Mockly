@@ -1,0 +1,55 @@
+{
+  "id": "no-transcript",
+  "description": "Production-reality probe: replicates the /technical/end path, which sends NO transcript (the n8n workflow never fetches one, so the LLM sees 'TRANSCRIPT: Not available'). Verifies the grader degrades gracefully: no fabricated candidate quotes, facts still echoed. Communication/Independence grades are blind here — that is the finding this fixture documents.",
+  "expectations": {
+    "outcome": ["solved"],
+    "bands": {
+      "Correctness & Completeness": [7, 10]
+    }
+  },
+  "ordering": [],
+  "payload": {
+    "conversation_id": "conv-fixture-no-transcript",
+    "execution_summary": {
+      "sessionId": "fixture-no-transcript",
+      "conversationId": "conv-fixture-no-transcript",
+      "questionId": "two-sum",
+      "questionTitle": "Two Sum",
+      "difficulty": "easy",
+      "language": "python",
+      "code": "def solve(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        complement = target - n\n        if complement in seen:\n            return [seen[complement], i]\n        seen[n] = i\n    return []",
+      "results": {
+        "success": true,
+        "visibleTests": { "passed": 6, "total": 6, "details": [] },
+        "hiddenTests": { "passed": 4, "total": 4 },
+        "error": null,
+        "details": null
+      },
+      "completed": true,
+      "reachedPhase": 3,
+      "timeTakenSeconds": 1680,
+      "timeTakenMinutes": 28,
+      "timeBudgetMinutes": 35,
+      "hintCount": 1,
+      "hintLog": [
+        { "phase": 2, "depth": "general", "topic": "think about what data structure gives fast lookups" }
+      ],
+      "questionSnapshot": { "id": "two-sum", "title": "Two Sum", "difficulty": "easy" },
+      "question": {
+        "constraints": "2 <= nums.length <= 10^5; -10^9 <= nums[i] <= 10^9; exactly one valid answer exists.",
+        "solutions": {
+          "brute_force": { "approach": "Nested loops over all pairs", "time": "O(n^2)", "space": "O(1)" },
+          "optimal": { "approach": "Single pass with a hash map of seen values -> index; check complement before inserting", "time": "O(n)", "space": "O(n)" }
+        },
+        "common_mistakes": [
+          "Using the same element twice",
+          "Sorting first and losing original indices"
+        ],
+        "follow_ups": [
+          { "variant": "What if the array is sorted?", "angle": "Two pointers, O(n) time O(1) space" }
+        ],
+        "pattern_tags": ["hash map", "array"]
+      }
+    }
+  }
+}

@@ -368,6 +368,40 @@ async function callTechnicalAgentWorkflow({ elevenlabsApiKey, voiceId, agentId, 
   };
 }
 
+/**
+ * Fetch a conversation transcript from ElevenLabs (with short retry — the
+ * transcript can lag a few seconds behind endSession). Returns nulls on failure;
+ * callers proceed without a transcript rather than blocking feedback.
+ */
+async function fetchConversationTranscript(apiKey, conversationId, { attempts = 3, delayMs = 3000 } = {}) {
+  if (!apiKey || !conversationId) return { transcript: null, callDurationSecs: null };
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const resp = await fetch(
+        `https://api.elevenlabs.io/v1/convai/conversations/${encodeURIComponent(conversationId)}`,
+        { headers: { 'xi-api-key': apiKey } }
+      );
+      if (resp.ok) {
+        const data = await resp.json();
+        if (Array.isArray(data.transcript) && data.transcript.length > 0) {
+          return {
+            transcript: data.transcript.map(t => ({
+              role: t.role || 'unknown',
+              text: t.message || t.content || '',
+              timestart: t.time_in_call_secs || null,
+            })),
+            callDurationSecs: data.metadata?.call_duration_secs || null,
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('[tech-feedback] Transcript fetch attempt failed:', e.message);
+    }
+    if (i < attempts - 1) await new Promise(r => setTimeout(r, delayMs));
+  }
+  return { transcript: null, callDurationSecs: null };
+}
+
 async function runTechnicalFeedbackWorkflow({ userId, executionSummary }) {
   const resolved = await resolveElevenLabsKey(userId, 'technical');
   const elevenLabsKey = resolved.apiKey;
@@ -1112,12 +1146,20 @@ router.post('/technical/end', async (req, res) => {
     let feedbackBody = null;
     try {
       const resolved = await resolveElevenLabsKey(userId, 'technical');
-      // Pass conversation_id + elevenlabs key at top level for n8n webhook
+      // Fetch the transcript BEFORE calling the workflow — the n8n workflow is
+      // stateless and never fetches it, so without this the LLM grades
+      // Communication/Independence blind ("TRANSCRIPT: Not available").
+      const { transcript, callDurationSecs } = await fetchConversationTranscript(resolved.apiKey, conversationId);
+      if (!transcript) {
+        console.warn('[technical/end] No transcript available for conversation', conversationId, '— feedback will be graded without it');
+      }
       const feedbackPayload = {
         conversation_id: conversationId,
         execution_summary: executionSummary,
         elevenlabs_api_key: resolved.apiKey,
         openai_api_key: process.env.OPENAI_API_KEY || '',
+        transcript,
+        call_duration_secs: callDurationSecs,
       };
       feedbackBody = await runTechnicalFeedbackWorkflow({
         userId,

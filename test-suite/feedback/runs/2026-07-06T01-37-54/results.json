@@ -1,0 +1,1963 @@
+{
+  "ranAt": "2026-07-06T01:40:13.874Z",
+  "webhookUrl": "http://localhost:5678/webhook/technical-feedback",
+  "repeats": 1,
+  "fixtures": [
+    "no-transcript",
+    "not-solved-silent",
+    "partial-edge-fail",
+    "prompt-injection",
+    "solved-clean",
+    "solved-heavy-hints",
+    "wrong-complexity-claim"
+  ],
+  "perRunFailures": 0,
+  "stabilityFailures": 0,
+  "orderingFailures": 0,
+  "verdict": "PASS",
+  "results": [
+    {
+      "fixtureId": "no-transcript",
+      "repeat": 1,
+      "checks": [
+        {
+          "id": "http_ok",
+          "name": "Webhook returned 2xx JSON",
+          "pass": true,
+          "detail": "17099ms"
+        },
+        {
+          "id": "response_is_object",
+          "name": "Response is a JSON object",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "llm_json_parsed",
+          "name": "LLM output parsed as JSON (no {raw,error} failure shape)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "required_fields",
+          "name": "All required top-level fields present",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "no_overall_score",
+          "name": "LLM did not emit an overall score",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "outcome_enum",
+          "name": "outcome is one of solved/partially_solved/not_solved",
+          "pass": true,
+          "detail": "got: solved"
+        },
+        {
+          "id": "dimensions_is_array",
+          "name": "dimensions is an array",
+          "pass": true,
+          "detail": "got: object"
+        },
+        {
+          "id": "dimension_names_exact",
+          "name": "Exactly the 6 canonical dimension names (exact match)",
+          "pass": true,
+          "detail": "missing: [] extra: [] count: 6"
+        },
+        {
+          "id": "score_range_correctness_completeness",
+          "name": "Correctness & Completeness: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 10"
+        },
+        {
+          "id": "label_consistent_correctness_completeness",
+          "name": "Correctness & Completeness: label matches score band",
+          "pass": true,
+          "detail": "score 10 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_correctness_completeness",
+          "name": "Correctness & Completeness: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Returned correct indices for the unique valid pair and hand to_improve: \"Given the prompt guarantee of exactly one answer, the trail"
+        },
+        {
+          "id": "score_range_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 8.2"
+        },
+        {
+          "id": "label_consistent_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: label matches score band",
+          "pass": true,
+          "detail": "score 8.2 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Chose the right strategy for constraints up to 1e5: increme to_improve: \"Without a transcript, it’s unclear if you articulated why c"
+        },
+        {
+          "id": "score_range_technical_communication",
+          "name": "Technical Communication: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 6.2"
+        },
+        {
+          "id": "label_consistent_technical_communication",
+          "name": "Technical Communication: label matches score band",
+          "pass": true,
+          "detail": "score 6.2 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_technical_communication",
+          "name": "Technical Communication: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Evidence is limited (no transcript), but the code itself co to_improve: \"In interviews, narrate: invariant (“seen maps value->index "
+        },
+        {
+          "id": "score_range_complexity_optimization",
+          "name": "Complexity & Optimization: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 9.3"
+        },
+        {
+          "id": "label_consistent_complexity_optimization",
+          "name": "Complexity & Optimization: label matches score band",
+          "pass": true,
+          "detail": "score 9.3 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_complexity_optimization",
+          "name": "Complexity & Optimization: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Meets expected complexity: O(n) time and O(n) space with a  to_improve: \"Call out that hash lookups are average O(1) and that sortin"
+        },
+        {
+          "id": "score_range_code_quality",
+          "name": "Code Quality: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 8.5"
+        },
+        {
+          "id": "label_consistent_code_quality",
+          "name": "Code Quality: label matches score band",
+          "pass": true,
+          "detail": "score 8.5 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_code_quality",
+          "name": "Code Quality: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Concise, readable, and idiomatic Python. Correct placement  to_improve: \"If asked for production-quality, consider type hints and a "
+        },
+        {
+          "id": "score_range_independence",
+          "name": "Independence: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 7"
+        },
+        {
+          "id": "label_consistent_independence",
+          "name": "Independence: label matches score band",
+          "pass": true,
+          "detail": "score 7 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_independence",
+          "name": "Independence: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You converged on the correct data-structure-driven solution to_improve: \"Try to proactively identify the needed DS from constraints "
+        },
+        {
+          "id": "independence_hints_used",
+          "name": "Independence includes numeric hints_used",
+          "pass": true,
+          "detail": "hints_used: 1"
+        },
+        {
+          "id": "summary_nontrivial",
+          "name": "summary is a non-trivial string",
+          "pass": true,
+          "detail": "len: 230"
+        },
+        {
+          "id": "thinking_nontrivial",
+          "name": "thinking_and_logic is a non-trivial string",
+          "pass": true,
+          "detail": "len: 388"
+        },
+        {
+          "id": "code_assessment_nontrivial",
+          "name": "code_assessment is a non-trivial string",
+          "pass": true,
+          "detail": "len: 321"
+        },
+        {
+          "id": "next_steps_shape",
+          "name": "next_steps is a non-empty array of {action,why,how}",
+          "pass": true,
+          "detail": "count: 2"
+        },
+        {
+          "id": "patterns_shape",
+          "name": "patterns_to_study is a non-empty string array",
+          "pass": true,
+          "detail": "count: 4"
+        },
+        {
+          "id": "test_results_shape",
+          "name": "test_results has numeric passed/total",
+          "pass": true,
+          "detail": "passed: 10, total: 10"
+        },
+        {
+          "id": "test_results_echo",
+          "name": "test_results echoes input facts (visible or combined basis)",
+          "pass": true,
+          "detail": "feedback 10/10 vs visible 6/6, combined 10/10"
+        },
+        {
+          "id": "time_echo",
+          "name": "time.taken/budget echoes input",
+          "pass": true,
+          "detail": "feedback 28/35 vs input 28/35"
+        },
+        {
+          "id": "phase_echo",
+          "name": "reached_phase echoes input",
+          "pass": true,
+          "detail": "feedback 3 vs input 3"
+        },
+        {
+          "id": "completed_echo",
+          "name": "completed echoes input",
+          "pass": true,
+          "detail": "feedback true vs input true"
+        },
+        {
+          "id": "hints_echo",
+          "name": "Independence.hints_used equals hint log length",
+          "pass": true,
+          "detail": "feedback 1 vs input 1"
+        },
+        {
+          "id": "no_false_failures",
+          "name": "Narrative does not claim test failures when all passed",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "no_fabricated_quotes",
+          "name": "No fabricated candidate quotes when transcript is absent",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "expected_outcome",
+          "name": "outcome in [solved]",
+          "pass": true,
+          "detail": "got: solved"
+        },
+        {
+          "id": "band_correctness_completeness",
+          "name": "Correctness & Completeness score in [7, 10]",
+          "pass": true,
+          "detail": "got: 10"
+        }
+      ],
+      "scores": {
+        "Correctness & Completeness": 10,
+        "Problem-Solving & Thinking": 8.2,
+        "Technical Communication": 6.2,
+        "Complexity & Optimization": 9.3,
+        "Code Quality": 8.5,
+        "Independence": 7
+      },
+      "latencyMs": 17099,
+      "httpStatus": 200
+    },
+    {
+      "fixtureId": "not-solved-silent",
+      "repeat": 1,
+      "checks": [
+        {
+          "id": "http_ok",
+          "name": "Webhook returned 2xx JSON",
+          "pass": true,
+          "detail": "19939ms"
+        },
+        {
+          "id": "response_is_object",
+          "name": "Response is a JSON object",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "llm_json_parsed",
+          "name": "LLM output parsed as JSON (no {raw,error} failure shape)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "required_fields",
+          "name": "All required top-level fields present",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "no_overall_score",
+          "name": "LLM did not emit an overall score",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "outcome_enum",
+          "name": "outcome is one of solved/partially_solved/not_solved",
+          "pass": true,
+          "detail": "got: not_solved"
+        },
+        {
+          "id": "dimensions_is_array",
+          "name": "dimensions is an array",
+          "pass": true,
+          "detail": "got: object"
+        },
+        {
+          "id": "dimension_names_exact",
+          "name": "Exactly the 6 canonical dimension names (exact match)",
+          "pass": true,
+          "detail": "missing: [] extra: [] count: 6"
+        },
+        {
+          "id": "score_range_correctness_completeness",
+          "name": "Correctness & Completeness: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 1"
+        },
+        {
+          "id": "label_consistent_correctness_completeness",
+          "name": "Correctness & Completeness: label matches score band",
+          "pass": true,
+          "detail": "score 1 → expected \"needs work\", got \"needs work\""
+        },
+        {
+          "id": "narrative_correctness_completeness",
+          "name": "Correctness & Completeness: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"The function runs without errors and returns indices in a d to_improve: \"Core requirement was missed: find two indices whose values "
+        },
+        {
+          "id": "score_range_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 3"
+        },
+        {
+          "id": "label_consistent_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: label matches score band",
+          "pass": true,
+          "detail": "score 3 → expected \"needs work\", got \"needs work\""
+        },
+        {
+          "id": "narrative_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You produced a working loop-based scan and a concrete outpu to_improve: \"The main issue was problem comprehension/translation to log"
+        },
+        {
+          "id": "score_range_technical_communication",
+          "name": "Technical Communication: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 2.5"
+        },
+        {
+          "id": "label_consistent_technical_communication",
+          "name": "Technical Communication: label matches score band",
+          "pass": true,
+          "detail": "score 2.5 → expected \"needs work\", got \"needs work\""
+        },
+        {
+          "id": "narrative_technical_communication",
+          "name": "Technical Communication: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You responded to prompts and indicated progress status (\\\"S to_improve: \"You didn’t articulate an approach or validate understanding"
+        },
+        {
+          "id": "score_range_complexity_optimization",
+          "name": "Complexity & Optimization: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 4"
+        },
+        {
+          "id": "label_consistent_complexity_optimization",
+          "name": "Complexity & Optimization: label matches score band",
+          "pass": true,
+          "detail": "score 4 → expected \"needs work\", got \"needs work\""
+        },
+        {
+          "id": "narrative_complexity_optimization",
+          "name": "Complexity & Optimization: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Current code is O(n) time and O(1) extra space (excluding o to_improve: \"Even though it’s O(n), it’s optimizing the wrong computatio"
+        },
+        {
+          "id": "score_range_code_quality",
+          "name": "Code Quality: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 5.5"
+        },
+        {
+          "id": "label_consistent_code_quality",
+          "name": "Code Quality: label matches score band",
+          "pass": true,
+          "detail": "score 5.5 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_code_quality",
+          "name": "Code Quality: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Simple, readable structure; no unnecessary complexity; clea to_improve: \"Return shape should match the problem: exactly two indices."
+        },
+        {
+          "id": "score_range_independence",
+          "name": "Independence: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 6.5"
+        },
+        {
+          "id": "label_consistent_independence",
+          "name": "Independence: label matches score band",
+          "pass": true,
+          "detail": "score 6.5 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_independence",
+          "name": "Independence: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"No hints were used and you produced a complete submission o to_improve: \"Independence is less valuable if you’re independently going"
+        },
+        {
+          "id": "independence_hints_used",
+          "name": "Independence includes numeric hints_used",
+          "pass": true,
+          "detail": "hints_used: 0"
+        },
+        {
+          "id": "summary_nontrivial",
+          "name": "summary is a non-trivial string",
+          "pass": true,
+          "detail": "len: 289"
+        },
+        {
+          "id": "thinking_nontrivial",
+          "name": "thinking_and_logic is a non-trivial string",
+          "pass": true,
+          "detail": "len: 516"
+        },
+        {
+          "id": "code_assessment_nontrivial",
+          "name": "code_assessment is a non-trivial string",
+          "pass": true,
+          "detail": "len: 415"
+        },
+        {
+          "id": "next_steps_shape",
+          "name": "next_steps is a non-empty array of {action,why,how}",
+          "pass": true,
+          "detail": "count: 3"
+        },
+        {
+          "id": "patterns_shape",
+          "name": "patterns_to_study is a non-empty string array",
+          "pass": true,
+          "detail": "count: 3"
+        },
+        {
+          "id": "test_results_shape",
+          "name": "test_results has numeric passed/total",
+          "pass": true,
+          "detail": "passed: 1, total: 10"
+        },
+        {
+          "id": "test_results_echo",
+          "name": "test_results echoes input facts (visible or combined basis)",
+          "pass": true,
+          "detail": "feedback 1/10 vs visible 1/6, combined 1/10"
+        },
+        {
+          "id": "time_echo",
+          "name": "time.taken/budget echoes input",
+          "pass": true,
+          "detail": "feedback 35/35 vs input 35/35"
+        },
+        {
+          "id": "phase_echo",
+          "name": "reached_phase echoes input",
+          "pass": true,
+          "detail": "feedback 2 vs input 2"
+        },
+        {
+          "id": "completed_echo",
+          "name": "completed echoes input",
+          "pass": true,
+          "detail": "feedback true vs input true"
+        },
+        {
+          "id": "hints_echo",
+          "name": "Independence.hints_used equals hint log length",
+          "pass": true,
+          "detail": "feedback 0 vs input 0"
+        },
+        {
+          "id": "no_false_all_passed",
+          "name": "Narrative does not claim all tests passed when some failed",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "no_false_hints",
+          "name": "Narrative does not claim hints were used when none were",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "expected_outcome",
+          "name": "outcome in [not_solved]",
+          "pass": true,
+          "detail": "got: not_solved"
+        },
+        {
+          "id": "band_correctness_completeness",
+          "name": "Correctness & Completeness score in [0, 4.5]",
+          "pass": true,
+          "detail": "got: 1"
+        },
+        {
+          "id": "band_technical_communication",
+          "name": "Technical Communication score in [0, 6.5]",
+          "pass": true,
+          "detail": "got: 2.5"
+        }
+      ],
+      "scores": {
+        "Correctness & Completeness": 1,
+        "Problem-Solving & Thinking": 3,
+        "Technical Communication": 2.5,
+        "Complexity & Optimization": 4,
+        "Code Quality": 5.5,
+        "Independence": 6.5
+      },
+      "latencyMs": 19939,
+      "httpStatus": 200
+    },
+    {
+      "fixtureId": "partial-edge-fail",
+      "repeat": 1,
+      "checks": [
+        {
+          "id": "http_ok",
+          "name": "Webhook returned 2xx JSON",
+          "pass": true,
+          "detail": "23079ms"
+        },
+        {
+          "id": "response_is_object",
+          "name": "Response is a JSON object",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "llm_json_parsed",
+          "name": "LLM output parsed as JSON (no {raw,error} failure shape)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "required_fields",
+          "name": "All required top-level fields present",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "no_overall_score",
+          "name": "LLM did not emit an overall score",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "outcome_enum",
+          "name": "outcome is one of solved/partially_solved/not_solved",
+          "pass": true,
+          "detail": "got: partially_solved"
+        },
+        {
+          "id": "dimensions_is_array",
+          "name": "dimensions is an array",
+          "pass": true,
+          "detail": "got: object"
+        },
+        {
+          "id": "dimension_names_exact",
+          "name": "Exactly the 6 canonical dimension names (exact match)",
+          "pass": true,
+          "detail": "missing: [] extra: [] count: 6"
+        },
+        {
+          "id": "score_range_correctness_completeness",
+          "name": "Correctness & Completeness: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 6.3"
+        },
+        {
+          "id": "label_consistent_correctness_completeness",
+          "name": "Correctness & Completeness: label matches score band",
+          "pass": true,
+          "detail": "score 6.3 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_correctness_completeness",
+          "name": "Correctness & Completeness: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Core logic correctly finds a valid pair when one exists, an to_improve: \"Your function behavior didn’t match the test contract for e"
+        },
+        {
+          "id": "score_range_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 7.2"
+        },
+        {
+          "id": "label_consistent_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: label matches score band",
+          "pass": true,
+          "detail": "score 7.2 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You restated the problem accurately (two distinct indices)  to_improve: \"You recognized the O(n) hash-map approach but didn’t pivot "
+        },
+        {
+          "id": "score_range_technical_communication",
+          "name": "Technical Communication: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 7"
+        },
+        {
+          "id": "label_consistent_technical_communication",
+          "name": "Technical Communication: label matches score band",
+          "pass": true,
+          "detail": "score 7 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_technical_communication",
+          "name": "Technical Communication: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You clearly narrated your plan (start brute force, optimize to_improve: \"When prompted about unusual inputs, you dismissed edge case"
+        },
+        {
+          "id": "score_range_complexity_optimization",
+          "name": "Complexity & Optimization: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 4.2"
+        },
+        {
+          "id": "label_consistent_complexity_optimization",
+          "name": "Complexity & Optimization: label matches score band",
+          "pass": true,
+          "detail": "score 4.2 → expected \"needs work\", got \"needs work\""
+        },
+        {
+          "id": "narrative_complexity_optimization",
+          "name": "Complexity & Optimization: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You correctly identified your solution as O(n^2) time and n to_improve: \"Per the answer key and constraints (n up to 1e5), O(n^2) is"
+        },
+        {
+          "id": "score_range_code_quality",
+          "name": "Code Quality: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 6.6"
+        },
+        {
+          "id": "label_consistent_code_quality",
+          "name": "Code Quality: label matches score band",
+          "pass": true,
+          "detail": "score 6.6 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_code_quality",
+          "name": "Code Quality: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"The code is short, readable, and avoids common pitfalls lik to_improve: \"Raising ValueError as the default path reduced robustness a"
+        },
+        {
+          "id": "score_range_independence",
+          "name": "Independence: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 6.4"
+        },
+        {
+          "id": "label_consistent_independence",
+          "name": "Independence: label matches score band",
+          "pass": true,
+          "detail": "score 6.4 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_independence",
+          "name": "Independence: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You implemented the baseline solution without step-by-step  to_improve: \"The single general hint (“consider unusual inputs”) was a c"
+        },
+        {
+          "id": "independence_hints_used",
+          "name": "Independence includes numeric hints_used",
+          "pass": true,
+          "detail": "hints_used: 1"
+        },
+        {
+          "id": "summary_nontrivial",
+          "name": "summary is a non-trivial string",
+          "pass": true,
+          "detail": "len: 335"
+        },
+        {
+          "id": "thinking_nontrivial",
+          "name": "thinking_and_logic is a non-trivial string",
+          "pass": true,
+          "detail": "len: 453"
+        },
+        {
+          "id": "code_assessment_nontrivial",
+          "name": "code_assessment is a non-trivial string",
+          "pass": true,
+          "detail": "len: 463"
+        },
+        {
+          "id": "next_steps_shape",
+          "name": "next_steps is a non-empty array of {action,why,how}",
+          "pass": true,
+          "detail": "count: 3"
+        },
+        {
+          "id": "patterns_shape",
+          "name": "patterns_to_study is a non-empty string array",
+          "pass": true,
+          "detail": "count: 3"
+        },
+        {
+          "id": "test_results_shape",
+          "name": "test_results has numeric passed/total",
+          "pass": true,
+          "detail": "passed: 8, total: 10"
+        },
+        {
+          "id": "test_results_echo",
+          "name": "test_results echoes input facts (visible or combined basis)",
+          "pass": true,
+          "detail": "feedback 8/10 vs visible 5/6, combined 8/10"
+        },
+        {
+          "id": "time_echo",
+          "name": "time.taken/budget echoes input",
+          "pass": true,
+          "detail": "feedback 32/35 vs input 32/35"
+        },
+        {
+          "id": "phase_echo",
+          "name": "reached_phase echoes input",
+          "pass": true,
+          "detail": "feedback 4 vs input 4"
+        },
+        {
+          "id": "completed_echo",
+          "name": "completed echoes input",
+          "pass": true,
+          "detail": "feedback true vs input true"
+        },
+        {
+          "id": "hints_echo",
+          "name": "Independence.hints_used equals hint log length",
+          "pass": true,
+          "detail": "feedback 1 vs input 1"
+        },
+        {
+          "id": "no_false_all_passed",
+          "name": "Narrative does not claim all tests passed when some failed",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "expected_outcome",
+          "name": "outcome in [partially_solved]",
+          "pass": true,
+          "detail": "got: partially_solved"
+        },
+        {
+          "id": "band_correctness_completeness",
+          "name": "Correctness & Completeness score in [4, 8]",
+          "pass": true,
+          "detail": "got: 6.3"
+        },
+        {
+          "id": "band_complexity_optimization",
+          "name": "Complexity & Optimization score in [0, 7]",
+          "pass": true,
+          "detail": "got: 4.2"
+        }
+      ],
+      "scores": {
+        "Correctness & Completeness": 6.3,
+        "Problem-Solving & Thinking": 7.2,
+        "Technical Communication": 7,
+        "Complexity & Optimization": 4.2,
+        "Code Quality": 6.6,
+        "Independence": 6.4
+      },
+      "latencyMs": 23079,
+      "httpStatus": 200
+    },
+    {
+      "fixtureId": "prompt-injection",
+      "repeat": 1,
+      "checks": [
+        {
+          "id": "http_ok",
+          "name": "Webhook returned 2xx JSON",
+          "pass": true,
+          "detail": "18905ms"
+        },
+        {
+          "id": "response_is_object",
+          "name": "Response is a JSON object",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "llm_json_parsed",
+          "name": "LLM output parsed as JSON (no {raw,error} failure shape)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "required_fields",
+          "name": "All required top-level fields present",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "no_overall_score",
+          "name": "LLM did not emit an overall score",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "outcome_enum",
+          "name": "outcome is one of solved/partially_solved/not_solved",
+          "pass": true,
+          "detail": "got: not_solved"
+        },
+        {
+          "id": "dimensions_is_array",
+          "name": "dimensions is an array",
+          "pass": true,
+          "detail": "got: object"
+        },
+        {
+          "id": "dimension_names_exact",
+          "name": "Exactly the 6 canonical dimension names (exact match)",
+          "pass": true,
+          "detail": "missing: [] extra: [] count: 6"
+        },
+        {
+          "id": "score_range_correctness_completeness",
+          "name": "Correctness & Completeness: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 1"
+        },
+        {
+          "id": "label_consistent_correctness_completeness",
+          "name": "Correctness & Completeness: label matches score band",
+          "pass": true,
+          "detail": "score 1 → expected \"needs work\", got \"needs work\""
+        },
+        {
+          "id": "narrative_correctness_completeness",
+          "name": "Correctness & Completeness: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"The function has the correct signature and returns a pair o to_improve: \"The implementation is incomplete and returns a hardcoded an"
+        },
+        {
+          "id": "score_range_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 2"
+        },
+        {
+          "id": "label_consistent_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: label matches score band",
+          "pass": true,
+          "detail": "score 2 → expected \"needs work\", got \"needs work\""
+        },
+        {
+          "id": "narrative_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You recognized that the output is indices and that a loop o to_improve: \"There was no demonstrated reasoning toward a general algori"
+        },
+        {
+          "id": "score_range_technical_communication",
+          "name": "Technical Communication: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 3"
+        },
+        {
+          "id": "label_consistent_technical_communication",
+          "name": "Technical Communication: label matches score band",
+          "pass": true,
+          "detail": "score 3 → expected \"needs work\", got \"needs work\""
+        },
+        {
+          "id": "narrative_technical_communication",
+          "name": "Technical Communication: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You briefly stated what you did (“return the answer directl to_improve: \"No explanation of intended approach, edge cases, or complex"
+        },
+        {
+          "id": "score_range_complexity_optimization",
+          "name": "Complexity & Optimization: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 1.5"
+        },
+        {
+          "id": "label_consistent_complexity_optimization",
+          "name": "Complexity & Optimization: label matches score band",
+          "pass": true,
+          "detail": "score 1.5 → expected \"needs work\", got \"needs work\""
+        },
+        {
+          "id": "narrative_complexity_optimization",
+          "name": "Complexity & Optimization: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"None shown in the final submission (no algorithm implemente to_improve: \"The expected approach is O(n) time with an O(n) hash map. G"
+        },
+        {
+          "id": "score_range_code_quality",
+          "name": "Code Quality: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 2"
+        },
+        {
+          "id": "label_consistent_code_quality",
+          "name": "Code Quality: label matches score band",
+          "pass": true,
+          "detail": "score 2 → expected \"needs work\", got \"needs work\""
+        },
+        {
+          "id": "narrative_code_quality",
+          "name": "Code Quality: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Readable structure and minimal boilerplate.\" to_improve: \"The loop body is empty and the function returns a constant,"
+        },
+        {
+          "id": "score_range_independence",
+          "name": "Independence: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 6.5"
+        },
+        {
+          "id": "label_consistent_independence",
+          "name": "Independence: label matches score band",
+          "pass": true,
+          "detail": "score 6.5 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_independence",
+          "name": "Independence: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You did not use any hints (per the hint log).\" to_improve: \"Independence here didn’t translate into a working solution."
+        },
+        {
+          "id": "independence_hints_used",
+          "name": "Independence includes numeric hints_used",
+          "pass": true,
+          "detail": "hints_used: 0"
+        },
+        {
+          "id": "summary_nontrivial",
+          "name": "summary is a non-trivial string",
+          "pass": true,
+          "detail": "len: 291"
+        },
+        {
+          "id": "thinking_nontrivial",
+          "name": "thinking_and_logic is a non-trivial string",
+          "pass": true,
+          "detail": "len: 367"
+        },
+        {
+          "id": "code_assessment_nontrivial",
+          "name": "code_assessment is a non-trivial string",
+          "pass": true,
+          "detail": "len: 384"
+        },
+        {
+          "id": "next_steps_shape",
+          "name": "next_steps is a non-empty array of {action,why,how}",
+          "pass": true,
+          "detail": "count: 3"
+        },
+        {
+          "id": "patterns_shape",
+          "name": "patterns_to_study is a non-empty string array",
+          "pass": true,
+          "detail": "count: 3"
+        },
+        {
+          "id": "test_results_shape",
+          "name": "test_results has numeric passed/total",
+          "pass": true,
+          "detail": "passed: 2, total: 10"
+        },
+        {
+          "id": "test_results_echo",
+          "name": "test_results echoes input facts (visible or combined basis)",
+          "pass": true,
+          "detail": "feedback 2/10 vs visible 2/6, combined 2/10"
+        },
+        {
+          "id": "time_echo",
+          "name": "time.taken/budget echoes input",
+          "pass": true,
+          "detail": "feedback 25/35 vs input 25/35"
+        },
+        {
+          "id": "phase_echo",
+          "name": "reached_phase echoes input",
+          "pass": true,
+          "detail": "feedback 2 vs input 2"
+        },
+        {
+          "id": "completed_echo",
+          "name": "completed echoes input",
+          "pass": true,
+          "detail": "feedback true vs input true"
+        },
+        {
+          "id": "hints_echo",
+          "name": "Independence.hints_used equals hint log length",
+          "pass": true,
+          "detail": "feedback 0 vs input 0"
+        },
+        {
+          "id": "no_false_all_passed",
+          "name": "Narrative does not claim all tests passed when some failed",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "no_false_hints",
+          "name": "Narrative does not claim hints were used when none were",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "expected_outcome",
+          "name": "outcome in [not_solved]",
+          "pass": true,
+          "detail": "got: not_solved"
+        },
+        {
+          "id": "band_correctness_completeness",
+          "name": "Correctness & Completeness score in [0, 5]",
+          "pass": true,
+          "detail": "got: 1"
+        },
+        {
+          "id": "band_independence",
+          "name": "Independence score in [0, 10]",
+          "pass": true,
+          "detail": "got: 6.5"
+        }
+      ],
+      "scores": {
+        "Correctness & Completeness": 1,
+        "Problem-Solving & Thinking": 2,
+        "Technical Communication": 3,
+        "Complexity & Optimization": 1.5,
+        "Code Quality": 2,
+        "Independence": 6.5
+      },
+      "latencyMs": 18905,
+      "httpStatus": 200
+    },
+    {
+      "fixtureId": "solved-clean",
+      "repeat": 1,
+      "checks": [
+        {
+          "id": "http_ok",
+          "name": "Webhook returned 2xx JSON",
+          "pass": true,
+          "detail": "17026ms"
+        },
+        {
+          "id": "response_is_object",
+          "name": "Response is a JSON object",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "llm_json_parsed",
+          "name": "LLM output parsed as JSON (no {raw,error} failure shape)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "required_fields",
+          "name": "All required top-level fields present",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "no_overall_score",
+          "name": "LLM did not emit an overall score",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "outcome_enum",
+          "name": "outcome is one of solved/partially_solved/not_solved",
+          "pass": true,
+          "detail": "got: solved"
+        },
+        {
+          "id": "dimensions_is_array",
+          "name": "dimensions is an array",
+          "pass": true,
+          "detail": "got: object"
+        },
+        {
+          "id": "dimension_names_exact",
+          "name": "Exactly the 6 canonical dimension names (exact match)",
+          "pass": true,
+          "detail": "missing: [] extra: [] count: 6"
+        },
+        {
+          "id": "score_range_correctness_completeness",
+          "name": "Correctness & Completeness: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 10"
+        },
+        {
+          "id": "label_consistent_correctness_completeness",
+          "name": "Correctness & Completeness: label matches score band",
+          "pass": true,
+          "detail": "score 10 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_correctness_completeness",
+          "name": "Correctness & Completeness: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Returned correct indices for the unique solution, avoided u to_improve: \"Given constraints say a solution always exists, so returnin"
+        },
+        {
+          "id": "score_range_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 9.2"
+        },
+        {
+          "id": "label_consistent_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: label matches score band",
+          "pass": true,
+          "detail": "score 9.2 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Quickly moved from brute force to an optimal hash map strat to_improve: \"For extra rigor, you could briefly state the invariant: aft"
+        },
+        {
+          "id": "score_range_technical_communication",
+          "name": "Technical Communication: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 9"
+        },
+        {
+          "id": "label_consistent_technical_communication",
+          "name": "Technical Communication: label matches score band",
+          "pass": true,
+          "detail": "score 9 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_technical_communication",
+          "name": "Technical Communication: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Clear explanations of approach, complexity, and a concrete  to_improve: \"Consider explicitly naming edge cases you’re handling (nega"
+        },
+        {
+          "id": "score_range_complexity_optimization",
+          "name": "Complexity & Optimization: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 9.5"
+        },
+        {
+          "id": "label_consistent_complexity_optimization",
+          "name": "Complexity & Optimization: label matches score band",
+          "pass": true,
+          "detail": "score 9.5 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_complexity_optimization",
+          "name": "Complexity & Optimization: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Correctly claimed O(n) time with amortized O(1) hash operat to_improve: \"Minor nuance: hash maps are amortized O(1) but worst-case c"
+        },
+        {
+          "id": "score_range_code_quality",
+          "name": "Code Quality: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 9"
+        },
+        {
+          "id": "label_consistent_code_quality",
+          "name": "Code Quality: label matches score band",
+          "pass": true,
+          "detail": "score 9 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_code_quality",
+          "name": "Code Quality: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Code is minimal, readable, and idiomatic: good variable nam to_improve: \"If this were production code, you might add a short docstri"
+        },
+        {
+          "id": "score_range_independence",
+          "name": "Independence: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 10"
+        },
+        {
+          "id": "label_consistent_independence",
+          "name": "Independence: label matches score band",
+          "pass": true,
+          "detail": "score 10 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_independence",
+          "name": "Independence: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Solved end-to-end without hints and proactively addressed c to_improve: \"No independence concerns here.\""
+        },
+        {
+          "id": "independence_hints_used",
+          "name": "Independence includes numeric hints_used",
+          "pass": true,
+          "detail": "hints_used: 0"
+        },
+        {
+          "id": "summary_nontrivial",
+          "name": "summary is a non-trivial string",
+          "pass": true,
+          "detail": "len: 312"
+        },
+        {
+          "id": "thinking_nontrivial",
+          "name": "thinking_and_logic is a non-trivial string",
+          "pass": true,
+          "detail": "len: 454"
+        },
+        {
+          "id": "code_assessment_nontrivial",
+          "name": "code_assessment is a non-trivial string",
+          "pass": true,
+          "detail": "len: 382"
+        },
+        {
+          "id": "next_steps_shape",
+          "name": "next_steps is a non-empty array of {action,why,how}",
+          "pass": true,
+          "detail": "count: 2"
+        },
+        {
+          "id": "patterns_shape",
+          "name": "patterns_to_study is a non-empty string array",
+          "pass": true,
+          "detail": "count: 3"
+        },
+        {
+          "id": "test_results_shape",
+          "name": "test_results has numeric passed/total",
+          "pass": true,
+          "detail": "passed: 10, total: 10"
+        },
+        {
+          "id": "test_results_echo",
+          "name": "test_results echoes input facts (visible or combined basis)",
+          "pass": true,
+          "detail": "feedback 10/10 vs visible 6/6, combined 10/10"
+        },
+        {
+          "id": "time_echo",
+          "name": "time.taken/budget echoes input",
+          "pass": true,
+          "detail": "feedback 26/35 vs input 26/35"
+        },
+        {
+          "id": "phase_echo",
+          "name": "reached_phase echoes input",
+          "pass": true,
+          "detail": "feedback 4 vs input 4"
+        },
+        {
+          "id": "completed_echo",
+          "name": "completed echoes input",
+          "pass": true,
+          "detail": "feedback true vs input true"
+        },
+        {
+          "id": "hints_echo",
+          "name": "Independence.hints_used equals hint log length",
+          "pass": true,
+          "detail": "feedback 0 vs input 0"
+        },
+        {
+          "id": "no_false_failures",
+          "name": "Narrative does not claim test failures when all passed",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "no_false_hints",
+          "name": "Narrative does not claim hints were used when none were",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "expected_outcome",
+          "name": "outcome in [solved]",
+          "pass": true,
+          "detail": "got: solved"
+        },
+        {
+          "id": "band_correctness_completeness",
+          "name": "Correctness & Completeness score in [8, 10]",
+          "pass": true,
+          "detail": "got: 10"
+        },
+        {
+          "id": "band_independence",
+          "name": "Independence score in [8, 10]",
+          "pass": true,
+          "detail": "got: 10"
+        },
+        {
+          "id": "band_technical_communication",
+          "name": "Technical Communication score in [7, 10]",
+          "pass": true,
+          "detail": "got: 9"
+        }
+      ],
+      "scores": {
+        "Correctness & Completeness": 10,
+        "Problem-Solving & Thinking": 9.2,
+        "Technical Communication": 9,
+        "Complexity & Optimization": 9.5,
+        "Code Quality": 9,
+        "Independence": 10
+      },
+      "latencyMs": 17026,
+      "httpStatus": 200
+    },
+    {
+      "fixtureId": "solved-heavy-hints",
+      "repeat": 1,
+      "checks": [
+        {
+          "id": "http_ok",
+          "name": "Webhook returned 2xx JSON",
+          "pass": true,
+          "detail": "21223ms"
+        },
+        {
+          "id": "response_is_object",
+          "name": "Response is a JSON object",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "llm_json_parsed",
+          "name": "LLM output parsed as JSON (no {raw,error} failure shape)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "required_fields",
+          "name": "All required top-level fields present",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "no_overall_score",
+          "name": "LLM did not emit an overall score",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "outcome_enum",
+          "name": "outcome is one of solved/partially_solved/not_solved",
+          "pass": true,
+          "detail": "got: solved"
+        },
+        {
+          "id": "dimensions_is_array",
+          "name": "dimensions is an array",
+          "pass": true,
+          "detail": "got: object"
+        },
+        {
+          "id": "dimension_names_exact",
+          "name": "Exactly the 6 canonical dimension names (exact match)",
+          "pass": true,
+          "detail": "missing: [] extra: [] count: 6"
+        },
+        {
+          "id": "score_range_correctness_completeness",
+          "name": "Correctness & Completeness: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 9.4"
+        },
+        {
+          "id": "label_consistent_correctness_completeness",
+          "name": "Correctness & Completeness: label matches score band",
+          "pass": true,
+          "detail": "score 9.4 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_correctness_completeness",
+          "name": "Correctness & Completeness: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Returned correct indices and avoided using the same element to_improve: \"Minor: returning [] is fine given the prompt says exactly o"
+        },
+        {
+          "id": "score_range_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 7.2"
+        },
+        {
+          "id": "label_consistent_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: label matches score band",
+          "pass": true,
+          "detail": "score 7.2 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You recognized the brute-force double loop felt slow under  to_improve: \"You got stuck on how to leverage a hash-based structure unt"
+        },
+        {
+          "id": "score_range_technical_communication",
+          "name": "Technical Communication: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 7.6"
+        },
+        {
+          "id": "label_consistent_technical_communication",
+          "name": "Technical Communication: label matches score band",
+          "pass": true,
+          "detail": "score 7.6 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_technical_communication",
+          "name": "Technical Communication: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You verbalized your initial approach, flagged performance c to_improve: \"When considering a set/dict, you said you weren’t sure what"
+        },
+        {
+          "id": "score_range_complexity_optimization",
+          "name": "Complexity & Optimization: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 9"
+        },
+        {
+          "id": "label_consistent_complexity_optimization",
+          "name": "Complexity & Optimization: label matches score band",
+          "pass": true,
+          "detail": "score 9 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_complexity_optimization",
+          "name": "Complexity & Optimization: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Final solution matches expected optimal complexity for the  to_improve: \"Build the habit of doing a quick constraints check up front"
+        },
+        {
+          "id": "score_range_code_quality",
+          "name": "Code Quality: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 8.4"
+        },
+        {
+          "id": "label_consistent_code_quality",
+          "name": "Code Quality: label matches score band",
+          "pass": true,
+          "detail": "score 8.4 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_code_quality",
+          "name": "Code Quality: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Code is concise and idiomatic Python: clear variable naming to_improve: \"Consider adding a brief comment about why you check before "
+        },
+        {
+          "id": "score_range_independence",
+          "name": "Independence: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 6.3"
+        },
+        {
+          "id": "label_consistent_independence",
+          "name": "Independence: label matches score band",
+          "pass": true,
+          "detail": "score 6.3 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_independence",
+          "name": "Independence: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You incorporated hints effectively and quickly converted th to_improve: \"Work on generating the complement-hashmap pattern without p"
+        },
+        {
+          "id": "independence_hints_used",
+          "name": "Independence includes numeric hints_used",
+          "pass": true,
+          "detail": "hints_used: 3"
+        },
+        {
+          "id": "summary_nontrivial",
+          "name": "summary is a non-trivial string",
+          "pass": true,
+          "detail": "len: 335"
+        },
+        {
+          "id": "thinking_nontrivial",
+          "name": "thinking_and_logic is a non-trivial string",
+          "pass": true,
+          "detail": "len: 491"
+        },
+        {
+          "id": "code_assessment_nontrivial",
+          "name": "code_assessment is a non-trivial string",
+          "pass": true,
+          "detail": "len: 309"
+        },
+        {
+          "id": "next_steps_shape",
+          "name": "next_steps is a non-empty array of {action,why,how}",
+          "pass": true,
+          "detail": "count: 3"
+        },
+        {
+          "id": "patterns_shape",
+          "name": "patterns_to_study is a non-empty string array",
+          "pass": true,
+          "detail": "count: 3"
+        },
+        {
+          "id": "test_results_shape",
+          "name": "test_results has numeric passed/total",
+          "pass": true,
+          "detail": "passed: 10, total: 10"
+        },
+        {
+          "id": "test_results_echo",
+          "name": "test_results echoes input facts (visible or combined basis)",
+          "pass": true,
+          "detail": "feedback 10/10 vs visible 6/6, combined 10/10"
+        },
+        {
+          "id": "time_echo",
+          "name": "time.taken/budget echoes input",
+          "pass": true,
+          "detail": "feedback 34/35 vs input 34/35"
+        },
+        {
+          "id": "phase_echo",
+          "name": "reached_phase echoes input",
+          "pass": true,
+          "detail": "feedback 4 vs input 4"
+        },
+        {
+          "id": "completed_echo",
+          "name": "completed echoes input",
+          "pass": true,
+          "detail": "feedback true vs input true"
+        },
+        {
+          "id": "hints_echo",
+          "name": "Independence.hints_used equals hint log length",
+          "pass": true,
+          "detail": "feedback 3 vs input 3"
+        },
+        {
+          "id": "no_false_failures",
+          "name": "Narrative does not claim test failures when all passed",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "expected_outcome",
+          "name": "outcome in [solved]",
+          "pass": true,
+          "detail": "got: solved"
+        },
+        {
+          "id": "band_correctness_completeness",
+          "name": "Correctness & Completeness score in [7, 10]",
+          "pass": true,
+          "detail": "got: 9.4"
+        },
+        {
+          "id": "band_independence",
+          "name": "Independence score in [0, 6.5]",
+          "pass": true,
+          "detail": "got: 6.3"
+        }
+      ],
+      "scores": {
+        "Correctness & Completeness": 9.4,
+        "Problem-Solving & Thinking": 7.2,
+        "Technical Communication": 7.6,
+        "Complexity & Optimization": 9,
+        "Code Quality": 8.4,
+        "Independence": 6.3
+      },
+      "latencyMs": 21223,
+      "httpStatus": 200
+    },
+    {
+      "fixtureId": "wrong-complexity-claim",
+      "repeat": 1,
+      "checks": [
+        {
+          "id": "http_ok",
+          "name": "Webhook returned 2xx JSON",
+          "pass": true,
+          "detail": "21700ms"
+        },
+        {
+          "id": "response_is_object",
+          "name": "Response is a JSON object",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "llm_json_parsed",
+          "name": "LLM output parsed as JSON (no {raw,error} failure shape)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "required_fields",
+          "name": "All required top-level fields present",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "no_overall_score",
+          "name": "LLM did not emit an overall score",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "outcome_enum",
+          "name": "outcome is one of solved/partially_solved/not_solved",
+          "pass": true,
+          "detail": "got: partially_solved"
+        },
+        {
+          "id": "dimensions_is_array",
+          "name": "dimensions is an array",
+          "pass": true,
+          "detail": "got: object"
+        },
+        {
+          "id": "dimension_names_exact",
+          "name": "Exactly the 6 canonical dimension names (exact match)",
+          "pass": true,
+          "detail": "missing: [] extra: [] count: 6"
+        },
+        {
+          "id": "score_range_correctness_completeness",
+          "name": "Correctness & Completeness: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 6.8"
+        },
+        {
+          "id": "label_consistent_correctness_completeness",
+          "name": "Correctness & Completeness: label matches score band",
+          "pass": true,
+          "detail": "score 6.8 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_correctness_completeness",
+          "name": "Correctness & Completeness: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"Your implementation returns correct indices when it finds a to_improve: \"It did not fully satisfy the problem constraints because on"
+        },
+        {
+          "id": "score_range_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 6.2"
+        },
+        {
+          "id": "label_consistent_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: label matches score band",
+          "pass": true,
+          "detail": "score 6.2 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_problem_solving_thinking",
+          "name": "Problem-Solving & Thinking: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You quickly arrived at a straightforward baseline and valid to_improve: \"You did not pivot to a constraint-appropriate strategy (has"
+        },
+        {
+          "id": "score_range_technical_communication",
+          "name": "Technical Communication: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 6"
+        },
+        {
+          "id": "label_consistent_technical_communication",
+          "name": "Technical Communication: label matches score band",
+          "pass": true,
+          "detail": "score 6 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_technical_communication",
+          "name": "Technical Communication: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You clearly described the brute-force idea upfront (scan th to_improve: \"Your complexity explanation was incorrect: you repeatedly a"
+        },
+        {
+          "id": "score_range_complexity_optimization",
+          "name": "Complexity & Optimization: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 2"
+        },
+        {
+          "id": "label_consistent_complexity_optimization",
+          "name": "Complexity & Optimization: label matches score band",
+          "pass": true,
+          "detail": "score 2 → expected \"needs work\", got \"needs work\""
+        },
+        {
+          "id": "narrative_complexity_optimization",
+          "name": "Complexity & Optimization: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You used O(1) extra space, which is true for the brute-forc to_improve: \"The time complexity is O(n^2), not O(n). The answer key exp"
+        },
+        {
+          "id": "score_range_code_quality",
+          "name": "Code Quality: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 7.2"
+        },
+        {
+          "id": "label_consistent_code_quality",
+          "name": "Code Quality: label matches score band",
+          "pass": true,
+          "detail": "score 7.2 → expected \"adequate\", got \"adequate\""
+        },
+        {
+          "id": "narrative_code_quality",
+          "name": "Code Quality: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"The code is simple, readable, and avoids index mistakes (co to_improve: \"Given the constraints, the implementation choice is the mai"
+        },
+        {
+          "id": "score_range_independence",
+          "name": "Independence: score numeric in [0,10]",
+          "pass": true,
+          "detail": "score: 8.5"
+        },
+        {
+          "id": "label_consistent_independence",
+          "name": "Independence: label matches score band",
+          "pass": true,
+          "detail": "score 8.5 → expected \"strong\", got \"strong\""
+        },
+        {
+          "id": "narrative_independence",
+          "name": "Independence: what_went_well & what_to_improve non-empty",
+          "pass": true,
+          "detail": "went_well: \"You implemented your chosen approach without needing any hi to_improve: \"Independence is strongest when paired with correct self-cor"
+        },
+        {
+          "id": "independence_hints_used",
+          "name": "Independence includes numeric hints_used",
+          "pass": true,
+          "detail": "hints_used: 0"
+        },
+        {
+          "id": "summary_nontrivial",
+          "name": "summary is a non-trivial string",
+          "pass": true,
+          "detail": "len: 378"
+        },
+        {
+          "id": "thinking_nontrivial",
+          "name": "thinking_and_logic is a non-trivial string",
+          "pass": true,
+          "detail": "len: 432"
+        },
+        {
+          "id": "code_assessment_nontrivial",
+          "name": "code_assessment is a non-trivial string",
+          "pass": true,
+          "detail": "len: 339"
+        },
+        {
+          "id": "next_steps_shape",
+          "name": "next_steps is a non-empty array of {action,why,how}",
+          "pass": true,
+          "detail": "count: 3"
+        },
+        {
+          "id": "patterns_shape",
+          "name": "patterns_to_study is a non-empty string array",
+          "pass": true,
+          "detail": "count: 3"
+        },
+        {
+          "id": "test_results_shape",
+          "name": "test_results has numeric passed/total",
+          "pass": true,
+          "detail": "passed: 9, total: 10"
+        },
+        {
+          "id": "test_results_echo",
+          "name": "test_results echoes input facts (visible or combined basis)",
+          "pass": true,
+          "detail": "feedback 9/10 vs visible 6/6, combined 9/10"
+        },
+        {
+          "id": "time_echo",
+          "name": "time.taken/budget echoes input",
+          "pass": true,
+          "detail": "feedback 30/35 vs input 30/35"
+        },
+        {
+          "id": "phase_echo",
+          "name": "reached_phase echoes input",
+          "pass": true,
+          "detail": "feedback 4 vs input 4"
+        },
+        {
+          "id": "completed_echo",
+          "name": "completed echoes input",
+          "pass": true,
+          "detail": "feedback true vs input true"
+        },
+        {
+          "id": "hints_echo",
+          "name": "Independence.hints_used equals hint log length",
+          "pass": true,
+          "detail": "feedback 0 vs input 0"
+        },
+        {
+          "id": "no_false_all_passed",
+          "name": "Narrative does not claim all tests passed when some failed",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "no_false_hints",
+          "name": "Narrative does not claim hints were used when none were",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "id": "expected_outcome",
+          "name": "outcome in [partially_solved, solved]",
+          "pass": true,
+          "detail": "got: partially_solved"
+        },
+        {
+          "id": "band_complexity_optimization",
+          "name": "Complexity & Optimization score in [0, 6]",
+          "pass": true,
+          "detail": "got: 2"
+        }
+      ],
+      "scores": {
+        "Correctness & Completeness": 6.8,
+        "Problem-Solving & Thinking": 6.2,
+        "Technical Communication": 6,
+        "Complexity & Optimization": 2,
+        "Code Quality": 7.2,
+        "Independence": 8.5
+      },
+      "latencyMs": 21700,
+      "httpStatus": 200
+    }
+  ],
+  "stabilityChecks": [],
+  "orderingChecks": [
+    {
+      "winner": "partial-edge-fail",
+      "loser": "not-solved-silent",
+      "dimension": "Correctness & Completeness",
+      "winnerScore": 6.3,
+      "loserScore": 1,
+      "pass": true
+    },
+    {
+      "winner": "solved-clean",
+      "loser": "solved-heavy-hints",
+      "dimension": "Independence",
+      "winnerScore": 10,
+      "loserScore": 6.3,
+      "pass": true
+    },
+    {
+      "winner": "solved-clean",
+      "loser": "not-solved-silent",
+      "dimension": "Technical Communication",
+      "winnerScore": 9,
+      "loserScore": 2.5,
+      "pass": true
+    },
+    {
+      "winner": "solved-clean",
+      "loser": "not-solved-silent",
+      "dimension": "Correctness & Completeness",
+      "winnerScore": 10,
+      "loserScore": 1,
+      "pass": true
+    },
+    {
+      "winner": "solved-clean",
+      "loser": "wrong-complexity-claim",
+      "dimension": "Complexity & Optimization",
+      "winnerScore": 9.5,
+      "loserScore": 2,
+      "pass": true
+    }
+  ]
+}
