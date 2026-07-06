@@ -87,15 +87,27 @@ curl -H "X-N8N-API-KEY: $N8N_API" http://localhost:5678/api/v1/workflows/pbjDnkI
    precomputed `TOTAL TESTS PASSED` line the model must copy.
 5. ✅ **Example-value bleed-through** — with no transcript, grader copied `reached_phase: 4`
    from the prompt's example JSON; prompt now marks example values as placeholders.
+6. ✅ **Answer key never reached the model** — Format prompt concatenated JSON objects into
+   `"[object Object]"`; now `JSON.stringify`ed. The canonical optimal solution (with code) is
+   finally visible to the grader, and the prompt now requires code_assessment to contrast the
+   candidate's code with it by name.
+7. ✅ **Independence rubric flaw** — silent do-nothing candidates scored 7–9 on Independence
+   (zero hints ≠ independent progress); prompt now caps Independence ≤ 5 without real progress.
+8. ✅ **Lazy coaching / fabricated attribution** — `what_to_improve: "None."` on perfect scores
+   and 'you said…' phrasing without a transcript are now banned by prompt rules.
+9. ✅ **Backend fact enforcement** — `enforceFactFields()` overwrites test counts, time, phase,
+   and hints_used from the execution summary after generation; plus one validated retry when
+   the workflow returns invalid feedback (design doc Part 6).
 
 ## Known gaps still open
 
 1. `elevenlabs_api_key` / `openai_api_key` in the webhook payload are **unused** by the workflow —
    dead payload and unnecessary key exposure.
-2. No structured-output enforcement on the model node; parse failure returns `{raw, error}`
-   which the backend stores as feedback without re-asking.
-3. `LoadingPage.jsx` technical branch requires a `webhookUrl` state field that is never passed —
+2. `LoadingPage.jsx` technical branch requires a `webhookUrl` state field that is never passed —
    the post-interview waiting page never polls/navigates on its own.
+3. Question bank has only 5 questions (all with full answer keys — `solutions.optimal` incl.
+   code, mistakes, follow-ups). No schema migration needed for optimal-solution reference;
+   growing the bank is a seeding task (`seed_answer_keys.js` pattern).
 
 ## Not yet implemented (tier 3)
 

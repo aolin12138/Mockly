@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feedback page — wrong-complexity-claim (run 1)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<style>body{font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}</style>
+</head>
+<body class="bg-slate-950 text-slate-100">
+  <div class="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+    <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]"></div>
+    <div class="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-cyan-500/10 rounded-full blur-[100px]"></div>
+    <div class="absolute bottom-[-10%] left-[20%] w-[35%] h-[35%] bg-purple-500/10 rounded-full blur-[120px]"></div>
+  </div>
+  <div class="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
+    <div class="w-full max-w-6xl space-y-6">
+      <div class="text-[11px] uppercase tracking-widest text-slate-500">Eval preview — fixture <span class="text-emerald-400">wrong-complexity-claim</span>, run 1 — Answer-key grading probe: candidate confidently claims their nested-loop solution is O(n) (it is O(n^2); the key's optimal is O(n) hash map). Visible tests pass but a hidden performance case fails. Complexity &amp; Optimization must be marked down and the narrative should correct the claim.</div>
+      
+    <!-- 1. HEADER BAND -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">Technical Interview Results</h1>
+          <p class="mt-2 text-sm text-slate-400">Comprehensive analysis of your coding interview performance</p>
+          <div class="mt-2 flex items-center gap-2"><span class="text-xs text-slate-400">⌨ python</span></div>
+        </div>
+        <div class="flex items-center gap-6">
+  <div class="flex flex-col items-center gap-1">
+    <div class="relative w-28 h-28 text-3xl flex items-center justify-center">
+      <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="url(#scoreGrad)" stroke-width="6" stroke-linecap="round" stroke-dasharray="147.84 264"/>
+        <defs><linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#06b6d4"/>
+        </linearGradient></defs>
+      </svg>
+      <span class="relative font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">5.6</span>
+    </div>
+    <span class="text-xs font-medium text-amber-400">adequate</span>
+  </div><div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-amber-500/20 border-amber-500/40 text-amber-400"><span>⚠</span><span class="text-sm font-semibold">Partially Solved</span></div></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Tests:</span>
+    <span class="text-xs font-semibold text-white">9/10</span>
+  </div>
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Time:</span>
+    <span class="text-xs font-semibold text-white">30 / 35 min</span>
+  </div>
+        
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Phase:</span>
+    <span class="text-xs font-semibold text-white">4</span>
+  </div>
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Completed:</span>
+    <span class="text-xs font-semibold text-white">Yes</span>
+  </div>
+      </div>
+      <p class="text-sm text-slate-300 leading-relaxed">You produced a correct brute-force solution that passed all visible tests, but it failed one hidden test due to performance constraints. The biggest gap was complexity reasoning: the implementation is O(n^2) and the interview discussion asserted it was O(n), which would be a serious signal in a real interview.</p>
+    </div>
+
+    <!-- 2. CODE (static stand-in for the interactive sandbox) -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Code Review Sandbox</h2>
+    
+      <p class="text-xs text-slate-500 mb-2">Interactive in the app (edit + run tests). Submitted code shown below.</p>
+      <pre class="text-xs bg-slate-950/70 border border-white/10 rounded-xl p-4 overflow-x-auto text-slate-200">def solve(nums, target):
+    if not nums:
+        return []
+    for i in range(len(nums)):
+        for j in range(i + 1, len(nums)):
+            if nums[i] + nums[j] == target:
+                return [i, j]
+    return []</pre>
+  </div>
+
+    <!-- 3. TEST RESULTS -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4">
+    <div class="flex items-center justify-between">
+      <span class="text-sm text-slate-300">🧪 Test Results</span>
+      <div class="flex items-center gap-2"><span class="text-lg font-bold text-white">9</span><span class="text-sm text-slate-400">/</span><span class="text-lg font-bold text-white">10</span><span class="text-xs text-slate-400">passed</span></div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500" style="width:90%"></div></div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2"><div class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border bg-emerald-500/10 border-emerald-500/20 text-emerald-300"><span>✓</span><span class="capitalize">basic</span><span class="ml-auto font-medium">pass</span></div><div class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border bg-emerald-500/10 border-emerald-500/20 text-emerald-300"><span>✓</span><span class="capitalize">edge</span><span class="ml-auto font-medium">pass</span></div><div class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border bg-red-500/10 border-red-500/20 text-red-300"><span>✕</span><span class="capitalize">performance</span><span class="ml-auto font-medium">1 fail</span></div></div>
+    <p class="text-xs text-slate-400 italic">All visible tests passed; one hidden test likely timed out due to quadratic runtime.</p>
+  </div>
+
+    <!-- 4. SKILL BREAKDOWN -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Skill Breakdown</h2>
+    <div class="grid gap-4 md:grid-cols-2">
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Correctness &amp; Completeness</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-amber-400">6.8/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg" style="width:68%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">adequate</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Returns valid indices when a pair is found and avoids using the same element twice by enforcing j &gt; i. Handles the no-solution case by returning an empty list (even though the prompt guarantees exactly one solution).</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Meet the stated large-input constraint: the current approach does not complete within time limits on worst-case inputs. Implement the hash-map single-pass approach so correctness holds under performance requirements.</p></div>
+  </div>
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Problem-Solving &amp; Thinking</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-amber-400">5.6/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg" style="width:55.99999999999999%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">adequate</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Quickly identified the straightforward baseline approach and implemented it cleanly with early return on success.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">When constraints explicitly warn that O(n^2) will time out, treat the brute-force as a stepping stone and immediately pivot to an O(n) strategy (hash map / complement lookup) before declaring the solution optimal.</p></div>
+  </div>
+  <div class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Technical Communication</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-red-400">5.4/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-red-500 to-rose-500 shadow-lg" style="width:54%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">needs work</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Communicated the intended high-level plan upfront and confirmed test status after running visible cases.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Give precise complexity explanations: nested loops are O(n^2), not O(n). Practice articulating why (e.g., ~n(n-1)/2 pair checks) and tie it back to constraints and timeouts.</p></div>
+  </div>
+  <div class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Complexity &amp; Optimization</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-red-400">2.8/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-red-500 to-rose-500 shadow-lg" style="width:27.999999999999996%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">needs work</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Space usage is indeed O(1) for the brute-force implementation, and the early return can help average-case runtime on some distributions.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Adopt the canonical optimal approach from the answer key: single pass + hash map of value-&gt;index to achieve O(n) time. Also calibrate your complexity claims against actual loop structure; an inner loop per i makes total work quadratic.</p></div>
+  </div>
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Code Quality</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-amber-400">7.2/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg" style="width:72%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">adequate</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Code is short, readable, and avoids off-by-one issues by using range(i + 1, len(nums)). Early return is clear and correct.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Remove unnecessary guards that contradict constraints (e.g., `if not nums`) unless the interface truly requires it, and align return behavior with typical expectations (e.g., always returning a pair since one is guaranteed) or document deviations.</p></div>
+  </div>
+  <div class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Independence</span>
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-white/10">0 hints</span>
+        <span class="text-xs font-bold text-red-400">4.8/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-red-500 to-rose-500 shadow-lg" style="width:48%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">needs work</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Completed an initial working solution without hints and passed the full visible suite.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Independently incorporate constraint-driven optimization without prompting—here, despite an explicit warning about O(n^2), the solution stayed quadratic and was asserted to be optimal.</p></div>
+  </div></div>
+  </div>
+
+    <!-- 5-6. NARRATIVES -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Thinking &amp; Logic</h2>
+    <p class="text-sm text-slate-300 leading-relaxed">The implemented approach checks every pair (i, j) with i &lt; j and returns as soon as it finds a pair summing to target. While this is logically straightforward and correct for many cases, it scales poorly because it performs up to ~n(n-1)/2 checks. The interview discussion also mischaracterized this as O(n), which conflicts with both the code structure and the stated constraints warning about timeouts.</p>
+  </div>
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Code Assessment</h2>
+    <p class="text-sm text-slate-300 leading-relaxed">Your final code matches the answer key's brute-force solution (nested loops, O(n^2) time, O(1) space). The canonical optimal solution you missed is the single-pass hash map (value-&gt;index) approach: for each number x at index i, check whether target-x is already in the map; if so return those indices, otherwise store x. That technique reduces runtime to O(n) and is the expected solution under the given constraints; your current code cannot guarantee passing the largest hidden case.</p>
+  </div>
+
+    <!-- 7. NEXT STEPS -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Next Steps</h2>
+    
+      <div class="space-y-3">
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-xs font-bold text-emerald-400">1</span></div>
+      <div class="flex-1 space-y-2"><p class="text-sm font-semibold text-white">Re-implement Two Sum using the single-pass hash map (complement lookup before insert).</p>
+       <div><p class="text-xs text-slate-400 font-medium">Why</p><p class="text-xs text-slate-300">It is the canonical optimal approach and satisfies the O(n) time requirement that your current solution violates.</p></div>
+       <div><p class="text-xs text-slate-400 font-medium">How</p><p class="text-xs text-slate-300">Maintain a dict seen: value-&gt;index. For each i, x=nums[i], if (target-x) in seen: return [seen[target-x], i]; else seen[x]=i.</p></div></div>
+    </div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-xs font-bold text-emerald-400">2</span></div>
+      <div class="flex-1 space-y-2"><p class="text-sm font-semibold text-white">Practice complexity explanations for common loop patterns (nested loops, two pointers, hash lookups).</p>
+       <div><p class="text-xs text-slate-400 font-medium">Why</p><p class="text-xs text-slate-300">The incorrect O(n) claim on an O(n^2) implementation is a major interview risk even if the code works on small tests.</p></div>
+       <div><p class="text-xs text-slate-400 font-medium">How</p><p class="text-xs text-slate-300">For each solution you write, compute the number of iterations symbolically (e.g., sum_{i=0}^{n-1} (n-i-1) = n(n-1)/2) and state time/space explicitly.</p></div></div>
+    </div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-xs font-bold text-emerald-400">3</span></div>
+      <div class="flex-1 space-y-2"><p class="text-sm font-semibold text-white">Do 5-10 variants that force choosing the right pattern from constraints (e.g., Two Sum, Subarray Sum Equals K, Longest Substring Without Repeating Characters).</p>
+       <div><p class="text-xs text-slate-400 font-medium">Why</p><p class="text-xs text-slate-300">These problems build the habit of mapping constraints to the right tool (hash map / sliding window) instead of stopping at brute force.</p></div>
+       <div><p class="text-xs text-slate-400 font-medium">How</p><p class="text-xs text-slate-300">Before coding, write: 'Constraints imply O(n log n) or better; choose pattern X; expected time/space Y' and validate after implementation.</p></div></div>
+    </div>
+  </div></div>
+      <div class="mt-4 pt-4 border-t border-white/10"><p class="text-xs text-slate-400 font-medium mb-2">Patterns to Study</p><div class="flex flex-wrap gap-2"><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 font-medium"># hash map complement lookup (Two Sum pattern)</span><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 font-medium"># complexity analysis of nested iteration</span><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 font-medium"># two pointers (sorted Two Sum variant)</span></div></div>
+  </div>
+
+    <!-- 8. ENCOURAGEMENT -->
+    
+    <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+      <div class="flex items-start gap-3">
+        <div class="p-2 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30">🏆</div>
+        <div class="flex-1"><h3 class="text-sm font-semibold text-white mb-1">Final Words</h3><p class="text-sm text-slate-300 leading-relaxed italic">You’re close—your baseline implementation is correct and clean; the main unlock is treating constraints as requirements and consistently matching your approach (and complexity explanation) to them.</p></div>
+      </div>
+    </div>
+
+    <!-- 9. TRANSCRIPT -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Transcript</h2>
+    <div class="space-y-2 max-h-80 overflow-y-auto">
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> Here's the problem: given an array of integers and a target, return the indices of the two numbers that add up to the target.</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> Simple enough. I'll iterate through the array and for each element scan the rest for the complement. I'll also guard the empty input case.</div>
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> Go ahead.</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> Done. All the visible tests pass on the first run.</div>
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> Nice. Can you analyze the complexity of your solution?</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> It's O(n) — I only have one main loop over the array, the inner scan is just part of processing each element. Space is O(1).</div>
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> Are you confident about that time bound for large inputs?</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> Yes, linear. It only touches each element once from the outer loop's perspective.</div>
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> Alright. Anything you'd improve given more time?</div>
+    <div class="text-xs text-slate-300"><span class="font-semibold">user:</span> Not really, I think this is already optimal.</div>
+    <div class="text-xs text-cyan-300"><span class="font-semibold">agent:</span> Okay, let's wrap up there.</div></div>
+  </div>
+    </div>
+  </div>
+</body></html>

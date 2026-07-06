@@ -1,0 +1,84 @@
+{
+  "summary": "You delivered the canonical optimal Two Sum solution: a single-pass hash map with complement checks. All tests passed, and the implementation correctly avoids using the same element twice by checking the complement before inserting the current value.",
+  "outcome": "solved",
+  "completed": true,
+  "reached_phase": 3,
+  "test_results": {
+    "passed": 10,
+    "total": 10,
+    "by_category": {},
+    "summary_note": "All visible and hidden tests passed with the standard one-pass hash map approach."
+  },
+  "time": {
+    "taken_minutes": 28,
+    "budget_minutes": 35
+  },
+  "dimensions": [
+    {
+      "name": "Correctness & Completeness",
+      "score": 9.6,
+      "label": "strong",
+      "what_went_well": "Returned correct indices for all test cases (10/10), handled duplicates correctly by storing indices and checking complement membership before insertion.",
+      "what_to_improve": "Even though constraints guarantee one answer, consider whether you want to raise/return a clearer sentinel (e.g., None) instead of [] in production-style code to make failure mode explicit."
+    },
+    {
+      "name": "Problem-Solving & Thinking",
+      "score": 8.4,
+      "label": "strong",
+      "what_went_well": "Chose the right strategy for the constraints (up to 1e5) and used the key invariant: if a complement has been seen, you can return immediately.",
+      "what_to_improve": "As a stretch, practice quickly stating the invariant and why checking-before-inserting prevents reusing the same index—this is often probed even on easy problems."
+    },
+    {
+      "name": "Technical Communication",
+      "score": 6,
+      "label": "adequate",
+      "what_went_well": "Evidence is limited due to no transcript, but the code structure suggests a clear, standard reasoning flow (compute complement, check, store).",
+      "what_to_improve": "In future interviews, explicitly verbalize complexity (O(n) time, O(n) space) and call out key pitfalls (same element twice, sorting loses indices) as you code."
+    },
+    {
+      "name": "Complexity & Optimization",
+      "score": 9.2,
+      "label": "strong",
+      "what_went_well": "Matches the answer key optimal complexity: O(n) time with a hash map, O(n) space; appropriate for n up to 1e5.",
+      "what_to_improve": "Be prepared to discuss the sorted-array variant (two pointers, O(n) time, O(1) extra space) and when it applies; interviewers often ask this follow-up."
+    },
+    {
+      "name": "Code Quality",
+      "score": 8.3,
+      "label": "strong",
+      "what_went_well": "Concise, readable implementation with sensible variable names (seen, complement) and early return; avoids unnecessary work.",
+      "what_to_improve": "Add a short docstring or comment about the map meaning (value -> index) and why the check happens before insertion to make the intent unambiguous to reviewers."
+    },
+    {
+      "name": "Independence",
+      "score": 7.2,
+      "label": "adequate",
+      "hints_used": 1,
+      "what_went_well": "Converted a general hint about fast lookups into the correct hash map solution and completed successfully.",
+      "what_to_improve": "Try to proactively enumerate candidate data structures (set/map/sort+two pointers) before asking for hints; build a habit of mapping constraints (n=1e5) directly to O(n) or O(n log n) targets."
+    }
+  ],
+  "thinking_and_logic": "The solution maintains a hash map from previously seen number to its index. For each element n at index i, it computes complement = target - n and checks whether that complement has already appeared; if so, the pair of indices is immediately returned. Checking before inserting the current element ensures you never use the same element twice.",
+  "code_assessment": "Your final code is essentially identical to the canonical optimal approach in the answer key (single-pass hash map, complement check before insert). It directly avoids the known pitfalls listed (same element twice and sorting away original indices) and meets the expected O(n) time / O(n) space profile.",
+  "next_steps": [
+    {
+      "action": "Practice the common Two Sum follow-up: sorted input variant",
+      "why": "Interviewers often ask you to adapt the approach when the array is sorted, and the optimal technique changes to two pointers with O(1) extra space.",
+      "how": "Implement: l=0,r=n-1; while l<r: s=nums[l]+nums[r]; move l/r based on s vs target; return indices. Then rehearse explaining why it’s O(n) and why it works."
+    },
+    {
+      "action": "Build a quick complexity/constraints reflex checklist",
+      "why": "It helps you justify the hash map choice immediately (n up to 1e5 strongly discourages O(n^2)).",
+      "how": "Before coding, state: target complexity, chosen DS, and pitfalls to avoid (duplicate handling, index preservation). Time-box this to ~20 seconds."
+    }
+  ],
+  "patterns_to_study": [
+    "one-pass hash map (complement lookup)",
+    "two pointers on sorted arrays",
+    "constraint-driven complexity selection"
+  ],
+  "encouragement": "This is the exact solution most interviewers want for Two Sum—focus next on crisp verbal justification and the common follow-up variants to turn this into a consistently fast, confident win.",
+  "transcript": [],
+  "audio": null,
+  "callDurationSecs": null
+}

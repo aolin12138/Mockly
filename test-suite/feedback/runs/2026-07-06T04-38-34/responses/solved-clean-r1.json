@@ -1,0 +1,149 @@
+{
+  "summary": "You delivered the canonical optimal Two Sum solution: a single-pass hash map with a complement check before insertion. Your reasoning covered the key pitfalls (no self-use, duplicates) and you correctly articulated time/space complexity and the sorted-array follow-up.",
+  "outcome": "solved",
+  "completed": true,
+  "reached_phase": 4,
+  "test_results": {
+    "passed": 10,
+    "total": 10,
+    "by_category": {
+      "basic": "pass",
+      "edge": "pass",
+      "performance": "pass"
+    },
+    "summary_note": "All visible and hidden tests passed with the optimal hash-map approach."
+  },
+  "time": {
+    "taken_minutes": 26,
+    "budget_minutes": 35
+  },
+  "dimensions": [
+    {
+      "name": "Correctness & Completeness",
+      "score": 10,
+      "label": "strong",
+      "what_went_well": "Returned correct indices across all tests (10/10). The complement-before-insert order avoids using the same element twice and correctly handles duplicates (e.g., [3,3] -> 6).",
+      "what_to_improve": "Add a brief comment or assertion documenting the problem guarantee (exactly one solution) and decide whether to raise/return a sentinel if no solution exists, to make the function’s contract explicit beyond this prompt."
+    },
+    {
+      "name": "Problem-Solving & Thinking",
+      "score": 9.6,
+      "label": "strong",
+      "what_went_well": "You quickly identified brute force vs. optimal and chose the correct invariant: store seen values while checking for the needed complement. You also sanity-traced with a concrete example and called out duplicate handling.",
+      "what_to_improve": "As a stretch, practice stating the invariant formally (e.g., “seen contains all nums[0..i-1] mapped to indices”)—this helps when variants require small but tricky changes."
+    },
+    {
+      "name": "Technical Communication",
+      "score": 9.2,
+      "label": "strong",
+      "what_went_well": "Clear explanation of approach, why complement is checked first, and a correct amortized complexity argument. Your follow-up answer for sorted input was direct and correct (two pointers).",
+      "what_to_improve": "When discussing complexity, explicitly note the assumption behind hash map O(1) (average/amortized) and briefly acknowledge worst-case hashing, even if only as one sentence."
+    },
+    {
+      "name": "Complexity & Optimization",
+      "score": 9.8,
+      "label": "strong",
+      "what_went_well": "Matched the answer key’s optimal complexity: O(n) time and O(n) space with a single pass hash map. Mentioned amortized O(1) ops and gave the O(1)-space alternative for sorted arrays (two pointers).",
+      "what_to_improve": "For completeness, be ready to discuss tradeoffs in variants: e.g., if multiple pairs are needed, value -> list of indices or output-size-driven complexity."
+    },
+    {
+      "name": "Code Quality",
+      "score": 9,
+      "label": "strong",
+      "what_went_well": "Concise, idiomatic Python: clear variable names, straightforward loop, and correct return shape. The ordering of operations is intentional and prevents the self-match bug.",
+      "what_to_improve": "Consider adding a short docstring/type hints (e.g., List[int] -> List[int]) and be consistent about return behavior (empty list vs. exception) depending on whether the guarantee holds."
+    },
+    {
+      "name": "Independence",
+      "score": 10,
+      "label": "strong",
+      "hints_used": 0,
+      "what_went_well": "Solved optimally without hints and handled key pitfalls proactively (self-use and duplicates).",
+      "what_to_improve": "Push independence further by proactively offering how you’d adapt the solution for at least one variant (multiple answers, streaming input, or memory constraints) before being asked."
+    }
+  ],
+  "thinking_and_logic": "You used the standard single-pass hash map strategy: for each element n at index i, compute complement = target - n, check if it’s already been seen, and if so return the stored index and i. Checking the complement before inserting the current element enforces the “no same element twice” rule and naturally supports duplicates. You validated the approach with a quick trace and correctly described the asymptotic costs.",
+  "code_assessment": "Your final code is effectively identical to the canonical optimal solution in the answer key (single pass, value->index map, complement check first). It achieves O(n) time and O(n) space and avoids known pitfalls like reusing the same index or mishandling duplicates. Compared to suboptimal alternatives (sorting or nested loops), your approach preserves original indices and scales to the constraint limit.",
+  "next_steps": [
+    {
+      "action": "Practice Two Sum variants that change the output requirement (e.g., all pairs, count of pairs, or return values instead of indices).",
+      "why": "The core hash-map pattern is the same, but the data structure often shifts from value->index to value->list/count, and it’s easy to introduce duplicate-pair or ordering bugs.",
+      "how": "Implement: (1) collect all unique index pairs, (2) count pairs, (3) handle multiple solutions; test on arrays with many duplicates like [1,1,1,2,2,3]."
+    },
+    {
+      "action": "Drill the two-pointer technique for sorted-array sum problems (Two Sum II and 3Sum-style extensions).",
+      "why": "It’s the natural follow-up and a common pathway to harder problems where space matters or sorting is part of the solution.",
+      "how": "Solve: Two Sum II (sorted), then 3Sum (sort + two pointers), focusing on duplicate-skipping invariants."
+    }
+  ],
+  "patterns_to_study": [
+    "single-pass hash map (complement lookup)",
+    "two pointers on sorted arrays",
+    "handling duplicates / de-duplication patterns"
+  ],
+  "encouragement": "This was a clean, optimal solve with correct reasoning and strong handling of edge cases—keep pushing into the common variants to make the pattern more flexible under changing requirements.",
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Here's the problem: given an array of integers and a target, return the indices of the two numbers that add up to the target. Take your time to read it.",
+      "timestart": 5
+    },
+    {
+      "role": "user",
+      "text": "Okay. Quick clarification — is there always exactly one valid answer, and can I use the same element twice?",
+      "timestart": 40
+    },
+    {
+      "role": "agent",
+      "text": "Exactly one valid answer exists, and you may not use the same element twice.",
+      "timestart": 55
+    },
+    {
+      "role": "user",
+      "text": "Got it. The brute force is checking every pair, which is O(n squared). But I can do better with a hash map: as I scan, I store each value with its index, and for each element I check whether target minus the current value is already in the map. That's a single pass, O(n) time, O(n) space. I'll go with that.",
+      "timestart": 90
+    },
+    {
+      "role": "agent",
+      "text": "Sounds good, go ahead.",
+      "timestart": 120
+    },
+    {
+      "role": "user",
+      "text": "Writing it now. I'm checking the complement before inserting the current value so I never match an element with itself. That also handles duplicates like two threes summing to six.",
+      "timestart": 300
+    },
+    {
+      "role": "user",
+      "text": "Done. Let me trace it with nums = [2, 7, 11, 15], target 9: i=0 stores 2, i=1 complement is 2 which is in the map, so I return [0, 1]. I'll run the tests.",
+      "timestart": 700
+    },
+    {
+      "role": "agent",
+      "text": "All visible tests pass. Can you state the complexity of your solution?",
+      "timestart": 900
+    },
+    {
+      "role": "user",
+      "text": "Time is O(n) — one pass, each lookup and insert is amortized O(1). Space is O(n) for the map in the worst case.",
+      "timestart": 930
+    },
+    {
+      "role": "agent",
+      "text": "Follow-up: what would you change if the input array were sorted?",
+      "timestart": 1000
+    },
+    {
+      "role": "user",
+      "text": "Then I'd use two pointers from both ends and move them inward based on whether the sum is too big or too small. That keeps O(n) time but drops the extra space to O(1).",
+      "timestart": 1040
+    },
+    {
+      "role": "agent",
+      "text": "Great. That wraps up the interview.",
+      "timestart": 1500
+    }
+  ],
+  "audio": null,
+  "callDurationSecs": 1560
+}

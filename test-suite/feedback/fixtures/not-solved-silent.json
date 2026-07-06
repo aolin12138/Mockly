@@ -5,7 +5,8 @@
     "outcome": ["not_solved"],
     "bands": {
       "Correctness & Completeness": [0, 4.5],
-      "Technical Communication": [0, 6.5]
+      "Technical Communication": [0, 6.5],
+      "Independence": [0, 5]
     }
   },
   "ordering": [],

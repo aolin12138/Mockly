@@ -1,0 +1,87 @@
+{
+  "summary": "You implemented the canonical one-pass hash map solution and it passed all tests, including hidden cases. The approach is optimal for the given constraints and correctly avoids using the same element twice by checking the complement before inserting the current value.",
+  "outcome": "solved",
+  "completed": true,
+  "reached_phase": 3,
+  "test_results": {
+    "passed": 10,
+    "total": 10,
+    "by_category": {
+      "basic": "pass",
+      "edge": "pass",
+      "performance": "pass"
+    },
+    "summary_note": "All visible and hidden tests passed with the optimal single-pass hash map approach."
+  },
+  "time": {
+    "taken_minutes": 28,
+    "budget_minutes": 35
+  },
+  "dimensions": [
+    {
+      "name": "Correctness & Completeness",
+      "score": 9.5,
+      "label": "strong",
+      "what_went_well": "Returned correct indices for all cases (10/10), handled duplicates properly, and avoided the \"same element twice\" pitfall by checking the complement before storing the current index.",
+      "what_to_improve": "If the platform guarantees exactly one solution, you can omit the trailing `return []`; otherwise, consider raising an error or documenting the behavior for no-solution inputs to make the contract explicit."
+    },
+    {
+      "name": "Problem-Solving & Thinking",
+      "score": 8.6,
+      "label": "strong",
+      "what_went_well": "Chose the right invariant for a single pass: keep a map of previously seen values to indices and look for the needed complement at each step.",
+      "what_to_improve": "Practice quickly articulating why the complement-check must happen before inserting the current element (this is the key reasoning that prevents reusing the same index)."
+    },
+    {
+      "name": "Technical Communication",
+      "score": 6.2,
+      "label": "adequate",
+      "what_went_well": "Limited evidence due to no transcript; the final code is self-explanatory and uses clear variable names (`seen`, `complement`).",
+      "what_to_improve": "In future interviews, narrate your invariant and complexity upfront in 1–2 sentences (e.g., \"I’ll scan once, store seen numbers in a dict for O(1) complement lookups\")."
+    },
+    {
+      "name": "Complexity & Optimization",
+      "score": 9.2,
+      "label": "strong",
+      "what_went_well": "Matches the answer key optimal complexity: O(n) time with O(n) extra space; appropriate for n up to 1e5.",
+      "what_to_improve": "Be prepared to discuss worst-case hash map behavior and the tradeoff vs the sorted/two-pointer variant (when the input is already sorted or indices aren’t required)."
+    },
+    {
+      "name": "Code Quality",
+      "score": 8.8,
+      "label": "strong",
+      "what_went_well": "Clean, minimal, and idiomatic Python; correct ordering of operations; straightforward control flow.",
+      "what_to_improve": "Add a short docstring or comment stating the function contract and return format (especially useful when constraints like \"exactly one answer\" are part of the problem statement)."
+    },
+    {
+      "name": "Independence",
+      "score": 7.2,
+      "label": "adequate",
+      "hints_used": 1,
+      "what_went_well": "You converged to the optimal approach and produced a fully correct solution with only a general hint about using a fast-lookup data structure.",
+      "what_to_improve": "Work on recognizing the \"complement + hash map\" pattern immediately for pair-sum problems so you don’t need prompting to choose the right data structure."
+    }
+  ],
+  "thinking_and_logic": "The solution maintains a dictionary mapping previously seen numbers to their indices. For each number `n` at index `i`, it computes `target - n` and checks if that complement has already been seen; if so, it returns the stored index and `i`. Checking before inserting ensures you never pair an element with itself, and the single pass guarantees O(n) time.",
+  "code_assessment": "Your final code aligns with the answer key’s optimal solution: a one-pass hash map that checks for the complement before adding the current element. This avoids known pitfalls like using the same element twice and avoids sorting (which can lose original indices). The implementation is concise and robust for duplicates because the dict stores the most recent index, while the early return correctly captures the first valid pair encountered (and the problem guarantees exactly one solution).",
+  "next_steps": [
+    {
+      "action": "Practice explaining the hash-map invariant and the check-before-insert detail out loud.",
+      "why": "That reasoning is often what interviewers probe on even when the code is correct.",
+      "how": "Rehearse a 20-second explanation: \"scan once; for each value, look up complement in dict of prior values; if found return; else store current index\" and explicitly mention avoiding same-index reuse."
+    },
+    {
+      "action": "Study the sorted-array variant (two pointers) and when it applies.",
+      "why": "It’s a common follow-up and tests whether you can switch patterns based on input properties and constraints.",
+      "how": "Implement two pointers for a sorted list returning values/positions, and discuss tradeoffs vs hash map (O(1) space but needs sorted input or sorting + index bookkeeping)."
+    }
+  ],
+  "patterns_to_study": [
+    "one-pass hash map (complement lookup)",
+    "two pointers on sorted arrays"
+  ],
+  "encouragement": "This is the exact optimal solution expected for Two Sum—focus next on sharpening your verbal reasoning and follow-up variants to make the performance consistent in real interviews.",
+  "transcript": [],
+  "audio": null,
+  "callDurationSecs": null
+}
