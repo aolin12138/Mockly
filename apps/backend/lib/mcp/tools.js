@@ -414,16 +414,42 @@ export async function runCodeAgainstTests(args, context) {
     const total = detailedResults.length;
     const allPassed = passed === total;
 
+    // Compact format: summary + only FAILED test details
+    // Hidden test details are NEVER exposed — just count and category
+    const failures = detailedResults.filter(r => !r.passed).map(r => {
+      if (r.visible) {
+        return {
+          id: r.id,
+          visible: true,
+          detail: r.error || `Expected ${r.expected}, got ${r.actual}`,
+        };
+      }
+      // Hidden test: only reveal that it failed, never the input/expected
+      return {
+        id: r.id,
+        visible: false,
+        detail: r.error || 'Hidden test failed',
+      };
+    });
+
+    const classify = () => {
+      if (allPassed) return 'none';
+      if (detailedResults.some(r => !r.passed && (r.error || '').toLowerCase().includes('syntax'))) return 'compile_error';
+      if (detailedResults.some(r => !r.passed && (r.error || '').toLowerCase().includes('runtime'))) return 'runtime_error';
+      return 'edge_case';
+    };
+
     return {
       content: [{
         type: 'text',
         text: JSON.stringify({
           passed, total, all_passed: allPassed,
-          failure_category: allPassed ? null : 'edge_case',
-          visible: { passed: visibleResults.filter(t => t.passed).length, total: visibleResults.length, results: visibleResults },
-          hidden: { passed: hiddenResults.filter(t => t.passed).length, total: hiddenResults.length, results: hiddenResults },
-          elapsed_seconds: 240,
-          remaining_seconds: 1560,
+          failure_category: allPassed ? 'none' : classify(),
+          visible_passed: visibleResults.filter(t => t.passed).length,
+          visible_total: visibleResults.length,
+          hidden_passed: hiddenResults.filter(t => t.passed).length,
+          hidden_total: hiddenResults.length,
+          failures,
         }),
       }],
     };
@@ -614,29 +640,29 @@ export async function runCodeAgainstTests(args, context) {
   const visiblePassed = visibleResults.filter(t => t.passed).length;
   const hiddenPassed = hiddenResults.filter(t => t.passed).length;
 
-  const failureCategory = allPassed ? null : classifyFailure(executionResult, detailedResults, allTests);
+  const failureCategory = allPassed ? 'none' : classifyFailure(executionResult, detailedResults, allTests);
 
   const now = new Date();
   const startedAt = fresh.startedAt ? new Date(fresh.startedAt).getTime() : null;
   const elapsedSecs = startedAt ? Math.floor((now.getTime() - startedAt) / 1000) : 0;
   const remainingSecs = startedAt ? Math.max(0, DEFAULT_TIME_BUDGET_SECS - elapsedSecs) : DEFAULT_TIME_BUDGET_SECS;
 
-  // Full result for the agent
+  // Compact failures-only format
+  const failures = detailedResults.filter(r => !r.passed).map(r => {
+    if (r.visible) {
+      return { id: r.id, visible: true, detail: r.error || `Expected ${r.expected}, got ${r.actual}` };
+    }
+    return { id: r.id, visible: false, detail: r.error || 'Hidden test failed' };
+  });
+
   const result = {
-    passed,
-    total,
-    all_passed: allPassed,
+    passed, total, all_passed: allPassed,
     failure_category: failureCategory,
-    visible: {
-      passed: visiblePassed,
-      total: visibleResults.length,
-      results: visibleResults,
-    },
-    hidden: {
-      passed: hiddenPassed,
-      total: hiddenResults.length,
-      results: hiddenResults,
-    },
+    visible_passed: visiblePassed,
+    visible_total: visibleResults.length,
+    hidden_passed: hiddenPassed,
+    hidden_total: hiddenResults.length,
+    failures,
     elapsed_seconds: elapsedSecs,
     remaining_seconds: remainingSecs,
   };
