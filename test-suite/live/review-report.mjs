@@ -297,6 +297,8 @@ h4{font-size:12px;margin:18px 0 8px;color:var(--muted);text-transform:uppercase;
 
 <div class="toolbar">
   <button class="active" onclick="filter('all',this)">All</button>
+  <button onclick="filter('latest',this)">🏃 Latest</button>
+  <span style="color:var(--border)">|</span>
   <button onclick="filter(0,this)">🧪 Full</button>
   <button onclick="filter(1,this)">Phase 1</button>
   <button onclick="filter(2,this)">Phase 2</button>
@@ -338,7 +340,11 @@ function filter(v,btn){
     const phaseMatch = c.closest('.phase-section')?.querySelector('.phase-h2')?.textContent;
     const phaseNum = phaseMatch?.startsWith('🧪 Full') ? 0 : phaseMatch?.match(/Phase (\d)/)?.[1];
     const result=c.querySelector('.badge')?.classList.contains(v);
-    c.style.display=(af==='all')?'':(af===0||af===1||af===2||af===3||af===4)?(String(phaseNum)===String(af)?'':'none'):(result?'':'none');
+    const isLatest=c.querySelector('.latest-tag') !== null;
+    c.style.display=(af==='all')?'':
+      (af==='latest')?(isLatest?'':'none'):
+      (af===0||af===1||af===2||af===3||af===4)?(String(phaseNum)===String(af)?'':'none'):
+      (result?'':'none');
   });
   document.querySelectorAll('.phase-section').forEach(s=>{
     s.style.display=[...s.querySelectorAll('.card')].some(c=>c.style.display!=='none')?'':'none';
