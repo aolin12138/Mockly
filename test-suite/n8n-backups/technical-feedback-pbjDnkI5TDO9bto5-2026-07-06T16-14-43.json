@@ -1,0 +1,382 @@
+{
+  "updatedAt": "2026-07-06T04:06:36.536Z",
+  "createdAt": "2026-06-12T03:54:56.784Z",
+  "id": "pbjDnkI5TDO9bto5",
+  "name": "Technical feedback",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "technical-feedback",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1200,
+        0
+      ],
+      "id": "w1",
+      "name": "Webhook",
+      "webhookId": "technical-feedback"
+    },
+    {
+      "parameters": {
+        "jsCode": "const w = $input.first().json.body || $input.first().json;\nconst s = w.execution_summary || {};\nconst r = s.results || {};\nconst q = s.question || {};\nconst rawTranscript = w.transcript || [];\nconst callDurationSecs = w.call_duration_secs || null;\nconst audio = w.audio || null;\n\nlet transcript = '';\nif (Array.isArray(rawTranscript) && rawTranscript.length > 0) {\n  transcript = rawTranscript.map(t => {\n    const role = t.role || 'unknown';\n    const msg = t.text || t.message || t.content || '';\n    return role + ': ' + msg;\n  }).join(String.fromCharCode(10));\n}\n\n// Derive per-test failures + category summary from visibleTests.details\n// (the backend sends details[], not by_category/failures).\nconst details = Array.isArray(r.visibleTests?.details) ? r.visibleTests.details : [];\nconst derivedFailures = details.filter(d => d && d.passed === false).map(d => ({\n  name: d.name, tags: d.tags || [], expected: d.expected, actual: d.actual, error: d.error || null\n}));\nconst catCounts = {};\nfor (const d of details) {\n  for (const tag of (Array.isArray(d.tags) && d.tags.length ? d.tags : ['uncategorized'])) {\n    catCounts[tag] = catCounts[tag] || { pass: 0, fail: 0 };\n    catCounts[tag][d.passed ? 'pass' : 'fail']++;\n  }\n}\nconst derivedByCategory = {};\nfor (const [tag, c] of Object.entries(catCounts)) {\n  derivedByCategory[tag] = c.fail === 0 ? 'pass' : c.fail + ' fail';\n}\nconst lines = [\n  'QUESTION: ' + (s.questionTitle || '?') + ' (' + (s.difficulty || '?') + ')',\n  'CONSTRAINTS: ' + (q.constraints || 'Not specified'),\n  'CODE (' + (s.language || '?') + '):',\n  s.code || 'none',\n  'TEST RESULTS:',\n  'TOTAL TESTS PASSED: ' + ((r.visibleTests?.passed||0) + (r.hiddenTests?.passed||0)) + '/' + ((r.visibleTests?.total||0) + (r.hiddenTests?.total||0)),\n  'Visible: ' + (r.visibleTests?.passed||0) + '/' + (r.visibleTests?.total||0),\n  'Hidden: ' + (r.hiddenTests?.passed||0) + '/' + (r.hiddenTests?.total||0),\n  'By category: ' + JSON.stringify(r.by_category || r.byCategory || derivedByCategory),\n  'Failures: ' + JSON.stringify(r.failures || derivedFailures),\n  'COMPLETED: ' + (s.completed === true ? 'Yes' : 'No'),\n  'PHASE: ' + (s.reachedPhase || s.reached_phase || '?'),\n  'TIME: ' + (s.timeTakenMinutes || '?') + ' / ' + (s.timeBudgetMinutes || '?') + ' min',\n  'HINTS: ' + JSON.stringify(s.hintLog || []),\n  'ANSWER KEY - Solutions: ' + (q.solutions ? JSON.stringify(q.solutions, null, 1) : 'N/A'),\n  'ANSWER KEY - Mistakes: ' + ((q.commonMistakes || q.common_mistakes) ? JSON.stringify(q.commonMistakes || q.common_mistakes) : 'N/A'),\n  'ANSWER KEY - Follow-ups: ' + ((q.followUps || q.follow_ups) ? JSON.stringify(q.followUps || q.follow_ups) : 'N/A'),\n  'TRANSCRIPT:',\n  transcript || 'Not available'\n];\nreturn [{json: {userMessage: lines.join(String.fromCharCode(10)), transcript: rawTranscript, audio: audio, callDurationSecs: callDurationSecs}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        0
+      ],
+      "id": "c1",
+      "name": "Format prompt"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5.2",
+          "mode": "list",
+          "cachedResultName": "GPT-5.2"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert technical interviewer writing post-interview feedback for a candidate who just finished a practice coding interview. Assess honestly and help them improve. Tone: HONEST BUT COACHING.\n\nYou receive: full transcript, candidate's final code, detailed test results, hints given (with depth), timing, which phase they reached, and the question's ANSWER KEY (canonical solutions, expected complexity, known pitfalls).\n\n# Ground rules\n- Test results are FACTS. Trust them. Do not re-read code to re-judge.\n- In test_results, set passed and total to EXACTLY the numbers on the 'TOTAL TESTS PASSED' line. Do not recompute or re-add them yourself.\n- Set reached_phase to EXACTLY the number on the PHASE line, completed from the COMPLETED line, and time from the TIME line. The values in the JSON example below are placeholders \u2014 NEVER copy them into your answer.\n- Grade complexity claims against the ANSWER KEY.\n- In code_assessment, explicitly contrast the candidate's final code with the canonical optimal solution in the ANSWER KEY: name the pattern or technique they missed and what the optimal approach achieves that theirs does not (time/space, robustness). In next_steps, reference that canonical approach by name so they know exactly what to study.\n- Be specific and evidence-based. Every score must cite something that actually happened.\n- Weight communication and reasoning heavily.\n- Distinguish solving alone from solving with help.\n- Make next_steps concrete: specific patterns, problem types, habits.\n- The HINTS list is the complete and authoritative hint record. In the Independence dimension, set hints_used to EXACTLY the number of entries in HINTS. Do NOT count other interviewer remarks (test-failure disclosures, follow-up questions, wrap-up prompts) as hints.\n- If TRANSCRIPT is \"Not available\", do not invent or quote candidate statements. Grade communication-related dimensions only from the available facts and say the evidence was limited.\n\n# Scoring\n- Score each dimension 0-10 (one decimal).\n- Label from number: 8.0-10 = \"strong\", 5.5-7.9 = \"adequate\", 0-5.4 = \"needs work\".\n- Do NOT compute any overall score. Omit it.\n\n# Output (valid JSON only, no markdown, no preamble):\n{\n  \"summary\": \"2-3 sentence honest overall assessment\",\n  \"outcome\": \"solved | partially_solved | not_solved\",\n  \"completed\": true,\n  \"reached_phase\": 4,\n  \"test_results\": {\"passed\":9,\"total\":10,\"by_category\":{\"basic\":\"pass\",\"edge\":\"1 fail\",\"performance\":\"pass\"},\"summary_note\":\"Brief summary\"},\n  \"time\": {\"taken_minutes\":32,\"budget_minutes\":35},\n  \"dimensions\": [\n    {\"name\":\"Correctness & Completeness\",\"score\":7.5,\"label\":\"adequate\",\"what_went_well\":\"...\",\"what_to_improve\":\"...\"},\n    {\"name\":\"Problem-Solving & Thinking\",\"score\":8.0,\"label\":\"strong\",\"what_went_well\":\"...\",\"what_to_improve\":\"...\"},\n    {\"name\":\"Technical Communication\",\"score\":8.5,\"label\":\"strong\",\"what_went_well\":\"...\",\"what_to_improve\":\"...\"},\n    {\"name\":\"Complexity & Optimization\",\"score\":4.5,\"label\":\"needs work\",\"what_went_well\":\"...\",\"what_to_improve\":\"...\"},\n    {\"name\":\"Code Quality\",\"score\":7.0,\"label\":\"adequate\",\"what_went_well\":\"...\",\"what_to_improve\":\"...\"},\n    {\"name\":\"Independence\",\"score\":6.0,\"label\":\"adequate\",\"hints_used\":2,\"what_went_well\":\"...\",\"what_to_improve\":\"...\"}\n  ],\n  \"thinking_and_logic\": \"Paragraph on approach and reasoning\",\n  \"code_assessment\": \"Paragraph on code structure and correctness\",\n  \"next_steps\": [{\"action\":\"...\",\"why\":\"...\",\"how\":\"...\"}],\n  \"patterns_to_study\": [\"hash map\",\"complexity analysis\"],\n  \"encouragement\": \"One honest motivating closing line\"\n}"
+            },
+            {
+              "content": "={{ $json.userMessage }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -720,
+        0
+      ],
+      "id": "o1",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "8HOYmotXQKJmEGAV",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst fp = $('Format prompt').first().json;\nlet c = '';\nif (item.output?.[0]?.content?.[0]?.text) {\n  c = item.output[0].content[0].text;\n} else if (item.output?.[0]?.text) {\n  c = item.output[0].text;\n} else if (typeof item.output === 'string') {\n  c = item.output;\n} else if (item.message?.content) {\n  c = item.message.content;\n}\nconst m = c.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\nif (m) c = m[1].trim();\nlet fb;\ntry { fb = JSON.parse(c); } catch(e) { fb = { raw: c.substring(0,2000), error: e.message }; }\nreturn [{json: { ...fb, transcript: fp.transcript || [], audio: fp.audio || null, callDurationSecs: fp.callDurationSecs || null }}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        0
+      ],
+      "id": "c2",
+      "name": "Parse & wrap"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -240,
+        0
+      ],
+      "id": "r1",
+      "name": "Respond"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Format prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format prompt": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Parse & wrap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & wrap": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "a4e788db-80b5-4135-aa21-22136f4fb98e",
+  "activeVersionId": "a4e788db-80b5-4135-aa21-22136f4fb98e",
+  "versionCounter": 90,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-06-12T03:54:56.786Z",
+      "createdAt": "2026-06-12T03:54:56.786Z",
+      "role": "workflow:owner",
+      "workflowId": "pbjDnkI5TDO9bto5",
+      "projectId": "PgSzPfKXrsFDeMI0",
+      "project": {
+        "updatedAt": "2026-01-30T06:55:30.763Z",
+        "createdAt": "2026-01-30T06:55:09.091Z",
+        "id": "PgSzPfKXrsFDeMI0",
+        "name": "A Yang <aolin12138@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "0166ecf7-b918-4593-b7c5-c47d7c234c3f",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-01-30T06:55:09.091Z",
+            "createdAt": "2026-01-30T06:55:09.091Z",
+            "userId": "0166ecf7-b918-4593-b7c5-c47d7c234c3f",
+            "projectId": "PgSzPfKXrsFDeMI0",
+            "user": {
+              "updatedAt": "2026-07-06T04:04:35.000Z",
+              "createdAt": "2026-01-30T06:55:08.680Z",
+              "id": "0166ecf7-b918-4593-b7c5-c47d7c234c3f",
+              "email": "aolin12138@gmail.com",
+              "firstName": "A",
+              "lastName": "Yang",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-01-30T06:55:34.107Z",
+                "personalization_survey_n8n_version": "2.4.8"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "q3GjRn4-cS3GmCwpLEtNP",
+                "userActivatedAt": 1769766313088,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1775532002919
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-07-06",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-07-06T04:06:36.537Z",
+    "createdAt": "2026-07-06T04:06:36.537Z",
+    "versionId": "a4e788db-80b5-4135-aa21-22136f4fb98e",
+    "workflowId": "pbjDnkI5TDO9bto5",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "technical-feedback",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          -1200,
+          0
+        ],
+        "id": "w1",
+        "name": "Webhook",
+        "webhookId": "technical-feedback"
+      },
+      {
+        "parameters": {
+          "jsCode": "const w = $input.first().json.body || $input.first().json;\nconst s = w.execution_summary || {};\nconst r = s.results || {};\nconst q = s.question || {};\nconst rawTranscript = w.transcript || [];\nconst callDurationSecs = w.call_duration_secs || null;\nconst audio = w.audio || null;\n\nlet transcript = '';\nif (Array.isArray(rawTranscript) && rawTranscript.length > 0) {\n  transcript = rawTranscript.map(t => {\n    const role = t.role || 'unknown';\n    const msg = t.text || t.message || t.content || '';\n    return role + ': ' + msg;\n  }).join(String.fromCharCode(10));\n}\n\n// Derive per-test failures + category summary from visibleTests.details\n// (the backend sends details[], not by_category/failures).\nconst details = Array.isArray(r.visibleTests?.details) ? r.visibleTests.details : [];\nconst derivedFailures = details.filter(d => d && d.passed === false).map(d => ({\n  name: d.name, tags: d.tags || [], expected: d.expected, actual: d.actual, error: d.error || null\n}));\nconst catCounts = {};\nfor (const d of details) {\n  for (const tag of (Array.isArray(d.tags) && d.tags.length ? d.tags : ['uncategorized'])) {\n    catCounts[tag] = catCounts[tag] || { pass: 0, fail: 0 };\n    catCounts[tag][d.passed ? 'pass' : 'fail']++;\n  }\n}\nconst derivedByCategory = {};\nfor (const [tag, c] of Object.entries(catCounts)) {\n  derivedByCategory[tag] = c.fail === 0 ? 'pass' : c.fail + ' fail';\n}\nconst lines = [\n  'QUESTION: ' + (s.questionTitle || '?') + ' (' + (s.difficulty || '?') + ')',\n  'CONSTRAINTS: ' + (q.constraints || 'Not specified'),\n  'CODE (' + (s.language || '?') + '):',\n  s.code || 'none',\n  'TEST RESULTS:',\n  'TOTAL TESTS PASSED: ' + ((r.visibleTests?.passed||0) + (r.hiddenTests?.passed||0)) + '/' + ((r.visibleTests?.total||0) + (r.hiddenTests?.total||0)),\n  'Visible: ' + (r.visibleTests?.passed||0) + '/' + (r.visibleTests?.total||0),\n  'Hidden: ' + (r.hiddenTests?.passed||0) + '/' + (r.hiddenTests?.total||0),\n  'By category: ' + JSON.stringify(r.by_category || r.byCategory || derivedByCategory),\n  'Failures: ' + JSON.stringify(r.failures || derivedFailures),\n  'COMPLETED: ' + (s.completed === true ? 'Yes' : 'No'),\n  'PHASE: ' + (s.reachedPhase || s.reached_phase || '?'),\n  'TIME: ' + (s.timeTakenMinutes || '?') + ' / ' + (s.timeBudgetMinutes || '?') + ' min',\n  'HINTS: ' + JSON.stringify(s.hintLog || []),\n  'ANSWER KEY - Solutions: ' + (q.solutions ? JSON.stringify(q.solutions, null, 1) : 'N/A'),\n  'ANSWER KEY - Mistakes: ' + ((q.commonMistakes || q.common_mistakes) ? JSON.stringify(q.commonMistakes || q.common_mistakes) : 'N/A'),\n  'ANSWER KEY - Follow-ups: ' + ((q.followUps || q.follow_ups) ? JSON.stringify(q.followUps || q.follow_ups) : 'N/A'),\n  'TRANSCRIPT:',\n  transcript || 'Not available'\n];\nreturn [{json: {userMessage: lines.join(String.fromCharCode(10)), transcript: rawTranscript, audio: audio, callDurationSecs: callDurationSecs}}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -960,
+          0
+        ],
+        "id": "c1",
+        "name": "Format prompt"
+      },
+      {
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "value": "gpt-5.2",
+            "mode": "list",
+            "cachedResultName": "GPT-5.2"
+          },
+          "responses": {
+            "values": [
+              {
+                "role": "system",
+                "content": "You are an expert technical interviewer writing post-interview feedback for a candidate who just finished a practice coding interview. Assess honestly and help them improve. Tone: HONEST BUT COACHING.\n\nYou receive: full transcript, candidate's final code, detailed test results, hints given (with depth), timing, which phase they reached, and the question's ANSWER KEY (canonical solutions, expected complexity, known pitfalls).\n\n# Ground rules\n- Test results are FACTS. Trust them. Do not re-read code to re-judge.\n- In test_results, set passed and total to EXACTLY the numbers on the 'TOTAL TESTS PASSED' line. Do not recompute or re-add them yourself.\n- Set reached_phase to EXACTLY the number on the PHASE line, completed from the COMPLETED line, and time from the TIME line. The values in the JSON example below are placeholders \u2014 NEVER copy them into your answer.\n- Grade complexity claims against the ANSWER KEY.\n- In code_assessment, explicitly contrast the candidate's final code with the canonical optimal solution in the ANSWER KEY: name the pattern or technique they missed and what the optimal approach achieves that theirs does not (time/space, robustness). In next_steps, reference that canonical approach by name so they know exactly what to study.\n- Be specific and evidence-based. Every score must cite something that actually happened.\n- Weight communication and reasoning heavily.\n- Distinguish solving alone from solving with help.\n- Make next_steps concrete: specific patterns, problem types, habits.\n- The HINTS list is the complete and authoritative hint record. In the Independence dimension, set hints_used to EXACTLY the number of entries in HINTS. Do NOT count other interviewer remarks (test-failure disclosures, follow-up questions, wrap-up prompts) as hints.\n- If TRANSCRIPT is \"Not available\", do not invent or quote candidate statements. Grade communication-related dimensions only from the available facts and say the evidence was limited.\n\n# Scoring\n- Score each dimension 0-10 (one decimal).\n- Label from number: 8.0-10 = \"strong\", 5.5-7.9 = \"adequate\", 0-5.4 = \"needs work\".\n- Do NOT compute any overall score. Omit it.\n\n# Output (valid JSON only, no markdown, no preamble):\n{\n  \"summary\": \"2-3 sentence honest overall assessment\",\n  \"outcome\": \"solved | partially_solved | not_solved\",\n  \"completed\": true,\n  \"reached_phase\": 4,\n  \"test_results\": {\"passed\":9,\"total\":10,\"by_category\":{\"basic\":\"pass\",\"edge\":\"1 fail\",\"performance\":\"pass\"},\"summary_note\":\"Brief summary\"},\n  \"time\": {\"taken_minutes\":32,\"budget_minutes\":35},\n  \"dimensions\": [\n    {\"name\":\"Correctness & Completeness\",\"score\":7.5,\"label\":\"adequate\",\"what_went_well\":\"...\",\"what_to_improve\":\"...\"},\n    {\"name\":\"Problem-Solving & Thinking\",\"score\":8.0,\"label\":\"strong\",\"what_went_well\":\"...\",\"what_to_improve\":\"...\"},\n    {\"name\":\"Technical Communication\",\"score\":8.5,\"label\":\"strong\",\"what_went_well\":\"...\",\"what_to_improve\":\"...\"},\n    {\"name\":\"Complexity & Optimization\",\"score\":4.5,\"label\":\"needs work\",\"what_went_well\":\"...\",\"what_to_improve\":\"...\"},\n    {\"name\":\"Code Quality\",\"score\":7.0,\"label\":\"adequate\",\"what_went_well\":\"...\",\"what_to_improve\":\"...\"},\n    {\"name\":\"Independence\",\"score\":6.0,\"label\":\"adequate\",\"hints_used\":2,\"what_went_well\":\"...\",\"what_to_improve\":\"...\"}\n  ],\n  \"thinking_and_logic\": \"Paragraph on approach and reasoning\",\n  \"code_assessment\": \"Paragraph on code structure and correctness\",\n  \"next_steps\": [{\"action\":\"...\",\"why\":\"...\",\"how\":\"...\"}],\n  \"patterns_to_study\": [\"hash map\",\"complexity analysis\"],\n  \"encouragement\": \"One honest motivating closing line\"\n}"
+              },
+              {
+                "content": "={{ $json.userMessage }}"
+              }
+            ]
+          },
+          "builtInTools": {},
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "typeVersion": 2.1,
+        "position": [
+          -720,
+          0
+        ],
+        "id": "o1",
+        "name": "Message a model",
+        "credentials": {
+          "openAiApi": {
+            "id": "8HOYmotXQKJmEGAV",
+            "name": "OpenAi account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const item = $input.first().json;\nconst fp = $('Format prompt').first().json;\nlet c = '';\nif (item.output?.[0]?.content?.[0]?.text) {\n  c = item.output[0].content[0].text;\n} else if (item.output?.[0]?.text) {\n  c = item.output[0].text;\n} else if (typeof item.output === 'string') {\n  c = item.output;\n} else if (item.message?.content) {\n  c = item.message.content;\n}\nconst m = c.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\nif (m) c = m[1].trim();\nlet fb;\ntry { fb = JSON.parse(c); } catch(e) { fb = { raw: c.substring(0,2000), error: e.message }; }\nreturn [{json: { ...fb, transcript: fp.transcript || [], audio: fp.audio || null, callDurationSecs: fp.callDurationSecs || null }}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -480,
+          0
+        ],
+        "id": "c2",
+        "name": "Parse & wrap"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [
+          -240,
+          0
+        ],
+        "id": "r1",
+        "name": "Respond"
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Format prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format prompt": {
+        "main": [
+          [
+            {
+              "node": "Message a model",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Message a model": {
+        "main": [
+          [
+            {
+              "node": "Parse & wrap",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse & wrap": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "A Yang",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-07-06T04:06:36.603Z",
+        "id": 91,
+        "workflowId": "pbjDnkI5TDO9bto5",
+        "versionId": "a4e788db-80b5-4135-aa21-22136f4fb98e",
+        "event": "activated",
+        "userId": "0166ecf7-b918-4593-b7c5-c47d7c234c3f"
+      }
+    ]
+  }
+}

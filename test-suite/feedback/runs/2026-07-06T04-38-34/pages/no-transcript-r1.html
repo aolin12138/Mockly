@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feedback page — no-transcript (run 1)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<style>body{font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}</style>
+</head>
+<body class="bg-slate-950 text-slate-100">
+  <div class="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+    <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]"></div>
+    <div class="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-cyan-500/10 rounded-full blur-[100px]"></div>
+    <div class="absolute bottom-[-10%] left-[20%] w-[35%] h-[35%] bg-purple-500/10 rounded-full blur-[120px]"></div>
+  </div>
+  <div class="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
+    <div class="w-full max-w-6xl space-y-6">
+      <div class="text-[11px] uppercase tracking-widest text-slate-500">Eval preview — fixture <span class="text-emerald-400">no-transcript</span>, run 1 — Production-reality probe: replicates the /technical/end path, which sends NO transcript (the n8n workflow never fetches one, so the LLM sees 'TRANSCRIPT: Not available'). Verifies the grader degrades gracefully: no fabricated candidate quotes, facts still echoed. Communication/Independence grades are blind here — that is the finding this fixture documents.</div>
+      
+    <!-- 1. HEADER BAND -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">Technical Interview Results</h1>
+          <p class="mt-2 text-sm text-slate-400">Comprehensive analysis of your coding interview performance</p>
+          <div class="mt-2 flex items-center gap-2"><span class="text-xs text-slate-400">⌨ python</span></div>
+        </div>
+        <div class="flex items-center gap-6">
+  <div class="flex flex-col items-center gap-1">
+    <div class="relative w-28 h-28 text-3xl flex items-center justify-center">
+      <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="url(#scoreGrad)" stroke-width="6" stroke-linecap="round" stroke-dasharray="221.76 264"/>
+        <defs><linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#06b6d4"/>
+        </linearGradient></defs>
+      </svg>
+      <span class="relative font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">8.4</span>
+    </div>
+    <span class="text-xs font-medium text-emerald-400">strong</span>
+  </div><div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-emerald-500/20 border-emerald-500/40 text-emerald-400"><span>✓</span><span class="text-sm font-semibold">Solved</span></div></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Tests:</span>
+    <span class="text-xs font-semibold text-white">10/10</span>
+  </div>
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Time:</span>
+    <span class="text-xs font-semibold text-white">28 / 35 min</span>
+  </div>
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Hints:</span>
+    <span class="text-xs font-semibold text-white">1 used</span>
+  </div>
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Phase:</span>
+    <span class="text-xs font-semibold text-white">3</span>
+  </div>
+        
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+    <span class="text-xs text-slate-400">Completed:</span>
+    <span class="text-xs font-semibold text-white">Yes</span>
+  </div>
+      </div>
+      <p class="text-sm text-slate-300 leading-relaxed">You implemented the canonical one-pass hash map solution and it passed all tests, including hidden cases. The approach is optimal for the given constraints and correctly avoids using the same element twice by checking the complement before inserting the current value.</p>
+    </div>
+
+    <!-- 2. CODE (static stand-in for the interactive sandbox) -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Code Review Sandbox</h2>
+    
+      <p class="text-xs text-slate-500 mb-2">Interactive in the app (edit + run tests). Submitted code shown below.</p>
+      <pre class="text-xs bg-slate-950/70 border border-white/10 rounded-xl p-4 overflow-x-auto text-slate-200">def solve(nums, target):
+    seen = {}
+    for i, n in enumerate(nums):
+        complement = target - n
+        if complement in seen:
+            return [seen[complement], i]
+        seen[n] = i
+    return []</pre>
+  </div>
+
+    <!-- 3. TEST RESULTS -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4">
+    <div class="flex items-center justify-between">
+      <span class="text-sm text-slate-300">🧪 Test Results</span>
+      <div class="flex items-center gap-2"><span class="text-lg font-bold text-white">10</span><span class="text-sm text-slate-400">/</span><span class="text-lg font-bold text-white">10</span><span class="text-xs text-slate-400">passed</span></div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500" style="width:100%"></div></div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2"><div class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border bg-emerald-500/10 border-emerald-500/20 text-emerald-300"><span>✓</span><span class="capitalize">basic</span><span class="ml-auto font-medium">pass</span></div><div class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border bg-emerald-500/10 border-emerald-500/20 text-emerald-300"><span>✓</span><span class="capitalize">edge</span><span class="ml-auto font-medium">pass</span></div><div class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border bg-emerald-500/10 border-emerald-500/20 text-emerald-300"><span>✓</span><span class="capitalize">performance</span><span class="ml-auto font-medium">pass</span></div></div>
+    <p class="text-xs text-slate-400 italic">All visible and hidden tests passed with the optimal single-pass hash map approach.</p>
+  </div>
+
+    <!-- 4. SKILL BREAKDOWN -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Skill Breakdown</h2>
+    <div class="grid gap-4 md:grid-cols-2">
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Correctness &amp; Completeness</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-emerald-400">9.5/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-lg" style="width:95%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">strong</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Returned correct indices for all cases (10/10), handled duplicates properly, and avoided the &quot;same element twice&quot; pitfall by checking the complement before storing the current index.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">If the platform guarantees exactly one solution, you can omit the trailing `return []`; otherwise, consider raising an error or documenting the behavior for no-solution inputs to make the contract explicit.</p></div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Problem-Solving &amp; Thinking</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-emerald-400">8.6/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-lg" style="width:86%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">strong</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Chose the right invariant for a single pass: keep a map of previously seen values to indices and look for the needed complement at each step.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Practice quickly articulating why the complement-check must happen before inserting the current element (this is the key reasoning that prevents reusing the same index).</p></div>
+  </div>
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Technical Communication</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-amber-400">6.2/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg" style="width:62%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">adequate</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Limited evidence due to no transcript; the final code is self-explanatory and uses clear variable names (`seen`, `complement`).</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">In future interviews, narrate your invariant and complexity upfront in 1–2 sentences (e.g., &quot;I’ll scan once, store seen numbers in a dict for O(1) complement lookups&quot;).</p></div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Complexity &amp; Optimization</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-emerald-400">9.2/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-lg" style="width:92%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">strong</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Matches the answer key optimal complexity: O(n) time with O(n) extra space; appropriate for n up to 1e5.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Be prepared to discuss worst-case hash map behavior and the tradeoff vs the sorted/two-pointer variant (when the input is already sorted or indices aren’t required).</p></div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Code Quality</span>
+      <div class="flex items-center gap-2">
+        
+        <span class="text-xs font-bold text-emerald-400">8.8/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-lg" style="width:88.00000000000001%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">strong</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">Clean, minimal, and idiomatic Python; correct ordering of operations; straightforward control flow.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Add a short docstring or comment stating the function contract and return format (especially useful when constraints like &quot;exactly one answer&quot; are part of the problem statement).</p></div>
+  </div>
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold text-white">Independence</span>
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-white/10">1 hint</span>
+        <span class="text-xs font-bold text-amber-400">7.2/10</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden mb-2">
+      <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg" style="width:72%"></div>
+    </div>
+    <div class="mb-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">adequate</span></div>
+    <div class="mb-2"><p class="text-xs text-emerald-400 font-medium mb-1">What went well</p><p class="text-xs text-slate-300 leading-relaxed">You converged to the optimal approach and produced a fully correct solution with only a general hint about using a fast-lookup data structure.</p></div>
+    <div><p class="text-xs text-amber-400 font-medium mb-1">What to improve</p><p class="text-xs text-slate-300 leading-relaxed">Work on recognizing the &quot;complement + hash map&quot; pattern immediately for pair-sum problems so you don’t need prompting to choose the right data structure.</p></div>
+  </div></div>
+  </div>
+
+    <!-- 5-6. NARRATIVES -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Thinking &amp; Logic</h2>
+    <p class="text-sm text-slate-300 leading-relaxed">The solution maintains a dictionary mapping previously seen numbers to their indices. For each number `n` at index `i`, it computes `target - n` and checks if that complement has already been seen; if so, it returns the stored index and `i`. Checking before inserting ensures you never pair an element with itself, and the single pass guarantees O(n) time.</p>
+  </div>
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Code Assessment</h2>
+    <p class="text-sm text-slate-300 leading-relaxed">Your final code aligns with the answer key’s optimal solution: a one-pass hash map that checks for the complement before adding the current element. This avoids known pitfalls like using the same element twice and avoids sorting (which can lose original indices). The implementation is concise and robust for duplicates because the dict stores the most recent index, while the early return correctly captures the first valid pair encountered (and the problem guarantees exactly one solution).</p>
+  </div>
+
+    <!-- 7. NEXT STEPS -->
+    
+  <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-lg font-semibold text-white mb-4">Next Steps</h2>
+    
+      <div class="space-y-3">
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-xs font-bold text-emerald-400">1</span></div>
+      <div class="flex-1 space-y-2"><p class="text-sm font-semibold text-white">Practice explaining the hash-map invariant and the check-before-insert detail out loud.</p>
+       <div><p class="text-xs text-slate-400 font-medium">Why</p><p class="text-xs text-slate-300">That reasoning is often what interviewers probe on even when the code is correct.</p></div>
+       <div><p class="text-xs text-slate-400 font-medium">How</p><p class="text-xs text-slate-300">Rehearse a 20-second explanation: &quot;scan once; for each value, look up complement in dict of prior values; if found return; else store current index&quot; and explicitly mention avoiding same-index reuse.</p></div></div>
+    </div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-xs font-bold text-emerald-400">2</span></div>
+      <div class="flex-1 space-y-2"><p class="text-sm font-semibold text-white">Study the sorted-array variant (two pointers) and when it applies.</p>
+       <div><p class="text-xs text-slate-400 font-medium">Why</p><p class="text-xs text-slate-300">It’s a common follow-up and tests whether you can switch patterns based on input properties and constraints.</p></div>
+       <div><p class="text-xs text-slate-400 font-medium">How</p><p class="text-xs text-slate-300">Implement two pointers for a sorted list returning values/positions, and discuss tradeoffs vs hash map (O(1) space but needs sorted input or sorting + index bookkeeping).</p></div></div>
+    </div>
+  </div></div>
+      <div class="mt-4 pt-4 border-t border-white/10"><p class="text-xs text-slate-400 font-medium mb-2">Patterns to Study</p><div class="flex flex-wrap gap-2"><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 font-medium"># one-pass hash map (complement lookup)</span><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 font-medium"># two pointers on sorted arrays</span></div></div>
+  </div>
+
+    <!-- 8. ENCOURAGEMENT -->
+    
+    <div class="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+      <div class="flex items-start gap-3">
+        <div class="p-2 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30">🏆</div>
+        <div class="flex-1"><h3 class="text-sm font-semibold text-white mb-1">Final Words</h3><p class="text-sm text-slate-300 leading-relaxed italic">This is the exact optimal solution expected for Two Sum—focus next on sharpening your verbal reasoning and follow-up variants to make the performance consistent in real interviews.</p></div>
+      </div>
+    </div>
+
+    <!-- 9. TRANSCRIPT -->
+    
+    </div>
+  </div>
+</body></html>

@@ -146,6 +146,76 @@ else:
     fmt["parameters"]["jsCode"] = js
     print("format prompt: patched (TOTAL TESTS PASSED line)")
 
+# --- fix 5: answer key fields are JSON objects/arrays — string concatenation
+# rendered them as "[object Object]", so the LLM never saw the actual answer key. ---
+js = fmt["parameters"]["jsCode"]
+OLD_SOL = "'ANSWER KEY - Solutions: ' + (q.solutions || 'N/A'),"
+OLD_MIS = "'ANSWER KEY - Mistakes: ' + (q.commonMistakes || q.common_mistakes || 'N/A'),"
+OLD_FU = "'ANSWER KEY - Follow-ups: ' + (q.followUps || q.follow_ups || 'N/A'),"
+NEW_SOL = "'ANSWER KEY - Solutions: ' + (q.solutions ? JSON.stringify(q.solutions, null, 1) : 'N/A'),"
+NEW_MIS = "'ANSWER KEY - Mistakes: ' + ((q.commonMistakes || q.common_mistakes) ? JSON.stringify(q.commonMistakes || q.common_mistakes) : 'N/A'),"
+NEW_FU = "'ANSWER KEY - Follow-ups: ' + ((q.followUps || q.follow_ups) ? JSON.stringify(q.followUps || q.follow_ups) : 'N/A'),"
+if "JSON.stringify(q.solutions" in js:
+    print("format prompt (answer key stringify): already patched, skipping")
+else:
+    assert OLD_SOL in js and OLD_MIS in js and OLD_FU in js, "answer key lines not found"
+    js = js.replace(OLD_SOL, NEW_SOL).replace(OLD_MIS, NEW_MIS).replace(OLD_FU, NEW_FU)
+    fmt["parameters"]["jsCode"] = js
+    print("format prompt: patched (answer key JSON.stringify)")
+
+# --- fix 6: actively use the canonical solution to name the candidate's gap ---
+sysmsg = model["parameters"]["responses"]["values"][0]["content"]
+GAP_RULE = (
+    "\n- In code_assessment, explicitly contrast the candidate's final code with the canonical "
+    "optimal solution in the ANSWER KEY: name the pattern or technique they missed and what the "
+    "optimal approach achieves that theirs does not (time/space, robustness). In next_steps, "
+    "reference that canonical approach by name so they know exactly what to study."
+)
+if "contrast the candidate's final code with the canonical" in sysmsg:
+    print("system prompt (canonical gap rule): already patched, skipping")
+else:
+    anchor4 = "- Grade complexity claims against the ANSWER KEY."
+    assert anchor4 in sysmsg, "complexity anchor not found"
+    sysmsg = sysmsg.replace(anchor4, anchor4 + GAP_RULE)
+    model["parameters"]["responses"]["values"][0]["content"] = sysmsg
+    print("system prompt: patched (canonical solution gap rule)")
+
+# --- fix 7: Independence measures progress-without-help, not mere absence of
+# hints (stability run: silent do-nothing candidates scored Independence 7-9) ---
+sysmsg = model["parameters"]["responses"]["values"][0]["content"]
+INDEP_RULE = (
+    "\n- Independence means PROGRESS ACHIEVED WITHOUT HELP, not merely the absence of hints. "
+    "A candidate who made little or no progress cannot score high on Independence even with "
+    "zero hints: if the outcome is not_solved with minimal working code, Independence must be "
+    "5.0 or below."
+)
+if "PROGRESS ACHIEVED WITHOUT HELP" in sysmsg:
+    print("system prompt (independence rule): already patched, skipping")
+else:
+    anchor5 = "- Distinguish solving alone from solving with help."
+    assert anchor5 in sysmsg, "independence anchor not found"
+    sysmsg = sysmsg.replace(anchor5, anchor5 + INDEP_RULE)
+    model["parameters"]["responses"]["values"][0]["content"] = sysmsg
+    print("system prompt: patched (independence = progress without help)")
+
+# --- fix 8: coaching completeness + hard ban on attributed speech without transcript ---
+sysmsg = model["parameters"]["responses"]["values"][0]["content"]
+COACH_RULE = (
+    "\n- Every dimension's what_to_improve must contain one concrete, specific suggestion — "
+    "even for a 9-10 score give a stretch goal. Never write \"None\", \"N/A\", or leave it empty."
+    "\n- When TRANSCRIPT is \"Not available\", never write phrases like 'you said', 'you mentioned', "
+    "'you stated', 'you explained', or attribute ANY specific statement or behavior to the candidate; "
+    "describe only what the code and facts show."
+)
+if "even for a 9-10 score give a stretch goal" in sysmsg:
+    print("system prompt (coaching/attribution rules): already patched, skipping")
+else:
+    anchor6 = "- Make next_steps concrete: specific patterns, problem types, habits."
+    assert anchor6 in sysmsg, "next_steps anchor not found"
+    sysmsg = sysmsg.replace(anchor6, anchor6 + COACH_RULE)
+    model["parameters"]["responses"]["values"][0]["content"] = sysmsg
+    print("system prompt: patched (coaching completeness + attribution ban)")
+
 # --- PUT back (only fields the API accepts) ---
 payload = {k: wf[k] for k in ("name", "nodes", "connections", "settings") if k in wf}
 updated = req("PUT", BASE, payload)
@@ -159,8 +229,16 @@ ok1 = "EXACTLY the number of entries in HINTS" in sys2
 ok2 = "derivedFailures" in js2
 ok3 = "TOTAL TESTS PASSED' line" in sys2 and "TOTAL TESTS PASSED" in js2
 ok4 = "NEVER copy them into your answer" in sys2
+ok5 = "JSON.stringify(q.solutions" in js2
+ok6 = "contrast the candidate's final code with the canonical" in sys2
+ok7 = "PROGRESS ACHIEVED WITHOUT HELP" in sys2
+ok8 = "even for a 9-10 score give a stretch goal" in sys2
 print("verify system prompt:", "OK" if ok1 else "MISSING")
 print("verify format prompt:", "OK" if ok2 else "MISSING")
 print("verify test-totals fix:", "OK" if ok3 else "MISSING")
 print("verify phase/example fix:", "OK" if ok4 else "MISSING")
-sys.exit(0 if ok1 and ok2 and ok3 and ok4 else 1)
+print("verify answer-key stringify:", "OK" if ok5 else "MISSING")
+print("verify canonical gap rule:", "OK" if ok6 else "MISSING")
+print("verify independence rule:", "OK" if ok7 else "MISSING")
+print("verify coaching/attribution rules:", "OK" if ok8 else "MISSING")
+sys.exit(0 if ok1 and ok2 and ok3 and ok4 and ok5 and ok6 and ok7 and ok8 else 1)

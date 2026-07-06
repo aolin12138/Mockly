@@ -1,0 +1,145 @@
+{
+  "summary": "You delivered the canonical optimal Two Sum solution: a single pass with a hash map, checking the complement before insertion to avoid reusing the same element. All tests passed, and your complexity analysis and follow-up discussion (sorted array) were correct and to the point.",
+  "outcome": "solved",
+  "completed": true,
+  "reached_phase": 4,
+  "test_results": {
+    "passed": 10,
+    "total": 10,
+    "by_category": {},
+    "summary_note": "All visible and hidden tests passed (10/10); no failures."
+  },
+  "time": {
+    "taken_minutes": 26,
+    "budget_minutes": 35
+  },
+  "dimensions": [
+    {
+      "name": "Correctness & Completeness",
+      "score": 10,
+      "label": "strong",
+      "what_went_well": "Returned correct indices across all test suites (10/10). The complement-first check prevents using the same element twice and correctly handles duplicates like [3,3] -> 6.",
+      "what_to_improve": "As a habit, consider whether you want to raise/return a sentinel for impossible cases vs returning []—even if the prompt guarantees an answer, aligning behavior to spec (or documenting assumptions) helps in real codebases."
+    },
+    {
+      "name": "Problem-Solving & Thinking",
+      "score": 9.2,
+      "label": "strong",
+      "what_went_well": "You quickly identified brute force, then moved to the optimal hashing approach with a clear rationale and a quick manual trace to validate behavior.",
+      "what_to_improve": "Add a quick explicit note about why checking before inserting is necessary (prevents self-match) whenever you present the approach—this reduces the chance of subtle ordering bugs in variants."
+    },
+    {
+      "name": "Technical Communication",
+      "score": 9,
+      "label": "strong",
+      "what_went_well": "You communicated the algorithm, key edge case (duplicates), and complexity clearly, and you answered the sorted-array follow-up with the correct two-pointer strategy.",
+      "what_to_improve": "When doing the trace, also mention what invariant the map represents (e.g., “all prior values and their indices”)—it makes correctness easier to argue formally."
+    },
+    {
+      "name": "Complexity & Optimization",
+      "score": 9.5,
+      "label": "strong",
+      "what_went_well": "Your claimed O(n) time / O(n) space matches the answer key’s optimal solution; you also correctly cited amortized O(1) hash ops and gave the O(1)-space two-pointer optimization for sorted input.",
+      "what_to_improve": "Stretch goal: be ready to discuss worst-case hash behavior (theoretical) vs practical amortized performance, and when you might prefer sorting + two pointers (O(n log n)) if memory is constrained and indices aren’t required."
+    },
+    {
+      "name": "Code Quality",
+      "score": 8.8,
+      "label": "strong",
+      "what_went_well": "Code is minimal, readable, and idiomatic: clear variable names, single pass, and no unnecessary branching.",
+      "what_to_improve": "Consider adding a short docstring/type hints (e.g., List[int] -> List[int]) in interview settings when time allows; it improves clarity and reduces ambiguity about return format."
+    },
+    {
+      "name": "Independence",
+      "score": 10,
+      "label": "strong",
+      "hints_used": 0,
+      "what_went_well": "You arrived at the optimal approach and implemented it correctly without any hints.",
+      "what_to_improve": "Push yourself to proactively enumerate 2–3 edge cases before coding (duplicates, negatives, target formed by early/late indices) to demonstrate robustness even when tests aren’t available."
+    }
+  ],
+  "thinking_and_logic": "You used the optimal “single-pass hash map” pattern: iterate once, compute complement = target - n, return as soon as the complement is found in previously seen values, otherwise record the current value’s index. Checking the complement before inserting the current element ensures you never use the same index twice and naturally supports duplicates when the second occurrence finds the first in the map.",
+  "code_assessment": "Your final code matches the answer key’s optimal solution (hash map value->index, complement check before insert), achieving O(n) time and O(n) space. Compared to common pitfalls listed in the key, your implementation explicitly avoids reusing the same element and correctly handles duplicates without sorting (so indices remain correct). The only minor gap is that the trailing return [] is unnecessary under the “exactly one valid answer” constraint, though it doesn’t harm correctness.",
+  "next_steps": [
+    {
+      "action": "Practice Two Sum variants that change constraints (sorted input, multiple pairs, returning values vs indices).",
+      "why": "These variants test whether you understand the underlying pattern (hash map vs two pointers) rather than memorizing one solution.",
+      "how": "Implement: (1) sorted-array two pointers (O(n), O(1)), (2) multiple pairs using hash map of value -> list of indices, and (3) streaming input where you must return earliest pair."
+    },
+    {
+      "action": "Build a habit of stating invariants and edge cases before coding.",
+      "why": "It strengthens correctness arguments and helps you avoid subtle ordering/duplicate bugs in harder hashmap problems.",
+      "how": "Before writing code, say: what’s stored in the map at iteration i, what condition triggers return, and list 3 edge cases you expect (duplicates, negatives, minimal length)."
+    }
+  ],
+  "patterns_to_study": [
+    "single-pass hash map (complement lookup)",
+    "two pointers on sorted arrays",
+    "hash map of value -> list of indices (handling duplicates/multiple answers)"
+  ],
+  "encouragement": "This was a clean, optimal solution with solid reasoning—keep pushing into variants to demonstrate the same clarity when constraints shift.",
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Here's the problem: given an array of integers and a target, return the indices of the two numbers that add up to the target. Take your time to read it.",
+      "timestart": 5
+    },
+    {
+      "role": "user",
+      "text": "Okay. Quick clarification — is there always exactly one valid answer, and can I use the same element twice?",
+      "timestart": 40
+    },
+    {
+      "role": "agent",
+      "text": "Exactly one valid answer exists, and you may not use the same element twice.",
+      "timestart": 55
+    },
+    {
+      "role": "user",
+      "text": "Got it. The brute force is checking every pair, which is O(n squared). But I can do better with a hash map: as I scan, I store each value with its index, and for each element I check whether target minus the current value is already in the map. That's a single pass, O(n) time, O(n) space. I'll go with that.",
+      "timestart": 90
+    },
+    {
+      "role": "agent",
+      "text": "Sounds good, go ahead.",
+      "timestart": 120
+    },
+    {
+      "role": "user",
+      "text": "Writing it now. I'm checking the complement before inserting the current value so I never match an element with itself. That also handles duplicates like two threes summing to six.",
+      "timestart": 300
+    },
+    {
+      "role": "user",
+      "text": "Done. Let me trace it with nums = [2, 7, 11, 15], target 9: i=0 stores 2, i=1 complement is 2 which is in the map, so I return [0, 1]. I'll run the tests.",
+      "timestart": 700
+    },
+    {
+      "role": "agent",
+      "text": "All visible tests pass. Can you state the complexity of your solution?",
+      "timestart": 900
+    },
+    {
+      "role": "user",
+      "text": "Time is O(n) — one pass, each lookup and insert is amortized O(1). Space is O(n) for the map in the worst case.",
+      "timestart": 930
+    },
+    {
+      "role": "agent",
+      "text": "Follow-up: what would you change if the input array were sorted?",
+      "timestart": 1000
+    },
+    {
+      "role": "user",
+      "text": "Then I'd use two pointers from both ends and move them inward based on whether the sum is too big or too small. That keeps O(n) time but drops the extra space to O(1).",
+      "timestart": 1040
+    },
+    {
+      "role": "agent",
+      "text": "Great. That wraps up the interview.",
+      "timestart": 1500
+    }
+  ],
+  "audio": null,
+  "callDurationSecs": 1560
+}

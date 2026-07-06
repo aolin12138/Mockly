@@ -405,26 +405,71 @@ async function fetchConversationTranscript(apiKey, conversationId, { attempts = 
   return { transcript: null, callDurationSecs: null };
 }
 
+/**
+ * Overwrite fact fields in LLM feedback with ground truth from the execution
+ * summary. The LLM's job is judgment; facts (test counts, time, phase, hints)
+ * are known inputs and must never depend on model echo fidelity.
+ * Mutates and returns the feedback object.
+ */
+function enforceFactFields(feedback, executionSummary) {
+  if (!feedback || typeof feedback !== 'object' || Array.isArray(feedback)) return feedback;
+  const s = executionSummary || {};
+  const r = s.results || {};
+  const passed = (Number(r.visibleTests?.passed) || 0) + (Number(r.hiddenTests?.passed) || 0);
+  const total = (Number(r.visibleTests?.total) || 0) + (Number(r.hiddenTests?.total) || 0);
+  if (total > 0) {
+    feedback.test_results = { ...(feedback.test_results || {}), passed, total };
+  }
+  if (s.timeTakenMinutes != null) {
+    feedback.time = {
+      ...(feedback.time || {}),
+      taken_minutes: s.timeTakenMinutes,
+      budget_minutes: s.timeBudgetMinutes ?? feedback.time?.budget_minutes ?? null,
+    };
+  }
+  if (s.reachedPhase != null) feedback.reached_phase = s.reachedPhase;
+  if (typeof s.completed === 'boolean') feedback.completed = s.completed;
+  const hintCount = Array.isArray(s.hintLog) ? s.hintLog.length : (Number(s.hintCount) || 0);
+  if (Array.isArray(feedback.dimensions)) {
+    const indep = feedback.dimensions.find(d => d?.name === 'Independence');
+    if (indep) indep.hints_used = hintCount;
+  }
+  return feedback;
+}
+
 async function runTechnicalFeedbackWorkflow({ userId, executionSummary }) {
   const resolved = await resolveElevenLabsKey(userId, 'technical');
   const elevenLabsKey = resolved.apiKey;
 
-  // Single attempt with 120s timeout — enough for GPT-5.2
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 120_000);
-
+  // Up to 2 attempts (design doc Part 6: one re-ask on invalid output) — the
+  // workflow occasionally returns {raw, error} when the LLM emits invalid JSON.
+  const maxAttempts = 2;
   let response, rawText, body;
-  try {
-    response = await fetch(TECHNICAL_FEEDBACK_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-ELEVENLABS-KEY': elevenLabsKey },
-      body: JSON.stringify(executionSummary || {}),
-      signal: controller.signal,
-    });
-    rawText = await response.text();
-    try { body = JSON.parse(rawText); } catch { /* non-JSON */ }
-  } finally {
-    clearTimeout(timer);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 120_000);
+    try {
+      response = await fetch(TECHNICAL_FEEDBACK_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-ELEVENLABS-KEY': elevenLabsKey },
+        body: JSON.stringify(executionSummary || {}),
+        signal: controller.signal,
+      });
+      rawText = await response.text();
+      try { body = JSON.parse(rawText); } catch { body = undefined; }
+    } finally {
+      clearTimeout(timer);
+    }
+
+    const fb = (body && body.feedback && typeof body.feedback === 'object') ? body.feedback : body;
+    const valid = response.ok && fb && typeof fb === 'object' && !Array.isArray(fb) &&
+      Array.isArray(fb.dimensions) && fb.dimensions.length > 0;
+    if (valid) break;
+    if (attempt < maxAttempts) {
+      console.warn(`[tech-feedback] Attempt ${attempt} returned invalid feedback (status ${response?.status}, parse error: ${body?.error || 'n/a'}) — retrying once`);
+    } else {
+      console.warn('[tech-feedback] Feedback still invalid after retry — passing through for storage/inspection');
+    }
   }
 
   if (!response.ok) {
@@ -1176,6 +1221,8 @@ router.post('/technical/end', async (req, res) => {
     // 4. Store feedback if we got it
     if (feedbackBody) {
       try {
+        // Facts come from the execution summary, not from LLM echo.
+        enforceFactFields(unwrapFeedback(feedbackBody), executionSummary);
         const envelope = extractFeedbackEnvelope({
           feedbackPayload: feedbackBody,
           rawPayload: feedbackBody || {},
@@ -1549,6 +1596,8 @@ router.post('/session/:sessionId/generate-technical-feedback', async (req, res) 
       executionSummary: feedbackPayload,
     });
 
+    // Facts come from the execution summary, not from LLM echo.
+    enforceFactFields(unwrapFeedback(feedbackBody), executionSummary);
     const envelope = extractFeedbackEnvelope({ feedbackPayload: feedbackBody, rawPayload: feedbackBody || {} });
     const feedbackResult = envelope.feedbackForScoring;
     const parsedFeedback = unwrapFeedback(feedbackResult);

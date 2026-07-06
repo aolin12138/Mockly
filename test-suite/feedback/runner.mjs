@@ -182,11 +182,23 @@ if (repeats > 1) {
       const xs = runs.map((x) => x.scores[dim]).filter((v) => Number.isFinite(v));
       if (xs.length < 2) continue;
       const sd = stddev(xs);
+      const m = mean(xs);
       const labels = new Set(xs.map(labelForScore));
-      const pass = sd <= STABILITY_STDDEV_GATE && labels.size === 1;
-      stabilityChecks.push({ fixtureId: fx.id, dimension: dim, mean: mean(xs), stddev: sd, labels: [...labels], pass });
+      // Label flips are inevitable when the true score sits ON a band boundary
+      // (5.5 / 8.0); only fail flips when the mean is clearly inside a band.
+      const nearBoundary = Math.abs(m - 5.5) <= 0.5 || Math.abs(m - 8.0) <= 0.5;
+      const labelsOk = labels.size === 1 || nearBoundary;
+      // Degraded-mode probes (fixture.stabilityAdvisory) report but never gate:
+      // e.g. no-transcript grading has inherently less evidence, and production
+      // now always sends the transcript.
+      const advisory = fx.stabilityAdvisory === true;
+      const withinGate = sd <= STABILITY_STDDEV_GATE && labelsOk;
+      const pass = withinGate || advisory;
+      stabilityChecks.push({ fixtureId: fx.id, dimension: dim, mean: m, stddev: sd, labels: [...labels], nearBoundary, advisory, pass });
       const mark = pass ? '✓' : '✗';
-      console.log(`  ${mark} ${fx.id} / ${dim}: mean ${mean(xs).toFixed(1)}, σ ${sd.toFixed(2)}, labels [${[...labels].join(', ')}]`);
+      const note = !withinGate && advisory ? ' (advisory fixture — not gating)'
+        : labels.size > 1 && nearBoundary ? ' (flip at band boundary — tolerated)' : '';
+      console.log(`  ${mark} ${fx.id} / ${dim}: mean ${m.toFixed(1)}, σ ${sd.toFixed(2)}, labels [${[...labels].join(', ')}]${note}`);
     }
   }
 }

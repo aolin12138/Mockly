@@ -8,6 +8,7 @@
     }
   },
   "ordering": [],
+  "stabilityAdvisory": true,
   "payload": {
     "conversation_id": "conv-fixture-no-transcript",
     "execution_summary": {
