@@ -5,6 +5,10 @@ import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 
 const router = express.Router();
 
+// In-memory cache for ElevenLabs subscription data (reduce API calls + key decryption frequency)
+const subscriptionCache = new Map(); // userId -> { data, expiresAt }
+const SUBSCRIPTION_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 // Tier → included agent minutes per month
 const TIER_MINUTES = {
   free: 15,
@@ -50,6 +54,12 @@ router.get('/elevenlabs/status', async (req, res) => {
       });
     }
 
+    // Check cache first
+    const cached = subscriptionCache.get(userId);
+    if (cached && cached.expiresAt > Date.now()) {
+      return res.json(cached.data);
+    }
+
     // Fetch live subscription data from ElevenLabs
     try {
       const client = new ElevenLabsClient({ apiKey });
@@ -82,7 +92,8 @@ router.get('/elevenlabs/status', async (req, res) => {
         data: { lastUsedAt: new Date() }
       });
 
-      return res.json({
+      // Build response
+      const responseData = {
         connected: true,
         last4: integration.apiKeyLast4,
         verifiedAt: integration.verifiedAt,
@@ -94,7 +105,15 @@ router.get('/elevenlabs/status', async (req, res) => {
         minutesRemaining: Math.round(minutesRemaining * 10) / 10,
         estimatedSessions,
         nextResetUnix: nextResetUnix || null,
+      };
+
+      // Cache the result
+      subscriptionCache.set(userId, {
+        data: responseData,
+        expiresAt: Date.now() + SUBSCRIPTION_CACHE_TTL_MS,
       });
+
+      return res.json(responseData);
     } catch (err) {
       console.error('Failed to fetch ElevenLabs subscription:', err.message);
       // Key might have been revoked on ElevenLabs side

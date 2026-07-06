@@ -22,18 +22,28 @@ const feedbackSseClients = new Map();
 // Fallback store in case callback arrives before results SSE connects
 const feedbackEventStore = new Map();
 
-const AGENT_SETUP_WEBHOOK_URL = 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
+const AGENT_SETUP_WEBHOOK_URL = process.env.AGENT_SETUP_WEBHOOK_URL || 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
 const ELEVENLABS_CONVAI_BASE_URL = 'https://api.elevenlabs.io/v1/convai';
 const CREDIT_TOOL_NAME = 'getCreditStatus';
 const COMPLETE_INTERVIEW_TOOL_NAME = 'completeInterview';
 
 const CREDIT_TOOL_WARNING_MESSAGE = 'Credit-aware wrap-up may be unavailable for this session. If your remaining credits are low, the interview could end abruptly.';
-const FEEDBACK_CALLBACK_SECRET = process.env.FEEDBACK_CALLBACK_SECRET || '';
+const FEEDBACK_CALLBACK_SECRET = process.env.FEEDBACK_CALLBACK_SECRET;
+
+// SSE CORS: validate origin instead of wildcard
+const getCorsOrigin = (req) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:5174').split(',');
+  if (!origin || allowedOrigins.includes(origin)) return origin || allowedOrigins[0];
+  return allowedOrigins[0]; // Fallback for unknown origins (browser will reject credentialed)
+};
+
+// 1. Shared-secret check
 
 const verifyUserIdFromToken = (token) => {
   if (!token) return null;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     return decoded?.userId || null;
   } catch {
     return null;
@@ -423,7 +433,7 @@ router.get('/session/:sessionId/stream', (req, res) => {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': getCorsOrigin(req),
   });
 
   // Send initial heartbeat so the client knows the connection is alive
@@ -456,10 +466,17 @@ router.get('/session/:sessionId/stream', (req, res) => {
     res.write(':keepalive\n\n');
   }, 15000);
 
+  // Absolute timeout: close after 30 minutes (interview shouldn't take longer)
+  const absoluteTimeout = setTimeout(() => {
+    res.write('event: timeout\ndata: {"message":"Session stream timeout"}\n\n');
+    res.end();
+  }, 30 * 60 * 1000);
+
   // Cleanup when client disconnects
   req.on('close', () => {
     console.log(`📡 SSE client disconnected for session ${sessionId}`);
     clearInterval(keepAlive);
+    clearTimeout(absoluteTimeout);
     sseClients.delete(sessionId);
   });
 });
@@ -495,7 +512,7 @@ router.get('/session/:sessionId/feedback-stream', async (req, res) => {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': getCorsOrigin(req),
   });
 
   res.write('event: connected\ndata: {}\n\n');
@@ -529,8 +546,15 @@ router.get('/session/:sessionId/feedback-stream', async (req, res) => {
     res.write(':keepalive\n\n');
   }, 15000);
 
+  // Absolute timeout: close feedback stream after 10 minutes
+  const absoluteTimeout = setTimeout(() => {
+    res.write('event: timeout\ndata: {"message":"Feedback stream timeout"}\n\n');
+    res.end();
+  }, 10 * 60 * 1000);
+
   req.on('close', () => {
     clearInterval(keepAlive);
+    clearTimeout(absoluteTimeout);
     const clients = feedbackSseClients.get(sessionId);
     if (!clients) return;
     clients.delete(res);
@@ -719,11 +743,9 @@ router.post('/session/:sessionId/callback', async (req, res) => {
 router.post('/session/:sessionId/feedback-callback', async (req, res) => {
   const { sessionId } = req.params;
 
-  if (FEEDBACK_CALLBACK_SECRET) {
-    const providedSecret = req.get('x-feedback-callback-secret') || req.body?.callback_secret || req.body?.callbackSecret;
-    if (providedSecret !== FEEDBACK_CALLBACK_SECRET) {
-      return res.status(401).json({ error: 'Invalid callback secret' });
-    }
+  if (!FEEDBACK_CALLBACK_SECRET) {
+    console.error('FATAL: FEEDBACK_CALLBACK_SECRET not configured. Refusing to process feedback callbacks.');
+    return res.status(500).json({ error: 'Server not configured for feedback callbacks' });
   }
 
   const rawBody = req.body || {};

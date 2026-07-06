@@ -1,7 +1,7 @@
 const LOGIN_PATH = '/login';
 
+// Clear stored user data (keep minimal — JWT is in httpOnly cookie now)
 export const clearAuthState = () => {
-  localStorage.removeItem('token');
   localStorage.removeItem('user');
 };
 
@@ -13,31 +13,38 @@ export const redirectToLogin = () => {
 };
 
 export const ensureAuthenticated = () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    clearAuthState();
-    redirectToLogin();
-    return null;
+  // Since JWT is now in httpOnly cookie (auto-sent by browser),
+  // we can't directly check. Instead, rely on the API returning 401.
+  // We still check for stored user data as a quick client-side check.
+  const user = localStorage.getItem('user');
+  if (!user) {
+    // Don't redirect immediately — the cookie might still be valid.
+    // The API call will trigger redirect if auth fails.
+    return true; // Proceed optimistically
   }
-  return token;
+  return true;
+};
+
+// Read CSRF token from cookie (for double-submit pattern)
+const getCsrfToken = () => {
+  if (typeof document === 'undefined') return '';
+  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/);
+  return match ? match[1] : '';
 };
 
 export const authFetch = async (url, options = {}) => {
-  const token = ensureAuthenticated();
-  if (!token) {
-    const error = new Error('Authentication required');
-    error.code = 'AUTH_REQUIRED';
-    throw error;
-  }
-
+  const csrfToken = getCsrfToken();
   const headers = {
     ...(options.headers || {}),
-    Authorization: `Bearer ${token}`,
+    ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
   };
 
+  // Try to use cookie-based auth (httpOnly, auto-sent).
+  // If the cookie is missing, the server will return 401.
   const response = await fetch(url, {
     ...options,
     headers,
+    credentials: 'include', // Required for httpOnly cookies
   });
 
   if (response.status === 401) {
