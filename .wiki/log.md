@@ -24,6 +24,17 @@ Session summary at `~/.pi/user/memory/sessions/2026-07-06.md`.
 - **Updated:** `decisions.md` — added 6 decisions: n8n stateless pipeline, fact enforcement, answer key flow, question bank seeding, selective staging, primary_focus
 - **Created:** `log.md` (this file)
 
+## 2026-07-07 update | Local index created — canonical browse list moved here
+
+Design change following the 2026-07-07 audit: the central pi index duplicated
+per-page summaries and drifted immediately (said 4 pages when there were 8).
+
+- **Created:** `index.md` — canonical page list with types, dates, summaries,
+  and ⚠ staleness flags. The central pi index now holds only a one-row pointer.
+- **Updated:** `test-suite.md`, `status.md` — scenario count corrected 18→27
+  (ground-truth error the structural audit missed; drove new §B2 checks in
+  the wiki-audit skill)
+
 ## 2026-07-07 lint | 6 issues, 4 auto-fixed
 
 - Auto-fixed: `lessons.md` missing backlink to `overview.md` (bidirectionality)
