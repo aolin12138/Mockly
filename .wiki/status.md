@@ -33,7 +33,7 @@ Assessment from codebase + recent development sessions.
 | **Design system** | `design-system/` directory with mockly-setup | Medium |
 | **MCP server** | `apps/backend/lib/mcp/` — working server with `get_current_code`, `run_code_against_tests`, `log_event` tools | High |
 | **ElevenLabs agent** | `agent_2201ktp0n7mwek6avkphs4x6394m` with 4-phase workflow (Understanding → Coding → Assessment → Wrap) + MCP tool integration | High |
-| **Live test suite** | `test-suite/` — 18 scenarios, WS harness, sim-user, DeepSeek judge, HTML reports, checkpoint system | High |
+| **Live test suite** | `test-suite/` — 27 scenarios, WS harness, sim-user, DeepSeek judge, HTML reports, checkpoint system | High |
 | **Feedback eval harness** | `test-suite/feedback/` — 7 fixtures, tier-1/2 checks, ordering + stability gates, report generator with per-fixture page rendering | High |
 | **Feedback grader (n8n)** | Workflow `pbjDnkI5TDO9bto5` — 5-node stateless pipeline: Webhook → Format prompt → GPT-5.2 → Parse & wrap → Respond. 10 defects found and patched via `scripts/patch-workflow.py` (idempotent, backs up first) | High |
 | **Technical question bank** | 15 DSA problems with full answer keys: 5 original (hash/sliding window/cyclic sort/prefix sum) + 10 new (binary search, linked list, BST, stack, two pointers, heap, DP, BFS). All have optimal solutions with code, common_mistakes, follow_ups, pattern_tags, hint_framework | High |

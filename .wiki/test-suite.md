@@ -36,7 +36,7 @@ test-suite/
 │   ├── judge.mjs          # DeepSeek evaluation against criteria
 │   ├── verify.mjs         # Preflight checks
 │   └── null-audio.mjs     # Null audio interface (text-only)
-├── scenarios/             # 18 scenario JSON files
+├── scenarios/             # 27 scenario JSON files
 ├── lib/                   # Shared: config, checkpoint, report, loader
 ├── runner.mjs             # Original simulation runner (limited — no MCP tools)
 └── live-report.html       # Latest test run output
@@ -44,7 +44,13 @@ test-suite/
 
 ## Scenarios
 
-18 scenarios covering agent behavior across 4 interview phases:
+27 scenarios covering agent behavior across 4 interview phases (incl.
+full-interview arcs, tool-failure probes, phase-transition traps, and
+adversarial cases like score-fishing).
+
+⚠ The status table below is from the 2026-06-23 run — stale. The agent has
+since moved to `gemini-3.1-pro-preview` with 2 more scenarios passing (see
+[decisions](decisions.md) and session 2026-07-06):
 
 | Scenario | Phase | Status |
 |----------|-------|--------|
