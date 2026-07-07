@@ -197,7 +197,7 @@ function generateHtml(merged) {
     ${s.runCriteria?.length ? `<h4>Criteria (${s.runCriteria.length})</h4>${criteriaHtml}` : ''}
     ${s.runTranscript?.length ? `<h4>Transcript</h4><div class="transcript">${transcriptHtml}</div>` : (s.runMessage ? `<div class="err-msg">${esc(s.runMessage)}</div>` : '')}
     <h4>💬 Comments</h4>
-    <textarea class="comment-box" id="cmt-${esc(s.id)}" placeholder="Leave feedback..." oninput="saveComment('${esc(s.id)}',this.value)"></textarea>
+    <textarea class="comment-box" id="cmt-${esc(s.id)}" placeholder="Leave feedback..." onfocus="this._dirty=false" oninput="this._dirty=true;debounceSave()" onblur="flushSave()"></textarea>
     <span class="comment-saved" id="svd-${esc(s.id)}">✓ Saved</span>
   </div>
 </div>`;
@@ -317,17 +317,31 @@ ${cards}
 </div>
 <script>
 const comments=JSON.parse(localStorage.getItem('mc-review')||'{}');
+let saveTimer=null;
 
-function saveComment(id,val){
-  if(val.trim()) comments[id]=val; else delete comments[id];
-  localStorage.setItem('mc-review',JSON.stringify(comments));
-  const el=document.getElementById('svd-'+id.replace(/[^a-zA-Z0-9_-]/g,''));
-  if(el){el.style.display='inline';setTimeout(()=>el.style.display='none',1500)}
+function debounceSave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(flushSave,800);
 }
+
+function flushSave(){
+  clearTimeout(saveTimer);
+  document.querySelectorAll('.comment-box').forEach(b=>{
+    if(!b._dirty) return;
+    b._dirty=false;
+    const id=b.id.replace('cmt-','');
+    if(b.value.trim()) comments[id]=b.value; else delete comments[id];
+  });
+  localStorage.setItem('mc-review',JSON.stringify(comments));
+  // Flash saved indicator briefly
+  document.querySelectorAll('.comment-saved').forEach(el=>el.style.display='inline');
+  setTimeout(()=>document.querySelectorAll('.comment-saved').forEach(el=>el.style.display='none'),1200);
+}
+
 function clearComments(){
   if(!confirm('Delete ALL comments?')) return;
   localStorage.removeItem('mc-review');
-  document.querySelectorAll('.comment-box').forEach(b=>b.value='');
+  document.querySelectorAll('.comment-box').forEach(b=>{b.value='';b._dirty=false});
   Object.keys(comments).forEach(k=>delete comments[k]);
 }
 
@@ -352,9 +366,11 @@ function filter(v,btn){
 }
 
 // Restore comments
-document.querySelectorAll('.comment-box').forEach(b=>{
+const commentBoxes=document.querySelectorAll('.comment-box');
+commentBoxes.forEach(b=>{
   const id=b.id.replace('cmt-','');
   if(comments[id]) b.value=comments[id];
+  b._dirty=false;
 });
 
 // Export
