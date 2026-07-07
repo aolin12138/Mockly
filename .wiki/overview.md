@@ -1,12 +1,13 @@
 ---
 title: "Mockly — Project Overview"
 type: concept
-updated: 2026-05-31
+updated: 2026-07-06
 sources:
   - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/README.md
   - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/package.json
-  - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/mcp_plan.md
-  - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/design-system/BYOK.md
+  - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/test-suite/
+  - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/test-suite/feedback/
+  - Pi sessions 2026-07-06 (eval harness, question seeding, primary_focus)
 tags: [mockly, overview, interview, ai]
 ---
 
@@ -51,10 +52,17 @@ A web app that allows people to practice interviews through mocked sessions powe
 | Resume/ doc upload | mammoth + pdf-parse + multer dependencies |
 | Analytics dashboard | Recharts dependency |
 | AI prompt templates | `Mockly/prompts/` and `apps/backend/prompts/` directories |
+| Live test suite | `test-suite/live/` — 18 scenarios, WS harness, sim-user, DeepSeek judge |
+| Feedback eval harness | `test-suite/feedback/` — 7 fixtures, tier-1/2 checks, ordering + stability gates, report generator |
+| Technical question bank | 15 DSA problems with full answer keys (optimal solutions, patterns, mistakes, follow-ups) |
+| primary_focus coaching | Single imperative headline rendered as 🎯 callout atop feedback pages |
 
 ## Pi session history
 
-Only 2 Pi sessions recorded, both from Apr 22, 2026 — neither involved Mockly development. The project was built outside of Pi (Claude, OpenCode). See [build history](build-history.md).
+7 Pi sessions recorded, 5 in 2026-07-06 (eval harness iteration, live test
+run, security review, feedback eval harness, question seeding + primary_focus)
+plus 2 from Apr 22, 2026. See [status](status.md), [decisions](decisions.md),
+[test-suite](test-suite.md) for session artifacts.
 
 ## See also
 
