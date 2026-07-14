@@ -12,11 +12,15 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
       '/webhook-test': {
         target: 'https://aolin12138.app.n8n.cloud',
-        changeOrigin: true, // Forward origin correctly
-        secure: false, // Use false for self-signed certificates
-        rewrite: (path) => path.replace(/^\/webhook-test/, ''), // This ensures the full URL is forwarded correctly
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/webhook-test/, ''),
       },
     },
   },

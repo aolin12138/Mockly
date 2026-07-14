@@ -52,7 +52,7 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
 }));
 
 // Body parser — reduced from 50MB to 5MB (DoS protection)
@@ -66,8 +66,8 @@ app.use(cookieParser());
 const csrfProtection = (req, res, next) => {
   // Skip for GET, HEAD, OPTIONS (safe methods)
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
-  // Skip for MCP and test endpoints (use their own auth)
-  if (req.path.startsWith('/mcp') || req.path.startsWith('/api/test')) return next();
+  // Skip for MCP, test endpoints, and login/register (public auth endpoints)
+  if (req.path.startsWith('/mcp') || req.path.startsWith('/api/test') || req.path.startsWith('/api/auth/login') || req.path.startsWith('/api/auth/register')) return next();
 
   const cookieToken = req.cookies?.csrf_token;
   const headerToken = req.headers['x-csrf-token'];

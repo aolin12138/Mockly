@@ -46,6 +46,12 @@ const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
+// GET endpoint to provide CSRF token before login
+router.get('/csrf-token', (req, res) => {
+  setCsrfCookie(res);
+  res.json({ ok: true });
+});
+
 // Register endpoint (rate-limited)
 router.post('/register', authLimiter, async (req, res) => {
   try {

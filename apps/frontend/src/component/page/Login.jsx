@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogIn, Mail, Lock, Sparkles } from 'lucide-react';
@@ -11,6 +11,11 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Fetch CSRF token on mount
+  useEffect(() => {
+    fetch('/api/auth/csrf-token', { credentials: 'include' }).catch(() => {});
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -26,11 +31,16 @@ const Login = () => {
     setError('');
 
     try {
+      // Read CSRF token from cookie
+      const csrfToken = (document.cookie.match(/(?:^|;\\s*)csrf_token=([^;]*)/) || [])[1] || '';
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
         },
+        credentials: 'include',
         body: JSON.stringify(formData),
       });
 
