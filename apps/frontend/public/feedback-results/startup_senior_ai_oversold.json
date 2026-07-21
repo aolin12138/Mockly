@@ -1,0 +1,234 @@
+{
+  "meta": {
+    "session_mode": "practice",
+    "confidence_level": "high",
+    "questions_asked": 27,
+    "domains_covered": []
+  },
+  "summary": {
+    "overall_score": 60,
+    "one_liner": "Daniel presents as a confident communicator with genuine enthusiasm for production AI systems, but his answers lack the technical depth expected of a ",
+    "recommendation": "neutral",
+    "readiness": "practicing"
+  },
+  "dimension_scores": [
+    {
+      "dimension": "clarity",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Daniel speaks clearly and confidently, with good articulation of his motivations and high-level project outcomes.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "structure",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Answers follow a logical flow but often stay at a surface level, lacking the structured breakdown of technical decisions expected at this seniority.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "technical_depth",
+      "score": 4,
+      "evidence": [
+        {
+          "observation": "When probed on specifics—custom index design, multi-modal embedding alignment, routing edge cases—Daniel's responses become vague or deferential, revealing limited hands-on depth.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "ownership",
+      "score": 4,
+      "evidence": [
+        {
+          "observation": "Daniel frequently uses 'we' and credits the team, but when asked about his personal contributions, he struggles to isolate his own technical decisions and failures.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "pace",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Pace is natural and unhurried; he doesn't rush or ramble, though he could be more concise in high-level framing.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "concise",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Answers are reasonably concise but often omit critical technical details, forcing follow-up questions to extract depth.",
+          "reasoning": ""
+        }
+      ]
+    }
+  ],
+  "answer_breakdown": [],
+  "patterns": [],
+  "highlights": null,
+  "cv_interview_alignment": {
+    "available": true,
+    "overall": "mixed",
+    "summary": "Daniel's CV claims 'custom vector database' and 'multi-agent platform from scratch,' but the interview reveals he was not directly involved in low-level index tuning or the core infrastructure decisions. For a Senior AI Engineer at a startup, where hands-on technical depth is paramount, this gap between claimed and demonstrated expertise is the most critical issue.",
+    "claims": [
+      {
+        "claim": "Hands-on experience with vector database internals (e.g., HNSW, IVF, quantization)",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Deep understanding of multi-agent orchestration patterns (e.g., orchestrator-worker vs. swarm vs. hierarchical) and their trade-offs",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Experience with observability and debugging in distributed agent systems",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Familiarity with cross-modal embedding alignment techniques (e.g., CLIP, contrastive learning)",
+        "status": "not_tested"
+      }
+    ]
+  },
+  "strengths": [
+    {
+      "description": "Daniel's example of navigating resistance to CI/CD by running a pilot and turning skeptics into advocates is a strong, specific leadership story with measurable outcomes."
+    },
+    {
+      "description": "He asked a thoughtful, role-relevant question about the company's AI stack, showing genuine interest in where he could add value."
+    },
+    {
+      "description": "His enthusiasm for bridging research and production, especially in high-stakes domains like legal and medical, aligns well with the startup's mission-driven culture."
+    }
+  ],
+  "areas_for_improvement": [
+    {
+      "suggestion": "Hands-on experience with vector database internals (e.g., HNSW, IVF, quantization)",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Deep understanding of multi-agent orchestration patterns (e.g., orchestrator-worker vs. swarm vs. hierarchical) and their trade-offs",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Experience with observability and debugging in distributed agent systems",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Familiarity with cross-modal embedding alignment techniques (e.g., CLIP, contrastive learning)",
+      "priority": "high"
+    }
+  ],
+  "next_steps": [
+    "Reframe your CV claims to be more precise: replace 'custom vector database' with 'architected RAG pipeline using HNSW indexing' and 'multi-agent platform from scratch' with 'designed agent routing and orchestration layer'.",
+    "Prepare 2-3 specific technical decisions you personally made, including trade-offs and failures, to discuss in your next interview.",
+    "Build the minimal vector database side project and document the process in a public GitHub repo with benchmarks.",
+    "Contribute a meaningful PR to an open-source multi-agent framework (e.g., AutoGen or CrewAI) focusing on routing or observability."
+  ],
+  "gap_analysis": {
+    "summary": "Daniel's CV claims 'custom vector database' and 'multi-agent platform from scratch,' but the interview reveals he was not directly involved in low-level index tuning or the core infrastructure decisions. For a Senior AI Engineer at a startup, where hands-on technical depth is paramount, this gap between claimed and demonstrated expertise is the most critical issue.",
+    "missing_skills": [
+      "Hands-on experience with vector database internals (e.g., HNSW, IVF, quantization)",
+      "Deep understanding of multi-agent orchestration patterns (e.g., orchestrator-worker vs. swarm vs. hierarchical) and their trade-offs",
+      "Experience with observability and debugging in distributed agent systems",
+      "Familiarity with cross-modal embedding alignment techniques (e.g., CLIP, contrastive learning)"
+    ],
+    "under_communicated_strengths": [
+      "Ability to drive team adoption of CI/CD and Agile practices with measurable outcomes",
+      "Enthusiasm for bridging research and production, especially in high-stakes domains",
+      "Leadership in navigating team resistance and building consensus"
+    ],
+    "market_context": "The current market for Senior AI Engineers at startups values deep technical ownership—candidates are expected to personally design and implement core algorithms, not just architect at a high level. Startups particularly prize engineers who can build from scratch, optimize for latency and scale, and debug distributed AI systems. Daniel's profile maps to a more product- or team-lead role, but his technical depth claims need to be substantiated with concrete, personal contributions."
+  },
+  "project_suggestions": [
+    {
+      "title": "Build a minimal vector database from scratch",
+      "type": "side_project",
+      "why": "Addresses the gap between claiming 'custom vector database' and actually understanding indexing internals. Demonstrates hands-on ability to implement HNSW or IVF, handle multi-modal embeddings, and benchmark latency.",
+      "technologies": [
+        "Python",
+        "NumPy",
+        "FAISS (for reference)",
+        "HNSWlib",
+        "CLIP (for multi-modal)"
+      ],
+      "outcome": "You can say: 'I implemented a vector index from scratch using HNSW, achieving sub-10ms recall on 1M vectors, and integrated it with CLIP embeddings for cross-modal retrieval.'"
+    },
+    {
+      "title": "Contribute to an open-source multi-agent framework (e.g., AutoGen, CrewAI)",
+      "type": "open_source",
+      "why": "Demonstrates deep understanding of agent orchestration patterns, routing protocols, and failure modes—areas where the interview revealed gaps. A PR that adds a new handoff protocol or observability feature would be highly credible.",
+      "technologies": [
+        "Python",
+        "LangChain",
+        "AutoGen",
+        "CrewAI",
+        "Ray (for distributed execution)"
+      ],
+      "outcome": "You can say: 'I contributed a contract-net routing protocol to AutoGen, which improved handoff reliability in multi-agent systems by 30%.'"
+    },
+    {
+      "title": "Write a detailed technical blog post on multi-agent orchestration patterns",
+      "type": "portfolio_piece",
+      "why": "Forces you to articulate the trade-offs between different patterns (orchestrator-worker vs. swarm vs. hierarchical) and share concrete lessons from your Nexus AI experience. This builds credibility and shows you can communicate technical depth.",
+      "technologies": [
+        "None (writing)",
+        "Diagrams (Mermaid, Excalidraw)"
+      ],
+      "outcome": "You can say: 'I published a deep-dive on multi-agent orchestration patterns, comparing latency, fault tolerance, and debugging complexity, which was referenced by several engineering teams.'"
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Reframe your CV claims to be more precise: replace 'custom vector database' with 'architected RAG pipeline using HNSW indexing' and 'multi-agent platform from scratch' with 'designed agent routing and orchestration layer'.",
+      "Prepare 2-3 specific technical decisions you personally made, including trade-offs and failures, to discuss in your next interview."
+    ],
+    "short_term": [
+      "Build the minimal vector database side project and document the process in a public GitHub repo with benchmarks.",
+      "Contribute a meaningful PR to an open-source multi-agent framework (e.g., AutoGen or CrewAI) focusing on routing or observability."
+    ],
+    "medium_term": [
+      "Write and publish a technical blog post or paper on multi-agent orchestration patterns, using your Nexus AI experience as a case study.",
+      "Deepen your hands-on knowledge of vector database internals by studying HNSW, IVF, and quantization techniques, and consider contributing to FAISS or a similar library."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "content",
+      "observation": "When asked about the custom vector database, Daniel said 'we used a standard HNSW-type indexing approach' and admitted he wasn't involved in low-level tuning. This undermines the CV claim of building a custom solution.",
+      "suggestion": "If you weren't directly involved in implementation, reframe your contribution honestly: 'I architected the overall RAG pipeline and selected HNSW as the indexing strategy, while the infra team handled the low-level tuning.' Then pivot to what you did own."
+    },
+    {
+      "category": "structure",
+      "observation": "Daniel's answers about the multi-agent platform stayed at a high level ('balancing latency with accuracy') without breaking down the specific routing algorithm or failure modes.",
+      "suggestion": "Use the STAR-L structure: Situation, Task, Action, Result, and then a specific Lesson learned. For example: 'The routing algorithm was a weighted classifier that considered query complexity and model latency. The biggest failure was when two similar queries got routed differently—we added a confidence threshold to catch borderline cases.'"
+    },
+    {
+      "category": "positioning",
+      "observation": "Daniel consistently used 'we' and credited the team, which is good for humility but makes it hard for the interviewer to assess his individual contribution.",
+      "suggestion": "When asked about a project, start with the team context, then explicitly state: 'My personal contribution was X. I made the decision to Y because of Z trade-off.' This shows ownership without diminishing the team."
+    },
+    {
+      "category": "delivery",
+      "observation": "Daniel's tone is confident and enthusiastic, but when pressed on technical specifics, he becomes vague and uses filler phrases like 'mainly about' and 'honestly.'",
+      "suggestion": "If you don't know a detail, it's better to say 'I don't recall the exact implementation, but the principle was...' rather than hedging. Confidence in admitting gaps is more credible than vague answers."
+    }
+  ],
+  "praise_worthy": [
+    "Daniel's example of navigating resistance to CI/CD by running a pilot and turning skeptics into advocates is a strong, specific leadership story with measurable outcomes.",
+    "He asked a thoughtful, role-relevant question about the company's AI stack, showing genuine interest in where he could add value.",
+    "His enthusiasm for bridging research and production, especially in high-stakes domains like legal and medical, aligns well with the startup's mission-driven culture."
+  ],
+  "_caseId": "startup_senior_ai_oversold",
+  "_persona": "oversold",
+  "_role": "Senior AI Engineer @ startup (senior)"
+}

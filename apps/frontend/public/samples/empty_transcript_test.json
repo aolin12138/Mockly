@@ -1,0 +1,74 @@
+{
+  "overall_assessment": "The interview transcript is empty, so no meaningful assessment can be made. The candidate provided no responses to evaluate, and no interviewer questions are recorded. This report defaults to minimal scores and empty arrays as per protocol.",
+  "overall_score": 1,
+  "insufficient_data": true,
+  "dimension_scores": {
+    "clarity": {
+      "score": 1,
+      "note": "No transcript content available to evaluate clarity of communication."
+    },
+    "structure": {
+      "score": 1,
+      "note": "No transcript content available to evaluate answer structure."
+    },
+    "technical_depth": {
+      "score": 1,
+      "note": "No transcript content available to evaluate technical depth."
+    },
+    "ownership": {
+      "score": 1,
+      "note": "No transcript content available to evaluate ownership or agency."
+    },
+    "impact_framing": {
+      "score": 1,
+      "note": "No transcript content available to evaluate impact framing."
+    },
+    "concise": {
+      "score": 1,
+      "note": "No transcript content available to evaluate conciseness."
+    }
+  },
+  "strengths": [],
+  "areas_for_improvement": [],
+  "gap_analysis": {
+    "summary": "The transcript is empty, so no gap analysis can be performed. The candidate's CV claims 5 years of full-stack experience, but there is zero evidence of communication, technical depth, or behavioural competency in this interview.",
+    "missing_skills": [
+      "Unable to assess — no transcript data"
+    ],
+    "under_communicated_strengths": [
+      "Unable to assess — no transcript data"
+    ],
+    "market_context": "The market expects mid-level engineers to articulate clear STAR examples, demonstrate ownership, and discuss technical trade-offs. No such evidence is present."
+  },
+  "project_suggestions": [],
+  "roadmap": {
+    "immediate": [
+      "Ensure the interview recording or transcript is captured correctly before the next session."
+    ],
+    "short_term": [
+      "Practice delivering at least 3 STAR-structured behavioural answers aloud."
+    ],
+    "medium_term": [
+      "Build a portfolio of projects that demonstrate ownership and measurable impact."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "delivery",
+      "observation": "No responses were recorded — the candidate may not have spoken, or the transcript failed to capture.",
+      "suggestion": "Always confirm the recording/transcription tool is working before starting. Speak clearly and at a moderate pace."
+    },
+    {
+      "category": "structure",
+      "observation": "No answer structure can be observed.",
+      "suggestion": "Use the STAR method (Situation, Task, Action, Result) for every behavioural question to ensure clarity and completeness."
+    },
+    {
+      "category": "content",
+      "observation": "No content was provided.",
+      "suggestion": "Prepare 3-5 concrete examples from your career that highlight problem-solving, collaboration, and impact. Practice them until they feel natural."
+    }
+  ],
+  "praise_worthy": [],
+  "star_examples": []
+}

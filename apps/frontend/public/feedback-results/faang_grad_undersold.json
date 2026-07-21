@@ -1,0 +1,225 @@
+{
+  "meta": {
+    "session_mode": "practice",
+    "confidence_level": "high",
+    "questions_asked": 17,
+    "domains_covered": []
+  },
+  "summary": {
+    "overall_score": 73,
+    "one_liner": "Rohan delivered a solid, concise interview that revealed more depth than his CV suggests. He demonstrated strong problem-solving instincts, technical ",
+    "recommendation": "neutral",
+    "readiness": "practicing"
+  },
+  "dimension_scores": [
+    {
+      "dimension": "clarity",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Explanations were clear and jargon-free, making complex topics like recurrence rules and row-level locking accessible.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "structure",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Answers followed a logical flow but occasionally lacked a clear beginning-middle-end structure; the 'situation-action-result' pattern was implicit rather than explicit.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "technical_depth",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Demonstrated solid understanding of database design, concurrency control, and testing edge cases, appropriate for a new grad.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "ownership",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Showed initiative in the IT support role but didn't fully claim leadership or decision-making ownership in the capstone project.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "pace",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Pace was good—neither rushed nor slow—and he used pauses effectively to gather thoughts.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "concise",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Answers were appropriately detailed without rambling; he covered key points efficiently.",
+          "reasoning": ""
+        }
+      ]
+    }
+  ],
+  "answer_breakdown": [],
+  "patterns": [],
+  "highlights": null,
+  "cv_interview_alignment": {
+    "available": true,
+    "overall": "mixed",
+    "summary": "Rohan's interview demonstrated solid technical fundamentals but lacked explicit quantification of impact and proactive discussion of leadership or initiative, which are critical for FAANG new grad roles. The market expects candidates to frame contributions in terms of measurable outcomes and to show they drive projects, not just participate.",
+    "claims": [
+      {
+        "claim": "Quantified impact (e.g., 'reduced setup time by 90%', 'improved test coverage by X%')",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Explicit leadership or initiative examples (e.g., 'I proposed the dynamic generation approach and convinced the team')",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Discussion of scalability or performance under load (e.g., handling concurrent ticket sales, caching strategies)",
+        "status": "not_tested"
+      }
+    ]
+  },
+  "strengths": [
+    {
+      "description": "You proactively identified and automated a manual process in your IT support role, showing strong initiative and problem-solving skills."
+    },
+    {
+      "description": "Your explanation of the recurrence rule design trade-off (dynamic generation vs. storing all occurrences) was clear and showed good technical judgment."
+    },
+    {
+      "description": "You demonstrated thorough testing instincts by covering edge cases like leap years and daylight saving time, which is impressive for a new grad."
+    }
+  ],
+  "areas_for_improvement": [
+    {
+      "suggestion": "Quantified impact (e.g., 'reduced setup time by 90%', 'improved test coverage by X%')",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Explicit leadership or initiative examples (e.g., 'I proposed the dynamic generation approach and convinced the team')",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Discussion of scalability or performance under load (e.g., handling concurrent ticket sales, caching strategies)",
+      "priority": "high"
+    }
+  ],
+  "next_steps": [
+    "Reframe your IT support automation story with a clear metric: 'I reduced laptop setup time from 3 hours to 15 minutes, saving the company approximately 45 hours per month.'",
+    "Practice the STAR (Situation, Task, Action, Result) structure for every answer, especially for the capstone project.",
+    "Build the real-time ticket dashboard project and deploy it on a free tier (e.g., Heroku or Railway) to have a live demo.",
+    "Write and publish the blog post on row-level locking to showcase technical communication skills."
+  ],
+  "gap_analysis": {
+    "summary": "Rohan's interview demonstrated solid technical fundamentals but lacked explicit quantification of impact and proactive discussion of leadership or initiative, which are critical for FAANG new grad roles. The market expects candidates to frame contributions in terms of measurable outcomes and to show they drive projects, not just participate.",
+    "missing_skills": [
+      "Quantified impact (e.g., 'reduced setup time by 90%', 'improved test coverage by X%')",
+      "Explicit leadership or initiative examples (e.g., 'I proposed the dynamic generation approach and convinced the team')",
+      "Discussion of scalability or performance under load (e.g., handling concurrent ticket sales, caching strategies)"
+    ],
+    "under_communicated_strengths": [
+      "Automation scripting (Python) — mentioned but not framed as a proactive improvement",
+      "Testing rigor — described but not tied to a measurable outcome (e.g., 'caught X bugs before release')",
+      "Team collaboration — mentioned but not illustrated with a specific example of influencing or leading"
+    ],
+    "market_context": "FAANG new grad roles value candidates who can demonstrate ownership, quantify impact, and show they can operate independently. The market also expects familiarity with modern engineering practices (CI/CD, testing, code review) and the ability to discuss trade-offs in system design. Rohan's technical depth is strong, but he needs to better articulate his contributions in these terms."
+  },
+  "project_suggestions": [
+    {
+      "title": "Open Source Contribution: Improve Django's select_for_update() documentation or add a test case for timeout behavior",
+      "type": "open_source",
+      "why": "Addresses the gap in demonstrating initiative and community engagement, and deepens his understanding of a feature he already used.",
+      "technologies": [
+        "Django",
+        "PostgreSQL",
+        "Git",
+        "Python"
+      ],
+      "outcome": "Can say: 'I contributed to Django by adding a test case for select_for_update() timeout behavior, which improved the framework's reliability documentation.'"
+    },
+    {
+      "title": "Side Project: Build a real-time ticket availability dashboard with Django Channels and Redis",
+      "type": "side_project",
+      "why": "Directly addresses the missing scalability/real-time discussion and shows ability to handle concurrent load, a key FAANG concern.",
+      "technologies": [
+        "Django Channels",
+        "Redis",
+        "WebSockets",
+        "PostgreSQL",
+        "Docker"
+      ],
+      "outcome": "Can say: 'I built a real-time ticket dashboard that handled 1000+ concurrent users with sub-second updates, using Django Channels and Redis for pub/sub.'"
+    },
+    {
+      "title": "Portfolio Piece: Write a technical blog post on 'Handling Concurrent Edits in Django with PostgreSQL Row-Level Locking'",
+      "type": "portfolio_piece",
+      "why": "Demonstrates technical communication and thought leadership, and forces him to articulate trade-offs clearly.",
+      "technologies": [
+        "Django",
+        "PostgreSQL",
+        "Python"
+      ],
+      "outcome": "Can say: 'I published a technical blog post on row-level locking in Django that was featured on Hacker News and received positive feedback from the Django community.'"
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Reframe your IT support automation story with a clear metric: 'I reduced laptop setup time from 3 hours to 15 minutes, saving the company approximately 45 hours per month.'",
+      "Practice the STAR (Situation, Task, Action, Result) structure for every answer, especially for the capstone project."
+    ],
+    "short_term": [
+      "Build the real-time ticket dashboard project and deploy it on a free tier (e.g., Heroku or Railway) to have a live demo.",
+      "Write and publish the blog post on row-level locking to showcase technical communication skills."
+    ],
+    "medium_term": [
+      "Contribute a meaningful patch or test to an open-source project like Django or PostgreSQL to demonstrate community involvement.",
+      "Prepare a 2-minute 'leadership story' from the capstone (e.g., 'I convinced the team to use dynamic generation instead of storing all occurrences, which saved us from a potential scalability issue.')"
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "structure",
+      "observation": "When asked about the IT support problem, you described the situation and action but didn't explicitly state the result or impact (e.g., 'This saved X hours per week').",
+      "suggestion": "Always end your answer with a quantified result. For example: 'I wrote Python scripts that automated laptop setup, reducing the process from 3 hours to 15 minutes, saving the company about 45 hours of labor per month.'"
+    },
+    {
+      "category": "content",
+      "observation": "You mentioned 'team discussion' and 'checked with our client' but didn't describe your specific role in those discussions or any leadership you showed.",
+      "suggestion": "When describing team decisions, explicitly state your contribution: 'I proposed the dynamic generation approach and created a prototype to demonstrate its performance, which convinced the team and client to adopt it.'"
+    },
+    {
+      "category": "positioning",
+      "observation": "You downplayed the capstone's scale by saying 'we didn't have huge traffic spikes,' missing an opportunity to discuss how you would handle scale.",
+      "suggestion": "Instead of dismissing scale, pivot to a hypothetical: 'While our capstone didn't have high traffic, I designed the system with scalability in mind by using row-level locking and optimizing queries to handle concurrent edits efficiently. If we needed to scale, I would add Redis caching and a message queue for async tasks.'"
+    },
+    {
+      "category": "delivery",
+      "observation": "Your tone was confident and clear, but you occasionally used filler words like 'yeah' and 'so' at the start of answers.",
+      "suggestion": "Pause for one second before answering to collect your thoughts, then start with a direct statement. This makes you sound more deliberate and confident."
+    }
+  ],
+  "praise_worthy": [
+    "You proactively identified and automated a manual process in your IT support role, showing strong initiative and problem-solving skills.",
+    "Your explanation of the recurrence rule design trade-off (dynamic generation vs. storing all occurrences) was clear and showed good technical judgment.",
+    "You demonstrated thorough testing instincts by covering edge cases like leap years and daylight saving time, which is impressive for a new grad."
+  ],
+  "_caseId": "faang_grad_undersold",
+  "_persona": "undersold",
+  "_role": "Software Engineer (New Grad) @ faang (grad)"
+}

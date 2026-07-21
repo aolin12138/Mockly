@@ -1,0 +1,151 @@
+{
+  "overall_assessment": "Nina demonstrated strong technical depth and self-awareness, particularly around backtesting pitfalls and RL reward design. However, the interview was cut short after only 10 exchanges, limiting the breadth of behavioral examples she could provide. Her answers were concise and data-driven, but she missed opportunities to fully structure her responses using the STAR framework, and the truncated session leaves gaps in assessing her communication and collaboration skills.",
+  "overall_score": 7,
+  "insufficient_data": false,
+  "dimension_scores": {
+    "clarity": {
+      "score": 8,
+      "note": "Nina communicated complex ideas (survivorship bias, PPO reward shaping) with precision and minimal jargon. Her language was clear and accessible."
+    },
+    "structure": {
+      "score": 5,
+      "note": "Answers were direct but lacked a clear narrative arc (Situation-Task-Action-Result). She jumped straight into technical details without setting context or framing impact."
+    },
+    "technical_depth": {
+      "score": 9,
+      "note": "Exceptional depth for a junior candidate. She discussed survivorship bias correction, PDF parsing for historical index reconstruction, PPO reward engineering, and high-water mark drawdown penalties with genuine understanding."
+    },
+    "ownership": {
+      "score": 8,
+      "note": "Strong sense of ownership shown in the backtesting engine and PairTradingRL projects. She described personal initiative in identifying and fixing the survivorship bias issue."
+    },
+    "impact_framing": {
+      "score": 6,
+      "note": "She quantified impact (Sharpe from 2.1 to 0.8, 14% improvement) but didn't frame results in business terms (e.g., P&L impact, trader adoption, time saved)."
+    },
+    "concise": {
+      "score": 7,
+      "note": "Answers were appropriately brief for the time constraint, but some responses could have included more context without losing conciseness."
+    }
+  },
+  "strengths": [
+    "Deep technical understanding of survivorship bias and its impact on backtest validity — she didn't just name-drop, she explained the mechanism and her fix.",
+    "Strong grasp of RL reward engineering: she described drawdown penalties, high-water mark tracking, and position-holding penalties with specific implementation details.",
+    "Honest self-assessment: she openly acknowledged the PairTradingRL project's limitations (short test period, no regime-shift validation) without being prompted.",
+    "Proactive data engineering: she built a PDF parser for NZX bulletins and handled ticker mapping to avoid look-ahead bias — a non-trivial data pipeline task."
+  ],
+  "areas_for_improvement": [
+    "Answers lacked STAR structure — she often started with the Action or Result without setting the Situation or Task, making it harder for the interviewer to follow the narrative.",
+    "Impact was quantified in technical terms (Sharpe ratio) but not translated to business outcomes (e.g., 'this saved the desk $X in bad trades' or 'traders used this daily').",
+    "Limited breadth of examples: only two projects were discussed (backtesting engine and PairTradingRL). The options dashboard and NLP project were mentioned in the CV but never brought up.",
+    "Missed opportunity to connect PairTradingRL challenges to broader RL-in-finance literature or industry best practices (e.g., distributional RL, offline RL for trading)."
+  ],
+  "gap_analysis": {
+    "summary": "Nina's technical depth is strong for a junior role, but her ability to frame impact in business terms and structure answers for clarity is underdeveloped. The interview was cut short, so collaboration and communication skills were not assessed.",
+    "missing_skills": [
+      "Business impact translation (e.g., P&L, time saved, trader adoption)",
+      "Structured storytelling (STAR framework)",
+      "Breadth of project examples (only 2 of 4 CV projects discussed)",
+      "Collaboration/teamwork examples (no mention of working with traders or other engineers)"
+    ],
+    "under_communicated_strengths": [
+      "Options pricing dashboard (VolSurfaceVis) — mentioned in CV but not discussed; shows front-end and API integration skills",
+      "NLP sentiment analysis pipeline (EconInsight) — demonstrates text processing and economic domain knowledge",
+      "Competition performance (NZX Challenge, Optiver) — signals competitive drive and practical strategy development"
+    ],
+    "market_context": "Junior quant dev roles increasingly value end-to-end pipeline ownership (data ingestion → backtesting → live execution). Nina's backtesting engine and RL project align well, but the market also expects familiarity with cloud deployment (AWS/GCP), CI/CD, and production monitoring — none of which were discussed."
+  },
+  "project_suggestions": [
+    {
+      "title": "Production-Ready Backtesting Pipeline with CI/CD and Cloud Deployment",
+      "type": "side_project",
+      "why": "Nina's backtesting engine is strong on quant rigor but lacks production infrastructure. Adding Docker, GitHub Actions for automated testing, and deployment to AWS/GCP would demonstrate DevOps maturity — a key gap for junior roles.",
+      "technologies": [
+        "Docker",
+        "GitHub Actions",
+        "AWS Lambda or EC2",
+        "Terraform",
+        "ClickHouse (already familiar)"
+      ],
+      "outcome": "She can say: 'I built a backtesting pipeline that runs on AWS, is tested automatically on every commit, and can be deployed in under 5 minutes — the same infrastructure I'd use for live trading signals.'"
+    },
+    {
+      "title": "Regime-Switch Detection for PairTradingRL",
+      "type": "open_source",
+      "why": "Nina acknowledged her RL project lacked regime-shift validation. Extending it with a regime detection module (e.g., HMM or change-point detection) and publishing the code on GitHub would address a specific weakness and showcase her ability to iterate on research.",
+      "technologies": [
+        "PyTorch",
+        "statsmodels",
+        "Pyro (probabilistic programming)",
+        "pandas"
+      ],
+      "outcome": "She can say: 'I extended my RL pair-trading system with a regime detection layer that switches between mean-reversion and momentum modes — improving out-of-sample Sharpe by 20% and making the strategy robust to market regime changes.'"
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Rewrite the backtesting engine answer using STAR format (Situation: Kepler Capital intern, Task: build realistic backtest, Action: discovered survivorship bias, Result: Sharpe corrected from 2.1 to 0.8).",
+      "Prepare STAR versions for all 4 CV projects (backtesting engine, options dashboard, PairTradingRL, NLP pipeline).",
+      "Practice framing impact in business terms: 'This saved the desk $X in bad trades' or 'Traders used this dashboard daily for monitoring.'"
+    ],
+    "short_term": [
+      "Deploy the backtesting engine to AWS/GCP with Docker and CI/CD (see project suggestion above).",
+      "Add a regime-detection module to PairTradingRL and publish the code on GitHub with a README explaining the methodology.",
+      "Prepare answers for collaboration/teamwork questions (e.g., 'Tell me about a time you disagreed with a trader or colleague')."
+    ],
+    "medium_term": [
+      "Contribute to an open-source quant finance project (e.g., backtrader, zipline, or a PyTorch RL library) to demonstrate collaborative coding skills.",
+      "Study production monitoring and alerting (Prometheus, Grafana) — a common requirement for live trading systems.",
+      "Explore alternative datasets (e.g., satellite imagery, credit card transactions) to broaden domain knowledge beyond equities."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "structure",
+      "observation": "Nina often started answers with the Action or Result without setting the Situation or Task. For example, she jumped straight into 'The hardest part was digitising those bulletins' without first explaining why she needed to rebuild the historical universe.",
+      "suggestion": "Use the STAR framework for every behavioral answer: start with the Situation (context), then Task (your goal), then Action (what you did), then Result (quantified impact). This makes your answers easier to follow and more memorable."
+    },
+    {
+      "category": "content",
+      "observation": "Nina quantified impact in technical terms (Sharpe ratio) but didn't translate to business outcomes. For example, the survivorship bias fix was framed as 'Sharpe from 2.1 to 0.8' rather than 'This prevented the desk from deploying a strategy that would have lost money in live trading.'",
+      "suggestion": "After stating a technical metric, add one sentence that connects it to a business outcome: 'This meant the desk avoided deploying a strategy that would have lost $X in its first month of live trading.'"
+    },
+    {
+      "category": "positioning",
+      "observation": "Nina only discussed 2 of her 4 CV projects. The options dashboard (VolSurfaceVis) and NLP pipeline (EconInsight) were never mentioned, missing opportunities to showcase front-end skills and text processing.",
+      "suggestion": "Prepare a 30-second 'elevator pitch' for each CV project. Even if the interviewer doesn't ask directly, you can weave them into answers: 'That's similar to a challenge I faced when building my options dashboard, where I had to...'"
+    },
+    {
+      "category": "delivery",
+      "observation": "Nina's answers were concise but sometimes too brief — she gave the technical answer without elaborating on the process or challenges. For example, when asked about the reward function, she described the high-water mark penalty but didn't explain why she chose that approach over alternatives.",
+      "suggestion": "After giving the direct answer, add a sentence about your decision-making process: 'I chose the high-water mark approach because it's simpler to implement than a full risk-parity model and aligns with how professional traders think about drawdowns.'"
+    }
+  ],
+  "praise_worthy": [
+    "Nina demonstrated exceptional self-awareness by voluntarily acknowledging the limitations of her PairTradingRL project ('only tested on two years of data with no regime-shift validation') — a rare and impressive trait for a junior candidate.",
+    "She identified and fixed a subtle survivorship bias issue that many experienced quants miss, showing genuine intellectual rigor and a deep understanding of backtesting methodology.",
+    "Her answer about the PPO agent learning momentum instead of mean-reversion ('always check if your RL agent is actually solving the problem you think you gave it') showed mature understanding of RL pitfalls and the importance of reward design."
+  ],
+  "star_examples": [
+    {
+      "question": "What's one project or experience you're most proud of or excited about from your past work?",
+      "original_answer": "The backtesting engine for intraday mean-reversion strategies, hands down. Finding that survivorship bias hid 40% of the losses from delisted stocks — and then fixing it by cross-referencing NZX daily bulletins — turned a 2.1 Sharpe into 0.8. That was the moment I learned that a backtest is only as good as your universe construction.",
+      "worth_rewriting": true,
+      "why": "The answer is technically strong but lacks STAR structure — it starts with the Action and Result without setting the Situation or Task, making it harder for the interviewer to understand the context and the candidate's role.",
+      "rewritten_star": "Situation: As the only quant intern at Kepler Capital, a small prop trading desk, I was tasked with building a backtesting engine for intraday equity mean-reversion strategies to validate a signal the traders wanted to deploy.\nTask: I needed to ensure the backtest was realistic — accounting for survivorship bias, execution costs, and market impact — so the desk could make an informed decision about live trading.\nAction: I ingested 3 years of NZX tick data into ClickHouse and built a simulation that modeled order-book depth and fill probabilities. During validation, I discovered that the primary signal (gap-to-VWAP) had survivorship bias: the backtest used current NZX 50 constituents, but historical delisted stocks (which underperformed) were missing. I wrote a parser to digitise NZX daily bulletins and reconstructed the historical index membership, then re-ran the strategy.\nResult: Correcting the survivorship bias reduced the signal's Sharpe from 2.1 to 0.8, preventing the desk from deploying a strategy that would have lost money in live markets. This taught me that a backtest is only as good as your universe construction."
+    },
+    {
+      "question": "How did you design the reward function for your PPO agent to encourage profitable pair trading while also accounting for transaction costs and slippage?",
+      "original_answer": "I designed the reward function to penalise drawdowns and transaction costs directly — every trade incurred a cost proportional to the simulated bid-ask spread, and the agent got a negative reward whenever the portfolio value dropped below a trailing high-water mark. This stopped it from over-trading or taking concentrated bets that looked good on paper but would bleed cash in real markets.",
+      "worth_rewriting": true,
+      "why": "The answer is technically accurate but could be stronger by explaining the decision-making process and alternatives considered, which would demonstrate deeper understanding.",
+      "rewritten_star": "Situation: For my honours dissertation, I was building a PPO agent for pair trading and needed a reward function that would produce realistic, production-ready behaviour.\nTask: I had to design a reward that discouraged over-trading, penalised drawdowns, and accounted for transaction costs — without making the learning problem too hard for the agent.\nAction: I decomposed the reward into three components: (1) profit/loss from each trade, (2) a transaction cost penalty proportional to the simulated bid-ask spread, and (3) a drawdown penalty triggered whenever the portfolio value dropped below a trailing high-water mark. I chose the high-water mark approach over alternatives like a full risk-parity model because it's simpler to implement and aligns with how professional traders think about drawdowns. I also tuned the penalty weights via hyperparameter search to balance risk and return.\nResult: The agent learned to avoid over-trading and concentrated bets, producing a strategy that was more robust in simulated live conditions. The final system outperformed a baseline cointegration strategy by 14% Sharpe out-of-sample."
+    },
+    {
+      "question": "During the development of PairTradingRL, what was an unexpected challenge or a particular aspect that didn't work as you initially expected, and how did you address it?",
+      "original_answer": "The biggest surprise was that the PPO agent kept learning to hold positions for days instead of minutes, essentially becoming a momentum trader rather than a mean-reverting pair trader. I had to add a position-holding penalty and shorten the episode length to force it back to the intraday behaviour I intended. That taught me to always check if your RL agent is actually solving the problem you think you gave it.",
+      "worth_rewriting": false,
+      "why": "This answer is already well-structured and self-contained. It clearly describes the unexpected behaviour, the action taken, and the lesson learned. No rewrite needed."
+    }
+  ]
+}

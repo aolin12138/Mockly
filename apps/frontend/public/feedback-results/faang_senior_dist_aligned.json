@@ -1,0 +1,238 @@
+{
+  "meta": {
+    "session_mode": "practice",
+    "confidence_level": "high",
+    "questions_asked": 23,
+    "domains_covered": []
+  },
+  "summary": {
+    "overall_score": 77,
+    "one_liner": "Priya delivered a strong, technically grounded interview that demonstrated deep distributed systems expertise, particularly in shard rebalancing and s",
+    "recommendation": "neutral",
+    "readiness": "practicing"
+  },
+  "dimension_scores": [
+    {
+      "dimension": "clarity",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Explained complex concepts (vector clocks, two-phase handoff, thread-per-core) with precision and minimal jargon.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "structure",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Used STAR-like structure naturally, though the shard-rebalancing story could have been front-loaded with the problem before the solution.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "technical_depth",
+      "score": 10,
+      "evidence": [
+        {
+          "observation": "Demonstrated exceptional depth on vector clocks, two-phase handoff, and Kafka/Redpanda internals, with specific metrics and tradeoffs.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "ownership",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Clearly owned the benchmarking and protocol design, but could have highlighted more leadership in team adoption and cross-team influence.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "pace",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Answers were thorough but occasionally meandered; the interviewer had to redirect to get specifics on personal contribution and conflict resolution.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "concise",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "First two answers were too abstract; the interviewer had to ask twice for a concrete example before getting the shard-rebalancing story.",
+          "reasoning": ""
+        }
+      ]
+    }
+  ],
+  "answer_breakdown": [],
+  "patterns": [],
+  "highlights": null,
+  "cv_interview_alignment": {
+    "available": true,
+    "overall": "mixed",
+    "summary": "Priya's interview was strong on two flagship projects but lacked breadth in areas critical for a FAANG senior role: consensus protocols (Raft/Paxos), failure testing (Jepsen), operational excellence (on-call learnings), and cross-team influence. The market expects senior engineers to demonstrate systems thinking across multiple dimensions, not just deep dives on a couple of features.",
+    "claims": [
+      {
+        "claim": "Consensus protocol implementation details (Raft, Paxos, Multi-Paxos)",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Formal verification or fault injection testing (Jepsen, Chaos Monkey)",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Operational incident analysis and postmortem culture",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Cross-team collaboration and technical leadership stories",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Performance optimization at scale (beyond single endpoint)",
+        "status": "not_tested"
+      }
+    ]
+  },
+  "strengths": [
+    {
+      "description": "Exceptional technical depth on vector clocks and two-phase handoff — explained causal ordering and conflict resolution with precision."
+    },
+    {
+      "description": "Strong metrics-driven approach: benchmarked Kafka vs. Redpanda at 1K/5K/10K partitions, measured p99 latency, and cross-validated with CPU profiles."
+    },
+    {
+      "description": "Demonstrated influence by running a chaos-monkey test to convince the operations team — a concrete example of building consensus through data."
+    }
+  ],
+  "areas_for_improvement": [
+    {
+      "suggestion": "Consensus protocol implementation details (Raft, Paxos, Multi-Paxos)",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Formal verification or fault injection testing (Jepsen, Chaos Monkey)",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Operational incident analysis and postmortem culture",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Cross-team collaboration and technical leadership stories",
+      "priority": "high"
+    }
+  ],
+  "next_steps": [
+    "Prepare a concise 2-minute summary of the Kafka-to-Redpapa migration that starts with the problem (consumer-group rebalance pauses) and ends with the impact (zero-downtime migration, 50ms p99).",
+    "Identify 2-3 additional projects from your CV (ShardLab, hinted-handoff rewrite) and prepare STAR stories that highlight leadership and cross-team collaboration.",
+    "Implement a basic Raft consensus module in Rust (leader election + log replication) and open-source it on GitHub.",
+    "Write a blog post or conference talk proposal on 'Lessons from Building a Gossip-Based Rebalancing Protocol' to showcase thought leadership."
+  ],
+  "gap_analysis": {
+    "summary": "Priya's interview was strong on two flagship projects but lacked breadth in areas critical for a FAANG senior role: consensus protocols (Raft/Paxos), failure testing (Jepsen), operational excellence (on-call learnings), and cross-team influence. The market expects senior engineers to demonstrate systems thinking across multiple dimensions, not just deep dives on a couple of features.",
+    "missing_skills": [
+      "Consensus protocol implementation details (Raft, Paxos, Multi-Paxos)",
+      "Formal verification or fault injection testing (Jepsen, Chaos Monkey)",
+      "Operational incident analysis and postmortem culture",
+      "Cross-team collaboration and technical leadership stories",
+      "Performance optimization at scale (beyond single endpoint)"
+    ],
+    "under_communicated_strengths": [
+      "ShardLab simulator in Rust — a strong differentiator for distributed systems roles",
+      "On-call escalation ownership and postmortem writing",
+      "Guest lectures and conference talks — demonstrates thought leadership"
+    ],
+    "market_context": "FAANG senior distributed systems roles value depth in consensus, consistency models, and operational resilience. Candidates who can articulate tradeoffs between consistency and availability under real-world constraints, and who have experience with formal verification or chaos engineering, stand out. Priya's vector clock and two-phase handoff work is relevant but needs to be connected to broader systems thinking."
+  },
+  "project_suggestions": [
+    {
+      "title": "Implement Raft consensus from scratch in Rust",
+      "type": "side_project",
+      "why": "Addresses the gap in consensus protocol implementation — a core expectation for senior distributed systems roles at FAANG.",
+      "technologies": [
+        "Rust",
+        "Raft",
+        "gRPC",
+        "Tokio"
+      ],
+      "outcome": "Can confidently discuss leader election, log replication, and safety properties in interviews, and compare Raft to the gossip-based approach used at OrbitDB."
+    },
+    {
+      "title": "Write a Jepsen test for a real distributed system (e.g., OrbitDB shard rebalancing)",
+      "type": "portfolio_piece",
+      "why": "Demonstrates formal verification and fault injection skills — a gap identified in the interview.",
+      "technologies": [
+        "Jepsen",
+        "Clojure",
+        "Docker",
+        "Kubernetes"
+      ],
+      "outcome": "Can describe how you validated linearizability and safety under network partitions, directly addressing the 'how do you know it works?' question."
+    },
+    {
+      "title": "Publish a postmortem analysis of the OrbitDB hinted-handoff rewrite",
+      "type": "open_source",
+      "why": "Shows operational maturity and incident analysis — a key differentiator for senior roles.",
+      "technologies": [
+        "Markdown",
+        "Grafana",
+        "Prometheus"
+      ],
+      "outcome": "Can reference a public postmortem that demonstrates your ability to learn from failures and improve system resilience."
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Prepare a concise 2-minute summary of the Kafka-to-Redpapa migration that starts with the problem (consumer-group rebalance pauses) and ends with the impact (zero-downtime migration, 50ms p99).",
+      "Identify 2-3 additional projects from your CV (ShardLab, hinted-handoff rewrite) and prepare STAR stories that highlight leadership and cross-team collaboration."
+    ],
+    "short_term": [
+      "Implement a basic Raft consensus module in Rust (leader election + log replication) and open-source it on GitHub.",
+      "Write a blog post or conference talk proposal on 'Lessons from Building a Gossip-Based Rebalancing Protocol' to showcase thought leadership."
+    ],
+    "medium_term": [
+      "Contribute a Jepsen test to an open-source distributed database (e.g., etcd, Consul) to build formal verification skills.",
+      "Prepare a system design talk on 'Designing a Geo-Distributed Key-Value Store' that covers CAP tradeoffs, consistency models, and operational challenges."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "delivery",
+      "observation": "The first two answers were abstract ('the tension between correctness and performance') without concrete examples, causing the interviewer to redirect.",
+      "suggestion": "Start every answer with a specific project or incident, then generalize. For example: 'At OrbitDB, I saw this tension play out when our gossip protocol...'"
+    },
+    {
+      "category": "structure",
+      "observation": "The shard-rebalancing story was told in fragments across multiple questions, making it harder to follow the full narrative.",
+      "suggestion": "Use the STAR framework: Situation (coordinator bottleneck), Task (design new protocol), Action (gossip + vector clocks + two-phase handoff), Result (sub-second rebalance, survived partitions). Deliver it in one coherent block."
+    },
+    {
+      "category": "content",
+      "observation": "The interview focused heavily on two projects (shard rebalancing and Kafka migration), leaving out ShardLab, hinted-handoff rewrite, and on-call learnings.",
+      "suggestion": "Prepare 4-5 diverse stories covering: consensus, performance optimization, operational incident, cross-team influence, and open-source contribution. Let the interviewer choose which to explore."
+    },
+    {
+      "category": "positioning",
+      "observation": "When asked about personal contribution, the answer was technically detailed but didn't emphasize leadership or decision-making authority.",
+      "suggestion": "Frame contributions as 'I identified the root cause, proposed the solution, built consensus with ops, and led the implementation.' Use 'I' not 'we' for ownership."
+    }
+  ],
+  "praise_worthy": [
+    "Exceptional technical depth on vector clocks and two-phase handoff — explained causal ordering and conflict resolution with precision.",
+    "Strong metrics-driven approach: benchmarked Kafka vs. Redpanda at 1K/5K/10K partitions, measured p99 latency, and cross-validated with CPU profiles.",
+    "Demonstrated influence by running a chaos-monkey test to convince the operations team — a concrete example of building consensus through data."
+  ],
+  "_caseId": "faang_senior_dist_aligned",
+  "_persona": "aligned",
+  "_role": "Senior Software Engineer (Distributed Systems) @ faang (senior)"
+}

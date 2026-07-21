@@ -1,0 +1,136 @@
+{
+  "overall_assessment": "Tessa delivered a strong, focused interview that clearly demonstrated deep expertise in AI agent architecture, particularly in routing, planning, and safety. She provided specific, quantified examples of her impact at Finch, showing a data-driven approach to engineering decisions. The interview was concise and well-structured, though she could have elaborated more on the collaborative aspects and stakeholder management for her projects.",
+  "overall_score": 8,
+  "insufficient_data": false,
+  "dimension_scores": {
+    "clarity": {
+      "score": 9,
+      "note": "Extremely clear and articulate. Used precise technical language (e.g., 'structured output enum', 'pre-execution validator', 'plan-and-execute') and explained complex concepts succinctly."
+    },
+    "structure": {
+      "score": 8,
+      "note": "Good narrative flow. Started with motivation, then detailed specific projects with metrics. Could have used a more explicit STAR structure for some answers, but the information was well-organized."
+    },
+    "technical_depth": {
+      "score": 10,
+      "note": "Exceptional depth. Demonstrated mastery of agent-specific architecture decisions (ReAct vs plan-and-execute, supervisor topology, structured output routing, confidence gating, tool-calling safety). Provided concrete metrics and trade-off analysis."
+    },
+    "ownership": {
+      "score": 8,
+      "note": "Clearly took ownership of key components (structured output schema, confidence threshold calibration, tool-calling safety layer). However, could have more explicitly described leading a team or influencing cross-functional stakeholders."
+    },
+    "impact_framing": {
+      "score": 9,
+      "note": "Excellent at quantifying impact: 'cut hallucinated tool calls by 80%', 'stuck-in-loop rate from 18% to 4%', 'accuracy above 95%'. Directly linked engineering improvements to operational wins."
+    },
+    "concise": {
+      "score": 9,
+      "note": "Very concise. Answered questions directly without rambling. Provided just enough context and data to be convincing without unnecessary detail."
+    }
+  },
+  "strengths": [
+    "Deep technical expertise in agent architectures (ReAct, plan-and-execute, supervisor-worker topology).",
+    "Strong data-driven decision-making, demonstrated by side-by-side experiments and threshold calibration.",
+    "Excellent at quantifying impact with specific metrics (80% reduction, 18% to 4%, 95% accuracy).",
+    "Clear communication of complex technical concepts and trade-offs.",
+    "Proactive in identifying and solving edge cases (multi-agent escalation path).",
+    "Demonstrated ownership of critical system components (safety layer, evaluation harness)."
+  ],
+  "areas_for_improvement": [
+    "Could have elaborated more on the collaborative and leadership aspects of her projects (e.g., how she worked with the 3 other engineers on the core agent team).",
+    "Stakeholder management answer was a bit brief; could have provided more detail on how she addressed concerns and built consensus.",
+    "Did not explicitly mention any challenges with team dynamics or code review processes, which are important for a mid-level role at a FAANG company.",
+    "Could have framed her contributions more in terms of 'we' vs 'I' to show team leadership, while still highlighting her individual impact."
+  ],
+  "gap_analysis": {
+    "summary": "The biggest gap is in demonstrating cross-functional collaboration and stakeholder influence at a larger scale, which is crucial for a mid-level role at a FAANG company. While she showed ownership of technical decisions, she didn't provide examples of mentoring junior engineers, leading design reviews, or influencing broader organizational strategy.",
+    "missing_skills": [
+      "Mentoring or guiding other engineers",
+      "Leading technical design documents and reviews",
+      "Influencing product roadmap or cross-team strategy",
+      "Handling ambiguity in a larger, more complex organizational structure"
+    ],
+    "under_communicated_strengths": [
+      "Her open-source projects (TriageBot, EvalTwin) show initiative and community engagement, but she didn't mention them in the interview.",
+      "Her talk at the NZ AI Meetup demonstrates thought leadership, but she didn't bring it up.",
+      "Her experience building evaluation harnesses is highly relevant to FAANG's focus on reliability, but she only briefly mentioned it in her CV."
+    ],
+    "market_context": "The market (especially FAANG) values AI engineers who can not only build sophisticated agent systems but also operate effectively within large, cross-functional teams. Tessa's technical depth is exceptional, but she needs to demonstrate that she can scale her impact through collaboration, mentorship, and influencing decisions beyond her immediate team."
+  },
+  "project_suggestions": [
+    {
+      "title": "Multi-Agent Debate System for Fact-Checking",
+      "type": "side_project",
+      "why": "This would demonstrate her ability to design and evaluate complex multi-agent interactions beyond the supervisor-worker pattern. It would also showcase her skills in evaluation and safety, which are highly valued at FAANG.",
+      "technologies": [
+        "LangGraph",
+        "OpenAI/DeepSeek",
+        "FastAPI",
+        "Docker"
+      ],
+      "outcome": "She would be able to discuss trade-offs between different multi-agent topologies (debate, reflection, supervisor) and how to evaluate agent alignment and factuality in a structured way."
+    },
+    {
+      "title": "Open-Source Agent Evaluation Framework",
+      "type": "open_source",
+      "why": "Building on her EvalTwin project, she could create a more comprehensive, community-driven evaluation framework for agents. This would demonstrate thought leadership and her ability to create tools that scale beyond a single company.",
+      "technologies": [
+        "Python",
+        "LangChain/LangGraph",
+        "Weights & Biases",
+        "GitHub Actions"
+      ],
+      "outcome": "She would have a concrete, public artifact that showcases her expertise in agent evaluation, safety, and reliability — a key differentiator for FAANG roles."
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Reframe CV and interview answers to emphasize collaborative leadership and cross-functional impact.",
+      "Prepare a 1-page document detailing how you would approach a complex agent system at a FAANG scale, including considerations for latency, cost, and safety."
+    ],
+    "short_term": [
+      "Contribute to an open-source agent framework (e.g., LangGraph, CrewAI) to build credibility and network with other engineers.",
+      "Write a blog post or give a talk on 'Scaling Agent Safety: Lessons from Production' to establish thought leadership."
+    ],
+    "medium_term": [
+      "Build the Multi-Agent Debate System for Fact-Checking project to demonstrate advanced multi-agent design.",
+      "Seek opportunities to mentor junior engineers or lead a small team, even in a volunteer capacity, to build leadership experience."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "structure",
+      "observation": "Tessa's answers were clear and data-driven, but she didn't always follow a strict STAR format. For example, when asked about the supervisor-worker router, she jumped straight to the action and result without explicitly setting the situation and task.",
+      "suggestion": "For behavioral interviews, explicitly structure your answers using the STAR method: Situation, Task, Action, Result. This ensures the interviewer has full context and can easily follow your narrative."
+    },
+    {
+      "category": "content",
+      "observation": "Tessa didn't mention her open-source projects (TriageBot, EvalTwin) or her talk at the NZ AI Meetup, which are strong signals of initiative and thought leadership.",
+      "suggestion": "Always have a few 'bonus' examples ready to weave into your answers. For instance, when asked about what drew you to agents, you could mention TriageBot as a personal exploration of structured output routing."
+    },
+    {
+      "category": "positioning",
+      "observation": "Tessa's answer about stakeholders was good but brief. She could have provided more detail on how she built consensus and addressed concerns.",
+      "suggestion": "When discussing stakeholder management, elaborate on the 'how': How did you present the data? How did you address their specific concerns? How did you build trust? This shows emotional intelligence and influence."
+    },
+    {
+      "category": "delivery",
+      "observation": "Tessa's delivery was confident and articulate. She maintained good eye contact (assuming video interview) and spoke at a measured pace.",
+      "suggestion": "Continue this strong delivery. To add more impact, try pausing briefly before delivering a key metric or insight — this draws attention to the most important part of your answer."
+    }
+  ],
+  "praise_worthy": [
+    "Excellent use of specific, quantified metrics to demonstrate impact (e.g., 'cut hallucinated tool calls by 80%', 'stuck-in-loop rate from 18% to 4%').",
+    "Clear articulation of complex technical trade-offs (ReAct vs plan-and-execute, confidence threshold calibration) with data-driven reasoning.",
+    "Proactive identification and solution of a critical edge case (multi-agent escalation path for ambiguous tickets), showing deep system thinking."
+  ],
+  "star_examples": [
+    {
+      "question": "Can you tell me more about your personal contribution to designing that supervisor-worker router and what challenges you faced in implementing it?",
+      "original_answer": "Sure. I designed the structured output schema and the confidence-threshold calibration myself. The hardest part was picking that escalation threshold — I ran 500 historical tickets through the system, plotted accuracy against escalation rate, and chose the point that kept accuracy above 95% while only escalating 15% of tickets. That calibration process took weeks because we had to balance false positives against missing critical edge cases.",
+      "worth_rewriting": true,
+      "why": "This answer is strong but could be even more impactful with a clear STAR structure. The 'Situation' and 'Task' are implied but not explicitly stated, and the 'Action' could be more detailed.",
+      "rewritten_star": "Situation: At Finch, we had a prompt-based routing system for customer support tickets that occasionally hallucinated agent assignments, causing customer frustration and manual cleanup.\nTask: I was tasked with designing a new supervisor-worker router that could reliably classify tickets and route them to the correct specialist agent (billing, technical, account) with high accuracy.\nAction: I designed a structured output schema using LangGraph's `.with_structured_output()` to force the LLM to output a valid enum for routing. To calibrate the confidence threshold, I manually annotated 500 historical tickets with the correct agent assignment, then ran the router against this ground truth. I plotted accuracy against escalation rate and chose the point that maximized accuracy while minimizing unnecessary human escalations. This involved weeks of iterative testing to balance false positives against missing critical edge cases. I also added a 'multi-agent escalation' path for ambiguous tickets that mentioned multiple domains.\nResult: The new router eliminated hallucinated assignments entirely, maintained accuracy above 95%, and only escalated 15% of tickets to humans — directly reducing customer complaints and support team workload."
+    }
+  ]
+}

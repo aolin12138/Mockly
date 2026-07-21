@@ -1,0 +1,226 @@
+{
+  "meta": {
+    "session_mode": "practice",
+    "confidence_level": "high",
+    "questions_asked": 24,
+    "domains_covered": []
+  },
+  "summary": {
+    "overall_score": 67,
+    "one_liner": "Samuel demonstrated strong technical depth and ownership in his interview, clearly articulating complex decisions around embedding models, chunking st",
+    "recommendation": "neutral",
+    "readiness": "practicing"
+  },
+  "dimension_scores": [
+    {
+      "dimension": "clarity",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Explanations were technically precise and jargon was well-defined, but the density of information sometimes made the core point harder to extract.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "structure",
+      "score": 4,
+      "evidence": [
+        {
+          "observation": "Answers were delivered as streams of technical details without a clear narrative structure like STAR, making it difficult for the interviewer to follow the progression of a problem.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "technical_depth",
+      "score": 10,
+      "evidence": [
+        {
+          "observation": "Demonstrated exceptional depth on embedding model evaluation, chunking strategies, vector DB migration, and hybrid search, showing a genuine understanding of tradeoffs.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "ownership",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Clearly led the migration and owned the retrieval pipeline, but could have more explicitly framed his role in influencing team decisions and building consensus.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "pace",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Pace was generally good, but some answers were very long and packed with details, which could cause a listener to lose the thread.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "concise",
+      "score": 4,
+      "evidence": [
+        {
+          "observation": "Answers were often verbose and included multiple technical points without a clear summary or takeaway, making them less impactful.",
+          "reasoning": ""
+        }
+      ]
+    }
+  ],
+  "answer_breakdown": [],
+  "patterns": [],
+  "highlights": null,
+  "cv_interview_alignment": {
+    "available": true,
+    "overall": "mixed",
+    "summary": "Samuel's primary gap is in communication structure, not technical knowledge. For a senior role at a startup, he needs to frame his answers with a clear narrative (Situation, Task, Action, Result) to demonstrate strategic thinking and business impact, rather than just listing technical details. He also under-communicated his role in team leadership and stakeholder management, which is critical for a senior engineer.",
+    "claims": [
+      {
+        "claim": "Explicit demonstration of strategic thinking and business impact framing",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Clear articulation of stakeholder management and consensus-building process",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Structured storytelling (e.g., STAR method) for behavioral answers",
+        "status": "not_tested"
+      }
+    ]
+  },
+  "strengths": [
+    {
+      "description": "Excellent technical depth on embedding model evaluation, including specific metrics (12% MRR improvement) and the rationale for choosing Cohere v3 over OpenAI."
+    },
+    {
+      "description": "Clear articulation of the pgvector migration tradeoffs, including the performance ceiling at 5M chunks and the hybrid plan for future scale."
+    },
+    {
+      "description": "Strong understanding of MCP vs. REST, with a concrete example (JurisMCP) and a clear explanation of the protocol-level benefits for agentic systems."
+    }
+  ],
+  "areas_for_improvement": [
+    {
+      "suggestion": "Explicit demonstration of strategic thinking and business impact framing",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Clear articulation of stakeholder management and consensus-building process",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Structured storytelling (e.g., STAR method) for behavioral answers",
+      "priority": "high"
+    }
+  ],
+  "next_steps": [
+    "Reframe your next interview answers using the STAR method: for every question, explicitly state the Situation, Task, Action, and Result. Practice with a friend or recording yourself.",
+    "Prepare 3 'leadership stories' from your Contextual experience that highlight influencing decisions, not just executing them.",
+    "Write and publish the technical blog post on vector database tradeoffs. This will force you to structure your knowledge into a clear narrative.",
+    "Identify one open-source MCP project and make a small contribution (e.g., documentation, a bug fix) to build your collaborative profile."
+  ],
+  "gap_analysis": {
+    "summary": "Samuel's primary gap is in communication structure, not technical knowledge. For a senior role at a startup, he needs to frame his answers with a clear narrative (Situation, Task, Action, Result) to demonstrate strategic thinking and business impact, rather than just listing technical details. He also under-communicated his role in team leadership and stakeholder management, which is critical for a senior engineer.",
+    "missing_skills": [
+      "Explicit demonstration of strategic thinking and business impact framing",
+      "Clear articulation of stakeholder management and consensus-building process",
+      "Structured storytelling (e.g., STAR method) for behavioral answers"
+    ],
+    "under_communicated_strengths": [
+      "His role in building consensus for the hybrid DB plan was mentioned but not framed as a leadership story",
+      "The business impact of his work (e.g., converting pilots to paid contracts) was mentioned in the CV but not in the interview",
+      "His ability to mentor or influence the engineering team was not discussed"
+    ],
+    "market_context": "The current market for Senior AI Engineers at startups values engineers who can not only execute technically but also communicate complex decisions clearly to non-technical stakeholders, influence product direction, and demonstrate ownership of business outcomes. Samuel's technical depth is exceptional, but his interview delivery needs to better showcase these senior-level soft skills."
+  },
+  "project_suggestions": [
+    {
+      "title": "Write a technical blog post on 'The Real Tradeoffs in Vector Database Selection'",
+      "type": "portfolio_piece",
+      "why": "This directly addresses the gap in structured communication. Writing forces a clear narrative (problem, options, decision, outcome) and demonstrates thought leadership. It also showcases his deep knowledge of pgvector vs. Pinecone vs. Qdrant.",
+      "technologies": [
+        "pgvector",
+        "Pinecone",
+        "Qdrant",
+        "IVFFlat",
+        "HNSW"
+      ],
+      "outcome": "Samuel will be able to say: 'I wrote a detailed post on vector DB tradeoffs that was shared by the Postgres Auckland community, demonstrating my ability to communicate complex architectural decisions clearly.'"
+    },
+    {
+      "title": "Contribute to the MCP specification or a popular MCP client (e.g., Continue.dev)",
+      "type": "open_source",
+      "why": "Deepens his MCP expertise beyond his own project and shows he can collaborate in the broader ecosystem. This is a high-signal activity for a senior role.",
+      "technologies": [
+        "MCP",
+        "TypeScript",
+        "Python"
+      ],
+      "outcome": "Samuel can say: 'I contributed a new tool pattern to the MCP spec that simplifies authentication for legal data sources, which was accepted by the community.'"
+    },
+    {
+      "title": "Build a public evaluation benchmark for legal RAG chunking strategies",
+      "type": "side_project",
+      "why": "His work on chunking is a key differentiator. A public benchmark with a clear methodology and results would be a powerful portfolio piece and establish him as an expert.",
+      "technologies": [
+        "Python",
+        "BERT",
+        "LangChain",
+        "LlamaIndex",
+        "Weights & Biases"
+      ],
+      "outcome": "Samuel can say: 'I created a public benchmark for legal chunking strategies that is now used by two other startups to evaluate their pipelines.'"
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Reframe your next interview answers using the STAR method: for every question, explicitly state the Situation, Task, Action, and Result. Practice with a friend or recording yourself.",
+      "Prepare 3 'leadership stories' from your Contextual experience that highlight influencing decisions, not just executing them."
+    ],
+    "short_term": [
+      "Write and publish the technical blog post on vector database tradeoffs. This will force you to structure your knowledge into a clear narrative.",
+      "Identify one open-source MCP project and make a small contribution (e.g., documentation, a bug fix) to build your collaborative profile."
+    ],
+    "medium_term": [
+      "Build and release the public legal RAG chunking benchmark. This will solidify your expertise and create a tangible asset for future interviews.",
+      "Seek out a speaking opportunity (e.g., a meetup or conference) to present a structured talk on one of your projects, which will further hone your communication skills."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "structure",
+      "observation": "When asked about the pgvector migration, you jumped straight into the technical details (sync latency, IVFFlat indexing) without first setting the context of the problem and your role.",
+      "suggestion": "Use the STAR framework: Start with the Situation (Contextual's legal RAG had stale embeddings causing hallucinations), Task (you needed to eliminate sync latency), Action (you led the migration to pgvector after benchmarking), and Result (zero sync latency, matched performance). This makes the story compelling and easy to follow."
+    },
+    {
+      "category": "content",
+      "observation": "You mentioned building consensus with a spreadsheet, but didn't elaborate on the stakeholder dynamics or how you convinced them.",
+      "suggestion": "For senior roles, 'building consensus' is a key skill. Describe who the stakeholders were (e.g., CTO, product manager, legal team), what their concerns were (cost vs. performance), and how you addressed them. This shows strategic influence."
+    },
+    {
+      "category": "positioning",
+      "observation": "You didn't explicitly connect your technical work to business outcomes, like converting pilots to paid contracts (which is on your CV).",
+      "suggestion": "Always tie your technical decisions to business impact. For example: 'By eliminating stale embeddings, we reduced hallucinated citations from 22% to 4%, which was the key metric that convinced our first three enterprise customers to sign.' This positions you as a business-aware engineer."
+    },
+    {
+      "category": "delivery",
+      "observation": "Your answers were dense and packed with multiple technical points, which can overwhelm the listener.",
+      "suggestion": "After stating your main point, pause and ask 'Does that make sense?' or 'Would you like me to go deeper on any part of that?' This gives the interviewer control and makes the conversation more interactive."
+    }
+  ],
+  "praise_worthy": [
+    "Excellent technical depth on embedding model evaluation, including specific metrics (12% MRR improvement) and the rationale for choosing Cohere v3 over OpenAI.",
+    "Clear articulation of the pgvector migration tradeoffs, including the performance ceiling at 5M chunks and the hybrid plan for future scale.",
+    "Strong understanding of MCP vs. REST, with a concrete example (JurisMCP) and a clear explanation of the protocol-level benefits for agentic systems."
+  ],
+  "_caseId": "startup_senior_ai_aligned",
+  "_persona": "aligned",
+  "_role": "Senior AI Engineer @ startup (senior)"
+}

@@ -1,0 +1,106 @@
+{
+  "overall_assessment": "The interview was very brief, providing insufficient evidence to evaluate the candidate's behavioural competencies. The candidate gave vague, high-level answers without specific details, structure, or measurable outcomes. A more comprehensive response with a clear STAR framework is needed for a fair assessment.",
+  "overall_score": 2,
+  "insufficient_data": true,
+  "dimension_scores": {
+    "clarity": {
+      "score": 2,
+      "note": "Answers are vague and lack specific details about the problem, actions, and results."
+    },
+    "structure": {
+      "score": 1,
+      "note": "No discernible structure (e.g., STAR) in the response; it is a single, unstructured sentence."
+    },
+    "technical_depth": {
+      "score": 2,
+      "note": "Mentions 'index' and 'N+1 queries' but provides no explanation of techniques, trade-offs, or implementation."
+    },
+    "ownership": {
+      "score": 1,
+      "note": "No indication of personal role, initiative, or decision-making; uses passive language ('I used an index')."
+    },
+    "impact_framing": {
+      "score": 1,
+      "note": "No quantified impact or business outcome is communicated; 'made things faster' is too vague."
+    },
+    "concise": {
+      "score": 3,
+      "note": "Response is very short, but not effectively concise as it lacks substance."
+    }
+  },
+  "strengths": [],
+  "areas_for_improvement": [
+    "Provide a complete, structured story using the STAR method (Situation, Task, Action, Result).",
+    "Include specific technical details: which queries, which indexes, why they were chosen, and how performance was measured.",
+    "Quantify the impact with metrics (e.g., latency reduction, query time improvement).",
+    "Demonstrate personal ownership and initiative in the solution."
+  ],
+  "gap_analysis": {
+    "summary": "The candidate's CV claims a 40% latency reduction and N+1 query optimization, but the interview response fails to articulate this achievement with any depth, structure, or evidence of personal contribution.",
+    "missing_skills": [
+      "Structured communication (STAR)",
+      "Articulating technical trade-offs",
+      "Quantifying impact with metrics"
+    ],
+    "under_communicated_strengths": [
+      "Database optimization experience (N+1 queries, indexing)",
+      "Use of Docker, Redis, Kafka (not mentioned at all)"
+    ],
+    "market_context": "FAANG interviews expect candidates to deliver detailed, structured stories with clear metrics and personal ownership. The candidate's response falls far short of this standard."
+  },
+  "project_suggestions": [
+    {
+      "title": "Build a Performance Dashboard for a Web App",
+      "type": "side_project",
+      "why": "This project forces the candidate to practice identifying, diagnosing, and fixing performance bottlenecks, and then communicating the impact with clear metrics.",
+      "technologies": [
+        "PostgreSQL",
+        "Python/Flask or Node.js",
+        "Prometheus",
+        "Grafana"
+      ],
+      "outcome": "The candidate will be able to describe a complete story: the problem (slow page loads), the diagnosis (N+1 queries, missing indexes), the action (adding composite indexes, query refactoring), and the result (X% latency reduction, shown on a dashboard)."
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Practice the STAR method with 3 different technical stories from the internship.",
+      "Write down each story with full details: Situation, Task, Action, Result."
+    ],
+    "short_term": [
+      "Record yourself answering the same question and self-evaluate using the STAR rubric.",
+      "Get feedback from a peer or mentor on your story structure and clarity."
+    ],
+    "medium_term": [
+      "Complete the performance dashboard side project to build a strong, metric-driven story.",
+      "Participate in mock interviews focused on behavioural questions."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "structure",
+      "observation": "The candidate's answer lacks any clear structure, making it hard to follow the problem and solution.",
+      "suggestion": "Always use the STAR framework: start with the Situation (context), then the Task (your goal), then the Action (what you specifically did), and finally the Result (quantified impact)."
+    },
+    {
+      "category": "content",
+      "observation": "The candidate mentions 'index' but provides no technical depth or reasoning.",
+      "suggestion": "Explain why you chose a specific technique (e.g., 'I added a composite index on user_id and created_at because the query filtered on both columns'). This shows technical understanding."
+    },
+    {
+      "category": "positioning",
+      "observation": "The candidate uses passive language ('I used an index') and does not claim ownership.",
+      "suggestion": "Use active language to show leadership: 'I identified the bottleneck, proposed adding a composite index, implemented it, and validated the improvement with before/after metrics.'"
+    }
+  ],
+  "praise_worthy": [],
+  "star_examples": [
+    {
+      "question": "Tell me about a challenging technical problem you solved.",
+      "original_answer": "I optimized some database queries at my internship and it made things faster. I used an index and it helped a lot.",
+      "worth_rewriting": true,
+      "why": "The original answer is too vague and lacks structure, technical depth, and measurable impact. A STAR rewrite will make it compelling.",
+      "rewritten_star": "Situation: At my internship with Kea Systems, the shipment tracking API had a slow endpoint that took over 2 seconds to load, causing user complaints.\nTask: I was responsible for identifying the root cause and reducing the response time to under 500ms.\nAction: I analyzed the query logs and found an N+1 query pattern where the system made separate database calls for each shipment's status. I added a composite index on (shipment_id, status) and rewrote the query to use a JOIN, reducing the number of queries from 100+ to 1.\nResult: The p95 latency dropped by 40%, from 2.1s to 1.26s, and the endpoint now loads in under 300ms. I documented the change and presented it to the team."
+    }
+  ]
+}

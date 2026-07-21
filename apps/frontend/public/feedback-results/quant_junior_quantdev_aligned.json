@@ -1,0 +1,225 @@
+{
+  "meta": {
+    "session_mode": "practice",
+    "confidence_level": "high",
+    "questions_asked": 20,
+    "domains_covered": []
+  },
+  "summary": {
+    "overall_score": 73,
+    "one_liner": "Nina demonstrated strong technical depth and genuine quantitative finance experience, particularly in backtesting methodology and RL agent design. How",
+    "recommendation": "neutral",
+    "readiness": "practicing"
+  },
+  "dimension_scores": [
+    {
+      "dimension": "clarity",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Responses were clear and well-articulated, with specific technical details like '2.1 Sharpe to 0.8' and 'PPO agent with reward shaping'.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "structure",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Answers followed a logical flow but occasionally lacked a clear STAR framework, especially when describing the backtesting engine and RL project.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "technical_depth",
+      "score": 10,
+      "evidence": [
+        {
+          "observation": "Exceptional depth for a junior—survivorship bias correction, SVI parameterisation, PPO reward engineering, and look-ahead bias awareness were all demonstrated.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "ownership",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Strong sense of ownership shown through phrases like 'I discovered', 'I had to add', and 'I rebuilt', though some team context was missing.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "pace",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Pace was generally good but occasionally rushed through key details (e.g., Sharpe calculation method), and some answers could have been more measured.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "concise",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Responses were mostly concise but sometimes included extra context that diluted the core message, such as the detailed parser description for NZX bulletins.",
+          "reasoning": ""
+        }
+      ]
+    }
+  ],
+  "answer_breakdown": [],
+  "patterns": [],
+  "highlights": null,
+  "cv_interview_alignment": {
+    "available": true,
+    "overall": "mixed",
+    "summary": "Nina's technical depth is strong for a junior, but she under-communicated her ability to work in a team or handle ambiguous, non-technical challenges—key for a quant role that requires collaboration with traders and engineers. The market for junior quant developers values not just technical rigor but also adaptability to fast-changing priorities and clear communication of trade-offs.",
+    "claims": [
+      {
+        "claim": "Team collaboration and stakeholder management (e.g., working with traders to define requirements)",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Experience with production-grade systems (e.g., latency optimization, error handling, monitoring)",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Knowledge of alternative data sources and their integration challenges",
+        "status": "not_tested"
+      }
+    ]
+  },
+  "strengths": [
+    {
+      "description": "Nina demonstrated exceptional technical depth for a junior, particularly in her understanding of survivorship bias, look-ahead bias, and RL reward engineering—topics that are often glossed over by candidates at her level."
+    },
+    {
+      "description": "She was honest about the limitations of her RL project ('only tested on two years of data with no regime-shift validation'), which shows maturity and self-awareness."
+    },
+    {
+      "description": "Her answer about the PPO agent learning to become a momentum trader was a standout moment—it showed she not only built the system but also critically evaluated its behavior."
+    }
+  ],
+  "areas_for_improvement": [
+    {
+      "suggestion": "Team collaboration and stakeholder management (e.g., working with traders to define requirements)",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Experience with production-grade systems (e.g., latency optimization, error handling, monitoring)",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Knowledge of alternative data sources and their integration challenges",
+      "priority": "high"
+    }
+  ],
+  "next_steps": [
+    "Reframe your backtesting engine story to explicitly highlight the systematic approach to data quality (e.g., 'I developed a framework for detecting and correcting survivorship bias that can be applied to any index').",
+    "Prepare a concise STAR-structured answer for your PairTradingRL project, focusing on the unexpected challenge (agent becoming momentum trader) and how you solved it.",
+    "Contribute a small feature or bug fix to an open-source quant library (e.g., Backtrader, Zipline, or QuantLib) to demonstrate production coding skills.",
+    "Write a blog post or LinkedIn article about your survivorship bias discovery, including code snippets and lessons learned."
+  ],
+  "gap_analysis": {
+    "summary": "Nina's technical depth is strong for a junior, but she under-communicated her ability to work in a team or handle ambiguous, non-technical challenges—key for a quant role that requires collaboration with traders and engineers. The market for junior quant developers values not just technical rigor but also adaptability to fast-changing priorities and clear communication of trade-offs.",
+    "missing_skills": [
+      "Team collaboration and stakeholder management (e.g., working with traders to define requirements)",
+      "Experience with production-grade systems (e.g., latency optimization, error handling, monitoring)",
+      "Knowledge of alternative data sources and their integration challenges"
+    ],
+    "under_communicated_strengths": [
+      "Her ability to independently identify and fix data quality issues (e.g., survivorship bias) was mentioned but not framed as a systematic skill",
+      "Her open-source project (VolSurfaceVis) with 300+ stars was mentioned in the CV but not discussed in the interview—missed opportunity to show community impact"
+    ],
+    "market_context": "The current market for junior quant developers values strong technical fundamentals (backtesting, RL, data pipelines) but increasingly expects candidates to demonstrate how they translate quantitative insights into actionable trading decisions. Nina's focus on data quality is relevant, but she needs to show more awareness of how her work fits into a broader trading system and team dynamics."
+  },
+  "project_suggestions": [
+    {
+      "title": "Contribute to an open-source backtesting framework (e.g., Backtrader or Zipline)",
+      "type": "open_source",
+      "why": "Addresses the gap in production-grade systems experience and shows ability to work with existing codebases and community standards.",
+      "technologies": [
+        "Python",
+        "Backtrader",
+        "Zipline",
+        "Git",
+        "CI/CD"
+      ],
+      "outcome": "Can say: 'I contributed a feature for handling corporate actions in backtests, which required understanding the framework's architecture and writing tests for edge cases.'"
+    },
+    {
+      "title": "Build a multi-asset backtesting pipeline with regime detection",
+      "type": "side_project",
+      "why": "Demonstrates ability to handle regime shifts—a gap Nina acknowledged in her RL project—and shows broader market awareness beyond equities.",
+      "technologies": [
+        "Python",
+        "pandas",
+        "scikit-learn",
+        "HMM",
+        "ClickHouse"
+      ],
+      "outcome": "Can say: 'I built a pipeline that detects market regimes using HMMs and adjusts strategy parameters accordingly, tested on 5 years of FX data.'"
+    },
+    {
+      "title": "Write a technical blog post on 'Lessons from Building a Realistic Backtesting Engine'",
+      "type": "portfolio_piece",
+      "why": "Positions Nina as a thought leader on data quality and backtest realism, which is a key differentiator for junior roles.",
+      "technologies": [
+        "Python",
+        "ClickHouse",
+        "NZX data"
+      ],
+      "outcome": "Can say: 'I published a detailed post on survivorship bias and look-ahead bias, which was shared by several quant communities and led to interview invitations.'"
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Reframe your backtesting engine story to explicitly highlight the systematic approach to data quality (e.g., 'I developed a framework for detecting and correcting survivorship bias that can be applied to any index').",
+      "Prepare a concise STAR-structured answer for your PairTradingRL project, focusing on the unexpected challenge (agent becoming momentum trader) and how you solved it."
+    ],
+    "short_term": [
+      "Contribute a small feature or bug fix to an open-source quant library (e.g., Backtrader, Zipline, or QuantLib) to demonstrate production coding skills.",
+      "Write a blog post or LinkedIn article about your survivorship bias discovery, including code snippets and lessons learned."
+    ],
+    "medium_term": [
+      "Build a multi-asset backtesting pipeline that includes regime detection (e.g., using HMMs) to address the gap in regime-shift validation.",
+      "Seek opportunities to collaborate with traders or engineers (e.g., through hackathons or open-source projects) to demonstrate teamwork and stakeholder management."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "structure",
+      "observation": "When asked about the backtesting engine, Nina jumped straight into the survivorship bias discovery without first setting up the context (e.g., 'I was tasked with building a backtesting engine for intraday mean-reversion strategies...').",
+      "suggestion": "Use the STAR method: start with the Situation (what was the task?), then Task (what was your role?), Action (what did you do?), and Result (what was the outcome?). This makes your story easier to follow."
+    },
+    {
+      "category": "content",
+      "observation": "Nina mentioned the Sharpe ratio calculation but didn't explain the methodology until prompted, which could leave interviewers wondering about rigor.",
+      "suggestion": "When discussing metrics, proactively explain how they were calculated (e.g., 'I used daily returns, subtracted the risk-free rate, and annualised using the standard deviation of daily returns'). This shows you understand the assumptions behind the numbers."
+    },
+    {
+      "category": "positioning",
+      "observation": "Nina's answer about what drew her to quant finance was strong but could have been more personal—she focused on data flaws rather than her own journey or motivations.",
+      "suggestion": "Connect your technical interests to a personal story or a specific moment (e.g., 'I first got interested when I saw how a simple bias could mislead a trading strategy during my internship'). This makes you more memorable."
+    },
+    {
+      "category": "delivery",
+      "observation": "Nina's pace was generally good, but she occasionally rushed through technical details (e.g., the parser for NZX bulletins) without checking if the interviewer wanted more depth.",
+      "suggestion": "Pause after key points and ask 'Would you like me to go deeper into that?' This gives the interviewer control and shows you're attuned to their interest level."
+    }
+  ],
+  "praise_worthy": [
+    "Nina demonstrated exceptional technical depth for a junior, particularly in her understanding of survivorship bias, look-ahead bias, and RL reward engineering—topics that are often glossed over by candidates at her level.",
+    "She was honest about the limitations of her RL project ('only tested on two years of data with no regime-shift validation'), which shows maturity and self-awareness.",
+    "Her answer about the PPO agent learning to become a momentum trader was a standout moment—it showed she not only built the system but also critically evaluated its behavior."
+  ],
+  "_caseId": "quant_junior_quantdev_aligned",
+  "_persona": "aligned",
+  "_role": "Quantitative Developer (Junior) @ quant (junior)"
+}

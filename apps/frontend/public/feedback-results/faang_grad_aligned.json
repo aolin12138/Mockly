@@ -1,0 +1,225 @@
+{
+  "meta": {
+    "session_mode": "practice",
+    "confidence_level": "high",
+    "questions_asked": 23,
+    "domains_covered": []
+  },
+  "summary": {
+    "overall_score": 87,
+    "one_liner": "Aria delivered a strong, technically grounded interview that clearly demonstrated her ability to identify and fix performance bottlenecks, make sound ",
+    "recommendation": "neutral",
+    "readiness": "practicing"
+  },
+  "dimension_scores": [
+    {
+      "dimension": "clarity",
+      "score": 10,
+      "evidence": [
+        {
+          "observation": "Aria explained technical concepts like N+1 queries, tsrange, and GIST indexes with precision and without jargon overload.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "structure",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Her answers followed a logical flow (problem → action → result), though the StudyMate migration story could have been more explicitly structured around the timeline of challenges.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "technical_depth",
+      "score": 10,
+      "evidence": [
+        {
+          "observation": "She demonstrated deep understanding of PostgreSQL range types, indexing strategies, and the tradeoffs of Firebase vs. relational databases, matching the FAANG bar for a new grad.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "ownership",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "She clearly owned the Kea latency fix and the StudyMate migration, but the calendar rescue story lacked detail on her specific role in the negotiation and how she influenced the teammate.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "pace",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Her responses were well-paced and she didn't rush, though one or two answers could have been slightly more concise to leave room for more follow-ups.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "concise",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "She was generally succinct, but the StudyMate migration answer could have been tightened to focus on the most impactful technical and collaborative details.",
+          "reasoning": ""
+        }
+      ]
+    }
+  ],
+  "answer_breakdown": [],
+  "patterns": [],
+  "highlights": null,
+  "cv_interview_alignment": {
+    "available": true,
+    "overall": "mixed",
+    "summary": "Aria's technical depth is excellent for a new grad, but she under-communicated her leadership and influence in team situations, which is critical for FAANG roles that value cross-functional collaboration and mentorship.",
+    "claims": [
+      {
+        "claim": "Explicit demonstration of mentoring or teaching others (beyond TA work)",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Discussion of tradeoffs in distributed systems (e.g., Fly.io multi-region latency)",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Evidence of handling ambiguity or competing priorities in a team setting",
+        "status": "not_tested"
+      }
+    ]
+  },
+  "strengths": [
+    {
+      "description": "Aria gave a technically precise explanation of tsrange and GIST indexes, showing deep understanding beyond what most new grads demonstrate."
+    },
+    {
+      "description": "She clearly owned the Kea latency reduction, from identifying the N+1 pattern to validating the improvement with k6, and she communicated her personal contribution without ambiguity."
+    },
+    {
+      "description": "She asked a thoughtful question about team culture (code review and pairing) that showed she's thinking about how she'll fit into the team, not just the role."
+    }
+  ],
+  "areas_for_improvement": [
+    {
+      "suggestion": "Explicit demonstration of mentoring or teaching others (beyond TA work)",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Discussion of tradeoffs in distributed systems (e.g., Fly.io multi-region latency)",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Evidence of handling ambiguity or competing priorities in a team setting",
+      "priority": "high"
+    }
+  ],
+  "next_steps": [
+    "Reframe the calendar rescue story to explicitly highlight your role in influencing the teammate and the tradeoff decision.",
+    "Prepare a 2-minute version of the Kea latency story that includes the business impact (e.g., 'support engineers could now reproduce bugs in minutes instead of hours').",
+    "Contribute to an open-source project (e.g., pgvector, PostGIS, or a Node.js tool) to demonstrate collaborative coding and code review skills.",
+    "Write a technical blog post about the Firebase-to-PostgreSQL migration, focusing on the schema design and query optimization decisions."
+  ],
+  "gap_analysis": {
+    "summary": "Aria's technical depth is excellent for a new grad, but she under-communicated her leadership and influence in team situations, which is critical for FAANG roles that value cross-functional collaboration and mentorship.",
+    "missing_skills": [
+      "Explicit demonstration of mentoring or teaching others (beyond TA work)",
+      "Discussion of tradeoffs in distributed systems (e.g., Fly.io multi-region latency)",
+      "Evidence of handling ambiguity or competing priorities in a team setting"
+    ],
+    "under_communicated_strengths": [
+      "Her role in the calendar scope negotiation and how she influenced a teammate to accept a tradeoff",
+      "Her ability to write runbooks and onboard others (mentioned in CV but not explored)",
+      "Her hackathon win and mentorship in Women in Computing club"
+    ],
+    "market_context": "FAANG new grad roles increasingly value candidates who can not only code but also influence team decisions, mentor peers, and navigate ambiguity. Aria's technical skills are strong, but she needs to more explicitly frame her collaborative and leadership experiences to stand out."
+  },
+  "project_suggestions": [
+    {
+      "title": "Open-source contribution to a PostgreSQL-related project (e.g., pgvector or PostGIS)",
+      "type": "open_source",
+      "why": "Demonstrates advanced PostgreSQL skills and ability to work with distributed communities, addressing the gap in collaborative open-source experience.",
+      "technologies": [
+        "PostgreSQL",
+        "C",
+        "SQL",
+        "Git"
+      ],
+      "outcome": "Can say: 'I contributed a performance optimization to pgvector's indexing layer, which was reviewed and merged by the maintainers.'"
+    },
+    {
+      "title": "Build a distributed task scheduler with Node.js and PostgreSQL",
+      "type": "side_project",
+      "why": "Shows ability to handle distributed systems challenges (latency, consistency, failure handling) that are core to FAANG roles.",
+      "technologies": [
+        "Node.js",
+        "PostgreSQL",
+        "Redis",
+        "Docker",
+        "k6"
+      ],
+      "outcome": "Can say: 'I designed a task scheduler that uses PostgreSQL advisory locks for distributed coordination and achieved 99th percentile latency under 50ms under load.'"
+    },
+    {
+      "title": "Write a technical blog post on 'Migrating from Firebase to PostgreSQL: Lessons from a Student Project'",
+      "type": "portfolio_piece",
+      "why": "Positions Aria as a thought leader and demonstrates her ability to communicate technical decisions to a broader audience, a skill FAANG values.",
+      "technologies": [
+        "PostgreSQL",
+        "Firebase",
+        "Node.js"
+      ],
+      "outcome": "Can say: 'My blog post on Firebase-to-PostgreSQL migration was featured on the PostgreSQL weekly newsletter and received positive feedback from engineers at several companies.'"
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Reframe the calendar rescue story to explicitly highlight your role in influencing the teammate and the tradeoff decision.",
+      "Prepare a 2-minute version of the Kea latency story that includes the business impact (e.g., 'support engineers could now reproduce bugs in minutes instead of hours')."
+    ],
+    "short_term": [
+      "Contribute to an open-source project (e.g., pgvector, PostGIS, or a Node.js tool) to demonstrate collaborative coding and code review skills.",
+      "Write a technical blog post about the Firebase-to-PostgreSQL migration, focusing on the schema design and query optimization decisions."
+    ],
+    "medium_term": [
+      "Build a distributed system side project (e.g., a task scheduler or real-time collaboration tool) that uses PostgreSQL for coordination and includes load testing with k6.",
+      "Seek a mentorship or leadership role in a student club or open-source project to build evidence of influencing and teaching others."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "structure",
+      "observation": "The StudyMate migration story started with the problem but didn't clearly separate the technical migration from the calendar rescue. The interviewer had to ask separate follow-ups to get the full picture.",
+      "suggestion": "When telling a multi-part story, use a signpost: 'There were two key challenges here—first, the technical migration, and second, a team coordination issue. Let me start with the technical side.'"
+    },
+    {
+      "category": "content",
+      "observation": "Aria mentioned the calendar rescue but didn't detail how she convinced her teammate to accept the scope cut. She said 'I suggested' and 'I navigated it by framing the tradeoff,' but didn't describe the teammate's reaction or how she handled pushback.",
+      "suggestion": "In behavioral answers, include the other person's perspective and your specific influence tactics. For example: 'My teammate was initially resistant because they felt drag-and-drop was a key feature. I asked them to walk me through their concerns, then showed them data on how much time it would take vs. the week view. We agreed to prototype the week view first and revisit drag-and-drop if time allowed.'"
+    },
+    {
+      "category": "positioning",
+      "observation": "Aria's answers focused heavily on technical decisions, but she didn't frame herself as a leader or mentor, despite having TA experience and mentoring in Women in Computing.",
+      "suggestion": "When asked about teamwork, proactively mention moments where you taught or influenced others. For example: 'As a TA, I learned to break down complex concepts for students, which helped me when I paired with my teammate on the calendar feature.'"
+    },
+    {
+      "category": "delivery",
+      "observation": "Aria's tone was confident and clear, but she occasionally paused before answering, which could be interpreted as hesitation.",
+      "suggestion": "It's fine to take a moment to think, but signal it: 'That's a great question—let me think about the best example.' This shows you're thoughtful, not unprepared."
+    }
+  ],
+  "praise_worthy": [
+    "Aria gave a technically precise explanation of tsrange and GIST indexes, showing deep understanding beyond what most new grads demonstrate.",
+    "She clearly owned the Kea latency reduction, from identifying the N+1 pattern to validating the improvement with k6, and she communicated her personal contribution without ambiguity.",
+    "She asked a thoughtful question about team culture (code review and pairing) that showed she's thinking about how she'll fit into the team, not just the role."
+  ],
+  "_caseId": "faang_grad_aligned",
+  "_persona": "aligned",
+  "_role": "Software Engineer (New Grad) @ faang (grad)"
+}

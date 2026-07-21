@@ -1,0 +1,136 @@
+{
+  "overall_assessment": "Aria delivered a polished, well-structured interview that clearly demonstrated strong technical depth, ownership, and impact. She effectively used the STAR framework, provided specific metrics, and showed mature decision-making. The interview was concise and confident, leaving little room for improvement.",
+  "overall_score": 9,
+  "insufficient_data": false,
+  "dimension_scores": {
+    "clarity": {
+      "score": 9,
+      "note": "Answers were clear, well-articulated, and easy to follow. Technical concepts were explained without jargon overload."
+    },
+    "structure": {
+      "score": 10,
+      "note": "Every answer followed a clear STAR-like structure (Situation, Task, Action, Result) with a logical flow from problem to outcome."
+    },
+    "technical_depth": {
+      "score": 9,
+      "note": "Demonstrated deep understanding of N+1 queries, windowed queries, migration tradeoffs, and caching strategies. Probed well on technical details."
+    },
+    "ownership": {
+      "score": 10,
+      "note": "Consistently used 'I' statements, described driving decisions (e.g., migration, scope cut), and showed personal accountability for outcomes."
+    },
+    "impact_framing": {
+      "score": 9,
+      "note": "Quantified impact with specific metrics (latency reduction, user adoption, time saved) and linked actions to business/user value."
+    },
+    "concise": {
+      "score": 9,
+      "note": "Answers were appropriately detailed without being verbose. Stayed on topic and didn't ramble."
+    }
+  },
+  "strengths": [
+    "Excellent use of STAR structure across all answers, making it easy for the interviewer to follow the narrative.",
+    "Strong ownership language: consistently used 'I' to describe personal contributions and decision-making.",
+    "Quantified impact with specific metrics (e.g., 800ms to 200ms latency reduction, 180+ users, 300+ installs).",
+    "Demonstrated mature technical judgment, e.g., choosing PostgreSQL over Firebase and negotiating a scope cut to meet a deadline.",
+    "Clear communication of complex technical concepts (N+1 queries, windowed queries, migration tradeoffs) without oversimplifying.",
+    "Showed ability to learn and adapt, e.g., picking up k6 for load testing and Flutter for a solo project."
+  ],
+  "areas_for_improvement": [
+    "Could have elaborated more on the 'why' behind the PostgreSQL migration decision, specifically the tradeoffs with Firebase at scale.",
+    "Mentioned 'basic Docker' on CV but didn't discuss any containerization experience in the interview.",
+    "Could have discussed the team dynamics or collaboration aspects more in the capstone project, though ownership was clear."
+  ],
+  "gap_analysis": {
+    "summary": "The candidate's demonstrated skills closely match the role expectations for a FAANG new grad. The main gap is the lack of experience with large-scale distributed systems, which is common for a new grad. The candidate's projects show strong fundamentals and initiative, but not direct experience with the scale of systems at a FAANG company.",
+    "missing_skills": [
+      "Experience with large-scale distributed systems (e.g., microservices, event-driven architectures).",
+      "Experience with cloud infrastructure beyond basic deployment (e.g., Kubernetes, CI/CD pipelines).",
+      "Experience with performance optimization at a very large scale (e.g., millions of users)."
+    ],
+    "under_communicated_strengths": [
+      "Teaching and mentoring experience (TA role, onboarding interns) was mentioned but not highlighted as a key strength.",
+      "Hackathon win and community involvement (Women in Computing) were mentioned but not elaborated on for impact."
+    ],
+    "market_context": "FAANG companies value candidates who can demonstrate strong fundamentals, ownership, and impact, even in small-scale projects. Aria's profile aligns well with this, but she could strengthen her narrative by connecting her project decisions to the principles used in large-scale systems (e.g., the migration from Firebase to PostgreSQL as a lesson in choosing the right tool for the job)."
+  },
+  "project_suggestions": [
+    {
+      "title": "Distributed Task Queue",
+      "type": "side_project",
+      "why": "Addresses the gap in distributed systems experience. Building a simple task queue (e.g., with Redis and Node.js) would demonstrate understanding of message brokers, worker pools, and fault tolerance.",
+      "technologies": [
+        "Node.js",
+        "Redis",
+        "Docker",
+        "PostgreSQL"
+      ],
+      "outcome": "Can discuss tradeoffs between different queue implementations, handling failures, and scaling workers. This directly maps to common FAANG interview topics."
+    },
+    {
+      "title": "Open Source Contribution to a Database Driver or ORM",
+      "type": "open_source",
+      "why": "Demonstrates deep understanding of database internals and ability to work with large codebases. A contribution to a project like Prisma or pg-promise would be highly relevant.",
+      "technologies": [
+        "TypeScript",
+        "PostgreSQL",
+        "Node.js"
+      ],
+      "outcome": "Can discuss the process of understanding a complex codebase, making a change, and getting it reviewed. This shows initiative and ability to work at scale."
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Review the STAR examples below and practice rewriting any answers that could be more concise or impactful.",
+      "Prepare a 30-second 'elevator pitch' that summarizes your background and key achievements."
+    ],
+    "short_term": [
+      "Deepen understanding of distributed systems concepts (e.g., CAP theorem, consensus algorithms, event sourcing).",
+      "Build the distributed task queue project suggested above.",
+      "Practice system design interview questions for new grad level (e.g., design a URL shortener, design a chat system)."
+    ],
+    "medium_term": [
+      "Contribute to an open-source project to demonstrate ability to work with large codebases.",
+      "If possible, seek an internship or project that involves working with microservices or cloud infrastructure.",
+      "Prepare for behavioral questions that focus on teamwork and conflict resolution, as these are common in FAANG interviews."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "structure",
+      "observation": "You naturally use a STAR-like structure, which is excellent. However, in one answer, you started with the result before the context.",
+      "suggestion": "Always start with the Situation and Task to set the context before diving into Actions and Results. This ensures the interviewer understands the problem before the solution."
+    },
+    {
+      "category": "content",
+      "observation": "You provided great metrics, but could have connected them more explicitly to business value.",
+      "suggestion": "When stating a metric (e.g., 'cut latency from 800ms to 200ms'), explicitly state why that matters (e.g., 'This improved the user experience for our logistics partners, who were waiting for shipment data')."
+    },
+    {
+      "category": "positioning",
+      "observation": "You mentioned your TA role and hackathon win but didn't elaborate on the skills gained.",
+      "suggestion": "For non-engineering experiences, briefly connect them to engineering skills. For example: 'As a TA, I learned to break down complex concepts, which helps me communicate technical decisions clearly to stakeholders.'"
+    }
+  ],
+  "praise_worthy": [
+    "Excellent use of specific metrics to quantify impact (e.g., '800ms to 200ms', '180+ students', '300+ installs').",
+    "Demonstrated mature decision-making by choosing to migrate from Firebase to PostgreSQL and negotiating a scope cut to meet a deadline.",
+    "Clear ownership language throughout, showing personal accountability for project outcomes."
+  ],
+  "star_examples": [
+    {
+      "question": "Tell me about a time you improved the performance of a system.",
+      "original_answer": "At my internship, I noticed the shipment-history API was slow. I found it was using an N+1 query pattern. I replaced it with a single windowed query, which cut the p95 latency from 800ms to 200ms. I validated this with k6 load tests before rolling it out.",
+      "worth_rewriting": false,
+      "why": "This answer is already a strong STAR example. It's concise, specific, and includes metrics.",
+      "rewritten_star": "Situation: ...\nTask: ...\nAction: ...\nResult: ..."
+    },
+    {
+      "question": "Tell me about a time you had to make a technical decision with tradeoffs.",
+      "original_answer": "For my capstone project, we started with Firebase but the overlap queries got too complex. I prototyped both Firebase and PostgreSQL, presented the comparison to the team, and we migrated. I wrote the migration script with zero data loss.",
+      "worth_rewriting": true,
+      "why": "This answer is good but could be stronger by explicitly stating the tradeoffs considered (e.g., cost, query complexity, migration effort) and why PostgreSQL was the better choice.",
+      "rewritten_star": "Situation: Our capstone project, StudyMate, initially used Firebase for its ease of setup. As we scaled, our availability-overlap queries became too complex for document storage.\nTask: I needed to decide whether to optimize Firebase further or migrate to a relational database.\nAction: I prototyped both approaches: optimizing Firebase with denormalization vs. migrating to PostgreSQL with range types. I presented a comparison of query complexity, development time, and long-term scalability to the team. We chose PostgreSQL. I then designed the new schema, wrote a migration script that ran with zero data loss, and led the migration.\nResult: The new system handled 180+ users in the pilot with complex overlap queries running in milliseconds. The migration took 2 days and had no downtime."
+    }
+  ]
+}

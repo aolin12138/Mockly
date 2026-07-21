@@ -1,0 +1,235 @@
+{
+  "meta": {
+    "session_mode": "practice",
+    "confidence_level": "high",
+    "questions_asked": 27,
+    "domains_covered": []
+  },
+  "summary": {
+    "overall_score": 60,
+    "one_liner": "Marcus presents as a personable and motivated candidate with genuine enthusiasm for frontend work, but the interview reveals a significant gap between",
+    "recommendation": "neutral",
+    "readiness": "practicing"
+  },
+  "dimension_scores": [
+    {
+      "dimension": "clarity",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Answers are well-articulated and easy to follow, with good use of concrete examples.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "structure",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Answers follow a logical flow but sometimes lack a clear beginning-middle-end structure, occasionally trailing off.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "technical_depth",
+      "score": 4,
+      "evidence": [
+        {
+          "observation": "Struggled to provide technical depth on backend/infrastructure topics; answers were high-level and relied on teammates for complex details.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "ownership",
+      "score": 4,
+      "evidence": [
+        {
+          "observation": "Repeatedly deflected ownership of challenging technical work to backend teammates, especially on StockSense and CampusEats.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "pace",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Pace was natural and conversational, with appropriate pauses and no rushing.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "concise",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Answers were reasonably concise but occasionally included filler phrases or redundant explanations.",
+          "reasoning": ""
+        }
+      ]
+    }
+  ],
+  "answer_breakdown": [],
+  "patterns": [],
+  "highlights": null,
+  "cv_interview_alignment": {
+    "available": true,
+    "overall": "mixed",
+    "summary": "The biggest gap is between the CV's portrayal of a full-stack, cloud-native engineer with deep infrastructure expertise and the interview reality of a frontend-focused developer who defers on backend, DevOps, and ML topics. The market for FAANG grad roles expects candidates to own end-to-end features and demonstrate hands-on experience with the technologies on their CV.",
+    "claims": [
+      {
+        "claim": "Hands-on experience with Docker and Kubernetes beyond basic deployment",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Practical knowledge of Kafka for real-time data pipelines",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Experience deploying and serving ML models (TensorFlow) in production",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Ownership of backend or infrastructure components in a team project",
+        "status": "not_tested"
+      }
+    ]
+  },
+  "strengths": [
+    {
+      "description": "You gave a clear, specific example of handling cart state sync with out-of-stock items on CampusEats — this showed real problem-solving."
+    },
+    {
+      "description": "Your explanation of implementing virtual DOM diffing on top of D3.js to fix flickering demonstrated genuine frontend depth and creativity."
+    },
+    {
+      "description": "You asked a thoughtful question about the team's biggest technical challenge, showing interest in the role beyond surface level."
+    }
+  ],
+  "areas_for_improvement": [
+    {
+      "suggestion": "Hands-on experience with Docker and Kubernetes beyond basic deployment",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Practical knowledge of Kafka for real-time data pipelines",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Experience deploying and serving ML models (TensorFlow) in production",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Ownership of backend or infrastructure components in a team project",
+      "priority": "high"
+    }
+  ],
+  "next_steps": [
+    "Update CV to accurately reflect your hands-on experience — remove technologies you can't discuss in depth (e.g., Kafka, Kubernetes, TensorFlow) or add qualifiers like 'familiar with'.",
+    "Prepare a 2-minute 'ownership story' for each project on your CV, focusing on what YOU built, not what the team built.",
+    "Complete a Docker + Kubernetes tutorial and deploy a simple app to a cloud provider (e.g., AWS EKS or GKE). Document the process.",
+    "Build a small Kafka + Redis project (e.g., a real-time chat or stock ticker) and write a blog post explaining the architecture."
+  ],
+  "gap_analysis": {
+    "summary": "The biggest gap is between the CV's portrayal of a full-stack, cloud-native engineer with deep infrastructure expertise and the interview reality of a frontend-focused developer who defers on backend, DevOps, and ML topics. The market for FAANG grad roles expects candidates to own end-to-end features and demonstrate hands-on experience with the technologies on their CV.",
+    "missing_skills": [
+      "Hands-on experience with Docker and Kubernetes beyond basic deployment",
+      "Practical knowledge of Kafka for real-time data pipelines",
+      "Experience deploying and serving ML models (TensorFlow) in production",
+      "Ownership of backend or infrastructure components in a team project"
+    ],
+    "under_communicated_strengths": [
+      "Frontend performance optimization (virtual DOM diffing with D3.js)",
+      "User experience and usability focus",
+      "Ability to collaborate effectively with backend teams"
+    ],
+    "market_context": "FAANG and top-tier companies value candidates who can demonstrate ownership of complex, cross-functional features. For grad roles, they look for evidence of hands-on coding, problem-solving, and the ability to learn and apply new technologies independently. Marcus's CV suggests he has this, but the interview reveals a reliance on teammates for the hard parts."
+  },
+  "project_suggestions": [
+    {
+      "title": "Deploy a personal project end-to-end with Docker, Kubernetes, and CI/CD",
+      "type": "side_project",
+      "why": "Addresses the gap between claiming Kubernetes/Docker experience and actually owning the deployment. A simple web app deployed on a cloud provider with a full CI/CD pipeline will demonstrate hands-on infrastructure skills.",
+      "technologies": [
+        "Docker",
+        "Kubernetes",
+        "GitHub Actions",
+        "AWS/GCP",
+        "Terraform"
+      ],
+      "outcome": "In your next interview, you can say: 'I containerized my app with Docker, set up a Kubernetes cluster on AWS, and automated deployments with GitHub Actions. I handled service discovery, rolling updates, and monitoring.'"
+    },
+    {
+      "title": "Build a real-time data pipeline with Kafka and Redis",
+      "type": "side_project",
+      "why": "Directly addresses the gap in Kafka and Redis knowledge claimed on the CV. A simple streaming app (e.g., Twitter sentiment analysis) will force hands-on experience with Kafka producers/consumers and Redis data structures.",
+      "technologies": [
+        "Kafka",
+        "Redis",
+        "Python",
+        "Docker"
+      ],
+      "outcome": "You can say: 'I built a real-time data pipeline using Kafka for ingestion and Redis for in-memory aggregation. I managed consumer groups, handled partitioning, and used Redis Sorted Sets for real-time leaderboards.'"
+    },
+    {
+      "title": "Contribute to an open-source project's frontend performance",
+      "type": "open_source",
+      "why": "Leverages Marcus's existing frontend strength while building credibility in a visible, collaborative environment. Choose a project with complex data visualizations (e.g., Apache Superset, Grafana) to showcase D3.js and performance optimization skills.",
+      "technologies": [
+        "React",
+        "D3.js",
+        "Webpack",
+        "Performance profiling tools"
+      ],
+      "outcome": "You can say: 'I contributed performance optimizations to an open-source dashboard project, reducing re-render flicker by implementing virtual DOM diffing — a technique I first explored on a personal project.'"
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Update CV to accurately reflect your hands-on experience — remove technologies you can't discuss in depth (e.g., Kafka, Kubernetes, TensorFlow) or add qualifiers like 'familiar with'.",
+      "Prepare a 2-minute 'ownership story' for each project on your CV, focusing on what YOU built, not what the team built."
+    ],
+    "short_term": [
+      "Complete a Docker + Kubernetes tutorial and deploy a simple app to a cloud provider (e.g., AWS EKS or GKE). Document the process.",
+      "Build a small Kafka + Redis project (e.g., a real-time chat or stock ticker) and write a blog post explaining the architecture."
+    ],
+    "medium_term": [
+      "Contribute to an open-source project with a focus on frontend performance or data visualization. Aim for 2-3 meaningful PRs.",
+      "Take a course on ML model deployment (e.g., TensorFlow Serving, FastAPI) and deploy a model as a microservice."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "content",
+      "observation": "When asked about StockSense performance, you said 'I leaned heavily on my backend teammate' — this deflates your ownership and makes you seem like a passenger.",
+      "suggestion": "Reframe as: 'I collaborated closely with the backend engineer to design a batching system that aggregated data points, which I then consumed on the frontend to optimize rendering. Together we achieved X result.'"
+    },
+    {
+      "category": "positioning",
+      "observation": "Your CV claims 'architected a scalable microservices backend with Docker and Kubernetes' for CampusEats, but in the interview you only discussed frontend work.",
+      "suggestion": "Either remove that claim from your CV or prepare to discuss your specific role in the backend architecture. If you didn't build it, say 'I contributed to the frontend of a microservices-based system' — honesty builds trust."
+    },
+    {
+      "category": "structure",
+      "observation": "Your answers often start strong but then trail into generalities or defer to teammates.",
+      "suggestion": "Use the STAR method (Situation, Task, Action, Result) for every answer. End with a clear result or metric to cement your contribution."
+    },
+    {
+      "category": "delivery",
+      "observation": "You used phrases like 'I'll admit' and 'honestly' when discussing challenges — this can signal insecurity.",
+      "suggestion": "Replace with confident framing: 'That was a learning curve. I tackled it by...' — own the challenge without apologizing."
+    }
+  ],
+  "praise_worthy": [
+    "You gave a clear, specific example of handling cart state sync with out-of-stock items on CampusEats — this showed real problem-solving.",
+    "Your explanation of implementing virtual DOM diffing on top of D3.js to fix flickering demonstrated genuine frontend depth and creativity.",
+    "You asked a thoughtful question about the team's biggest technical challenge, showing interest in the role beyond surface level."
+  ],
+  "_caseId": "faang_grad_oversold",
+  "_persona": "oversold",
+  "_role": "Software Engineer (New Grad) @ faang (grad)"
+}

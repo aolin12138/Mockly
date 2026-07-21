@@ -1,0 +1,239 @@
+{
+  "meta": {
+    "session_mode": "practice",
+    "confidence_level": "high",
+    "questions_asked": 24,
+    "domains_covered": []
+  },
+  "summary": {
+    "overall_score": 50,
+    "one_liner": "Liam demonstrated solid foundational knowledge of distributed systems concepts but struggled to provide the depth and specificity expected at a senior",
+    "recommendation": "neutral",
+    "readiness": "practicing"
+  },
+  "dimension_scores": [
+    {
+      "dimension": "clarity",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Answers were generally clear but lacked precision when pressed on technical details, leading to vague statements like 'the team handled the implementation details.'",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "structure",
+      "score": 4,
+      "evidence": [
+        {
+          "observation": "Responses followed a pattern of high-level claim followed by deflection when probed, rather than using a structured narrative like STAR that demonstrates personal contribution.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "technical_depth",
+      "score": 4,
+      "evidence": [
+        {
+          "observation": "Failed to articulate specific mechanisms (e.g., how flow control credits worked, how reconciliation avoided bottlenecks, how 10x was measured) despite claiming architecture ownership.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "ownership",
+      "score": 4,
+      "evidence": [
+        {
+          "observation": "Repeatedly deferred to 'the team' for implementation details, undermining claims of tech-lead architecture ownership and suggesting a more hands-off role than stated.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "pace",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Pace was reasonable but rushed through technical details, likely to avoid being caught on specifics, which reduced confidence.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "concise",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Answers were appropriately concise but at the expense of necessary depth, leaving the interviewer unsatisfied.",
+          "reasoning": ""
+        }
+      ]
+    }
+  ],
+  "answer_breakdown": [],
+  "patterns": [],
+  "highlights": null,
+  "cv_interview_alignment": {
+    "available": true,
+    "overall": "mixed",
+    "summary": "The candidate's claims of architecture ownership and technical depth are not backed by specific, verifiable details. The biggest gap is between the 'tech lead' title and the demonstrated inability to explain design decisions, tradeoffs, and implementation mechanisms at the level expected for a senior FAANG distributed systems engineer.",
+    "claims": [
+      {
+        "claim": "Detailed knowledge of Kafka's internal architecture (partitioning, replication, consumer rebalancing)",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Hands-on experience with consistency models in CQRS/event sourcing (e.g., exactly-once semantics, idempotency)",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Experience with multi-region deployment challenges (data locality, conflict resolution, cross-region latency)",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Proficiency in benchmarking methodology (tooling, test design, statistical analysis of results)",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Understanding of flow control mechanisms (credit-based vs. sliding window tradeoffs at protocol level)",
+        "status": "not_tested"
+      }
+    ]
+  },
+  "strengths": [
+    {
+      "description": "You identified backpressure as a key challenge in the custom protocol — this shows awareness of a real distributed systems problem."
+    },
+    {
+      "description": "You asked a thoughtful question about observability and incident response culture at the end, demonstrating genuine interest in the role."
+    },
+    {
+      "description": "Your open-source project EventFlow with 2K GitHub stars is a strong differentiator — leverage it more in interviews by discussing specific design decisions."
+    }
+  ],
+  "areas_for_improvement": [
+    {
+      "suggestion": "Detailed knowledge of Kafka's internal architecture (partitioning, replication, consumer rebalancing)",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Hands-on experience with consistency models in CQRS/event sourcing (e.g., exactly-once semantics, idempotency)",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Experience with multi-region deployment challenges (data locality, conflict resolution, cross-region latency)",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Proficiency in benchmarking methodology (tooling, test design, statistical analysis of results)",
+      "priority": "high"
+    }
+  ],
+  "next_steps": [
+    "Prepare specific, verifiable answers for each CV claim: for the 10x throughput improvement, document the exact benchmark setup (Locust config, test duration, hardware specs, statistical significance).",
+    "Practice STAR-structured responses for each major project, ensuring every 'we' is backed by 'I' actions and decisions.",
+    "Contribute to an open-source distributed systems project (Kafka, gRPC, or similar) to demonstrate hands-on code ownership.",
+    "Write and publish a technical blog post detailing one specific design decision from EventFlow or DataFlow, including tradeoffs and failure modes."
+  ],
+  "gap_analysis": {
+    "summary": "The candidate's claims of architecture ownership and technical depth are not backed by specific, verifiable details. The biggest gap is between the 'tech lead' title and the demonstrated inability to explain design decisions, tradeoffs, and implementation mechanisms at the level expected for a senior FAANG distributed systems engineer.",
+    "missing_skills": [
+      "Detailed knowledge of Kafka's internal architecture (partitioning, replication, consumer rebalancing)",
+      "Hands-on experience with consistency models in CQRS/event sourcing (e.g., exactly-once semantics, idempotency)",
+      "Experience with multi-region deployment challenges (data locality, conflict resolution, cross-region latency)",
+      "Proficiency in benchmarking methodology (tooling, test design, statistical analysis of results)",
+      "Understanding of flow control mechanisms (credit-based vs. sliding window tradeoffs at protocol level)"
+    ],
+    "under_communicated_strengths": [
+      "Experience leading a team through a major architectural migration (REST to event-driven)",
+      "Familiarity with observability stack (OpenTelemetry, Grafana Mimir, Tempo, Loki)",
+      "Open-source project (EventFlow) with community traction (2K GitHub stars)"
+    ],
+    "market_context": "FAANG senior roles expect candidates to demonstrate deep technical ownership — not just participation in architecture decisions but the ability to articulate tradeoffs, failure modes, and implementation details. The market currently values hands-on experience with Kafka at scale, multi-region deployments, and rigorous incident response processes. Liam's CV suggests this experience, but the interview failed to validate it."
+  },
+  "project_suggestions": [
+    {
+      "title": "Contribute to Apache Kafka's community (e.g., fix a bug or add a feature related to flow control or consumer rebalancing)",
+      "type": "open_source",
+      "why": "Demonstrates deep understanding of Kafka internals, which is a critical gap. Shows ability to work with a large codebase and engage with a distributed systems community.",
+      "technologies": [
+        "Apache Kafka",
+        "Java/Scala",
+        "Protocol Buffers"
+      ],
+      "outcome": "Can say: 'I contributed a patch to Kafka's consumer rebalancing logic that reduced rebalance time by X% under high partition churn.'"
+    },
+    {
+      "title": "Build a multi-region event sourcing demo with conflict resolution",
+      "type": "side_project",
+      "why": "Addresses the gap in multi-region consistency and CQRS depth. Forces hands-on work with CRDTs or last-writer-wins strategies.",
+      "technologies": [
+        "Kafka",
+        "Cassandra",
+        "gRPC",
+        "Terraform",
+        "AWS/GCP multi-region"
+      ],
+      "outcome": "Can say: 'I designed and implemented a multi-region event sourcing system with CRDT-based conflict resolution, handling X region failures without data loss.'"
+    },
+    {
+      "title": "Write a detailed technical blog post on 'Lessons from Building a Custom Binary Protocol for Event Streaming'",
+      "type": "portfolio_piece",
+      "why": "Forces articulation of tradeoffs, benchmarking methodology, and flow control design — turning vague claims into concrete, shareable knowledge.",
+      "technologies": [
+        "Go/Rust",
+        "TCP",
+        "Protocol Buffers",
+        "Locust"
+      ],
+      "outcome": "Can say: 'I published a deep-dive on our custom protocol design, including benchmark results and flow control tradeoffs, which was featured on HighScalability.'"
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Prepare specific, verifiable answers for each CV claim: for the 10x throughput improvement, document the exact benchmark setup (Locust config, test duration, hardware specs, statistical significance).",
+      "Practice STAR-structured responses for each major project, ensuring every 'we' is backed by 'I' actions and decisions."
+    ],
+    "short_term": [
+      "Contribute to an open-source distributed systems project (Kafka, gRPC, or similar) to demonstrate hands-on code ownership.",
+      "Write and publish a technical blog post detailing one specific design decision from EventFlow or DataFlow, including tradeoffs and failure modes."
+    ],
+    "medium_term": [
+      "Build a multi-region event sourcing demo with conflict resolution and document the architecture in a public GitHub repo.",
+      "Obtain a relevant certification (e.g., Confluent Certified Developer for Apache Kafka) to validate Kafka expertise."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "structure",
+      "observation": "When asked about the 10x throughput improvement, you gave a high-level answer ('load tests, same hardware') without a structured narrative. The interviewer had to push twice for specifics.",
+      "suggestion": "Use the STAR framework: Situation (old REST system bottleneck), Task (improve throughput), Action (designed binary protocol, set up Locust benchmarks with X parameters, analyzed results), Result (10x improvement, measured as Y requests/second under Z load)."
+    },
+    {
+      "category": "content",
+      "observation": "When asked about flow control design, you said 'the team handled the implementation details' — this undermines your claim of architecture ownership.",
+      "suggestion": "Even if you didn't write every line, explain your specific contribution: 'I proposed the credit-based approach after analyzing processing time variance, then worked with the team to implement it. The key tradeoff was X vs Y, and we validated it with Z tests.'"
+    },
+    {
+      "category": "positioning",
+      "observation": "You mentioned the reconciliation job but didn't explain how it avoided becoming a bottleneck — a critical detail for a senior role.",
+      "suggestion": "Anticipate follow-up questions on failure modes. For reconciliation, explain: 'We used incremental checks with a watermark, ran it as a separate consumer group with low max.poll.records, and monitored lag to ensure it never fell behind.'"
+    },
+    {
+      "category": "delivery",
+      "observation": "Your answers were concise but lacked confidence when probed — you rushed through technical details.",
+      "suggestion": "Pause before answering to gather your thoughts. If you don't know a detail, say 'I'd need to check the exact numbers, but the approach was...' rather than deflecting. Confidence comes from preparation, not speed."
+    }
+  ],
+  "praise_worthy": [
+    "You identified backpressure as a key challenge in the custom protocol — this shows awareness of a real distributed systems problem.",
+    "You asked a thoughtful question about observability and incident response culture at the end, demonstrating genuine interest in the role.",
+    "Your open-source project EventFlow with 2K GitHub stars is a strong differentiator — leverage it more in interviews by discussing specific design decisions."
+  ],
+  "_caseId": "faang_senior_dist_oversold",
+  "_persona": "oversold",
+  "_role": "Senior Software Engineer (Distributed Systems) @ faang (senior)"
+}

@@ -1,0 +1,242 @@
+{
+  "meta": {
+    "session_mode": "practice",
+    "confidence_level": "high",
+    "questions_asked": 25,
+    "domains_covered": []
+  },
+  "summary": {
+    "overall_score": 77,
+    "one_liner": "Tessa delivered a strong, technically grounded interview that clearly demonstrated deep expertise in agent architecture, safety, and evaluation. She e",
+    "recommendation": "neutral",
+    "readiness": "practicing"
+  },
+  "dimension_scores": [
+    {
+      "dimension": "clarity",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Explained technical concepts like ReAct vs plan-and-execute and confidence calibration with clear, jargon-aware language.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "structure",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Answers followed a logical flow: context, action, result, with specific metrics. Could improve by front-loading the key takeaway.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "technical_depth",
+      "score": 10,
+      "evidence": [
+        {
+          "observation": "Demonstrated exceptional depth in agent orchestration, planning strategies, tool-calling safety, and evaluation methodology.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "ownership",
+      "score": 8,
+      "evidence": [
+        {
+          "observation": "Clearly owned the design and calibration of the supervisor-worker router and planning module. Could more explicitly state personal vs team contributions.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "pace",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Occasionally paused or restarted sentences, but overall maintained a steady, thoughtful pace.",
+          "reasoning": ""
+        }
+      ]
+    },
+    {
+      "dimension": "concise",
+      "score": 6,
+      "evidence": [
+        {
+          "observation": "Answers were detailed but sometimes included more context than needed for the question. Could tighten responses by leading with the conclusion.",
+          "reasoning": ""
+        }
+      ]
+    }
+  ],
+  "answer_breakdown": [],
+  "patterns": [],
+  "highlights": null,
+  "cv_interview_alignment": {
+    "available": true,
+    "overall": "mixed",
+    "summary": "Tessa demonstrated strong technical depth in agent architecture, but the interview lacked discussion of multi-agent topology tradeoffs (e.g., supervisor vs. swarm), tool-calling safety beyond validation, and evaluation methodology beyond basic metrics. The market for mid-level AI agent developers at FAANG also values experience with scaling, reliability engineering, and cross-team collaboration, which were only lightly touched upon.",
+    "claims": [
+      {
+        "claim": "Multi-agent topology tradeoffs (supervisor vs. swarm vs. hybrid)",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Tool-calling safety: adversarial testing, rate limiting, and cost management",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Evaluation methodology: trajectory-level analysis, synthetic data generation, and A/B testing",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Scaling agent systems: latency optimization, cost modeling, and fault tolerance",
+        "status": "not_tested"
+      },
+      {
+        "claim": "Cross-team collaboration and stakeholder management for architectural changes",
+        "status": "not_tested"
+      }
+    ]
+  },
+  "strengths": [
+    {
+      "description": "Strong use of concrete metrics (e.g., '18% to 4% stuck-in-loop rate', '95% accuracy with 15% escalation') to demonstrate impact."
+    },
+    {
+      "description": "Clear articulation of technical tradeoffs (e.g., ReAct vs plan-and-execute, confidence threshold calibration) with data-driven decision-making."
+    },
+    {
+      "description": "Proactive question about the team's current infrastructure and reliability challenges, showing genuine interest and strategic thinking."
+    }
+  ],
+  "areas_for_improvement": [
+    {
+      "suggestion": "Multi-agent topology tradeoffs (supervisor vs. swarm vs. hybrid)",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Tool-calling safety: adversarial testing, rate limiting, and cost management",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Evaluation methodology: trajectory-level analysis, synthetic data generation, and A/B testing",
+      "priority": "high"
+    },
+    {
+      "suggestion": "Scaling agent systems: latency optimization, cost modeling, and fault tolerance",
+      "priority": "high"
+    }
+  ],
+  "next_steps": [
+    "Review the interview transcript and identify moments where you could have led with the key takeaway instead of providing context first.",
+    "Prepare a 30-second 'elevator pitch' that summarizes your expertise in agent architecture, safety, and evaluation.",
+    "Write a blog post or create a talk on the tradeoffs between supervisor and swarm topologies, using your Finch experience as a case study.",
+    "Contribute to an open-source agent framework (e.g., LangGraph, AutoGPT) to demonstrate community engagement and thought leadership."
+  ],
+  "gap_analysis": {
+    "summary": "Tessa demonstrated strong technical depth in agent architecture, but the interview lacked discussion of multi-agent topology tradeoffs (e.g., supervisor vs. swarm), tool-calling safety beyond validation, and evaluation methodology beyond basic metrics. The market for mid-level AI agent developers at FAANG also values experience with scaling, reliability engineering, and cross-team collaboration, which were only lightly touched upon.",
+    "missing_skills": [
+      "Multi-agent topology tradeoffs (supervisor vs. swarm vs. hybrid)",
+      "Tool-calling safety: adversarial testing, rate limiting, and cost management",
+      "Evaluation methodology: trajectory-level analysis, synthetic data generation, and A/B testing",
+      "Scaling agent systems: latency optimization, cost modeling, and fault tolerance",
+      "Cross-team collaboration and stakeholder management for architectural changes"
+    ],
+    "under_communicated_strengths": [
+      "Open-source contributions (TriageBot, EvalTwin) demonstrate thought leadership and community engagement",
+      "Experience with evaluation harnesses and synthetic data generation is highly relevant for FAANG's focus on reliability",
+      "Talk at NZ AI Meetup shows ability to communicate complex ideas to technical audiences"
+    ],
+    "market_context": "The current market for AI agent developers at FAANG values candidates who can design scalable, reliable, and safe agent systems. Key differentiators include experience with multi-agent architectures, production-grade evaluation frameworks, and the ability to communicate technical decisions to non-technical stakeholders. Tessa's hands-on experience with LangGraph, structured outputs, and confidence gating is highly relevant, but she could strengthen her positioning by explicitly discussing tradeoffs and limitations of her approaches."
+  },
+  "project_suggestions": [
+    {
+      "title": "Multi-Agent Swarm Benchmark",
+      "type": "open_source",
+      "why": "Addresses the gap in multi-agent topology tradeoffs. Building a benchmark that compares supervisor, swarm, and hybrid topologies on metrics like latency, cost, and accuracy would demonstrate deep understanding of architectural decisions.",
+      "technologies": [
+        "LangGraph",
+        "LangChain",
+        "OpenAI",
+        "DeepSeek",
+        "Weights & Biases"
+      ],
+      "outcome": "Can discuss tradeoffs between supervisor and swarm patterns with concrete data, and show ability to design and evaluate multi-agent systems at scale."
+    },
+    {
+      "title": "Adversarial Tool-Calling Safety Suite",
+      "type": "open_source",
+      "why": "Extends the tool-calling safety work at Finch by creating a public suite of adversarial test cases for tool-calling agents. This would demonstrate expertise in safety beyond basic validation.",
+      "technologies": [
+        "Python",
+        "LangGraph",
+        "OpenAI",
+        "DeepSeek",
+        "Pydantic"
+      ],
+      "outcome": "Can discuss adversarial testing, rate limiting, and cost management for tool-calling agents, and show a portfolio piece that addresses a critical industry need."
+    },
+    {
+      "title": "Agent Evaluation Framework with Trajectory Analysis",
+      "type": "portfolio_piece",
+      "why": "Builds on the evaluation harness at Finch by creating a general-purpose framework that includes trajectory-level analysis, synthetic data generation, and A/B testing. This would demonstrate deep evaluation methodology.",
+      "technologies": [
+        "Python",
+        "LangGraph",
+        "DeepSeek",
+        "Weights & Biases",
+        "GitHub Actions"
+      ],
+      "outcome": "Can discuss evaluation methodology in depth, including trajectory-level analysis, synthetic data generation, and A/B testing, which are highly valued at FAANG."
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Review the interview transcript and identify moments where you could have led with the key takeaway instead of providing context first.",
+      "Prepare a 30-second 'elevator pitch' that summarizes your expertise in agent architecture, safety, and evaluation."
+    ],
+    "short_term": [
+      "Write a blog post or create a talk on the tradeoffs between supervisor and swarm topologies, using your Finch experience as a case study.",
+      "Contribute to an open-source agent framework (e.g., LangGraph, AutoGPT) to demonstrate community engagement and thought leadership."
+    ],
+    "medium_term": [
+      "Build and release the Multi-Agent Swarm Benchmark as an open-source project, including a detailed comparison of topologies.",
+      "Develop a course or workshop on production-grade agent evaluation, covering trajectory analysis, synthetic data, and A/B testing."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "structure",
+      "observation": "When asked about the planning module, you provided a clear example (cancel subscription before refund) but could have led with the key metric (18% to 4% reduction) to immediately grab attention.",
+      "suggestion": "Start your answers with the most impactful result or metric, then provide context. For example: 'We reduced stuck-in-loop rate from 18% to 4% by switching from ReAct to plan-and-execute. The key insight was...'"
+    },
+    {
+      "category": "content",
+      "observation": "You mentioned considering alternatives (hierarchical agent, reflection-based ReAct) but didn't discuss the tradeoffs in detail. The interviewer asked about alternatives, and you provided a brief comparison.",
+      "suggestion": "When discussing alternatives, explicitly state the tradeoffs (e.g., 'Hierarchical was too slow for real-time use, reflection-based was less accurate, so plan-and-execute was the best balance of speed and accuracy'). This demonstrates deeper decision-making."
+    },
+    {
+      "category": "positioning",
+      "observation": "You mentioned stakeholders (VP of Engineering, support team lead) but didn't elaborate on how you communicated the decision or addressed their concerns beyond latency.",
+      "suggestion": "When discussing stakeholder buy-in, describe your communication strategy: 'I created a one-pager comparing the three approaches on latency, accuracy, and cost, then walked them through the data. This helped them see the tradeoffs clearly.'"
+    },
+    {
+      "category": "delivery",
+      "observation": "Your pace was generally good, but you occasionally paused or restarted sentences (e.g., 'The thing that pulled me in is the gap...'). This can make you seem less confident.",
+      "suggestion": "Practice answering common behavioral questions with a timer. Focus on speaking in complete sentences without filler words. Record yourself and listen for hesitations."
+    }
+  ],
+  "praise_worthy": [
+    "Strong use of concrete metrics (e.g., '18% to 4% stuck-in-loop rate', '95% accuracy with 15% escalation') to demonstrate impact.",
+    "Clear articulation of technical tradeoffs (e.g., ReAct vs plan-and-execute, confidence threshold calibration) with data-driven decision-making.",
+    "Proactive question about the team's current infrastructure and reliability challenges, showing genuine interest and strategic thinking."
+  ],
+  "_caseId": "faang_mid_agentdev_aligned",
+  "_persona": "aligned",
+  "_role": "AI Agent Developer @ faang (mid)"
+}

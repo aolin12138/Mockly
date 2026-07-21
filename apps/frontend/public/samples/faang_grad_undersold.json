@@ -1,0 +1,133 @@
+{
+  "overall_assessment": "Rohan had a solid behavioral interview. He demonstrated strong initiative by identifying and automating a manual process in his IT support role, and showed good technical depth when discussing his capstone project's database design and testing. However, his answers were often reactive and lacked a structured narrative (like STAR), which made it harder for him to fully own and quantify his impact. He has the raw material of a strong candidate but needs to package his experiences more compellingly.",
+  "overall_score": 6,
+  "insufficient_data": false,
+  "dimension_scores": {
+    "clarity": {
+      "score": 7,
+      "note": "Answers were generally clear and easy to follow, though occasionally he could have been more direct."
+    },
+    "structure": {
+      "score": 5,
+      "note": "Answers lacked a consistent narrative structure (e.g., STAR). He often jumped into the action without setting context or quantifying the result."
+    },
+    "technical_depth": {
+      "score": 7,
+      "note": "Demonstrated good depth on database modeling (recurring events, row-level locking) and testing strategies. Could have elaborated more on the automation scripts."
+    },
+    "ownership": {
+      "score": 6,
+      "note": "Showed ownership of his work (e.g., 'I wrote some Python scripts', 'I added a timeout'), but didn't always clarify his specific role within the team."
+    },
+    "impact_framing": {
+      "score": 4,
+      "note": "This is the weakest area. He mentioned a 'three-hour reduction' but didn't frame the impact clearly (e.g., time saved per week, cost savings). The capstone project's impact was not quantified at all."
+    },
+    "concise": {
+      "score": 7,
+      "note": "Answers were appropriately concise for the time available. He didn't ramble or go off-topic."
+    }
+  },
+  "strengths": [
+    "Proactive problem-solving: Identified and automated a manual laptop provisioning process, reducing setup time from 3 hours.",
+    "Solid technical foundation: Demonstrated understanding of database design (recurring events, row-level locking) and testing (integration tests, edge cases).",
+    "Team-oriented: Mentioned consulting with teammates and the client on design decisions.",
+    "Good closing questions: Asked thoughtful questions about the role and team challenges."
+  ],
+  "areas_for_improvement": [
+    "Impact framing: Needs to consistently quantify the results of his actions (e.g., 'saved X hours per week', 'reduced error rate by Y%').",
+    "Narrative structure: Answers would be more compelling with a clear STAR structure (Situation, Task, Action, Result).",
+    "Ownership clarity: Should more explicitly state his individual contribution within team projects.",
+    "Proactive depth: Could have elaborated more on the technical challenges of the automation scripts (e.g., driver detection logic)."
+  ],
+  "gap_analysis": {
+    "summary": "The biggest gap is between Rohan's demonstrated technical ability and his ability to frame that ability in terms of business impact. A FAANG interview will expect him to not only solve problems but to articulate the value of those solutions clearly and quantitatively.",
+    "missing_skills": [
+      "Quantified impact communication",
+      "Structured storytelling (STAR)",
+      "Explicit leadership/initiative framing"
+    ],
+    "under_communicated_strengths": [
+      "Initiative (automation project)",
+      "Technical depth (database design, testing)",
+      "Collaboration (team decision-making)"
+    ],
+    "market_context": "FAANG interviews place a premium on candidates who can demonstrate high ownership and measurable impact. Rohan's CV is thin, but his interview reveals stronger experience. He needs to bridge the gap between 'what he did' and 'why it mattered' to compete effectively."
+  },
+  "project_suggestions": [
+    {
+      "title": "Open-source contribution to a Django project",
+      "type": "open_source",
+      "why": "This would demonstrate initiative in a public forum, provide a clear narrative for a behavioral question, and allow him to showcase his Django skills in a non-academic context.",
+      "technologies": [
+        "Python",
+        "Django",
+        "Git",
+        "GitHub"
+      ],
+      "outcome": "He can say: 'I contributed a feature to fix a recurring bug in Django's admin interface, which was merged and is now used by thousands of developers.'"
+    },
+    {
+      "title": "Personal blog: documenting the automation project",
+      "type": "side_project",
+      "why": "Writing a detailed technical blog post about his laptop provisioning scripts would force him to structure his thoughts, quantify the impact, and demonstrate communication skills.",
+      "technologies": [
+        "Python",
+        "Markdown",
+        "Static Site Generator (e.g., Hugo, Jekyll)"
+      ],
+      "outcome": "He can say: 'I wrote a blog post about my automation project that got 500 views and sparked a discussion on Reddit about IT automation.'"
+    }
+  ],
+  "roadmap": {
+    "immediate": [
+      "Rewrite the laptop provisioning story using the STAR format (Situation, Task, Action, Result).",
+      "Quantify the impact of the capstone project (e.g., 'handled X concurrent users', 'reduced query time by Y%')."
+    ],
+    "short_term": [
+      "Practice answering 5 common behavioral questions using a structured format (STAR).",
+      "Identify and contribute to one open-source Django project.",
+      "Write a blog post about the automation project, focusing on the problem, solution, and impact."
+    ],
+    "medium_term": [
+      "Build a small side project (e.g., a personal finance tracker) to demonstrate full-stack skills and initiative.",
+      "Prepare for technical questions on Django, PostgreSQL, and system design by studying common patterns."
+    ]
+  },
+  "interview_tips": [
+    {
+      "category": "structure",
+      "observation": "Answers lacked a clear beginning, middle, and end. He often started with the action without setting the context.",
+      "suggestion": "Use the STAR method for every behavioral answer. Start with the Situation (context), then Task (your goal), Action (what you did), and Result (the outcome, quantified if possible)."
+    },
+    {
+      "category": "content",
+      "observation": "He mentioned a 'three-hour reduction' but didn't explain the broader impact (e.g., how many new hires per month, total hours saved).",
+      "suggestion": "Always ask yourself: 'So what?' Why does this matter to the business? Frame your results in terms of time saved, cost reduced, or quality improved."
+    },
+    {
+      "category": "positioning",
+      "observation": "When discussing the capstone project, he said 'we' without clarifying his specific role.",
+      "suggestion": "Explicitly state your individual contribution: 'I was responsible for designing the database schema and writing the integration tests. I also led the discussion on the recurrence rule trade-off.'"
+    },
+    {
+      "category": "delivery",
+      "observation": "He answered questions directly but sometimes paused or seemed to search for the right words.",
+      "suggestion": "Practice your stories out loud until they feel natural. Use a recording to check for clarity and pacing."
+    }
+  ],
+  "praise_worthy": [
+    "Identified a real problem (3-hour laptop setup) and proactively built a solution (Python scripts) — this shows strong initiative.",
+    "Demonstrated solid technical depth on database design (recurring events, row-level locking) and testing (edge cases, time zones).",
+    "Asked thoughtful closing questions about the role and team challenges, showing genuine interest."
+  ],
+  "star_examples": [
+    {
+      "question": "What's been the most interesting problem you've had to solve in that job?",
+      "original_answer": "Yeah, it's been a good mix of routine stuff and unexpected challenges. I'd say the most interesting was when I realized our laptop provisioning process was taking nearly three hours per new hire — so I wrote some Python scripts to automate the whole setup.",
+      "worth_rewriting": true,
+      "why": "The answer is a good start but lacks context (Situation), a clear Task, and a quantified Result. The STAR rewrite will make it more compelling.",
+      "rewritten_star": "Situation: At Harbourview Accounting, the IT team manually set up each new laptop, a process that took about 3 hours per hire. With 5-10 new hires per month, this was a significant time sink.\nTask: I wanted to reduce this setup time and eliminate human error, so I decided to automate the provisioning process.\nAction: I wrote a set of Python scripts that automated software installation, configuration, and user account setup. The biggest challenge was handling different hardware models, so I added detection logic to adapt the scripts automatically. I tested the scripts on 3 different laptop models before rolling them out.\nResult: The automation reduced setup time from 3 hours to under 30 minutes per laptop, saving the team an estimated 20+ hours per month. It also eliminated manual errors, and the scripts are still in use today."
+    }
+  ]
+}
