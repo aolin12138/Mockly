@@ -1,45 +1,64 @@
 ---
 title: "Mockly — Test Suite"
 type: concept
-updated: 2026-07-06
+updated: 2026-07-21
 sources:
   - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/test-suite/
   - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/test-suite/live/
   - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/test-suite/feedback/
+  - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/test-suite/behavioural/
+  - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/test-suite/behavioural/feedback-eval/
+  - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/test-suite/smoke/
+  - E:/OneDrive - The University of Auckland/Desktop/Mockly/Mockly/test-suite/QA-AUDIT.md
   - Pi session 2026-06-23
-  - Pi session 2026-07-06 (feedback eval harness)
-tags: [mockly, test-suite, elevenlabs, agent-testing]
+  - Pi session 2026-07-06 (technical feedback eval harness)
+  - Pi session 2026-07-21 (behavioural harnesses + smoke + quality criteria)
+tags: [mockly, test-suite, elevenlabs, agent-testing, ci-cd]
 ---
 
 # Mockly — Test Suite
 
-Comprehensive scenario-based test harness for the Mockly ElevenLabs
-technical interview agent.
+Comprehensive multi-harness test infrastructure for Mockly. Five harnesses
+across three tiers: **smoke** (pipeline integrity), **eval** (output quality),
+**Playwright** (UI state transitions — planned).
 
-## Overview
+## Test hierarchy
 
-- **Agent under test**: `agent_2201ktp0n7mwek6avkphs4x6394m`
-- **Branch**: `agtbrch_1301ktp0n97rfn4tkjz5626383hm` (main)
-- **Test type**: Live WebSocket text-only conversations
-- **Sim-user LLM**: DeepSeek `deepseek-chat` (V3), temperature 0.3
-- **Judge LLM**: DeepSeek `deepseek-v4-pro` with `think-high`, temperature 0.0
+```
+Tier 1 — Smoke (pipeline)          Tier 2 — Eval (output quality)       Tier 3 — UI (state)
+─────────────────────────          ──────────────────────────────       ──────────────────
+test-suite/smoke/                  test-suite/live/                     (Playwright — planned)
+  ↑ fastest, run on every push       test-suite/feedback/
+                                    test-suite/behavioural/
+                                    test-suite/behavioural/feedback-eval/
+                                      ↑ medium, run on PR / nightly
+```
 
 ## Architecture
 
 ```
 test-suite/
-├── live/                  # Live WebSocket harness
-│   ├── runner.mjs         # Orchestrator — loads scenarios, runs concurrently
-│   ├── run-one.mjs        # Single-scenario runner
-│   ├── ws-client.mjs      # ElevenLabs WS client (text-only, no audio)
-│   ├── sim-user.mjs       # DeepSeek-simulated candidate
-│   ├── judge.mjs          # DeepSeek evaluation against criteria
-│   ├── verify.mjs         # Preflight checks
-│   └── null-audio.mjs     # Null audio interface (text-only)
-├── scenarios/             # 27 scenario JSON files
-├── lib/                   # Shared: config, checkpoint, report, loader
-├── runner.mjs             # Original simulation runner (limited — no MCP tools)
-└── live-report.html       # Latest test run output
+├── live/                           # Live WebSocket harness (technical)
+│   ├── runner.mjs                  # Orchestrator
+│   ├── ws-client.mjs               # ElevenLabs WS client
+│   ├── sim-user.mjs                # DeepSeek-simulated candidate
+│   └── judge.mjs                   # Per-criterion evaluation
+├── feedback/                       # Technical feedback eval harness
+│   ├── runner.mjs                  # Pure-function: POST → checks
+│   ├── lib/schema-checks.mjs       # 22 tier-1 field validations
+│   └── lib/fact-checks.mjs         # Per-fixture ground-truth
+├── behavioural/                    # Behavioural interview eval harness
+│   ├── runner.mjs                  # Two-stage: prompt builder + live WS
+│   ├── research.mjs                # Tavily research pack generator
+│   ├── feedback-eval/              # Behavioural feedback eval harness
+│   │   ├── runner.mjs              # Pure-function + 23 quality criteria
+│   │   └── fixtures/               # 9 real + 3 synthetic cases
+│   └── scripts/                    # Workflow patches, aggregate reports
+├── smoke/                          # CI/CD pipeline smoke tests
+│   └── smoke-test.mjs              # 6 workflows, SSE wait, retry logic
+├── lib/                            # Shared: config, api-client, checkpoint
+├── QA-AUDIT.md                     # Surface audit methodology
+└── SKILL.md                        # CI/CD pattern reference
 ```
 
 ## Scenarios
@@ -193,9 +212,201 @@ node report.mjs                       # generate HTML report + pages
 | 8 | Fabricated quotes without transcript + `"None."` coaching | Hallucinated attribution | Banned both in system prompt |
 | 9 | No `primary_focus` field — 6 equal dimension cards, no single takeaway | Coaching lost in report clutter | Added imperative headline to prompt + Parse fallback |
 
+## Behavioural interview eval harness (two-stage)
+
+Tests the behavioural interview pipeline end-to-end: prompt generation
+AND conversational behaviour. 9 test cases across 3 persona types × 4
+role configurations (FAANG grad/mid/senior + quant junior + startup AI).
+
+### Architecture
+
+```
+Fixture (case JSON: persona + CV + stage1_checks + stage2_criteria)
+  → Stage 1: Generate interview prompt (n8n or direct LLM)
+    → Deterministic checks: identity, CV grounding, fabrication, style rules
+  → Stage 2: Install prompt on test agent → Live WS conversation
+    → Judge: flow arc, drill-down, measurement probe, gap visibility
+      → Per-case JSON results + aggregate HTML report
+```
+
+### Key components
+
+- `test-suite/behavioural/runner.mjs` — two-stage orchestrator with `--direct`, `--research`, `--stage1-only` flags
+- `test-suite/behavioural/research.mjs` — Tavily research pack generator; caches to `fixtures/research/<case-id>.json`
+- `test-suite/behavioural/review-report.mjs` — standalone review of run results
+- `test-suite/behavioural/scripts/aggregate-report.mjs` — scans all runs
+
+### Test agent
+
+`agent_7401kxffy3hmf2drqtptznj9j9cq` — text-only, `turn_timeout: 60`, research-enriched prompts via prompt builder v2.
+
+### Persona types
+
+| Persona | Ground truth | What it tests |
+|---|---|---|
+| **aligned** | knowledge ≡ CV | Good candidate gets probed to depth |
+| **undersold** | knowledge > CV (`gems[]`) | Interviewer surfaces hidden strengths |
+| **oversold** | CV > knowledge (`hollow_claims[]`) | Two-level probing cracks inflated claims |
+
+### Research enrichment
+
+Prompt builder v2 accepts `background_knowledge` (3K chars of domain context)
+injected above behavioural instructions. Keyword-driven Tavily queries produce
+research packs cached per case. Research is REFERENCE MATERIAL, not a question
+bank — the interviewer listens first, draws on knowledge for follow-ups.
+
+### Oversold escalation (3-level crack)
+
+The sim-user cracks under probing, not by describing knowledge gaps, but by
+escalating through scripted weak answers: vague → deflect to team → admit
+lack of involvement. Two-level measurement probing: "how was that measured?"
+→ "what specific tool?"
+
+### Baseline (2026-07-21)
+
+9/9 cases run across multiple batches. Key metrics:
+- Oversold `asks_how_measured`: passes (3-level escalation visible)
+- `gap_visible`: passes for startup-senior-ai-oversold
+- `gap_visible`: still fails for faang-senior-dist-oversold (sim-user too competent, needs script tightening)
+
+### Running
+
+```bash
+cd test-suite/behavioural
+node runner.mjs --case faang-grad-aligned --direct --research    # single case
+node runner.mjs --all --direct --research                        # all 9 cases
+node research.mjs --all --force                                  # regenerate research packs
+```
+
+## Behavioural feedback eval harness (pure function)
+
+Tests the coaching feedback generator — a pure-function DeepSeek call that
+consumes behavioural interview transcripts and produces 13-field coaching
+reports. 12 test cases (9 real + 3 synthetic edge cases).
+
+### Architecture
+
+```
+Fixture (transcript + CV + persona)
+  → DeepSeek API call with canonical prompt
+    → Schema checks: 13 required fields, types, ranges
+    → STAR quality checks: original_answer ≥50c, why specific,
+      all 4 elements present, rewrite > original
+    → Quality checks: 23 criteria across 10 sections
+    → Cross-field consistency: oversold tech ≤5, aligned avg > oversold avg
+      → Per-case JSON + HTML report + feedback pages
+```
+
+### Key files
+
+- `test-suite/behavioural/feedback-eval/runner.mjs` — orchestrator with `--all`, `--fixture`, `--no-research` flags
+- `apps/backend/prompts/behavioural_feedback.md` — **canonical prompt** (single source of truth, read by both backend and eval)
+- `apps/backend/lib/feedbackResearch.mjs` — web research enrichment (shared by backend and eval)
+- `test-suite/behavioural/feedback-eval/fixtures/` — 3 synthetic edge cases (short, empty, one-word transcripts)
+
+### 23 quality criteria
+
+Checks across 10 sections verify substance, not just schema presence:
+
+| Section | Checks | Examples |
+|---|---|---|
+| `overall_assessment` | ≥100c, specific nouns, no filler flattery | `hasSpecificNoun()` regex + `hasFillerFlattery()` patterns |
+| `dimension_scores` | note≥20c, evidence anchors, spread≥2 | 6 dims × 2 checks + cross-dim spread |
+| `strengths` | per-item: ≥30c + specific noun | Catches generic "improve communication" |
+| `areas_for_improvement` | per-item: ≥30c + specific noun | Same as strengths |
+| `gap_analysis` | summary≥100c, CV refs, missing_skills short labels | Advisory on label length |
+| `project_suggestions` | title≥20c, technologies real, why≥30c | Tech allowlist (89 entries, advisory) |
+| `roadmap` | per-item: ≥15c | 3 tiers (immediate/short_term/medium_term) |
+| `interview_tips` | obs≥40c, sug≥40c, category valid | 4 valid categories |
+| `praise_worthy` | per-item: ≥30c + specific noun | No quantity floors |
+| Cross-field | oversold tech_depth≤5, aligned avg > oversold avg | Per-run ordering check |
+
+### Helpfulness proxy
+
+The `hasSpecificNoun()` heuristic detects substance vs. fluff:
+- Proper nouns (capitalised mid-sentence)
+- Numbers/percentages/metrics
+- Known tech keywords (89-entry allowlist)
+
+A section with zero specific nouns is generic fluff regardless of length.
+
+### Baseline (2026-07-21)
+
+- **0/1118 check failures** — 100% pass across 12 cases
+- Cross-field ordering: aligned avg 7.4 > oversold avg 4.0 ✅
+- Research enrichment: 52% gold resources (GitHub/YouTube/Coursera), 0% junk
+- 9 feedback pages generated at `feedback-eval/feedback-pages/<case-id>.html`
+
+### Running
+
+```bash
+cd test-suite/behavioural/feedback-eval
+node runner.mjs --all                           # all 12 cases
+node runner.mjs --fixture faang-grad-aligned   # single case
+node runner.mjs --all --no-research             # skip Tavily enrichment
+```
+
+## Smoke test harness (pipeline)
+
+Fast CI/CD pipeline tests that verify the end-to-end plumbing works.
+6 workflows, runs on every push.
+
+### Architecture
+
+```
+test-suite/smoke/
+├── smoke-test.mjs      # Orchestrator
+└── README.md           # Workflow documentation
+```
+
+### Workflows
+
+| Workflow | What it tests | Duration |
+|---|---|---|
+| `full` | Register → create session → 6 turns → generate feedback → verify | ~3 min |
+| `reopen` | Resume existing session → verify transcript preserved | ~1 min |
+| `incomplete` | 2-turn session → verify insufficient_data flag → hidden from dashboard | ~1 min |
+| `dashboard` | Fetch user interviews → verify only completed sessions returned | ~10s |
+| `e2e` | Full lifecycle: login → create → interview → feedback → verify | ~3 min |
+| `realistic` | Uses behavioural eval fixture for persona-aware 6-turn interview | ~3 min |
+
+### Key features
+
+- Retry logic: retries `generate-feedback` 3×5s when transcript not ready
+- SSE wait: after 202, waits for `feedback-ready` event with 180s timeout + poll fallback
+- `MIN_TURNS=4` configurable threshold for completed sessions
+- Test user: `smoketest@mockly.com` / `SecurePass123!`
+
+### Running
+
+```bash
+cd test-suite/smoke
+node smoke-test.mjs --workflow full     # single workflow
+node smoke-test.mjs --workflow e2e      # full lifecycle
+```
+
+## QA Audit methodology
+
+`test-suite/QA-AUDIT.md` documents a surface audit approach for QA engineering
+thinking — systematically scanning the test infrastructure from the outside
+to find blind spots, stale assumptions, and untested surfaces.
+
+### Audit pillars
+
+1. **Harness coverage**: every pipeline → at least one test harness
+2. **Persona completeness**: aligned + undersold + oversold per surface
+3. **Edge case coverage**: empty inputs, minimal data, overflow, error states
+4. **Drift detection**: canonical prompt vs eval prompt vs backend prompt
+5. **Quantitative verification**: counts, dates, versions matched against filesystem
+
+Applied during this session to discover the canonical prompt drift (eval and
+backend used different prompt strings) and the empty transcript edge case.
+
 ## See also
 
 - [overview](overview.md)
 - [status](status.md)
 - [decisions](decisions.md)
 - [lessons](lessons.md)
+- [eval-harness-engineering](eval-harness-engineering.md)
+- [coaching-feedback](coaching-feedback.md)

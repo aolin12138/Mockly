@@ -1,10 +1,12 @@
 ---
 title: "Mockly — Lessons"
 type: concept
-updated: 2026-06-23
+updated: 2026-07-21
 sources:
   - Pi session 2026-06-23
-tags: [mockly, lessons, debugging, elevenlabs]
+  - Pi session 2026-07-07 (behavioural eval + n8n restore)
+  - Pi session 2026-07-21 (coaching feedback + quality criteria)
+tags: [mockly, lessons, debugging, elevenlabs, evals]
 ---
 
 # Mockly — Lessons
@@ -89,9 +91,97 @@ was in a "stay silent" state (Phase 2 monitoring). The fix: any of
 three signals ends the wait early — `skip_turn` tool call, empty text
 chunks, or 3s of silence after at least one chunk.
 
+## Oversold sim-users crack under scripted escalation, not knowledge gaps
+
+**Don't describe what the sim-user doesn't know.** An LLM sim-user given
+"cannot explain X" will improvise a plausible explanation. The fix is a
+three-level escalation scripted in exact wording:
+
+```
+Level 1 (first probe): VAGUE. "Standard evaluation pipeline." (no specifics)
+Level 2 (second probe): DEFLECT to team. "Infra team handled the benchmarks."
+Level 3 (third probe): ADMIT lack of involvement. "I wasn't directly involved."
+```
+
+This pattern (see `eval-harness-engineering.md §2`) was discovered after 3
+rounds of oversold candidates passing tests they should have failed.
+
+## ElevenLabs PATCH is not deep-merge — tools can only be set via UI
+
+The `conversation_config` PATCH API replaces the entire config object.
+A partial payload clears unmentioned fields — including tool configuration.
+This means `skip_turn` cannot be enabled via API for the test agent; it
+requires manual UI configuration. GET → merge → PUT the full config is
+the workaround when API control is needed.
+
+## Thought text leaks into transcript in text-only mode
+
+DeepSeek reasoning tokens (injected when the interviewer "thinks") can
+leak into text output. Patterns like "The candidate has described their
+work..." appear mid-conversation. Fix: strip thinking markers before
+transcript storage AND before the judge views it.
+
+## $ref-based JSON replacement fails on unknown node IDs
+
+When swapping OpenAI → DeepSeek in n8n workflows, `$ref` references to
+`$node["<uuid>"].json` break if the model node ID changes. n8n's JSON
+import format uses UUIDs for node references — replacing one node changes
+all dependent $ref paths. The workaround: export the full workflow JSON,
+find-and-replace the *model name* to change node type (DeepSeek supports
+OpenAI-compatible endpoints with the same default node structure), rather
+than replacing node definitions.
+
+## Canonical prompt drift — the silent degradation
+
+When two subsystems (backend and eval harness) read a prompt from different
+sources (hardcoded string vs file), they **will** diverge. Within days, one
+gets updated while the other doesn't. The fix: single file, read by both.
+`apps/backend/prompts/behavioural_feedback.md` — edit once, both update.
+
+## Eval harness first, sync to production after
+
+Never change a production prompt without running the eval harness. The
+canonical prompt drift was discovered precisely because the eval harness
+caught a discrepancy (outdated "insufficient_data < 4 exchanges" rule
+in the harness that the backend no longer had). Code gates are
+non-negotiable; prompt rules drift silently.
+
+## n8n database recovery — encryption keys change between containers
+
+When `docker compose down` destroys the n8n container but the volume
+persists, the encryption key stored in the container is lost. The next
+`docker compose up` generates a new key, making all existing workflow
+credentials undecryptable. Fix: export all workflows as JSON before
+recreating containers; re-import after. The `.n8n/encryptionKey` file
+in the volume is the only recovery path — back it up separately.
+
+## Dashboard routing must use database, not heuristic inference
+
+`isTechnicalFeedback()` inferred interview type from feedback structure
+(dimensions array → technical, object → behavioural). But a behavioural
+session with DeepSeek emitting array-format dimensions was incorrectly
+routed to the technical results page. Database `interviewType` set at
+session creation is the single source of truth.
+
+## `let` shadowing in async callbacks — the invisible data loss
+
+```js
+let transcript = [];
+// ...
+conversation.on('message', (msg) => {
+  let transcript = [];  // ← SHADOWS outer variable
+  transcript.push({ role: 'user', text: msg.text });
+});
+// outer transcript is still []
+```
+
+Never shadow mutable accumulators in async callbacks. Use distinct names
+or `result.push()` on a single reference.
+
 ## See also
 
 - [overview](overview.md)
 - [decisions](decisions.md)
 - [test-suite](test-suite.md)
 - [status](status.md)
+- [eval-harness-engineering](eval-harness-engineering.md)

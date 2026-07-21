@@ -24,6 +24,10 @@ import PatternsList from '../results/PatternsList';
 import StrengthsImprovements from '../results/StrengthsImprovements';
 import CvAlignmentSection from '../results/CvAlignmentSection';
 import NextStepsList from '../results/NextStepsList';
+import GapAnalysis from '../results/GapAnalysis';
+import ProjectSuggestions from '../results/ProjectSuggestions';
+import Roadmap from '../results/Roadmap';
+import InterviewTips from '../results/InterviewTips';
 import { authFetch, ensureAuthenticated } from '../../lib/auth';
 
 void motion;
@@ -97,6 +101,12 @@ function transformFeedbackData(feedbackData) {
     strengths: feedback.strengths || [],
     areasForImprovement: feedback.areas_for_improvement || [],
     nextSteps: feedback.next_steps || [],
+    // Coaching feedback fields (new schema)
+    gapAnalysis: feedback.gap_analysis || null,
+    projectSuggestions: feedback.project_suggestions || [],
+    roadmap: feedback.roadmap || null,
+    interviewTips: feedback.interview_tips || [],
+    praiseWorthy: feedback.praise_worthy || [],
     transcript: Array.isArray(transcript)
       ? transcript.map((msg, index) => ({
           id: index + 1,
@@ -134,6 +144,19 @@ function buildSections(data) {
   }
   if (data.nextSteps.length > 0) {
     sections.push({ id: 'next-steps', label: 'Next Steps' });
+  }
+  // Coaching sections (new schema)
+  if (data.gapAnalysis) {
+    sections.push({ id: 'gap-analysis', label: 'Gap Analysis' });
+  }
+  if (data.projectSuggestions.length > 0) {
+    sections.push({ id: 'projects', label: 'Projects' });
+  }
+  if (data.roadmap) {
+    sections.push({ id: 'roadmap', label: 'Roadmap' });
+  }
+  if (data.interviewTips.length > 0) {
+    sections.push({ id: 'tips', label: 'Interview Tips' });
   }
   if (data.transcript?.length > 0) {
     sections.push({ id: 'replay', label: 'Replay' });
@@ -397,6 +420,12 @@ export default function ResultsPage() {
     strengths,
     areasForImprovement,
     nextSteps,
+    // Coaching fields (new schema)
+    gapAnalysis,
+    projectSuggestions,
+    roadmap,
+    interviewTips,
+    praiseWorthy,
     transcript,
     audio,
   } = feedbackData;
@@ -480,6 +509,36 @@ export default function ResultsPage() {
           {nextSteps.length > 0 && (
             <section id="next-steps">
               <NextStepsList nextSteps={nextSteps} />
+            </section>
+          )}
+
+          {/* ── Coaching Sections (new schema) ── */}
+
+          {/* Gap Analysis */}
+          {gapAnalysis && (
+            <section id="gap-analysis">
+              <GapAnalysis gapAnalysis={gapAnalysis} />
+            </section>
+          )}
+
+          {/* Project Suggestions */}
+          {projectSuggestions.length > 0 && (
+            <section id="projects">
+              <ProjectSuggestions projects={projectSuggestions} />
+            </section>
+          )}
+
+          {/* Roadmap */}
+          {roadmap && (
+            <section id="roadmap">
+              <Roadmap roadmap={roadmap} />
+            </section>
+          )}
+
+          {/* Interview Tips */}
+          {interviewTips.length > 0 && (
+            <section id="tips">
+              <InterviewTips tips={interviewTips} />
             </section>
           )}
 
