@@ -1,0 +1,111 @@
+{
+  "id": "faang_senior_dist_aligned",
+  "tags": ["faang", "senior", "distributed-systems", "aligned"],
+  "description": "Senior distributed-systems engineer with deep, defensible experience. Tests: domain-specific probing (CAP, consistency, partition tolerance), architecture tradeoff questions, technical depth in follow-ups.",
+
+  "config": {
+    "company_preset": "faang",
+    "seniority": "senior",
+    "seniority_label": "senior",
+    "role_title": "Senior Software Engineer (Distributed Systems)",
+    "role_context": "Large-scale distributed storage and messaging infrastructure; 200+ production clusters at petabyte scale",
+    "stage": "behavioral",
+    "mode": "behavioral",
+    "duration_min": 30,
+    "session_mode": "practice"
+  },
+
+  "cv_file": "../cvs/faang-senior-distributed-aligned.md",
+
+  "persona": {
+    "name": "Priya Kapoor",
+    "type": "aligned",
+    "summary": "Deep, specific, and can go arbitrarily technical on every line of her CV. Answers in precise systems-engineering language. Knows her numbers and tradeoffs cold.",
+    "project_knowledge": [
+      {
+        "cv_item": "Shard rebalancing protocol (gossip + vector clocks + two-phase handoff)",
+        "actual_depth": "deep",
+        "can_explain": [
+          "Why gossip over a coordinator: avoids single point of failure, scales with cluster size, handles partitions gracefully",
+          "Why vector clocks instead of timestamps: clock skew across regions; vector clocks capture causal relationships needed for conflict resolution",
+          "The two-phase handoff: prepare (drain writes on source) → commit (activate on target); what happens if either phase fails",
+          "Tradeoff: gossip adds eventual-consistency delay (~200ms) vs the old coordinator's strong consistency (but minutes of downtime during failure)"
+        ]
+      },
+      {
+        "cv_item": "Kafka→Redpanda migration",
+        "actual_depth": "deep",
+        "can_explain": [
+          "The specific Kafka problem: consumer-group rebalancing causing 3-5s pauses when partition count > 1000 due to Kafka's global group-coordinator model",
+          "Why Redpanda's thread-per-core model fixes this: each core owns a fixed set of partitions, no global locks, rebalancing is ~50ms",
+          "What she benchmarked: throughput at 1K/5K/10K partitions, p99 latency during rebalance, CPU utilisation",
+          "What she rejected: upgrading Kafka + Strimzi operator (wouldn't solve the fundamental architecture issue); going fully async (would lose ordering guarantees needed by the metadata bus)"
+        ]
+      },
+      {
+        "cv_item": "Transaction idempotency service (Redis state machine)",
+        "actual_depth": "deep",
+        "can_explain": [
+          "The 3-state design: PENDING (retry arrives before original completes), COMMITTED, ABORTED",
+          "Why not just deduplicate by key: a retry could land while the original is still processing; needed state machine to handle that",
+          "The TTL reaper: keys must expire eventually to bound memory; chose TTL based on max transaction processing time + network jitter + safety margin",
+          "Edge case: what if the original succeeds but the ABORT/COMMIT response is lost → the retried PENDING query needs to poll the actual transaction status"
+        ]
+      }
+    ],
+    "gems": [],
+    "hollow_claims": [],
+    "answering_style": "Gives the one-line answer, then if the interviewer asks 'how' or 'why' or 'what was the tradeoff', she goes deep — names the specific technology, explains the decision, contrasts alternatives, and gives measured outcomes. Uses precise systems language. Can distinguish 'we decided X' vs 'I decided X' without being prompted."
+  },
+
+  "stage1_checks": {
+    "identity_must_contain_any": ["behavioral interviewer", "behavioural interviewer", "interviewer for"],
+    "identity_must_not_contain": ["output a single JSON", "schema-compliant JSON", "score each dimension", "evaluation report"],
+    "must_reference_entities": ["OrbitDB", "Redpanda", "shard", "idempotency"],
+    "min_entity_references": 3,
+    "must_not_mention": ["React", "Flutter", "Spring Boot"],
+    "style_rules_must_contain_any": [
+      ["one question at a time", "never ask two questions"],
+      ["do not praise", "no praise", "neutral acknowledgement"]
+    ]
+  },
+
+  "stage2_criteria": [
+    {
+      "id": "flow_arc_order",
+      "name": "Smooth interview arc",
+      "conversation_goal_prompt": "The interview follows arc: greeting → get-to-know → CV deep-dive → technical probing → wrap."
+    },
+    {
+      "id": "domain_specific_questions",
+      "name": "Questions probe distributed-systems tradeoffs",
+      "conversation_goal_prompt": "At least 2 questions explicitly probe a technical architecture or design decision (CAP/consistency tradeoffs, partition handling, migration rationale, state-machine design) using the specific technologies from the CV. PASS if 2+ questions name a specific technology AND ask a 'why' or 'how' or 'tradeoff' question about it. FAIL if questions are generic behavioral ('tell me about a challenge') without technical specificity."
+    },
+    {
+      "id": "names_technologies",
+      "name": "Questions reference CV technologies by name",
+      "conversation_goal_prompt": "The interviewer names specific technologies from the candidate's CV when asking follow-ups (e.g., 'you mentioned vector clocks — how did you handle...' rather than 'how did you handle consistency?'). PASS if at least 3 questions name a specific technology (Kafka, Redpanda, Redis, Postgres, gRPC, vector clocks, gossip protocol, etc.)."
+    },
+    {
+      "id": "tradeoff_probing",
+      "name": "Probes tradeoffs and rejected alternatives",
+      "conversation_goal_prompt": "At least one question asks what the candidate REJECTED or what the TRADEOFF was: 'what did you consider instead?', 'what was the downside of that approach?', 'why not X?' PASS if at least one such question appears."
+    },
+    {
+      "id": "one_question_per_turn",
+      "name": "One question per turn",
+      "conversation_goal_prompt": "The interviewer asks exactly one question per turn."
+    },
+    {
+      "id": "no_praise_no_coaching",
+      "name": "No praise, no coaching",
+      "conversation_goal_prompt": "Zero praise/coaching utterances."
+    }
+  ],
+
+  "sim_user": {
+    "first_message_from_agent": true,
+    "end_instruction": "Participate for the full arc. When interviewer wraps up, ask one question about the team then call [END_CALL].",
+    "new_turns_limit": 26
+  }
+}

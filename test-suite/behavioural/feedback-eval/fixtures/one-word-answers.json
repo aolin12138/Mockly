@@ -1,0 +1,27 @@
+{
+  "id": "one_word_answers_test",
+  "personaType": "synthetic",
+  "role": "Software Engineer (Senior) - FAANG",
+  "description": "One-word answers — not STAR-worthy, low insight",
+  "cvText": "Senior engineer with 7 years of experience. Led migration from monolith to microservices. Reduced deployment time from 2 hours to 5 minutes. Mentored 4 junior engineers.",
+  "transcript": [
+    {"who": "INTERVIEWER", "text": "Tell me about the monolith migration you led."},
+    {"who": "CANDIDATE", "text": "Yes."},
+    {"who": "INTERVIEWER", "text": "Can you describe the approach you took?"},
+    {"who": "CANDIDATE", "text": "We split things up."},
+    {"who": "INTERVIEWER", "text": "What were the biggest challenges?"},
+    {"who": "CANDIDATE", "text": "Just normal stuff."},
+    {"who": "INTERVIEWER", "text": "How did you measure the deployment time improvement?"},
+    {"who": "CANDIDATE", "text": "We timed it."},
+    {"who": "INTERVIEWER", "text": "What about team mentoring?"},
+    {"who": "CANDIDATE", "text": "They learned."},
+    {"who": "INTERVIEWER", "text": "Any specific architecture patterns you chose?"},
+    {"who": "CANDIDATE", "text": "Standard ones."}
+  ],
+  "expected": {
+    "insufficient_data": true,
+    "max_dimension_score": 2,
+    "star_examples_worth_rewriting_all_false": true,
+    "low_overall_quality": true
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "id": "faang_senior_dist_oversold",
+  "tags": [
+    "faang",
+    "senior",
+    "distributed-systems",
+    "oversold"
+  ],
+  "description": "Candidate who claims tech-lead architecture ownership but can't back the boldest technical claims. Tests: does the interviewer drill into specific mechanisms, numbers, and design decisions behind the inflated claims?",
+  "config": {
+    "company_preset": "faang",
+    "seniority": "senior",
+    "seniority_label": "senior",
+    "role_title": "Senior Software Engineer (Distributed Systems)",
+    "role_context": "Large-scale distributed storage and messaging infrastructure",
+    "stage": "behavioral",
+    "mode": "behavioral",
+    "duration_min": 30,
+    "session_mode": "practice"
+  },
+  "cv_file": "../cvs/faang-senior-distributed-oversold.md",
+  "persona": {
+    "name": "Liam Foster",
+    "type": "oversold",
+    "summary": "Confident and articulate at the architecture-diagram level. His boldest claims (CQRS, custom binary protocol, 10x throughput, from-scratch event bus) collapse under drill-down to specific mechanisms. He manages a team but inflates his personal technical contribution.",
+    "project_knowledge": [
+      {
+        "cv_item": "Led the team (he actually managed 12 engineers \u2014 people management, not architecture)",
+        "actual_depth": "moderate",
+        "can_explain": [
+          "People management, sprint planning, hiring, performance reviews. He DID this part genuinely."
+        ]
+      },
+      {
+        "cv_item": "Observability stack (OpenTelemetry, Grafana) \u2014 he selected it and the team implemented it",
+        "actual_depth": "moderate",
+        "can_explain": [
+          "Why OpenTelemetry over vendor-specific agents, basic Grafana dashboards. The actual deployment was done by an SRE."
+        ]
+      }
+    ],
+    "gems": [],
+    "hollow_claims": [
+      {
+        "id": "custom_binary_protocol",
+        "cv_claim": "Replaced REST endpoints with a custom binary protocol over persistent TCP connections, achieving 10x throughput",
+        "reality": "He suggested switching to gRPC (an existing protocol, not custom). The 10x figure is his estimate without measurement. A teammate did the actual gRPC migration.",
+        "under_probing": "When asked about the protocol design: \"we went with a compact binary format over persistent TCP connections \u2014 standard approach for high-throughput systems.\" Cannot describe the framing, serialization format, or how backpressure was handled. When pressed on the 10x number: \"that was from our load tests comparing REST vs the binary protocol.\" Cannot describe the test setup or what metric was measured. If cornered: \"I designed the high-level architecture \u2014 the team handled the protocol implementation.\"",
+        "deflection_style": "Emphasises the 'custom' and 'from scratch' framing. When pressed on protocol details, pivots to 'the important thing was the business impact'."
+      },
+      {
+        "id": "cqrs_event_sourcing",
+        "cv_claim": "Designed a horizontally-scalable microservices architecture using event sourcing and CQRS patterns",
+        "reality": "They use Kafka with separate read/write services \u2014 which is CQRS-ish. No real event sourcing (the events are notifications, not the source of truth). The architecture was adopted from a vendor reference implementation.",
+        "under_probing": "Cannot explain how they handle eventual consistency between the read and write models, what the read-model projection looks like, or how they replay events. Uses CQRS/event-sourcing as buzzwords.",
+        "deflection_style": "Name-drops CQRS, event sourcing, and 'event-driven architecture' in the same sentence; pivots to team leadership ('I architected this with my team of 12')."
+      },
+      {
+        "id": "custom_event_bus",
+        "cv_claim": "Designed and built EventFlow \u2014 a distributed event bus from scratch, 2K GitHub stars",
+        "reality": "EventFlow wraps NATS with some configuration sugar. 2K stars came from a single viral tweet about 'building Kafka from scratch' (misleading). No novel distributed-systems contribution.",
+        "under_probing": "Cannot describe the consensus mechanism, message durability guarantees, or how it differs from NATS/Kafka/RabbitMQ. Calls it 'from scratch' to claim distributed-systems authority.",
+        "deflection_style": "Points to the GitHub stars as proof of quality; emphasises community adoption over technical details."
+      }
+    ],
+    "answering_style": "Opens confidently with technical vocabulary. First answers sound authoritative but are light on specifics.\n\nESCALATION UNDER PROBING:\n- First follow-up: gives a specific-sounding but hollow answer. E.g. \"we used event sourcing with CQRS \u2014 standard approach for this kind of system.\"\n- Second follow-up (\"how exactly did that work?\"): starts deflecting. \"The team implemented the details, I set the architecture and reviewed PRs.\"\n- Third follow-up: cracks visibly. \"Look, I wasn't writing every line of code \u2014 my role was more technical leadership and design reviews.\"\n\nNever says \"I don't know\" but will admit to delegating when cornered."
+  },
+  "stage1_checks": {
+    "identity_must_contain_any": [
+      "behavioral interviewer",
+      "behavioural interviewer",
+      "interviewer for"
+    ],
+    "identity_must_not_contain": [
+      "output a single JSON",
+      "schema-compliant JSON",
+      "score each dimension",
+      "evaluation report"
+    ],
+    "must_reference_entities": [
+      "DataFlow",
+      "event sourcing",
+      "EventFlow",
+      "10x"
+    ],
+    "min_entity_references": 3,
+    "must_not_mention": [
+      "Redpanda",
+      "vector clocks",
+      "Jepsen"
+    ],
+    "style_rules_must_contain_any": [
+      [
+        "one question at a time",
+        "never ask two questions"
+      ],
+      [
+        "do not praise",
+        "no praise",
+        "neutral acknowledgement"
+      ]
+    ]
+  },
+  "stage2_criteria": [
+    {
+      "id": "flow_arc_order",
+      "name": "Smooth interview arc",
+      "conversation_goal_prompt": "The interview follows arc: greeting \u2192 get-to-know \u2192 CV deep-dive \u2192 technical probing \u2192 wrap."
+    },
+    {
+      "id": "drills_into_architecture_claims",
+      "name": "Drills into the boldest architecture claims",
+      "conversation_goal_prompt": "The CV claims: custom binary protocol (10x throughput), CQRS/event-sourcing architecture, from-scratch distributed event bus. PASS if the interviewer asks specific mechanism-level follow-ups on AT LEAST 2 of these (what serialization format? how do you handle eventual consistency? what consensus mechanism?). FAIL if claims are accepted at surface level."
+    },
+    {
+      "id": "asks_for_numbers",
+      "name": "Demands numbers for quantified claims",
+      "conversation_goal_prompt": "The CV contains quantified claims (10x throughput, 45min MTR, 45% recall, 99.99% SLA). PASS if the interviewer asks 'how was that measured?' or 'what was the before/after?' for at least 1 quantified claim. FAIL if all numbers are accepted without measurement questions."
+    },
+    {
+      "id": "gap_visible",
+      "name": "Gap becomes visible in transcript",
+      "conversation_goal_prompt": "By the end, at least one exchange shows a specific question about a bold claim receiving a vague or non-technical answer. This makes the gap observable to a reader."
+    },
+    {
+      "id": "one_question_per_turn",
+      "name": "One question per turn",
+      "conversation_goal_prompt": "Exactly one question per turn."
+    },
+    {
+      "id": "no_praise_no_coaching",
+      "name": "No praise, no coaching",
+      "conversation_goal_prompt": "Zero praise/coaching."
+    }
+  ],
+  "sim_user": {
+    "first_message_from_agent": true,
+    "end_instruction": "Participate for the full arc. When wrap-up comes, ask a question then call [END_CALL].",
+    "new_turns_limit": 26
+  }
+}

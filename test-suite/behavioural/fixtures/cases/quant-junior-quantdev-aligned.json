@@ -1,0 +1,110 @@
+{
+  "id": "quant_junior_quantdev_aligned",
+  "tags": ["quant", "junior", "quant-dev", "aligned"],
+  "description": "Junior quant dev with genuine quantitative finance depth. Tests: does the interviewer probe quant-specific topics (backtesting methodology, survivorship bias, options pricing model assumptions, RL agent design choices) rather than generic behavioral questions?",
+
+  "config": {
+    "company_preset": "quant",
+    "seniority": "junior",
+    "seniority_label": "junior",
+    "role_title": "Quantitative Developer (Junior)",
+    "role_context": "Systematic trading desk; intraday equity and options strategies; requires rigorous statistical thinking and market microstructure knowledge",
+    "stage": "behavioral",
+    "mode": "behavioral",
+    "duration_min": 30,
+    "session_mode": "practice"
+  },
+
+  "cv_file": "../cvs/quant-junior-quantdev-aligned.md",
+
+  "persona": {
+    "name": "Nina Zhou",
+    "type": "aligned",
+    "summary": "Genuinely rigorous junior quant. Knows her methodologies, can discuss the math behind her models, and is honest about what she knows vs what she's learning. Strong on backtesting discipline, options pricing, and RL.",
+    "project_knowledge": [
+      {
+        "cv_item": "Backtesting engine for intraday mean-reversion strategies",
+        "actual_depth": "deep",
+        "can_explain": [
+          "Why ClickHouse for tick data: columnar storage, fast time-range queries, handles 2.5B+ ticks efficiently",
+          "The fill-probability model: calibrated from historical market-impact data using logistic regression on order-book features",
+          "The survivorship bias discovery: NZX 50 constituents change; delisted underperformers were missing from backtest; correcting this cut Sharpe from 2.1 to 0.8",
+          "How she verified: cross-referenced NZX daily bulletins with the backtest's historical universe"
+        ]
+      },
+      {
+        "cv_item": "Options pricing dashboard (BS + SVI volatility surface)",
+        "actual_depth": "deep",
+        "can_explain": [
+          "Why SVI parameterisation: fewer parameters than a full vol surface interpolation, fits well for equities, arbitrage-free by construction if calibrated correctly",
+          "Calibration frequency: every 5 minutes — enough for intraday monitoring, not for HFT",
+          "What she'd improve: add stochastic vol (Heston) for longer-dated options where the vol-of-vol matters"
+        ]
+      },
+      {
+        "cv_item": "PairTradingRL — PPO agent for pair trading",
+        "actual_depth": "deep",
+        "can_explain": [
+          "Why PPO over DQN/DDPG: continuous action space (position sizing), PPO handles this naturally; DQN requires discretisation which loses fine-grained sizing",
+          "Reward shaping: penalised drawdowns and transaction costs to discourage the agent from over-trading or taking concentrated bets",
+          "Key result: 14% Sharpe improvement over baseline; but honest about limitations — tested on only 2 years of data, no live trading, no regime-shift testing",
+          "Why a custom Gym environment: needed to simulate bid-ask spreads and volume-based slippage specific to NZX microstructure"
+        ]
+      }
+    ],
+    "gems": [],
+    "hollow_claims": [],
+    "answering_style": "Technical but not arrogant. Names the specific methodology, explains the rationale, and volunteers limitations unprompted. Answers questions like an engineer, not a textbook — 'we tried X but it broke because of Y, so we switched to Z.' Honest about what's simulated vs live."
+  },
+
+  "stage1_checks": {
+    "identity_must_contain_any": ["behavioral interviewer", "behavioural interviewer", "interviewer for"],
+    "identity_must_not_contain": ["output a single JSON", "schema-compliant JSON", "score each dimension", "evaluation report"],
+    "must_reference_entities": ["backtesting", "options", "Sharpe", "ClickHouse", "PPO"],
+    "min_entity_references": 3,
+    "must_not_mention": ["React", "Docker Swarm", "RAG", "LangChain"],
+    "style_rules_must_contain_any": [
+      ["one question at a time", "never ask two questions"],
+      ["do not praise", "no praise", "neutral acknowledgement"]
+    ]
+  },
+
+  "stage2_criteria": [
+    {
+      "id": "flow_arc_order",
+      "name": "Smooth interview arc",
+      "conversation_goal_prompt": "The interview follows arc: greeting → get-to-know → CV deep-dive → technical probing → wrap."
+    },
+    {
+      "id": "domain_specific_quant_probing",
+      "name": "Probes quant methodology",
+      "conversation_goal_prompt": "At least 2 questions probe quant-specific topics: backtesting biases (survivorship, look-ahead, data-snooping), options pricing model assumptions, RL agent design choices, market microstructure considerations, or risk management. PASS if 2+ questions demonstrate quant domain awareness (not generic 'tell me about a challenge')."
+    },
+    {
+      "id": "asks_about_limitations",
+      "name": "Probes model limitations and assumptions",
+      "conversation_goal_prompt": "The candidate's work involves financial models with known assumptions (Black-Scholes, PPO, cointegration tests). PASS if the interviewer asks at least one question about model LIMITATIONS, ASSUMPTIONS, or what the candidate would improve."
+    },
+    {
+      "id": "names_technologies",
+      "name": "References CV technologies by name",
+      "conversation_goal_prompt": "At least 3 questions name specific technologies from the CV (ClickHouse, PPO, SVI, Black-Scholes, cointegration, Gym, etc.). PASS if 3+."
+    },
+    {
+      "id": "one_question_per_turn",
+      "name": "One question per turn",
+      "conversation_goal_prompt": "Exactly one question per turn."
+    },
+    {
+      "id": "no_praise_no_coaching",
+      "name": "No praise, no coaching",
+      "conversation_goal_prompt": "Zero praise/coaching. Neutral professional tone."
+    }
+  ],
+
+  "sim_user": {
+    "first_message_from_agent": true,
+    "end_instruction": "Participate fully. When wrap-up comes, ask about the firm's current research direction, then call [END_CALL].",
+    "new_turns_limit": 26
+  }
+}

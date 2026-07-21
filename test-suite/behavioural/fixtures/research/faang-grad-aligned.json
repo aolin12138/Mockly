@@ -1,0 +1,49 @@
+{
+  "case_id": "faang-grad-aligned",
+  "generated_at": "2026-07-10T08:49:22.655Z",
+  "projects": [
+    {
+      "name": "StudyMate",
+      "description": "Capstone project: a study-group matching web app where I owned the backend and deployment, designed the matching schema and availability-overlap algorithm, and led a mid-project migration from Firebase to PostgreSQL.",
+      "tech_stack": [
+        "React",
+        "Node/Express",
+        "PostgreSQL",
+        "Fly.io"
+      ],
+      "search_queries": [
+        "PostgreSQL availability overlap algorithm design tradeoffs",
+        "Firebase to PostgreSQL migration challenges production"
+      ],
+      "sources": [
+        "https://pganalyze.com/blog/5mins-distributed-postgres",
+        "https://www.reddit.com/r/SQL/comments/1jvmrry/postgresql_schema_for_storing_user_availability",
+        "https://stackoverflow.com/questions/69826962/postgresql-optimization-of-query-for-select-with-overlap",
+        "https://www.10h11.com/en/blog/de-firebase-a-postgresql-comment-nous-avons-reduit-nos-couts-cloud-de-80",
+        "https://medium.com/@jm_rodrigues/firebase-database-migration-to-postgresql-not-a-tutorial-6a894c5ddc59",
+        "https://www.linkedin.com/posts/raghav-watts_database-postgres-firebase-activity-7417533989114019840-k6dg"
+      ]
+    },
+    {
+      "name": "TrailTracker",
+      "description": "Solo Flutter app for logging NZ hiking trails with a custom LRU tile-caching layer for offline maps and background GPS tracking.",
+      "tech_stack": [
+        "Flutter",
+        "Dart"
+      ],
+      "search_queries": [
+        "Flutter offline map tile caching LRU implementation",
+        "Flutter background GPS tracking battery optimization"
+      ],
+      "sources": [
+        "https://docs.fleaflet.dev/tile-servers/offline-mapping",
+        "https://blog.captainfresh.in/mastering-offline-maps-in-flutter-a-deep-dive-part-2-flutter-map-fmtc-c3c153ecd3c7",
+        "https://docs.fleaflet.dev/layers/tile-layer/caching",
+        "https://medium.com/@tungenwarkartick/implementing-background-location-tracking-in-flutter-a-step-by-step-guide-4ac3d6f5fb92",
+        "https://pub.dev/packages/live_location_tracker_plus",
+        "https://vibe-studio.ai/insights/handling-background-location-tracking-responsibly-in-flutter"
+      ]
+    }
+  ],
+  "background_knowledge": "## Background Knowledge for Interviewer\n\n### StudyMate (React, Node/Express, PostgreSQL, Fly.io)\n\n- **PostgreSQL overlap detection**: Finding overlapping time periods for groups of users is a classic \"range query\" problem. The core architectural tradeoff is between query simplicity (using `OVERLAPS` or `&&` operators with `tsrange`) and performance at scale — composite indexes on time ranges can help, but complex overlap logic across many users often requires careful query planning or denormalization.\n\n- **Distributed Postgres latency challenges**: In distributed Postgres setups (like Fly.io's multi-region), latency between client and database — or between database nodes — directly impacts throughput. Most Postgres applications are designed for sequential, low-latency access, so distributing the database introduces significant performance tradeoffs that must be weighed against availability benefits.\n\n- **Firebase to Postgres migration patterns**: Moving from Firebase (NoSQL, document-oriented) to PostgreSQL (relational, schema-enforced) requires fundamental data restructuring. Common challenges include: redesigning denormalized Firebase documents into normalized tables, handling relationships that were implicit in Firebase, and managing migration downtime. The payoff is typically better query capabilities and significant cost reduction.\n\n- **Schema design for availability**: Storing user availability efficiently often involves choosing between: (a) storing individual time slots vs. range types, (b) using exclusion constraints to prevent overlapping entries, and (c) designing composite indexes that support the specific overlap queries your application needs most.\n\n---\n\n### TrailTracker (Flutter, Dart)\n\n- **Offline map tile caching strategies**: Flutter map caching has evolved from in-memory-only (cleared on app close) to persistent caching options. The key architectural decision is between: (a) automatic caching as users browse tiles (simpler, but unpredictable coverage), vs. (b) bulk downloading predefined regions (more reliable offline experience, but requires upfront planning and storage management).\n\n- **Built-in vs. third-party caching**: Since flutter_map v8.2, built-in caching is available and enabled by default on non-web platforms. The tradeoff is between using the built-in `BuiltInMapCachingProvider` (simpler, compliant with OSM tile server requirements) vs. third-party solutions like FMTC (more configurable, additional storage backends). Built-in caching alone is not sufficient for guaranteed offline mapping in safety-critical scenarios.\n\n- **Background GPS tracking architecture**: Continuous background location tracking in Flutter requires platform-specific approaches: Android uses foreground services with persistent notifications, iOS uses `CLLocationManager` with \"Always\" permission and significant location change monitoring. The core architectural challenge is balancing tracking reliability against battery drain — achieved by configuring update intervals, accuracy levels, and leveraging geofencing to reduce unnecessary GPS polling.\n\n- **Battery optimization vs. tracking reliability**: The fundamental tension in background location apps is that OS-level battery optimization can kill background processes. Solutions include: requesting battery optimization exemptions, using appropriate location update intervals (not constant polling), and designing the app to gracefully handle cases where the OS suspends location services."
+}

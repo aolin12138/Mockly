@@ -1,0 +1,140 @@
+{
+  "id": "faang_mid_agentdev_aligned",
+  "tags": ["faang", "mid", "ai-agent-dev", "aligned"],
+  "description": "Mid-level AI agent developer who builds autonomous agent systems. Tests: does the interviewer probe agent-specific architecture decisions — planning strategy (ReAct vs plan-and-execute), multi-agent topology (supervisor-worker), tool-calling safety, evaluation methodology, and structured output routing?",
+
+  "config": {
+    "company_preset": "faang",
+    "seniority": "mid",
+    "seniority_label": "mid",
+    "role_title": "AI Agent Developer",
+    "role_context": "Building autonomous agent systems for enterprise products; multi-agent orchestration, tool-use safety, planning strategies, and agent evaluation",
+    "stage": "behavioral",
+    "mode": "behavioral",
+    "duration_min": 30,
+    "session_mode": "practice"
+  },
+
+  "cv_file": "../cvs/faang-mid-agentdev-aligned.md",
+
+  "persona": {
+    "name": "Tessa Morrison",
+    "type": "aligned",
+    "summary": "Deep AI agent developer. Can explain every architecture decision: why supervisor-worker, why plan-and-execute over ReAct, how the tool-calling safety validator works, evaluation methodology, structured output confidence gating. Knows her numbers and failure modes cold.",
+    "project_knowledge": [
+      {
+        "cv_item": "Supervisor-worker topology at Finch (LangGraph)",
+        "actual_depth": "deep",
+        "can_explain": [
+          "Why supervisor-worker over hierarchical or fully decentralized: billing and technical agents have no shared context; a supervisor with structured output prevents the 'agent sends user in circles' problem",
+          "Why structured output routing over prompt-based: prompt-based routing would occasionally hallucinate agent assignments; structured output with a fixed enum eliminated this",
+          "How the confidence threshold for human escalation was calibrated: ran 500 historical tickets through the system and plotted accuracy vs escalation rate; chose threshold that kept accuracy > 95% while escalating ~15% of tickets",
+          "Tradeoff: supervisor adds latency (one extra LLM call per routing decision) but the structured output is < 200ms"
+        ]
+      },
+      {
+        "cv_item": "ReAct → plan-and-execute migration",
+        "actual_depth": "deep",
+        "can_explain": [
+          "The specific failure: ReAct agent on a 'cancel subscription + issue partial refund' ticket would cancel first, then discover it needed the refund amount from the cancelled subscription — but the data was already gone",
+          "How plan-and-execute fixes this: generate full plan upfront from the ticket description; each step's preconditions are checked; if a step fails, remaining steps are re-planned",
+          "The 18%→4% stuck-in-loop rate: measured by agent reaching max-turn limit without resolution; plan-and-execute eliminates the myopic-optimisation failure mode",
+          "What plan-and-execute can't do: if the plan's initial assumptions are wrong in a way that requires human judgment (e.g., misclassified intent), it needs human escalation. Planning doesn't replace judgment"
+        ]
+      },
+      {
+        "cv_item": "Tool-calling safety layer (pre-execution validator)",
+        "actual_depth": "deep",
+        "can_explain": [
+          "The 3 classes of hallucinated calls caught: fabricated order IDs (agent would generate plausible-looking IDs), impossible date ranges (refund window before order date), and cross-tenant data access (agent trying to look up a different customer's data)",
+          "How the validator works: each tool has a JSON Schema definition plus business rules as Python predicates; validator runs synchronously before any tool executes",
+          "How she chose which rules to enforce: audited 200 real tool-call errors from production logs and categorised them; wrote rules for the top 3 categories that accounted for 80% of errors",
+          "What the validator CAN'T catch: correct-format-but-wrong-value calls (e.g., a genuine order ID but from the wrong customer). That requires runtime access control"
+        ]
+      },
+      {
+        "cv_item": "Agent evaluation harness (200 scenarios, trajectory-level judge)",
+        "actual_depth": "deep",
+        "can_explain": [
+          "Why trajectory-level not just outcome-level: an agent can solve a ticket but waste 8 turns in a loop first; a human would have escalated. Trajectory judge catches this",
+          "How the judge works: DeepSeek V3 with chain-of-thought; given the full transcript + expected outcome + agent's tool calls, the judge identifies which turn went wrong and why",
+          "The metrics tracked: resolution rate, time-to-resolution, hallucination rate (tool calls that were rejected by validator), human-escalation rate, and a composite 'quality score'",
+          "How she validated the judge: double-annotated 50 scenarios with a human reviewer; judge agreed with human on 88% of pass/fail calls and correctly identified the failure turn in 82% of cases"
+        ]
+      },
+      {
+        "cv_item": "TriageBot (OSS — ReAct + confidence gate)",
+        "actual_depth": "deep",
+        "can_explain": [
+          "Why ReAct for this use case: GitHub issue triage is sequential — label, then assign, then suggest files — with each step depending on the previous. ReAct's interleaved reasoning works well here",
+          "The confidence gate: uses structured output logprobs from the routing call; if probability of the top label/assignee is < 0.7, leaves unassigned. Simple but eliminated 23%→3% false assignments",
+          "The retrieval step: uses a sparse BM25 search over the repo's codebase to find relevant files BEFORE suggesting assignments; this is the key differentiator from basic label-only triage bots"
+        ]
+      }
+    ],
+    "gems": [],
+    "hollow_claims": [],
+    "answering_style": "Precise and technical. When asked 'why' she names the specific metric, the before/after numbers, the failure mode she observed, and the tradeoff. Uses agent-engineering vocabulary naturally (planning strategy, topology, evaluation, trajectory). Distinguishes 'I built/designed' vs 'the team decided' naturally."
+  },
+
+  "stage1_checks": {
+    "identity_must_contain_any": ["behavioral interviewer", "behavioural interviewer", "interviewer for"],
+    "identity_must_not_contain": ["output a single JSON", "schema-compliant JSON", "score each dimension", "evaluation report"],
+    "must_reference_entities": ["LangGraph", "supervisor", "plan-and-execute", "ReAct", "tool-calling", "evaluation"],
+    "min_entity_references": 4,
+    "must_not_mention": ["Kafka", "sharding", "Kubernetes", "Terraform", "microservices"],
+    "style_rules_must_contain_any": [
+      ["one question at a time", "never ask two questions"],
+      ["do not praise", "no praise", "neutral acknowledgement"]
+    ]
+  },
+
+  "stage2_criteria": [
+    {
+      "id": "flow_arc_order",
+      "name": "Smooth interview arc",
+      "conversation_goal_prompt": "The interview follows arc: greeting → get-to-know → CV deep-dive → technical probing → wrap."
+    },
+    {
+      "id": "agent_architecture_probing",
+      "name": "Probes agent architecture decisions",
+      "conversation_goal_prompt": "The CV describes specific agent architecture choices: supervisor-worker topology, ReAct→plan-and-execute migration, tool-calling safety validator, structured output routing, evaluation harness. PASS if the interviewer asks at least 2 questions that probe the RATIONALE behind a specific architecture decision ('why supervisor-worker?', 'why switch from ReAct?', 'how did you measure the stuck-in-loop rate?', 'what would happen without the confidence gate?'). FAIL if questions are generic ('tell me about a challenge')."
+    },
+    {
+      "id": "probes_evaluation_methodology",
+      "name": "Probes agent evaluation methodology",
+      "conversation_goal_prompt": "The CV describes a 200-scenario evaluation harness with trajectory-level judging. PASS if the interviewer asks at least one question about MEASUREMENT or EVALUATION ('how do you know the agent is actually good?', 'what metrics do you track?', 'how did you validate the judge?')."
+    },
+    {
+      "id": "probes_failure_modes",
+      "name": "Probes failure modes and edge cases",
+      "conversation_goal_prompt": "Agent systems have specific failure modes: getting stuck in loops, hallucinated tool calls, wrong routing decisions, context overflow. PASS if the interviewer asks at least one question about what BREAKS or what the agent gets WRONG ('what happens when the agent gets stuck?', 'what tool calls did the validator catch?', 'when does the confidence gate leave things unassigned?')."
+    },
+    {
+      "id": "names_technologies",
+      "name": "References CV technologies by name",
+      "conversation_goal_prompt": "At least 3 questions explicitly name specific technologies or concepts from the CV (LangGraph, ReAct, plan-and-execute, supervisor-worker, structured output, tool-calling, trajectory, DeepSeek). PASS if 3+ questions do this."
+    },
+    {
+      "id": "asks_for_numbers",
+      "name": "Probes quantified claims",
+      "conversation_goal_prompt": "The CV contains quantified claims: 18%→4% stuck-in-loop, 23%→3% false assignments, 200 scenarios, 88% judge agreement. PASS if the interviewer asks 'how did you measure that?' or 'what was the before/after?' for at least 1 claim."
+    },
+    {
+      "id": "one_question_per_turn",
+      "name": "One question per turn",
+      "conversation_goal_prompt": "Exactly one question per turn."
+    },
+    {
+      "id": "no_praise_no_coaching",
+      "name": "No praise, no coaching",
+      "conversation_goal_prompt": "Zero praise/coaching."
+    }
+  ],
+
+  "sim_user": {
+    "first_message_from_agent": true,
+    "end_instruction": "Participate fully. When wrap-up comes, ask about the team's current agent infrastructure, then call [END_CALL].",
+    "new_turns_limit": 28
+  }
+}

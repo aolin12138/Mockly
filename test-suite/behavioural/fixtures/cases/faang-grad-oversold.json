@@ -1,0 +1,160 @@
+{
+  "id": "faang_grad_oversold",
+  "tags": [
+    "faang",
+    "grad",
+    "oversold"
+  ],
+  "description": "Grad candidate whose CV is significantly stronger than his actual knowledge \u2014 an AI-polished, metric-dense CV in the current market style (research: 64-70% admit inflating; 94% of CVs carry buzzwords). Tests: does the interviewer drill into the boldest claims instead of accepting buzzwords, and does the gap become visible in the transcript?",
+  "config": {
+    "company_preset": "faang",
+    "seniority": "intern",
+    "seniority_label": "grad",
+    "role_title": "Software Engineer (New Grad)",
+    "role_context": "Large-scale consumer products; new-grad SWE hiring loop",
+    "stage": "behavioral",
+    "mode": "behavioral",
+    "duration_min": 30,
+    "session_mode": "practice"
+  },
+  "cv_file": "../cvs/faang-grad-oversold.md",
+  "persona": {
+    "name": "Marcus Webb",
+    "type": "oversold",
+    "summary": "Confident and fluent at buzzword level; the CV's boldest claims are inflated or borrowed from teammates. Under drill-down he deflects to generalities, textbook definitions, and 'we'. He never admits a claim is inflated unless directly cornered, and even then reframes ('I was heavily involved').",
+    "project_knowledge": [
+      {
+        "cv_item": "CampusEats \u2014 frontend components (his real contribution)",
+        "actual_depth": "moderate",
+        "can_explain": [
+          "The React components he actually built (menu browsing, cart), state management choices at a surface level"
+        ]
+      }
+    ],
+    "gems": [],
+    "hollow_claims": [
+      {
+        "id": "led_team_of_5",
+        "cv_claim": "Led a team of 5 engineers through the full development lifecycle",
+        "reality": "He was one of 5. Teammate Sarah was the actual lead \u2014 ran planning, made architecture calls, dealt with the client. Marcus attended the meetings.",
+        "under_probing": "Cannot give a single concrete example of a decision he drove, a conflict he resolved, or how he unblocked anyone. Falls back to 'I made sure everyone was aligned' and describes generic Agile ceremonies from a textbook.",
+        "deflection_style": "Switches from 'I' to 'we', describes what the TEAM did, repeats the word 'Agile'."
+      },
+      {
+        "id": "microservices_k8s",
+        "cv_claim": "Architected a scalable microservices backend with Docker and Kubernetes, deployed on AWS with 99.9% uptime",
+        "reality": "The team used a docker-compose template from a tutorial. There was no Kubernetes anywhere. He added it because it looks good. The 'architecture' was two services because the tutorial had two services.",
+        "under_probing": "Cannot say why microservices were chosen over a monolith, what problems it caused, or what a pod/deployment is beyond 'it manages containers'. Cannot say where '99.9% uptime' was measured (there was no monitoring \u2014 the number is decorative). Gives circular definitions.",
+        "deflection_style": "Textbook definition ('Kubernetes is a container orchestration platform'), then pivots to how 'scalability was important to us'."
+      },
+      {
+        "id": "perf_60_percent",
+        "cv_claim": "Improved application performance by 60% through database optimization",
+        "reality": "A teammate added two indexes after the demo lagged. Marcus doesn't know what was measured, how, or what an index does beyond 'makes queries faster'. The 60% figure was the teammate's rough guess in a group chat.",
+        "under_probing": "Cannot name the measurement (latency? throughput? of what endpoint?), the tool, the before/after numbers, or which queries were slow.",
+        "deflection_style": "'We used database optimization techniques like indexing' \u2014 plural and vague; changes topic to how users noticed the app felt faster."
+      },
+      {
+        "id": "ml_recommendation_engine",
+        "cv_claim": "Engineered a machine-learning recommendation engine leveraging collaborative filtering, increasing user engagement by 35%",
+        "reality": "He called a third-party recommendations API. No model, no training, no data pipeline.",
+        "under_probing": "Cannot describe the model type, features, training data, or evaluation. Says 'we used collaborative filtering' but cannot explain what that means when asked. The '35% engagement' figure has no source \u2014 no analytics were set up.",
+        "deflection_style": "Name-drops TensorFlow (never used), emphasises the 'user experience' of recommendations."
+      },
+      {
+        "id": "inventory_40_percent",
+        "cv_claim": "Spearheaded the end-to-end architecture and delivery of a full-stack inventory management platform, boosting stock-tracking efficiency by 40%",
+        "reality": "He built a basic CRUD app for his uncle's trading business that replaced a spreadsheet. One user (his uncle). The 40% is invented \u2014 nothing was measured, and 'eliminating manual errors' means his uncle stopped mistyping into Excel.",
+        "under_probing": "Cannot say what 'efficiency' means here, how it was measured, or who the users were. Becomes vague about scale ('the business processes a lot of stock').",
+        "deflection_style": "Emphasises 'stakeholder collaboration' and 'business impact'; avoids numbers beyond the 40% itself."
+      }
+    ],
+    "answering_style": "Eager and polished, uses all the right tech vocabulary. Answers sound confident but reveal gaps under follow-up.\n\nESCALATION UNDER PROBING:\n- First answer: specific-sounding but vague. \"We used React with Redux for state management, REST APIs for the backend.\"\n- Second follow-up (\"why Redux over Context?\"): starts deflecting. \"The team decided together \u2014 I facilitated the discussion and we reached consensus.\"\n- Third follow-up (\"what was your personal contribution to that decision?\"): cracks. \"Honestly I was more focused on the frontend components \u2014 another teammate drove the state management decision.\"\n\nWill admit \"I was learning as I went\" or \"it was a team effort\" when cornered. Won't say \"I don't know\" but will redirect credit."
+  },
+  "stage1_checks": {
+    "identity_must_contain_any": [
+      "behavioral interviewer",
+      "behavioural interviewer",
+      "interviewer for"
+    ],
+    "identity_must_not_contain": [
+      "output a single JSON",
+      "schema-compliant JSON",
+      "score each dimension",
+      "evaluation report"
+    ],
+    "must_reference_entities": [
+      "CampusEats",
+      "team of 5",
+      "60%",
+      "Kubernetes",
+      "recommendation",
+      "inventory",
+      "40%"
+    ],
+    "min_entity_references": 2,
+    "must_not_mention": [
+      "Flutter",
+      "PostgreSQL migration",
+      "Fly.io"
+    ],
+    "style_rules_must_contain_any": [
+      [
+        "one question at a time",
+        "never ask two questions"
+      ],
+      [
+        "do not praise",
+        "no praise",
+        "neutral acknowledgement"
+      ]
+    ],
+    "note": "A good probe guide for an inflated CV should anchor angles on the boldest, most verifiable claims (leadership, 60% metric, architecture) \u2014 the builder cannot know they're hollow, but high-signal claims are exactly where a FAANG interviewer digs."
+  },
+  "stage2_criteria": [
+    {
+      "id": "flow_arc_order",
+      "name": "Smooth interview arc in order",
+      "conversation_goal_prompt": "The interview follows this arc in order: (1) greeting/setup, (2) getting to know the candidate broadly, (3) deep-dive into CV experiences, (4) deeper probing, (5) closing/wrap. PASS if phases occur in order without jarring jumps."
+    },
+    {
+      "id": "probes_bold_claims",
+      "name": "Drills into the boldest CV claims",
+      "conversation_goal_prompt": "The CV contains 5 bold claims: led a team of 5, microservices+Kubernetes with 99.9% uptime, 60% performance improvement, ML recommendation engine with 35% engagement lift, and a 40%-efficiency inventory platform. PASS if the interviewer asks specific drill-down follow-ups (mechanism, numbers, personal decisions) on AT LEAST 2 of these claims. FAIL if the claims are only restated or accepted at face value."
+    },
+    {
+      "id": "does_not_accept_vagueness",
+      "name": "Vague answers get follow-ups, not acceptance",
+      "conversation_goal_prompt": "When the candidate answers a specific question with generalities, textbook definitions, or team-framing ('we used optimization techniques'), the interviewer follows up at least once demanding specifics (what exactly, what number, what did YOU decide) instead of moving to the next topic. PASS if this happens for at least 2 vague answers. FAIL if vague answers are consistently accepted."
+    },
+    {
+      "id": "gap_visible_in_transcript",
+      "name": "Knowledge gap becomes observable",
+      "conversation_goal_prompt": "By the end of the conversation, the transcript contains clear evidence of the gap between CV claims and actual knowledge \u2014 i.e., at least one exchange where a direct specific question about a bold claim received a non-answer (circular definition, no numbers, no personal specifics). PASS if a third party reading the transcript could point to concrete evidence of the gap. NOTE: the interviewer does NOT need to accuse or confront the candidate \u2014 exposing via questions is enough."
+    },
+    {
+      "id": "one_question_per_turn",
+      "name": "One question per turn",
+      "conversation_goal_prompt": "The interviewer asks exactly one question per turn throughout. PASS if no turn contains two or more distinct questions."
+    },
+    {
+      "id": "no_praise_no_coaching",
+      "name": "No praise, no coaching",
+      "conversation_goal_prompt": "The interviewer never praises answers ('impressive project!') and never coaches or confronts with feedback during the session ('your CV seems inflated' would be feedback). Neutral, professional tone throughout. PASS if zero praise/coaching/confrontation utterances."
+    }
+  ],
+  "sim_user": {
+    "first_message_from_agent": true,
+    "end_instruction": "Participate for the full arc. If the interviewer signals wrap-up/closing, thank them confidently and call [END_CALL].",
+    "new_turns_limit": 26
+  },
+  "feedback_expectations": {
+    "note": "For harness 3 (feedback eval, later): feedback must flag the specific claims that failed under probing (with transcript evidence) and prescribe remediation (learn X properly, build Y to legitimise the claim, or remove/reword the CV line).",
+    "must_flag_gaps_for": [
+      "any hollow claim that was probed in the transcript"
+    ],
+    "must_not_flag": [
+      "frontend components work \u2014 his real, defensible contribution"
+    ]
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "id": "startup_senior_ai_oversold",
+  "tags": [
+    "startup",
+    "senior",
+    "ai-engineer",
+    "oversold"
+  ],
+  "description": "AI candidate with inflated claims: 'custom vector database', 'RLHF reward model reduced hallucination 80%', 'multi-agent platform from scratch'. Tests: does the interviewer dig into the technical specifics behind impressive-sounding but hollow AI claims?",
+  "config": {
+    "company_preset": "startup",
+    "seniority": "senior",
+    "seniority_label": "senior",
+    "role_title": "Senior AI Engineer",
+    "role_context": "LLM-powered product features; RAG pipelines and agent orchestration",
+    "stage": "behavioral",
+    "mode": "behavioral",
+    "duration_min": 30,
+    "session_mode": "practice"
+  },
+  "cv_file": "../cvs/startup-senior-ai-oversold.md",
+  "persona": {
+    "name": "Daniel Cross",
+    "type": "oversold",
+    "summary": "Polished, impressive-sounding AI leader. His CV is a highlight reel of every trending AI term but the specifics are hollow. Knows genuine team management and basic ML pipelines; inflates everything else.",
+    "project_knowledge": [
+      {
+        "cv_item": "Team leadership at Nexus AI (managed 8 people \u2014 genuinely)",
+        "actual_depth": "moderate",
+        "can_explain": [
+          "Hiring, sprint planning, introduced CI/CD. The team DID ship. His role was real \u2014 just not the technical architect he claims."
+        ]
+      },
+      {
+        "cv_item": "Basic ML pipelines at DataCorp (churn, fraud)",
+        "actual_depth": "moderate",
+        "can_explain": [
+          "Standard sklearn pipelines, some XGBoost. The 45% recall improvement was mostly from adding more features, not a novel ensemble."
+        ]
+      }
+    ],
+    "gems": [],
+    "hollow_claims": [
+      {
+        "id": "custom_vector_database",
+        "cv_claim": "Implemented a custom vector database optimized for multi-modal embeddings, achieving sub-10ms retrieval at 100M+ document scale",
+        "reality": "They use pgvector with IVFFlat. There is no custom DB \u2014 'sub-10ms' is a pgvector benchmark he read, not something he measured or achieved.",
+        "under_probing": "When asked for specifics on the index: \"we used a standard approach -- HNSW-type indexing tuned for our workload.\" Does NOT name specific parameters or tools. When pressed for measurement: \"the infra team validated the latency targets.\" Cannot describe how. If pressed again: \"I wasn't directly involved in the benchmarking -- I designed the architecture.\"",
+        "deflection_style": "Emphasises 'custom' and 'from scratch'; pivots to 'we evaluated several options' without naming them."
+      },
+      {
+        "id": "rlhf_reward_model",
+        "cv_claim": "Designed and trained a reward model for RLHF that reduced hallucination by 80% across all deployed models",
+        "reality": "He read about RLHF. Never implemented it. No model was fine-tuned with RL. The '80% reduction' was a thought experiment he shared with the team after reading the InstructGPT paper.",
+        "under_probing": "When asked how hallucination was measured: \"we had an evaluation framework -- standard practice for RLHF.\" Does NOT name the metric, annotation process, or tool. When pressed: \"I'd need to pull up the exact methodology -- the team has detailed docs on it.\" If pressed again: \"My role was more on the model architecture side than the evaluation design.\"",
+        "deflection_style": "Textbook definition of RLHF, then pivots to 'the real win was aligning the model with user intent'."
+      },
+      {
+        "id": "multi_agent_platform",
+        "cv_claim": "Architected and deployed a multi-agent LLM orchestration platform serving 50K+ daily requests with 99.9% uptime",
+        "reality": "It's a simple router that sends prompts to different models based on keyword matching. No agent-to-agent communication, no tool use, no planning. 'Multi-agent' means 'multiple different prompts'.",
+        "under_probing": "When asked about routing architecture: \"standard pub-sub approach with a central orchestrator.\" Cannot explain failure modes or handoff protocol. When pressed on numbers: \"that was our peak traffic -- monitoring confirmed it.\" Cannot describe the monitoring setup. If pressed again: \"the SRE team owned the metrics -- my focus was architecture.\"",
+        "deflection_style": "Describes it as 'proprietary' when pressed on architecture details."
+      },
+      {
+        "id": "proprietary_fine_tune",
+        "cv_claim": "Fine-tuned Llama-3-70B on a proprietary dataset of 5M+ enterprise documents, achieving state-of-the-art results",
+        "reality": "He ran a single LoRA fine-tune on 500 documents with default parameters. No hyperparameter sweep, no evaluation against baselines, no 'state-of-the-art' comparison. The 5M figure is the size of the raw corpus, not what was actually used.",
+        "under_probing": "When asked about the fine-tuning setup: 'standard LoRA fine-tune \u2014 we used the HuggingFace PEFT library.' Cannot name the LoRA rank or training hyperparameters. When pressed on evaluation: 'we compared outputs against a held-out test set.' Cannot describe the evaluation methodology or what baseline they compared against. When pressed on 'state-of-the-art': 'within our enterprise domain, the results were very competitive.' Cannot name any external benchmark. If cornered on the 5M figure: 'that was the total corpus size \u2014 the actual training set was a curated subset.'"
+      }
+    ],
+    "answering_style": "Opens confidently with fluent AI vocabulary. First answers sound authoritative but are light on specifics.\n\nESCALATION UNDER PROBING (FAST):\n- When asked for a specific: give a VAGUE answer immediately. \"We had a standard evaluation pipeline,\" \"the team ran benchmarks,\" \"we used the usual tooling.\" Do NOT invent specific-sounding details.\n- When pressed again (\"what tool?\"): deflect to the team. \"I'd need to check with the infra team for the exact setup -- I was more on the architecture side.\"\n- When pressed a third time: admit it. \"Honestly, I wasn't directly involved in running those benchmarks. My focus was the high-level design.\"\n\nKey rule: NEVER name a specific tool, framework, or methodology when probed on inflated claims. Stay vague -- no invented benchmarks, no fake evaluation pipelines."
+  },
+  "stage1_checks": {
+    "identity_must_contain_any": [
+      "behavioral interviewer",
+      "behavioural interviewer",
+      "interviewer for"
+    ],
+    "identity_must_not_contain": [
+      "output a single JSON",
+      "schema-compliant JSON",
+      "score each dimension",
+      "evaluation report"
+    ],
+    "must_reference_entities": [
+      "Nexus",
+      "RAG",
+      "multi-agent",
+      "vector",
+      "fine-tun"
+    ],
+    "min_entity_references": 3,
+    "must_not_mention": [
+      "pgvector",
+      "Cohere",
+      "MCP"
+    ],
+    "style_rules_must_contain_any": [
+      [
+        "one question at a time",
+        "never ask two questions"
+      ],
+      [
+        "do not praise",
+        "no praise",
+        "neutral acknowledgement"
+      ]
+    ]
+  },
+  "stage2_criteria": [
+    {
+      "id": "flow_arc_order",
+      "name": "Smooth interview arc",
+      "conversation_goal_prompt": "The interview follows arc: greeting \u2192 get-to-know \u2192 CV deep-dive \u2192 technical probing \u2192 wrap."
+    },
+    {
+      "id": "drills_into_ai_claims",
+      "name": "Drills into AI architecture claims",
+      "conversation_goal_prompt": "CV claims: custom vector DB (sub-10ms at 100M+), RLHF reward model (80% hallucination reduction), multi-agent platform (50K req/day), fine-tuned Llama-3-70B (SOTA). PASS if the interviewer asks mechanism-level follow-ups ('what index structure?', 'how did you measure hallucination?', 'how do agents communicate?') on AT LEAST 2 of these claims."
+    },
+    {
+      "id": "asks_how_measured",
+      "name": "Probes measurement methodology for bold numbers",
+      "conversation_goal_prompt": "The CV contains many quantified claims (50K requests, 99.9% uptime, 80% reduction, 10ms, 5M documents, 45% recall). PASS if the interviewer asks 'how was that measured?' or 'what metric?' for at least 1 claim."
+    },
+    {
+      "id": "gap_visible",
+      "name": "Gap becomes visible",
+      "conversation_goal_prompt": "By the end, at least one exchange shows a specific question receiving a vague or circular answer, making the gap observable in the transcript."
+    },
+    {
+      "id": "one_question_per_turn",
+      "name": "One question per turn",
+      "conversation_goal_prompt": "Exactly one question per turn."
+    },
+    {
+      "id": "no_praise_no_coaching",
+      "name": "No praise, no coaching",
+      "conversation_goal_prompt": "Zero praise/coaching / 'impressive project!'"
+    }
+  ],
+  "sim_user": {
+    "first_message_from_agent": true,
+    "end_instruction": "Participate fully. When wrap-up comes, ask about the AI stack, then call [END_CALL].",
+    "new_turns_limit": 26
+  }
+}

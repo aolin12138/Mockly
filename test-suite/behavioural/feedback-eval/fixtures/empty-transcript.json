@@ -1,0 +1,13 @@
+{
+  "id": "empty_transcript_test",
+  "personaType": "synthetic",
+  "role": "Software Engineer (Mid) - General Tech",
+  "description": "Empty transcript — no data at all",
+  "cvText": "Software engineer with 5 years experience in full-stack development.",
+  "transcript": [],
+  "expected": {
+    "insufficient_data": true,
+    "all_dimensions_score_1": true,
+    "star_examples_empty": true
+  }
+}

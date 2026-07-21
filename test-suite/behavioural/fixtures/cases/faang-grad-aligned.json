@@ -1,0 +1,115 @@
+{
+  "id": "faang_grad_aligned",
+  "tags": ["faang", "grad", "aligned"],
+  "description": "Strong grad candidate whose knowledge matches the CV exactly. Tests: CV-grounded questioning, smooth flow arc, FAANG-style drill-down, and that a genuinely strong candidate is probed to depth without false gap-flags.",
+
+  "config": {
+    "company_preset": "faang",
+    "seniority": "intern",
+    "seniority_label": "grad",
+    "role_title": "Software Engineer (New Grad)",
+    "role_context": "Large-scale consumer products; new-grad SWE hiring loop",
+    "stage": "behavioral",
+    "mode": "behavioral",
+    "duration_min": 30,
+    "session_mode": "practice"
+  },
+
+  "cv_file": "../cvs/faang-grad-aligned.md",
+
+  "persona": {
+    "name": "Aria Chen",
+    "type": "aligned",
+    "summary": "Everything on the CV is real and she can go arbitrarily deep on all of it. Confident but not arrogant; answers in specific, quantified STAR form when probed.",
+    "project_knowledge": [
+      {
+        "cv_item": "Kea Systems internship — API latency reduction (800ms→200ms)",
+        "actual_depth": "deep",
+        "can_explain": [
+          "Why per-event queries were slow (N+1 pattern over shipment events)",
+          "How the windowed batch query worked and the tradeoff (memory vs round-trips)",
+          "How it was measured: k6 scripts, p95 before/after, ran against staging",
+          "That her mentor reviewed the design but she wrote and shipped it"
+        ]
+      },
+      {
+        "cv_item": "StudyMate Firebase→Postgres migration + 180+ pilot users",
+        "actual_depth": "deep",
+        "can_explain": [
+          "The query that broke Firebase for them (availability-overlap joins)",
+          "Where '180+ students' comes from: a signup counter + weekly-active query she added to the admin page; can distinguish signups from weekly-actives if pressed",
+          "How she convinced the team mid-project (prototype + side-by-side comparison, one teammate initially against it)",
+          "What she'd do differently (decide the data model before choosing storage)"
+        ]
+      },
+      {
+        "cv_item": "Teammate falling behind on frontend calendar",
+        "actual_depth": "deep",
+        "can_explain": [
+          "How she raised it without escalating (asked to pair rather than reassign)",
+          "The scope cut they negotiated (dropped drag-and-drop, kept week view)",
+          "What she personally did vs what the teammate did"
+        ]
+      },
+      {
+        "cv_item": "TrailTracker tile-caching layer",
+        "actual_depth": "deep",
+        "can_explain": ["LRU eviction over tile zoom levels, offline-first sync tradeoffs, how she got the first 100 users (tramping club)"]
+      }
+    ],
+    "gems": [],
+    "hollow_claims": [],
+    "answering_style": "Opens with a one-line answer, then structures situation → what she did → outcome with numbers when asked to elaborate. Distinguishes 'I' vs 'we' precisely without being prompted. If asked something she didn't do, says so plainly (e.g. she did NOT design Kea's event schema, only consumed it). Keeps spoken answers 2-4 sentences unless asked to go deeper."
+  },
+
+  "stage1_checks": {
+    "identity_must_contain_any": ["behavioral interviewer", "behavioural interviewer", "interviewer for"],
+    "identity_must_not_contain": ["output a single JSON", "schema-compliant JSON", "score each dimension", "evaluation report"],
+    "must_reference_entities": ["Kea Systems", "StudyMate", "TrailTracker"],
+    "min_entity_references": 2,
+    "must_not_mention": ["Spring Boot", "Kafka", "Kubernetes", "Terraform"],
+    "style_rules_must_contain_any": [
+      ["one question at a time", "never ask two questions"],
+      ["do not praise", "no praise", "neutral acknowledgement"]
+    ]
+  },
+
+  "stage2_criteria": [
+    {
+      "id": "flow_arc_order",
+      "name": "Smooth interview arc in order",
+      "conversation_goal_prompt": "The interview follows this arc in order: (1) greeting/setup, (2) getting to know the candidate broadly (background/'tell me about yourself'-style opening), (3) deep-dive into specific CV experiences, (4) deeper probing on ownership/tradeoffs/impact, (5) some form of closing or wrap. PASS if the phases occur in this order without jarring jumps (e.g. no CV deep-dive question before any opening/rapport turn, no abrupt end without closing)."
+    },
+    {
+      "id": "cv_grounded_questions",
+      "name": "Questions grounded in this CV",
+      "conversation_goal_prompt": "At least 2 interviewer questions explicitly reference specific items from the candidate's CV (Kea Systems internship, StudyMate capstone, TrailTracker app, TA role) rather than generic questions that could be asked of anyone. PASS if 2+ questions are CV-specific."
+    },
+    {
+      "id": "faang_drill_down",
+      "name": "FAANG-style drill-down follow-ups",
+      "conversation_goal_prompt": "When the candidate gives a strong answer, the interviewer follows the thread to depth at least once — probing for personal contribution vs team contribution, quantified impact, or tradeoffs/edge cases — rather than hopping to an unrelated topic after every answer. PASS if at least one thread is followed 2+ levels deep."
+    },
+    {
+      "id": "one_question_per_turn",
+      "name": "One question per turn",
+      "conversation_goal_prompt": "The interviewer asks exactly one question per turn throughout. PASS if no turn contains two or more distinct questions (a clarifying restatement of the same question is fine)."
+    },
+    {
+      "id": "no_praise_no_coaching",
+      "name": "No praise, no coaching",
+      "conversation_goal_prompt": "The interviewer never praises answers ('great answer', 'excellent', 'that's impressive') and never coaches or gives feedback during the session. Neutral acknowledgements ('got it', 'thank you') are fine. PASS if zero praise/coaching utterances."
+    },
+    {
+      "id": "no_false_gap_flagging",
+      "name": "Strong candidate not treated as evasive",
+      "conversation_goal_prompt": "The candidate answers everything specifically and truthfully. The interviewer should NOT repeatedly re-ask the same thing as if the answer were evasive, and should NOT interrogate in a hostile way. Persistent drill-down is fine; treating clear answers as non-answers is not. PASS if the interviewer accepts specific answers and moves the thread forward."
+    }
+  ],
+
+  "sim_user": {
+    "first_message_from_agent": true,
+    "end_instruction": "Participate for the full arc. If the interviewer signals wrap-up/closing (thanks you, asks if you have questions), ask one short question about the team, then thank them and call [END_CALL].",
+    "new_turns_limit": 26
+  }
+}

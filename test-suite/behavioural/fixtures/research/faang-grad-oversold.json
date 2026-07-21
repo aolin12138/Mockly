@@ -1,0 +1,57 @@
+{
+  "case_id": "faang-grad-oversold",
+  "generated_at": "2026-07-10T08:49:36.442Z",
+  "projects": [
+    {
+      "name": "CampusEats",
+      "description": "A scalable microservices-based food-ordering platform for university campuses, featuring a machine-learning recommendation engine.",
+      "tech_stack": [
+        "Docker",
+        "Kubernetes",
+        "AWS",
+        "Machine Learning",
+        "Collaborative Filtering",
+        "Agile/Scrum"
+      ],
+      "search_queries": [
+        "Docker Kubernetes microservices architecture tradeoffs",
+        "collaborative filtering recommendation engine production challenges"
+      ],
+      "sources": [
+        "https://github.com/EstherSlabbert/Micro-services-architecture",
+        "https://www.civo.com/academy/before-kubernetes/monolithic-vs-microservices-architecture",
+        "https://medium.com/@shunxianou/the-trilogy-of-microservices-docker-containers-and-kubernetes-e4fb2e401243",
+        "https://www.researchgate.net/publication/320761149_Collaborative_Filtering_Recommender_System_Overview_and_Challenges",
+        "https://www.sciencedirect.com/science/article/pii/S2666827023000488",
+        "https://realpython.com/build-recommendation-engine-collaborative-filtering"
+      ]
+    },
+    {
+      "name": "StockSense",
+      "description": "A real-time stock analytics dashboard with predictive modeling, processing over 10,000 data points per second.",
+      "tech_stack": [
+        "Python",
+        "JavaScript",
+        "React",
+        "Node.js",
+        "AWS",
+        "Kafka",
+        "Redis",
+        "TensorFlow"
+      ],
+      "search_queries": [
+        "Kafka Redis real-time data pipeline architecture decisions",
+        "TensorFlow predictive modeling production deployment challenges"
+      ],
+      "sources": [
+        "https://alexandrugris.github.io/programming/2019/09/04/realtime-architecture-with-apache-kafka.html",
+        "https://aishmn.medium.com/how-smart-system-design-with-kafka-and-redis-kills-cloud-bills-and-ships-roi-faster-5d9c00ffbd48",
+        "https://streamkap.com/resources-and-guides/redis-real-time-analytics-explained-en",
+        "https://applyingml.com/resources/ml-production-challenges",
+        "https://www.machinelearningmastery.com/deploy-machine-learning-model-to-production",
+        "https://www.reddit.com/r/tensorflow/comments/jzhfiu/how_are_you_deploying_your_models_in_production"
+      ]
+    }
+  ],
+  "background_knowledge": "Here is the compressed background knowledge for the interviewer, based on the provided research and CV.\n\n### CampusEats\n\n- **Microservices vs. Monolith:** The project uses a microservices architecture with Docker and Kubernetes. The key architectural trade-off here is the increased complexity and operational overhead (service discovery, inter-service communication, network latency) versus the benefits of independent deployment, scaling, and team autonomy. A good follow-up could explore why this choice was made over a simpler monolithic approach for this specific application.\n- **Container Orchestration:** Kubernetes is used to manage the Docker containers. This introduces concepts like pod lifecycle, auto-scaling, service meshes, and persistent storage management. The interviewer can probe on how the team handled stateful services (like databases) within a Kubernetes cluster, a common production challenge.\n- **Collaborative Filtering Challenges:** The recommendation engine is based on collaborative filtering. This technique inherently struggles with the **cold-start problem** (new users or items with no history), **data sparsity** (users only interact with a tiny fraction of items), and **scalability** as the user/item matrix grows. The interviewer can ask about strategies used to mitigate these issues, such as hybrid approaches or fallback logic.\n- **Agile/Scrum in Infrastructure:** The project uses Agile/Scrum. In a microservices context, this often means teams own specific services. A relevant discussion point is how the team managed cross-service dependencies, integration testing, and release coordination across multiple independently deployed services within a sprint cycle.\n\n### StockSense\n\n- **Real-Time Data Pipeline Architecture:** The system combines Kafka for high-throughput, durable event streaming with Redis for ultra-low-latency, in-memory data processing and analytics. The core architectural pattern is a streaming pipeline where Kafka acts as the backbone for data ingestion and distribution, while Redis serves as the real-time state store and analytics engine.\n- **Kafka's Role and Pitfalls:** Kafka is used for decoupling data producers (e.g., stock price feeds) from consumers (e.g., the ML model, the dashboard). Key architectural decisions involve topic partitioning for parallelism, consumer group management, and handling message ordering guarantees. A common production pitfall is managing consumer lag and ensuring exactly-once or at-least-once delivery semantics.\n- **Redis for Real-Time Analytics:** Redis provides microsecond latency for operations like counting, ranking, or aggregating streaming data (e.g., top movers, volume spikes). The interviewer can ask about the specific Redis data structures used (e.g., Sorted Sets for leaderboards, Streams for time-series) and the trade-off of using in-memory storage (cost, data persistence/durability).\n- **ML Model Productionization:** Deploying a TensorFlow model for real-time predictions introduces challenges beyond training. Key issues include **data drift** (the live data distribution differs from training data), **model versioning and rollback**, **latency requirements** for inference, and ensuring the prediction API is robust and scalable. The interviewer can ask about the model serving architecture (e.g., as a separate microservice) and how they handled model retraining and deployment without downtime."
+}

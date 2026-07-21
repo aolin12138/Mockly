@@ -1,0 +1,27 @@
+{
+  "case_id": "faang-grad-undersold",
+  "generated_at": "2026-07-10T08:49:47.110Z",
+  "projects": [
+    {
+      "name": "Event management web app",
+      "description": "University capstone project: a web application for managing student club events, built with Django and PostgreSQL.",
+      "tech_stack": [
+        "Django",
+        "PostgreSQL"
+      ],
+      "search_queries": [
+        "Django PostgreSQL event management architecture tradeoffs",
+        "Django production challenges database scaling club events"
+      ],
+      "sources": [
+        "https://contra.com/community/AZgYs0g6-full-stack-event-management-system-built-with",
+        "https://www.scoutapm.com/blog/event-driven-architectures-with-django",
+        "https://python.plainenglish.io/building-a-powerful-event-manager-with-django-drf-and-postgresql-part-1-bceefd5a1d18",
+        "https://www.youtube.com/watch?v=NdRB9-Xtl9M",
+        "https://www.linkedin.com/pulse/scaling-heights-our-journey-django-postgresql-quest-kuczy%C5%84ski-s7fpe",
+        "https://adriennedomingus.com/tech/django-at-scale-in-production"
+      ]
+    }
+  ],
+  "background_knowledge": "## Event Management Web App (Django + PostgreSQL)\n\n**Background Knowledge for Interviewer:**\n\n- **Synchronous vs. Event-Driven Tension**: Django's traditional synchronous request-response model creates friction when building event-driven features (e.g., ticket purchases triggering notifications, waitlist updates, or calendar syncs). The candidate likely had to decide where to introduce asynchronous processing — typically via message queues (Celery/RabbitMQ) or Django Channels for real-time features.\n\n- **Real-Time Communication**: Django Channels enables WebSocket support for live updates (e.g., seat availability changes, attendee count). Key architectural decisions include channel layer backend (Redis vs. in-memory), consumer routing, and handling connection lifecycle for thousands of concurrent users during peak events.\n\n- **Database Scaling Patterns**: PostgreSQL with Django faces specific bottlenecks at scale — N+1 queries on event registrations, lock contention on ticket inventory, and slow aggregation queries for dashboards. Common solutions include materialized views for reporting, selective denormalization for read-heavy endpoints, and connection pooling (PgBouncer).\n\n- **API Design with DRF**: Django REST Framework provides serializers, viewsets, and authentication classes. Architectural tradeoffs include choosing between function-based vs. class-based views, implementing pagination strategies for large event lists, and handling nested resource creation (e.g., creating an event with multiple sessions in one request).\n\n- **Migration Management at Scale**: Django's automatic migration system works well for small teams but becomes problematic with large datasets — long-running migrations lock tables, zero-downtime deployment requires careful planning (adding nullable columns first, using separate migration steps), and squashing migrations for faster CI/CD pipelines.\n\n- **Caching Strategy**: Event management apps have predictable access patterns (popular events, user dashboards). Common architecture includes Redis for session storage, template fragment caching for event listings, and database query caching for read-heavy endpoints. Cache invalidation becomes critical when ticket availability changes rapidly."
+}

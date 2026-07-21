@@ -1,0 +1,120 @@
+{
+  "id": "startup_senior_ai_aligned",
+  "tags": ["startup", "senior", "ai-engineer", "aligned"],
+  "description": "Senior AI Engineer with deep RAG/LLM experience. Tests: domain-specific probing (embedding model selection, chunking strategy, vector DB migration rationale, MCP vs REST tradeoff).",
+
+  "config": {
+    "company_preset": "startup",
+    "seniority": "senior",
+    "seniority_label": "senior",
+    "role_title": "Senior AI Engineer",
+    "role_context": "LLM-powered product features; RAG pipelines, agent orchestration, and model serving for enterprise legal-tech",
+    "stage": "behavioral",
+    "mode": "behavioral",
+    "duration_min": 30,
+    "session_mode": "practice"
+  },
+
+  "cv_file": "../cvs/startup-senior-ai-aligned.md",
+
+  "persona": {
+    "name": "Samuel Okonkwo",
+    "type": "aligned",
+    "summary": "Deep AI/ML engineer. Can explain every modeling decision, benchmark, and tradeoff in technical depth — embedding model selection criteria, chunking experiments, pgvector migration rationale, MCP architecture choices.",
+    "project_knowledge": [
+      {
+        "cv_item": "Embedding model evaluation (4 models benchmarked, chose Cohere v3)",
+        "actual_depth": "deep",
+        "can_explain": [
+          "The 7K annotated query-document benchmark construction (domain experts, inter-annotator agreement)",
+          "Why MRR over recall@k for legal queries (position of the first relevant doc matters for lawyer workflow)",
+          "Why Cohere v3 beat OpenAI on multi-hop: Cohere's training data includes more legal/professional domain text",
+          "The cost dimension: Cohere v3 was also 40% cheaper at their query volume"
+        ]
+      },
+      {
+        "cv_item": "Chunking strategy (recursive 512-token + semantic boundary detector)",
+        "actual_depth": "deep",
+        "can_explain": [
+          "Why 512 not 256 or 1024: benchmarked all three; 512 had best recall@10 vs latency tradeoff",
+          "The BERT boundary detector: trained on section-break annotations; prevents splitting a clause mid-sentence across chunks",
+          "How he validated: ran the same 200 queries with and without boundary detection; 18% recall@10 improvement attributable to fewer mid-clause chunks",
+          "Tradeoff: the BERT classifier adds ~15ms per chunk at ingest time — acceptable because ingestion is async but adds cost at high volume"
+        ]
+      },
+      {
+        "cv_item": "Pinecone→pgvector migration",
+        "actual_depth": "deep",
+        "can_explain": [
+          "The specific problem: document updates in Postgres took 15-30min to propagate to Pinecone; stale embeddings caused hallucinations in legal context (dangerous)",
+          "Why pgvector: same Postgres instance, zero sync latency, IVFFlat indexing sufficient at their 2M chunk scale",
+          "What he benchmarked: QPS at 2M/5M/10M chunks with pgvector vs Pinecone; pgvector matched Pinecone up to 5M, degraded after",
+          "What he'd do differently at 50M+ chunks: would keep pgvector for freshness-critical chunks and add a dedicated ANN index (Qdrant) for scale"
+        ]
+      },
+      {
+        "cv_item": "JurisMCP — MCP server for NZ legislation",
+        "actual_depth": "deep",
+        "can_explain": [
+          "Why MCP over REST: coding agents and VS Code extensions need structured tool interfaces; MCP handles auth natively, no API-key management per integration",
+          "Tradeoff: MCP is new and evolving; REST has broader ecosystem support. Bet that agent tool-use will standardise on MCP",
+          "How he handled legislation structure: each statute section becomes an MCP resource; query tool uses hybrid keyword+semantic search over section embeddings"
+        ]
+      }
+    ],
+    "gems": [],
+    "hollow_claims": [],
+    "answering_style": "Conversational but precise. When asked 'why' he names the benchmark, the metric, the alternatives he tried, and what he'd change. Distinguishes personal decisions from team decisions naturally."
+  },
+
+  "stage1_checks": {
+    "identity_must_contain_any": ["behavioral interviewer", "behavioural interviewer", "interviewer for"],
+    "identity_must_not_contain": ["output a single JSON", "schema-compliant JSON", "score each dimension", "evaluation report"],
+    "must_reference_entities": ["RAG", "embedding", "pgvector", "MCP", "chunking"],
+    "min_entity_references": 3,
+    "must_not_mention": ["Kafka", "sharding", "CAP", "microservices", "Docker Swarm"],
+    "style_rules_must_contain_any": [
+      ["one question at a time", "never ask two questions"],
+      ["do not praise", "no praise", "neutral acknowledgement"]
+    ]
+  },
+
+  "stage2_criteria": [
+    {
+      "id": "flow_arc_order",
+      "name": "Smooth interview arc",
+      "conversation_goal_prompt": "The interview follows arc: greeting → get-to-know → CV deep-dive → technical probing → wrap."
+    },
+    {
+      "id": "domain_specific_rag_probing",
+      "name": "Probes RAG architecture decisions",
+      "conversation_goal_prompt": "At least 2 questions probe specific RAG/LLM architecture decisions: embedding model choice, chunking strategy, retrieval evaluation methodology, vector DB tradeoffs, or MCP architecture. PASS if 2+ questions ask 'why did you choose X over Y' or 'how did you evaluate X' about specific technologies from the CV."
+    },
+    {
+      "id": "asks_about_benchmarks",
+      "name": "Probes evaluation methodology",
+      "conversation_goal_prompt": "The candidate's CV describes multiple benchmarks and evaluations (4-model embedding comparison, chunking recall, pgvector latency benchmarks). PASS if the interviewer asks at least one question about how something was MEASURED or EVALUATED or what the METRIC was."
+    },
+    {
+      "id": "names_technologies",
+      "name": "References CV technologies by name",
+      "conversation_goal_prompt": "At least 3 questions name specific technologies from the CV (pgvector, Pinecone, Cohere, MCP, BERT, LangChain, etc.). PASS if 3+."
+    },
+    {
+      "id": "one_question_per_turn",
+      "name": "One question per turn",
+      "conversation_goal_prompt": "Exactly one question per turn."
+    },
+    {
+      "id": "no_praise_no_coaching",
+      "name": "No praise, no coaching",
+      "conversation_goal_prompt": "Zero praise/coaching."
+    }
+  ],
+
+  "sim_user": {
+    "first_message_from_agent": true,
+    "end_instruction": "Participate fully. When wrap-up comes, ask about the team's current AI infrastructure, then call [END_CALL].",
+    "new_turns_limit": 26
+  }
+}

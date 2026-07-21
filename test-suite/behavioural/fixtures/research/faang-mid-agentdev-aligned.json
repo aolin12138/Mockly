@@ -1,0 +1,52 @@
+{
+  "case_id": "faang-mid-agentdev-aligned",
+  "generated_at": "2026-07-10T08:49:59.632Z",
+  "projects": [
+    {
+      "name": "Agent orchestration layer at Finch",
+      "description": "Designed a supervisor-worker topology using LangGraph for routing customer-support tickets to specialist agents with structured output routing and a safety layer.",
+      "tech_stack": [
+        "LangGraph",
+        "LangChain",
+        "Python",
+        "DeepSeek",
+        "OpenAI"
+      ],
+      "search_queries": [
+        "LangGraph supervisor worker topology structured output routing tradeoffs",
+        "plan-and-execute vs ReAct agent architecture production challenges"
+      ],
+      "sources": [
+        "https://forum.langchain.com/t/design-of-supervisor-node-in-langraph-which-do-correct-routing-of-user-query/2906",
+        "https://ossaihub.com/code/langgraph-supervisor-worker",
+        "https://focused.io/lab/multi-agent-orchestration-in-langgraph-supervisor-vs-swarm-tradeoffs-and-architecture",
+        "https://laxaar.com/blog/agent-planning-react-vs-plan-and-execute-1749470001700",
+        "https://apxml.com/courses/langchain-production-llm/chapter-2-sophisticated-agents-tools/agent-architectures",
+        "https://openclaw-ai.net/en/blog/ai-agent-architecture-patterns-2026"
+      ]
+    },
+    {
+      "name": "TriageBot",
+      "description": "Open-source LangGraph agent for triaging GitHub issues using ReAct loop with GitHub API tools and a confidence gate to reduce false assignments.",
+      "tech_stack": [
+        "LangGraph",
+        "LangChain",
+        "Python",
+        "GitHub API"
+      ],
+      "search_queries": [
+        "LangGraph ReAct loop confidence gate structured output logprobs",
+        "GitHub issue triage agent tool calling safety production"
+      ],
+      "sources": [
+        "https://www.youtube.com/watch?v=THsGizLHrTs",
+        "https://github.com/langchain-ai/langchain/issues/29668",
+        "https://www.reddit.com/r/LangChain/comments/1j38fca/structured_output_with_langgraph_sucks",
+        "https://www.zenml.io/llmops-database/ai-powered-vulnerability-triage-using-github-security-lab-taskflow-agent",
+        "https://www.linkedin.com/posts/anshumanbhartiya_tldr-version-i-built-a-prototype-of-an-activity-7438468539214254080-g_qp",
+        "https://github.com/rod-trent/SIEMTriage"
+      ]
+    }
+  ],
+  "background_knowledge": "## BACKGROUND KNOWLEDGE\n\n### Agent Orchestration Layer at Finch\n- **Supervisor topology**: LangGraph's supervisor pattern uses a strict star topology — all edges originate at or terminate at the supervisor node. Worker nodes are leaves that never communicate directly with each other. This contrasts with swarm patterns where agents can hand off directly without returning to a central router.\n- **Routing via structured output**: The supervisor routes queries by augmenting an LLM with a schema using `.with_structured_output(...)`, then branching based on the returned field. Conditional edge routing (inspecting state to return the next node label) is the mechanism, not \"smart logic\" in the routing function itself.\n- **Ambiguity handling**: Production supervisors should include a \"clarify\" path — if the query is ambiguous and routing would be guesswork, the supervisor asks for clarification rather than forcing a potentially wrong route.\n- **ReAct vs Plan-and-Execute tradeoff**: ReAct (interleaving reasoning, action, observation) is easier to start with but harder to operate at scale — it burns tokens on long tasks and can loop. Plan-and-Execute (generate full plan upfront, then execute) requires more upfront design but is significantly cheaper and more debuggable for tasks exceeding 5-6 steps.\n- **Handoff cost consideration**: In supervisor topology, a query touching multiple domains requires a round-trip through the supervisor for each handoff (route → specialist → route → specialist = 4 LLM calls), whereas swarm patterns can do direct specialist-to-specialist handoffs (2 calls). This cost tradeoff matters for multi-domain queries.\n\n### TriageBot\n- **Confidence gating via logprobs**: LLM confidence can be measured using log probabilities (logprobs) from the model output. For structured outputs, logprobs can be extracted and used to gate responses — only acting when confidence exceeds a threshold, otherwise escalating or asking for clarification.\n- **Structured output reliability**: LangGraph's ReAct loop benefits from structured outputs for deterministic routing and response parsing. Combining structured output schemas with logprobs enables confidence-gated, precise responses — critical for triage where false positives/negatives have real consequences.\n- **Production triage patterns**: GitHub Security Lab's Taskflow Agent demonstrates a production pattern for automated triage — breaking complex workflows into discrete tasks organized in YAML files, using LLMs to identify patterns (authentication checks, sanitization functions) that static analysis tools miss. This approach discovered ~30 real vulnerabilities in production.\n- **Triage agent scope**: AI triage agents for GitHub (issues, PRs, security alerts) typically automate Tier-1 analyst work — classification, initial assessment, and routing to appropriate human teams. The key architectural challenge is balancing automation speed with accuracy thresholds to avoid misrouting."
+}

@@ -1,0 +1,117 @@
+{
+  "id": "faang_grad_undersold",
+  "tags": ["faang", "grad", "undersold"],
+  "description": "Modest grad candidate whose real experience is stronger than the thin CV. Tests: does the interviewer probe beneath a sparse CV and surface hidden signal (gems) a FAANG loop would value — initiative, leadership, quantified impact, OSS?",
+
+  "config": {
+    "company_preset": "faang",
+    "seniority": "intern",
+    "seniority_label": "grad",
+    "role_title": "Software Engineer (New Grad)",
+    "role_context": "Large-scale consumer products; new-grad SWE hiring loop",
+    "stage": "behavioral",
+    "mode": "behavioral",
+    "duration_min": 30,
+    "session_mode": "practice"
+  },
+
+  "cv_file": "../cvs/faang-grad-undersold.md",
+
+  "persona": {
+    "name": "Rohan Patel",
+    "type": "undersold",
+    "summary": "Genuinely capable but modest; thinks most of what he did was 'not a big deal' so it never made the CV. Does not volunteer achievements — only reveals them when asked direct probing questions about what HE personally did, initiative, or going beyond the brief.",
+    "project_knowledge": [
+      {
+        "cv_item": "Event management web app (capstone) — 'backend features and testing'",
+        "actual_depth": "deep",
+        "can_explain": ["Django model design for recurring events, why they chose server-side rendering, every part of the test suite"]
+      },
+      {
+        "cv_item": "IT Support at Harbourview — 'laptop setup and troubleshooting'",
+        "actual_depth": "deep",
+        "can_explain": ["The full provisioning process and everything he automated about it"]
+      }
+    ],
+    "gems": [
+      {
+        "id": "ci_pipeline",
+        "hidden_fact": "He single-handedly set up the capstone team's CI pipeline (GitHub Actions: lint, test, deploy preview) and wrote all the integration tests after noticing merges kept breaking main. Nobody asked him to.",
+        "cv_status": "CV only says 'backend features and testing'",
+        "reveal_when": "Asked what HE specifically contributed, or about a time he took initiative / fixed a team process."
+      },
+      {
+        "id": "stepped_up_lead",
+        "hidden_fact": "The capstone team lead dropped the course in week 6. Rohan quietly took over coordination — ran the weekly standups, replanned the remaining scope with the client, and redistributed tasks. The team delivered on time.",
+        "cv_status": "Not on CV at all — he doesn't consider it leadership because 'someone had to do it'.",
+        "reveal_when": "Asked about team challenges, conflict, leadership, or how the project stayed on track."
+      },
+      {
+        "id": "provisioning_automation",
+        "hidden_fact": "At Harbourview he wrote Python scripts that automated laptop provisioning end-to-end, cutting setup from ~3 hours to ~20 minutes. The whole IT team (3 people) now uses them for every new hire.",
+        "cv_status": "CV says only 'handle laptop setup for new staff'.",
+        "reveal_when": "Asked what he's proud of at work, about improving a process, or about impact beyond his job description."
+      },
+      {
+        "id": "oss_bugfix",
+        "hidden_fact": "While debugging the capstone project he found a timezone bug in an open-source Django calendar package, wrote the fix with a regression test, and got the PR merged upstream.",
+        "cv_status": "Not on CV — 'it was just a small fix'.",
+        "reveal_when": "Asked about debugging war stories, learning something new, or contributing beyond his own codebase."
+      }
+    ],
+    "hollow_claims": [],
+    "answering_style": "First answers are short, factual, and undersell ('I mostly did backend stuff and testing'). Uses 'we' by default. Only when the interviewer probes specifically — 'what did YOU do', 'tell me about a time you took initiative', 'what are you proud of' — does he reveal the corresponding gem, and even then matter-of-factly, without spin. If never probed, the gems never surface. Never lies; never volunteers."
+  },
+
+  "stage1_checks": {
+    "identity_must_contain_any": ["behavioral interviewer", "behavioural interviewer", "interviewer for"],
+    "identity_must_not_contain": ["output a single JSON", "schema-compliant JSON", "score each dimension", "evaluation report"],
+    "must_reference_entities": ["event management", "Harbourview", "tutor"],
+    "min_entity_references": 2,
+    "must_not_mention": ["React", "Kubernetes", "AWS", "microservices"],
+    "style_rules_must_contain_any": [
+      ["one question at a time", "never ask two questions"],
+      ["do not praise", "no praise", "neutral acknowledgement"]
+    ],
+    "note": "A good probe guide for a sparse CV should plan angles that dig for unlisted specifics (personal contribution, initiative, impact) rather than only restating the thin CV lines."
+  },
+
+  "stage2_criteria": [
+    {
+      "id": "flow_arc_order",
+      "name": "Smooth interview arc in order",
+      "conversation_goal_prompt": "The interview follows this arc in order: (1) greeting/setup, (2) getting to know the candidate broadly, (3) deep-dive into CV experiences, (4) deeper probing, (5) closing/wrap. PASS if phases occur in order without jarring jumps."
+    },
+    {
+      "id": "gems_surfaced",
+      "name": "Hidden gems surfaced by probing",
+      "conversation_goal_prompt": "The candidate has 4 hidden achievements he never volunteers: (1) built the team CI pipeline on his own initiative, (2) took over team coordination when the lead dropped out, (3) automated laptop provisioning from 3h to 20min now used by the whole team, (4) merged an upstream open-source bugfix. PASS if the interviewer's probing causes AT LEAST 2 of these 4 to be revealed in the conversation. FAIL if 0-1 surface (interviewer accepted surface-level answers)."
+    },
+    {
+      "id": "probes_personal_contribution",
+      "name": "Probes 'you' vs 'we' on a sparse CV",
+      "conversation_goal_prompt": "The candidate defaults to 'we' and vague summaries. The interviewer explicitly asks at least twice what the candidate PERSONALLY did or drives past a vague first answer with a specific follow-up. PASS if 2+ such probes occur."
+    },
+    {
+      "id": "one_question_per_turn",
+      "name": "One question per turn",
+      "conversation_goal_prompt": "The interviewer asks exactly one question per turn throughout. PASS if no turn contains two or more distinct questions."
+    },
+    {
+      "id": "no_praise_no_coaching",
+      "name": "No praise, no coaching",
+      "conversation_goal_prompt": "The interviewer never praises answers and never coaches during the session ('you should put that on your CV' is coaching — it belongs in feedback, not the interview). Neutral acknowledgements are fine. PASS if zero praise/coaching utterances."
+    }
+  ],
+
+  "sim_user": {
+    "first_message_from_agent": true,
+    "end_instruction": "Participate for the full arc. If the interviewer signals wrap-up/closing, thank them briefly and call [END_CALL].",
+    "new_turns_limit": 26
+  },
+
+  "feedback_expectations": {
+    "note": "For harness 3 (feedback eval, later): feedback must recommend adding revealed gems to the CV, referencing them specifically.",
+    "must_recommend_cv_additions_for": ["any gem that surfaced in the transcript"]
+  }
+}

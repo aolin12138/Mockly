@@ -1,0 +1,50 @@
+{
+  "case_id": "quant-junior-quantdev-aligned",
+  "generated_at": "2026-07-10T08:50:45.090Z",
+  "projects": [
+    {
+      "name": "PairTradingRL",
+      "description": "Reinforcement learning approach to statistical arbitrage using a PPO agent trained on cointegrated NZX equity pairs, outperforming a baseline distance-based strategy by 14% Sharpe.",
+      "tech_stack": [
+        "Python",
+        "PyTorch",
+        "Gym"
+      ],
+      "search_queries": [
+        "PPO reinforcement learning pair trading entry exit rules",
+        "reward shaping drawdown transaction costs RL trading"
+      ],
+      "sources": [
+        "https://medium.com/@sthanikamsanthosh1994/reinforcement-learning-part-8-proximal-policy-optimization-ppo-for-trading-9f1c3431f27d",
+        "https://towardsdatascience.com/pairs-trading-with-optimized-positions-exit-rules-811fa0c6be91",
+        "https://www.reddit.com/r/reinforcementlearning/comments/1fai2t0/ppo_forex_trading",
+        "https://tr8dr.github.io/RLp2",
+        "https://www.daytrading.com/reinforcement-learning-implementation-strategies",
+        "https://arxiv.org/html/2604.00031v1"
+      ]
+    },
+    {
+      "name": "VolSurfaceVis",
+      "description": "Interactive volatility surface visualizer built with React, D3.js, and Flask, pulling live options data from Interactive Brokers API, with 300+ GitHub stars.",
+      "tech_stack": [
+        "React",
+        "D3.js",
+        "Flask",
+        "Interactive Brokers API"
+      ],
+      "search_queries": [
+        "React D3.js volatility surface visualization architecture",
+        "Interactive Brokers API live options data Flask backend"
+      ],
+      "sources": [
+        "https://rcc.uchicago.edu/content/interactive-data-visualization-d3js-and-react",
+        "https://www.reddit.com/r/reactjs/comments/rtthko/data_visualization_in_react_using_d3js",
+        "https://www.youtube.com/watch?v=YKDIsXA4OAc",
+        "https://www.reddit.com/r/algotrading/comments/alf4tc/interactive_brokers_api_options_data",
+        "https://www.interactivebrokers.com/campus/ibkr-quant-news/handling-options-chains",
+        "https://www.pyquantnews.com/the-pyquant-newsletter/download-options-chains-data-ibkr-api"
+      ]
+    }
+  ],
+  "background_knowledge": "## Background Knowledge for Interviewer\n\n### PairTradingRL\n\n- **PPO for Trading**: Proximal Policy Optimization is an on-policy RL algorithm that uses a clipping function to constrain policy updates within a trust region, making training more stable than vanilla policy gradient methods. This stability is particularly valuable in financial environments where reward signals can be noisy and non-stationary.\n\n- **Mean Reversion & Position Optimization**: Pairs trading exploits mean reversion in the spread between two correlated assets. A key architectural challenge is optimizing not just entry/exit timing but also position sizing—adjusting positions dynamically to enhance mean reversion characteristics rather than treating them as fixed.\n\n- **Reward Engineering**: Production RL trading systems require carefully decomposed reward functions that go beyond simple profit. Common components include: profit/loss, transaction cost penalties (spread, commission, slippage), drawdown penalties to discourage excessive risk, and sometimes risk-adjusted metrics like Sharpe ratio. The reward structure directly shapes agent behavior.\n\n- **Environment Realism**: A critical architectural consideration is anti-lookahead semantics—observations at time t, orders executed at t+1, positions marked at t+1. Realistic environments must model friction (spread, commissions, slippage), margin requirements, and liquidation risk. Without these, agents learn strategies that exploit unrealistic assumptions.\n\n- **Action Space Design**: There's a fundamental tradeoff between action space granularity and learning efficiency. A 10-action discrete interface (scaling, reduction, closure, reversal) with legal-action masking (enforcing margin constraints) can improve expressiveness but may increase turnover and reduce risk-adjusted returns compared to simpler 3-action approaches.\n\n### VolSurfaceVis\n\n- **React + D3.js Integration Pattern**: The standard architectural pattern is using React for component lifecycle, state management, and DOM updates, while delegating visualization rendering to D3.js. React manages the \"what\" (data, state, interactivity), D3 manages the \"how\" (scales, axes, transitions, SVG rendering). This avoids conflicts where both frameworks try to control the same DOM.\n\n- **Options Data via Interactive Brokers**: The `ib_insync` Python library wraps the native IB API, providing an async-friendly interface for retrieving options chains. Key data retrieval steps: define underlying stock contract → qualify the contract → request option chain → filter by trading class and exchange → retrieve market data snapshots for each contract.\n\n- **Options Chain Visualization Challenges**: Options data has multiple dimensions (strike price, expiration date, implied volatility, bid/ask, Greeks) that must be mapped to visual encodings. Common approaches include 3D surface plots (strike × expiration → implied volatility) or heatmaps. Interactivity (hover, zoom, filtering) is essential for exploring this high-dimensional space.\n\n- **Flask as Data Middleware**: Flask serves as a lightweight API layer between the IB data source and the React frontend. It handles authentication, data caching, and transformation of IB's contract-based data model into JSON consumable by the frontend. Security considerations include managing API credentials and rate limiting."
+}

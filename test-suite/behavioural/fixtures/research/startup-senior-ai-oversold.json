@@ -1,0 +1,81 @@
+{
+  "case_id": "startup-senior-ai-oversold",
+  "generated_at": "2026-07-10T08:48:55.309Z",
+  "projects": [
+    {
+      "name": "Multi-agent LLM orchestration platform",
+      "description": "Architected and deployed a multi-agent LLM orchestration platform serving 50K+ daily requests with 99.9% uptime, featuring a proprietary agent-routing algorithm.",
+      "tech_stack": [
+        "Python",
+        "PyTorch",
+        "TensorFlow",
+        "JAX",
+        "LangChain",
+        "LlamaIndex",
+        "Pinecone",
+        "Weaviate",
+        "Milvus",
+        "Qdrant",
+        "FAISS",
+        "Kubernetes",
+        "Docker",
+        "AWS",
+        "GCP",
+        "Ray",
+        "MLflow",
+        "Weights & Biases",
+        "Kafka"
+      ],
+      "search_queries": [
+        "multi-agent LLM orchestration architecture tradeoffs",
+        "agent routing algorithm design production challenges"
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/dynamics365/guidance/resources/contact-center-multi-agent-architecture-design",
+        "https://www.youtube.com/watch?v=2czYyrTzILg",
+        "https://gurusup.com/blog/agent-orchestration-patterns",
+        "https://www.sciencedirect.com/science/article/abs/pii/S0167926025001907",
+        "https://medium.com/@francotesei/routing-how-ai-agents-make-decisions-3351d45a9914",
+        "https://milvus.io/ai-quick-reference/what-are-the-challenges-of-designing-multiagent-systems"
+      ]
+    },
+    {
+      "name": "Custom RAG infrastructure with vector database",
+      "description": "Built core RAG infrastructure from scratch with a custom vector database optimized for multi-modal embeddings, achieving sub-10ms retrieval latency at 100M+ document scale.",
+      "tech_stack": [
+        "Python",
+        "PyTorch",
+        "TensorFlow",
+        "JAX",
+        "LangChain",
+        "LlamaIndex",
+        "Pinecone",
+        "Weaviate",
+        "Milvus",
+        "Qdrant",
+        "FAISS",
+        "Kubernetes",
+        "Docker",
+        "AWS",
+        "GCP",
+        "Ray",
+        "MLflow",
+        "Weights & Biases",
+        "Kafka"
+      ],
+      "search_queries": [
+        "custom vector database multi-modal embeddings latency optimization",
+        "RAG infrastructure scaling 100M documents production challenges"
+      ],
+      "sources": [
+        "https://milvus.io/ai-quick-reference/how-do-you-optimize-multimodal-search-for-low-latency",
+        "https://medium.com/@tenyks_blogger/multi-modal-image-search-with-embeddings-vector-dbs-cee61c70a88a",
+        "https://www.youtube.com/watch?v=3WUobZryyok",
+        "https://docs.anyscale.com/rag/production-scalability",
+        "https://medium.com/@visrow/how-to-design-a-rag-pipeline-for-10-million-documents-with-zero-hallucination-live-demo-057e37bcdbf6",
+        "https://zilliz.com/blog/infrastructure-challenges-in-scaling-rag-with-custom-ai-models"
+      ]
+    }
+  ],
+  "background_knowledge": "## Background Knowledge for Interviewer\n\n### Multi-agent LLM Orchestration Platform\n\n- **Orchestration pattern selection is the primary architectural decision.** Five main patterns exist in production: orchestrator-worker (centralized fan-out), swarm (decentralized emergent coordination), mesh (peer-to-peer), hierarchical (tree-structured delegation), and pipeline (sequential stages). Each has distinct trade-offs in latency, fault tolerance, scalability ceiling, and debugging complexity. Hybrid patterns are common.\n\n- **Centralized vs. decentralized coordination creates fundamental tension.** Orchestrator-worker is most widely deployed for its simplicity, but the orchestrator becomes a single point of failure and bottleneck. Decentralized patterns (swarm, mesh) improve fault tolerance but introduce silent handoff failures, stale data, and untraceable decisions — distributed systems problems unrelated to LLM quality.\n\n- **Agent routing and handoff protocols are critical infrastructure.** Production systems need adaptive routing to direct inputs to specialized agents, with protocols like contract net (agents bid for tasks) or publish-subscribe systems. Without proper routing, systems become rigid and can only handle one input type. State management, data contracts, and failure modes must be explicitly designed.\n\n- **Observability becomes a first-class concern at scale.** As agent count grows, coordination problems multiply. Teams need proper observability to trace decisions, detect silent failures, and debug handoff issues. This is an infrastructure layer problem that many teams overlook when moving from single-agent to multi-agent systems.\n\n### Custom RAG Infrastructure with Vector Database\n\n- **Latency optimization requires end-to-end architectural thinking.** Three areas matter: efficient preprocessing (lightweight embedding models like DistilBERT/MobileNet), optimized indexing/retrieval (sharding by content type, concurrent shard search), and infrastructure tuning (co-locating embedding models and vector indexes on same nodes to avoid network overhead).\n\n- **Scaling to millions of documents breaks naive approaches.** The simple \"embeddings → similarity search → LLM\" pipeline fails at 1M+ documents. Production systems need distributed data processing (e.g., Ray Data), heterogeneous hardware pipelines (assigning different stages to appropriate compute), and decoupled embedding generation from vector database operations.\n\n- **Multi-modal search requires shared embedding spaces.** Cross-modal retrieval (text-to-image, image-to-text) needs models like CLIP that align different modalities in a common vector space. For hybrid queries combining metadata filters with vector search, apply metadata filters first to narrow the dataset, then run approximate nearest neighbor on the reduced subset.\n\n- **Infrastructure reliability is a separate engineering challenge.** Moving from prototype to production introduces challenges in data processing scale, retrieval latency, inference throughput, and operational reliability. Managed infrastructure and distributed systems are essential for handling large-scale data while maintaining low hallucination rates through proper chunking, retrieval, and citation strategies."
+}

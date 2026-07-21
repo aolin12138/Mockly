@@ -1,0 +1,64 @@
+{
+  "case_id": "faang-senior-dist-oversold",
+  "generated_at": "2026-07-10T08:50:30.658Z",
+  "projects": [
+    {
+      "name": "EventFlow",
+      "description": "Open-source distributed event bus with at-least-once delivery, dead-letter queues, schema registry, and multi-tenancy.",
+      "tech_stack": [
+        "Go",
+        "Kafka",
+        "Kubernetes",
+        "Docker",
+        "Postgres",
+        "Redis",
+        "gRPC",
+        "Protocol Buffers"
+      ],
+      "search_queries": [
+        "Go Kafka event bus dead-letter queue architecture",
+        "distributed event bus schema registry multi-tenancy tradeoffs"
+      ],
+      "sources": [
+        "https://www.conduktor.io/glossary/dead-letter-queues-for-error-handling",
+        "https://www.linkedin.com/posts/gunnar-morling_apachekafka-activity-7341860479910195200-G0c2",
+        "https://www.confluent.io/learn/kafka-dead-letter-queue",
+        "https://www.linkedin.com/pulse/multi-tenant-event-streaming-architecture-saas-platforms-datatroops-zioqc",
+        "https://keen.io/blog/multi-tenant-vs-dedicated-event-streaming",
+        "https://abp.io/community/articles/a-developers-guide-to-distributed-event-buses-in-.net-oehl23kb"
+      ]
+    },
+    {
+      "name": "Real-time event processing platform at DataFlow Systems",
+      "description": "Architected and led delivery of a real-time event processing platform with 99.99% uptime SLA, using event sourcing and CQRS on multi-region Kubernetes.",
+      "tech_stack": [
+        "Kafka",
+        "Kubernetes",
+        "Docker",
+        "Terraform",
+        "AWS",
+        "GCP",
+        "Postgres",
+        "Redis",
+        "Cassandra",
+        "Elasticsearch",
+        "OpenTelemetry",
+        "gRPC",
+        "Protocol Buffers"
+      ],
+      "search_queries": [
+        "event sourcing CQRS multi-region Kubernetes challenges",
+        "scaling Kafka ingestion pipeline binary protocol TCP"
+      ],
+      "sources": [
+        "https://groups.google.com/g/dddcqrs/c/Rszj12RwBtA",
+        "https://www.kloia.com/blog/event-sourcing/cqrs-with-hazelcast",
+        "https://builder.aws.com/content/2dqfVdKPEO1Q917YG25q8F3Y2QW/scaling-distributed-systems-with-event-sourcing-cqrs-and-aws-serverless",
+        "https://docs.aklivity.io/zilla/next/concepts/protocol/kafka",
+        "https://openmetal.io/resources/blog/building-high-throughput-data-ingestion-pipelines-with-kafka-on-openmetal",
+        "https://mohitmishra786687.medium.com/why-kafka-chose-tcp-over-http-a-technical-analysis-5b1e71f9251b"
+      ]
+    }
+  ],
+  "background_knowledge": "## EventFlow\n- **Dead Letter Queue (DLQ) Pattern**: DLQs are a critical resilience mechanism in Kafka-based systems. Failed messages are routed to a separate topic after exhausting retries, preventing them from blocking the main processing pipeline. Key tradeoff: DLQ-ing messages with the same key can violate Kafka's ordering guarantees when retried later, as subsequent events may \"pass\" the failed one.\n- **Multi-tenancy in Event Bus Architecture**: Balancing shared infrastructure (cost efficiency) vs. tenant isolation (security/compliance). Key architectural decisions include shared vs. dedicated schemas, tenant ID-based data isolation, and how schema registry handles versioning across tenants.\n- **Schema Registry Integration**: Schema validation failures are a common DLQ trigger. Managing schema evolution (backward/forward compatibility) across distributed consumers is a core challenge, especially when different services consume events at different versions.\n- **gRPC vs. Kafka for Internal Communication**: gRPC (with Protocol Buffers) is typically used for synchronous, request-response patterns, while Kafka handles asynchronous event streaming. The architectural decision involves latency requirements, coupling, and whether eventual consistency is acceptable.\n- **Kubernetes Deployment Considerations**: Running Kafka on Kubernetes introduces challenges around stateful workload management, persistent volume claims, pod-to-broker affinity, and handling broker rebalancing during rolling updates.\n\n## Real-time event processing platform at DataFlow Systems\n- **Event Sourcing + CQRS on Multi-Region Kubernetes**: Core challenge is maintaining event ordering and consistency across regions. Zero-downtime deployments require careful event versioning strategies — either two-phase deployments (consumers first, producers last) or running parallel read model versions during transitions.\n- **Blue/Green vs. Rolling Updates for Event-Driven Systems**: Standard Kubernetes deployment strategies may not suffice. Blue/green deployments allow clean cutover but require managing two complete environments. Rolling updates risk mixing old/new event producers and consumers, potentially corrupting read models.\n- **Kafka's Custom TCP Protocol**: Kafka uses a binary protocol over TCP (not HTTP) for high-throughput, low-latency communication. This architectural choice enables efficient handling of millions of messages/second but adds complexity for protocol bridging (e.g., HTTP/gRPC to Kafka).\n- **Multi-Region Data Consistency**: Eventual consistency across regions is the norm, but tradeoffs include conflict resolution strategies, cross-region replication latency, and handling of regional failures without data loss.\n- **Observability with OpenTelemetry**: Distributed tracing across Kafka consumers, gRPC services, and read models (Cassandra, Elasticsearch) is essential for debugging event processing failures and understanding end-to-end latency in a complex topology.\n- **Read Model Materialization**: CQRS means maintaining multiple read models (e.g., Cassandra for operational queries, Elasticsearch for search). Keeping these eventually consistent with the event store requires careful handling of idempotency, ordering, and replay scenarios."
+}

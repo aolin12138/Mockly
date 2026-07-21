@@ -1,0 +1,17 @@
+{
+  "id": "short_transcript_test",
+  "personaType": "synthetic",
+  "role": "Software Engineer (Junior) - FAANG",
+  "description": "Short transcript — insufficient data test",
+  "cvText": "CS graduate with internship at Kea Systems. Built shipment tracking API using Rails, PostgreSQL. Optimized N+1 queries, reduced p95 latency by 40%. Experience with Docker, Redis, Kafka.",
+  "transcript": [
+    {"who": "INTERVIEWER", "text": "Hi, tell me about a challenging technical problem you solved."},
+    {"who": "CANDIDATE", "text": "I optimized some database queries at my internship and it made things faster."},
+    {"who": "INTERVIEWER", "text": "Can you elaborate on what specific techniques you used?"},
+    {"who": "CANDIDATE", "text": "I used an index and it helped a lot."}
+  ],
+  "expected": {
+    "insufficient_data": true,
+    "max_dimension_score": 2
+  }
+}

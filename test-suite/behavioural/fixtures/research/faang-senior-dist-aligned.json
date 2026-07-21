@@ -1,0 +1,51 @@
+{
+  "case_id": "faang-senior-dist-aligned",
+  "generated_at": "2026-07-10T08:50:15.137Z",
+  "projects": [
+    {
+      "name": "OrbitDB Shard-Rebalancing Protocol",
+      "description": "Designed a gossip-based shard-rebalancing protocol that reduced rebalance downtime from minutes to sub-second using vector clocks and two-phase handoff.",
+      "tech_stack": [
+        "Rust",
+        "Kafka",
+        "Redpanda",
+        "vector clocks",
+        "gossip protocol"
+      ],
+      "search_queries": [
+        "gossip-based shard rebalancing vector clock conflict resolution",
+        "two-phase handoff protocol distributed key-value store tradeoffs"
+      ],
+      "sources": [
+        "https://www.youtube.com/watch?v=W1PgB4sF8JE",
+        "https://gist.github.com/alicarbonteq/e889e1358672914ba25a291ed4637c5f",
+        "https://www.waitingforcode.com/big-data-algorithms/conflict-resolution-distributed-applications-vector-clocks/read",
+        "https://medium.com/@abhi.venkata54/designing-distributed-key-value-stores-trade-offs-techniques-and-tuning-544c862e0bbc",
+        "https://blog.algomaster.io/p/designing-a-distributed-key-value-store",
+        "http://www.scs.stanford.edu/20sp-cs244b/projects/RAFT%20based%20Key-Value%20Store%20with%20Transaction%20Support.pdf"
+      ]
+    },
+    {
+      "name": "ZeptoPay Transaction-Idempotency Service",
+      "description": "Built a Redis-backed deduplication layer with a three-state state machine to guarantee exactly-once processing across payment retries.",
+      "tech_stack": [
+        "Redis",
+        "state machine",
+        "idempotency key",
+        "TTL-based reaper"
+      ],
+      "search_queries": [
+        "Redis idempotency key state machine exactly-once processing",
+        "distributed transaction idempotency TTL reaper edge cases"
+      ],
+      "sources": [
+        "https://oneuptime.com/blog/post/2026-03-31-redis-exactly-once-processing-streams/view",
+        "https://backendbytes.com/articles/idempotency-patterns-distributed-systems",
+        "https://www.reddit.com/r/softwarearchitecture/comments/1u6lfkk/how_do_you_handle_idempotency_in_eventdriven",
+        "https://blog.bytedoodle.com/idempotency-in-distributed-transaction-systems",
+        "https://www.youtube.com/watch?v=qqkMpwmGv7U"
+      ]
+    }
+  ],
+  "background_knowledge": "## Background Knowledge for Interviewer\n\n### OrbitDB Shard-Rebalancing Protocol\n\n- **Vector clocks vs. Last-Write-Wins (LWW):** Vector clocks track per-node version history, enabling causal ordering and conflict detection. LWW is simpler but can silently drop writes. The tradeoff is between correctness (vector clocks) and operational simplicity (LWW). In shard rebalancing, vector clocks help detect concurrent updates during data migration.\n\n- **Two-phase handoff protocols:** Used in distributed key-value stores to transfer leadership or data ownership between nodes while maintaining consistency. The protocol involves a preparation phase (quarantine data) and a commit phase (transfer ownership). Key challenge: balancing availability during handoff against the risk of serving stale data.\n\n- **Gossip-based membership and state dissemination:** Nodes periodically exchange metadata (e.g., shard ownership, vector clock summaries) with random peers. This is eventually consistent but avoids a single point of failure. Tradeoff: convergence speed vs. network overhead — faster gossip means more bandwidth.\n\n- **Kafka/Redpanda as a rebalancing coordination log:** Using a partitioned log to record rebalancing decisions (e.g., \"shard X moves from node A to B\") provides durability and a total order of events. This simplifies crash recovery but introduces a dependency on the log's availability and throughput.\n\n- **Common production pitfalls in shard rebalancing:** Thundering herd (all nodes rebalance simultaneously), data inconsistency during migration (reads hitting both old and new owners), and tombstone buildup from moved data. Vector clocks help detect conflicts but don't prevent them — the system must have a merge strategy.\n\n### ZeptoPay Transaction-Idempotency Service\n\n- **Exactly-once is impossible — aim for at-least-once + idempotency:** No distributed system guarantees exactly-once delivery. The practical approach is to make operations idempotent so that retries produce the same result. The idempotency key (client-generated UUID) is the critical mechanism.\n\n- **Idempotency key + database constraint must be atomic:** A Redis SETNX check alone is insufficient — the idempotency key and the business operation must be in the same transaction (e.g., using Lua scripts or database constraints). Otherwise, a race condition can cause double processing.\n\n- **TTL-based reaper for idempotency key cleanup:** Storing processed keys indefinitely causes storage bloat. A TTL-based reaper deletes old keys after a configurable window. Key design decision: TTL must match the maximum retry window of clients — too short causes duplicate processing, too long wastes storage (e.g., ~415GB/day at 10K req/s).\n\n- **State machine for idempotent processing:** Modeling each transaction as a state machine (e.g., PENDING → COMPLETED → FAILED) allows the system to return the stored response on retries without re-executing the operation. The state machine must be deterministic and crash-recoverable.\n\n- **Common production pitfalls:** Clock skew between services (affects TTL-based cleanup), idempotency key collision (use UUIDv4 or server-generated keys), and the \"zombie\" problem where a delayed retry arrives after the TTL expired, causing a new duplicate transaction."
+}

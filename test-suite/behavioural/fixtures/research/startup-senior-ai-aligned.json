@@ -1,0 +1,54 @@
+{
+  "case_id": "startup-senior-ai-aligned",
+  "generated_at": "2026-07-10T08:51:02.765Z",
+  "projects": [
+    {
+      "name": "Retrieval Pipeline for Legal RAG",
+      "description": "Designed and built the end-to-end retrieval pipeline for a legal-domain RAG system, including embedding model selection, chunking strategy, hybrid search, and query rewriting.",
+      "tech_stack": [
+        "Cohere v3",
+        "text-embedding-3-large",
+        "E5-mistral",
+        "BGE-M3",
+        "BM25",
+        "Llama-3-8B",
+        "pgvector",
+        "IVFFlat",
+        "Pinecone"
+      ],
+      "search_queries": [
+        "Cohere v3 vs OpenAI embedding legal RAG tradeoffs",
+        "pgvector IVFFlat vs Pinecone latency tradeoffs production"
+      ],
+      "sources": [
+        "https://www.zudyog.com/blog/embedding-models-comparison-guide",
+        "https://www.linkedin.com/posts/sarojkumarswain-dev_rag-llm-ai-activity-7469417059861504000-8sSK",
+        "https://www.grizzlypeaksoftware.com/library/embedding-model-comparison-openai-vs-cohere-vs-open-source-we1f6fgu",
+        "https://www.kalviumlabs.ai/blog/vector-databases-compared-pgvector-pinecone-qdrant-weaviate",
+        "https://www.tigerdata.com/blog/pgvector-vs-pinecone",
+        "https://www.jusdb.com/blog/vector-databases-comparison-pgvector-pinecone-weaviate"
+      ]
+    },
+    {
+      "name": "JurisMCP",
+      "description": "An MCP server providing structured access to NZ legislation for LLMs, indexing 12,000+ statutes to reduce hallucinated case law.",
+      "tech_stack": [
+        "MCP",
+        "Python"
+      ],
+      "search_queries": [
+        "MCP server architecture tradeoffs vs REST API",
+        "MCP tool interface design for coding agents"
+      ],
+      "sources": [
+        "https://www.explorium.ai/blog/building-ai-agents/mcp-vs-rest-api-for-ai-agents-how-to-connect-b2b-data-to-your-agent",
+        "https://www.kai-waehner.de/blog/2026/04/10/mcp-vs-rest-http-api-vs-kafka-the-architects-guide-to-agentic-ai-integration",
+        "https://www.apideck.com/blog/mcp-vs-api",
+        "https://www.anthropic.com/engineering/code-execution-with-mcp",
+        "https://modelcontextprotocol.io/docs/develop/build-with-agent-skills",
+        "https://workos.com/blog/mcp-ui-a-technical-deep-dive-into-interactive-agent-interfaces"
+      ]
+    }
+  ],
+  "background_knowledge": "## Background Knowledge for Interviewer\n\n### Retrieval Pipeline for Legal RAG\n\n- **Embedding model selection involves critical tradeoffs**: OpenAI's text-embedding-3-large handles up to 8,191 tokens (good for large legal docs) vs Cohere v3's 512-token limit. Cohere offers specialized \"search document\" vs \"search query\" modes that can improve retrieval quality for asymmetric search tasks. Open-source models like BGE-M3 and E5-Mistral offer cost savings and self-hosting but typically lag on MTEB benchmarks.\n\n- **Vector database choice depends on scale and operational constraints**: pgvector (with pgvectorscale extension) runs inside existing PostgreSQL, eliminating a separate managed service — cost-effective up to ~2M vectors. Pinecone delivers sub-20ms p95 latency at 5M+ vectors but costs 3-8x more. Qdrant offers best throughput for self-hosted setups (~850 QPS at p95 ~8ms on 1M vectors). The pgvector+Pinecone decision is a common architectural fork point.\n\n- **Hybrid search (dense + sparse) is standard practice for legal RAG**: BM25 provides exact keyword matching that dense embeddings miss — critical for legal terminology, statute citations, and proper names. Combining both retrieval signals (often via reciprocal rank fusion) is the production baseline, not an advanced technique.\n\n- **Index type matters for latency/recall tradeoffs**: IVFFlat (pgvector default) requires careful tuning of `lists` and `probes` parameters. It's approximate — recall degrades if poorly configured. For legal use cases where missing a relevant document is costly, teams often need to validate recall empirically rather than relying on default settings.\n\n- **Matryoshka embedding models (like text-embedding-3) enable storage-cost scaling**: These models produce nested vector representations where smaller sub-vectors retain most semantic information. Teams can store truncated vectors (e.g., 256 dimensions instead of 3072) for initial retrieval, then re-rank with full vectors — cutting storage costs dramatically with minimal recall loss.\n\n- **MTEB leaderboard scores don't predict domain-specific performance**: General benchmarks can mislead for legal RAG. Teams should build domain-specific evaluation sets with legal queries and documents, measuring recall@k and precision on their actual use case rather than relying on published benchmarks.\n\n---\n\n### JurisMCP\n\n- **MCP is an orchestration layer, not a REST API replacement**: MCP enables AI agents to autonomously discover available tools and data schemas via a server, then decide which to invoke based on task context. REST APIs require developers to hardcode endpoints — MCP shifts that discovery responsibility to the agent itself, solving the M×N integration problem for AI applications.\n\n- **MCP and REST APIs coexist in production architectures**: They solve different problems at different layers. REST handles stateless data operations; MCP provides the agentic discovery and stateful session management layer on top. Treating them as competing options produces systems that are fragile where they need to be reliable.\n\n- **Code execution with MCP is an emerging pattern for efficiency**: Rather than making multiple tool calls, agents can write and execute code to batch operations, filter data before it reaches the LLM, and run complex logic in a single step. This requires sandboxed execution environments with resource limits and monitoring — a non-trivial production concern.\n\n- **Agent Skills encode domain knowledge for MCP server design**: These are portable instruction sets (SKILL.md plus reference directories) that guide AI coding assistants through design decisions like deployment model, tool patterns, and authentication. They represent a shift toward reusable, agent-readable documentation rather than traditional API docs.\n\n- **MCP-UI extends the protocol for interactive agent interfaces**: An experimental extension that brings interactive web components (via `UIResource` interface) directly into agent conversations. Uses Shopify's Remote DOM library to render JavaScript-driven interfaces matching the host application's design system — enabling richer human-AI interactions beyond text."
+}
