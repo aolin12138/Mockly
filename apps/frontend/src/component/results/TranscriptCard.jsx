@@ -54,9 +54,9 @@ export default function TranscriptCard({ transcript, audio, audioRef, delay = 0.
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold uppercase tracking-wide">
                     {m.role === 'user' ? (
-                      <span className="text-emerald-700">You</span>
+                      <span className="text-emerald-700 dark:text-emerald-400">You</span>
                     ) : (
-                      <span className="text-sky-700">Interviewer</span>
+                      <span className="text-sky-700 dark:text-sky-400">Interviewer</span>
                     )}
                   </span>
                   <div className="flex items-center gap-2">

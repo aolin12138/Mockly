@@ -397,18 +397,6 @@ const Dashboard = () => {
     const recentThree = sortedSessions.slice(0, 3);
 
     // Detect if feedback is technical or behavioural based on structure
-    const isTechnicalFeedback = (feedback) => {
-      if (!feedback) return false;
-      // Technical feedback has: outcome, dimensions (array with label/key), codeAssessment, actionPlan
-      // Behavioural feedback has: overall_score, dimension_scores, areas_for_improvement
-      return (
-        feedback.outcome !== undefined ||
-        feedback.codeAssessment !== undefined ||
-        feedback.actionPlan !== undefined ||
-        (Array.isArray(feedback.dimensions) && feedback.dimensions.length > 0)
-      );
-    };
-
     const normalizeFeedback = (rawFeedback) => {
       if (!rawFeedback) return null;
 
@@ -550,7 +538,7 @@ const Dashboard = () => {
 
     const parseSession = (s) => {
       const feedback = normalizeFeedback(s.feedback);
-      const isTechnical = s.interviewType === 'Technical' || (feedback && isTechnicalFeedback(feedback));
+      const isTechnical = s.interviewType === 'Technical';
       const sessionStatus = (s.status || (feedback ? 'completed' : 'pending')).toLowerCase();
       const isPending = sessionStatus === 'pending';
       const isCancelled = sessionStatus === 'cancelled';
@@ -630,15 +618,20 @@ const Dashboard = () => {
       const fb = session.feedback;
       if (!fb) return;
 
-      // --- From dimension scores (low = improvement, high = strength) ---
+      // --- From dimension scores (low score areas → use actual notes) ---
       const dims = session.normalizedDimensions || [];
+      const rawDims = fb.dimension_scores || {};
       dims.forEach(dim => {
-        const tag = tagFromDimension(dim.label);
         const pct = dim.originalScore || 0;
         if (pct < 60) {
-          improvements.push({ id: `${session.id}-dim-${tag}`, category: tag, task: `Improve ${tag.toLowerCase()} (${pct}%)`, priority: pct < 40 ? 'High' : 'Medium', source: 'dimension' });
+          // Try to use the actual note from dimension_scores
+          const raw = rawDims[dim.label.toLowerCase().replace(/\s+/g, '_')];
+          const note = (typeof raw === 'object' && raw.note) ? raw.note :
+                       (typeof raw === 'string') ? raw : null;
+          const task = note || `Improve ${dim.label.toLowerCase()} (${pct}%)`;
+          improvements.push({ id: `${session.id}-dim-${dim.label}`, category: dim.label, task, priority: pct < 40 ? 'High' : 'Medium', source: 'dimension' });
         } else if (pct >= 80) {
-          strengths.push({ id: `${session.id}-str-${tag}`, category: tag, task: `Strong ${tag.toLowerCase()} (${pct}%)`, source: 'dimension' });
+          strengths.push({ id: `${session.id}-str-${dim.label}`, category: dim.label, task: `Strong ${dim.label.toLowerCase()} (${pct}%)`, source: 'dimension' });
         }
       });
 
@@ -652,10 +645,16 @@ const Dashboard = () => {
         }
       });
 
-      // --- From areas_for_improvement (behavioural) ---
+      // --- From areas_for_improvement (behavioural: string[]; technical: object[])
       const areas = fb.areas_for_improvement || [];
       areas.forEach((area, idx) => {
-        improvements.push({ id: `${session.id}-afi-${idx}`, category: tagFromDimension(area.dimension), task: area.suggestion || area.dimension, priority: area.priority === 'high' ? 'High' : 'Medium', source: 'areaForImprovement' });
+        if (typeof area === 'string') {
+          // Behavioural: plain string
+          improvements.push({ id: `${session.id}-afi-${idx}`, category: 'Improvement', task: area, priority: 'Medium', source: 'areaForImprovement' });
+        } else {
+          // Technical: {dimension, suggestion, priority}
+          improvements.push({ id: `${session.id}-afi-${idx}`, category: tagFromDimension(area.dimension), task: area.suggestion || area.description || String(area), priority: area.priority === 'high' ? 'High' : 'Medium', source: 'areaForImprovement' });
+        }
       });
 
       // --- From actionPlan (technical) ---
@@ -1114,7 +1113,7 @@ const Dashboard = () => {
                                       </span>
                                       <span className="text-xs text-slate-500 dark:text-slate-600 flex items-center gap-1">
                                         <Clock size={11} />
-                                        {new Date(session.createdAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        {new Date(session.createdAt).toLocaleString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                       </span>
                                       {session.duration > 0 && (
                                         <span className="text-xs text-slate-500 dark:text-slate-600">

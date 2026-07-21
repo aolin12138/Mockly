@@ -2,11 +2,12 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Clipboard } from 'lucide-react';
 
 import { LoadingPage } from './LoadingPage';
 import { SAMPLE_FEEDBACK } from './constants';
+import { useTheme } from '../../context/ThemeContext';
 
 // Shared results components
 import AmbientBackground from '../results/AmbientBackground';
@@ -37,6 +38,23 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000
 const FEEDBACK_POLL_INTERVAL_MS = 5_000;
 const FEEDBACK_POLL_MAX_ATTEMPTS = 36;
 const FEEDBACK_SSE_TIMEOUT_MS = 3 * 60 * 1000;
+
+// Convert dimension_scores (object or array) to the array format components expect
+function normalizeDimensionScores(raw) {
+  if (Array.isArray(raw)) return raw.map(d => ({
+    dimension: d.name || d.dimension || '',
+    score: d.score || 0,
+    evidence: Array.isArray(d.evidence) ? d.evidence : Array.isArray(d.observations) ? d.observations : [{ observation: d.note || '' }],
+  }));
+  if (raw && typeof raw === 'object') {
+    return Object.entries(raw).map(([name, val]) => ({
+      dimension: name,
+      score: typeof val === 'object' ? (val.score || 0) : (val || 0),
+      evidence: typeof val === 'object' ? [{ observation: val.note || '' }] : [{ observation: '' }],
+    }));
+  }
+  return [];
+}
 
 function hasUsableFeedbackPayload(rawFeedback) {
   if (rawFeedback == null) return false;
@@ -88,8 +106,27 @@ function transformFeedbackData(feedbackData) {
       recommendation: summary.recommendation || feedback.overall_recommendation || null,
       readiness: summary.readiness || null,
     },
-    dimensionScores: feedback.dimension_scores || [],
-    answerBreakdown: feedback.answer_breakdown || [],
+    dimensionScores: normalizeDimensionScores(feedback.dimension_scores || feedback.dimensions || {}),
+    answerBreakdown: (feedback.answer_breakdown || feedback.star_examples || []).map(se => {
+      // If already in answer_breakdown format, pass through
+      if (se.star && typeof se.star === 'object') return se;
+      // Convert star_examples format to answer_breakdown format
+      const starStr = se.rewritten_star || '';
+      const parsed = {};
+      for (const label of ['Situation', 'Task', 'Action', 'Result']) {
+        const re = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n(?:${['Situation','Task','Action','Result'].join('|')}):|$)`, 'i');
+        const m = starStr.match(re);
+        parsed[label.toLowerCase()] = m ? m[1].trim() : '';
+      }
+      return {
+        question: se.question || '',
+        quality: se.worth_rewriting ? 'weak' : 'strong',
+        domain: se.domain || null,
+        originalAnswer: se.original_answer || '',
+        star: parsed,
+        observation: se.why || '',
+      };
+    }),
     patterns: feedback.patterns || [],
     highlights: feedback.highlights
       ? {
@@ -107,14 +144,35 @@ function transformFeedbackData(feedbackData) {
     roadmap: feedback.roadmap || null,
     interviewTips: feedback.interview_tips || [],
     praiseWorthy: feedback.praise_worthy || [],
-    transcript: Array.isArray(transcript)
-      ? transcript.map((msg, index) => ({
+    insufficientData: feedback.insufficient_data || false,
+    // Research resources are distributed into their sections (project/gap/interview);
+    // interviewPrepResources feeds the Interview Tips section.
+    interviewPrepResources: feedback.interview_prep_resources || [],
+    transcript: (() => {
+      // Already an array of {role, text} — pass through directly
+      if (Array.isArray(transcript)) {
+        return transcript.map((msg, index) => ({
           id: index + 1,
           role: msg.role === 'agent' || msg.role === 'assistant' ? 'assistant' : 'user',
           text: msg.text || msg.message || '',
           timestart: msg.timestart ?? null,
-        }))
-      : null,
+        }));
+      }
+      // Legacy string format: parse INTERVIEWER/CANDIDATE lines
+      if (typeof transcript === 'string' && transcript.trim()) {
+        const turns = [];
+        const lines = transcript.split(/\n(?=INTERVIEWER:|CANDIDATE:)/);
+        for (const line of lines) {
+          if (line.startsWith('INTERVIEWER:')) {
+            turns.push({ role: 'assistant', text: line.replace(/^INTERVIEWER:\s*/, '') });
+          } else if (line.startsWith('CANDIDATE:')) {
+            turns.push({ role: 'user', text: line.replace(/^CANDIDATE:\s*/, '') });
+          }
+        }
+        return turns;
+      }
+      return null;
+    })(),
     audio,
   };
 }
@@ -122,42 +180,32 @@ function transformFeedbackData(feedbackData) {
 /* --- Build dynamic section list for SectionNav --- */
 function buildSections(data) {
   const sections = [];
+  const incomplete = data.insufficientData || data.meta?.confidence_level === 'low';
+
   sections.push({ id: 'hero', label: 'Overview' });
 
-  if (data.highlights?.bestMoment || data.highlights?.growthMoment) {
-    sections.push({ id: 'highlights', label: 'Highlights' });
-  }
-  if (data.answerBreakdown.length > 0) {
+  sections.push({ id: 'highlights', label: 'Highlights' });
+
+  if (data.answerBreakdown.length > 0 || incomplete) {
     sections.push({ id: 'answers', label: 'STAR Breakdown' });
   }
   if (data.dimensionScores.length > 0) {
     sections.push({ id: 'dimensions', label: 'Skills' });
   }
-  if (data.patterns.length > 0) {
+  if (data.patterns.length > 0 || incomplete) {
     sections.push({ id: 'patterns', label: 'Patterns' });
   }
-  if (data.strengths.length > 0 || data.areasForImprovement.length > 0) {
-    sections.push({ id: 'strengths', label: 'Strengths & Growth' });
-  }
-  if (data.cvAlignment?.available) {
-    sections.push({ id: 'cv-alignment', label: 'CV Alignment' });
-  }
-  if (data.nextSteps.length > 0) {
-    sections.push({ id: 'next-steps', label: 'Next Steps' });
-  }
-  // Coaching sections (new schema)
-  if (data.gapAnalysis) {
-    sections.push({ id: 'gap-analysis', label: 'Gap Analysis' });
-  }
-  if (data.projectSuggestions.length > 0) {
-    sections.push({ id: 'projects', label: 'Projects' });
-  }
-  if (data.roadmap) {
-    sections.push({ id: 'roadmap', label: 'Roadmap' });
-  }
-  if (data.interviewTips.length > 0) {
-    sections.push({ id: 'tips', label: 'Interview Tips' });
-  }
+  sections.push({ id: 'strengths', label: 'Strengths & Growth' });
+
+  sections.push({ id: 'cv-alignment', label: 'CV Alignment' });
+
+  sections.push({ id: 'next-steps', label: 'Next Steps' });
+
+  // Coaching sections
+  sections.push({ id: 'gap-analysis', label: 'Gap Analysis' });
+  sections.push({ id: 'projects', label: 'Projects' });
+  sections.push({ id: 'roadmap', label: 'Roadmap' });
+  sections.push({ id: 'tips', label: 'Interview Tips' });
   if (data.transcript?.length > 0) {
     sections.push({ id: 'replay', label: 'Replay' });
   }
@@ -169,7 +217,10 @@ function buildSections(data) {
 export default function ResultsPage() {
   const navigate = useNavigate();
   const { sessionId: urlSessionId } = useParams();
+  const [searchParams] = useSearchParams();
+  const sampleCase = searchParams.get('sample');
   const audioRef = useRef(null);
+  const { theme, toggleTheme } = useTheme();
   const hasStartedFetchRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [feedbackData, setFeedbackData] = useState(null);
@@ -190,6 +241,17 @@ export default function ResultsPage() {
 
     const fetchFeedback = async () => {
       try {
+        // Sample preview mode — load from /samples/<case-id>.json (served by Vite)
+        if (sampleCase) {
+          const res = await fetch(`/samples/${sampleCase}.json`);
+          if (!res.ok) throw new Error(`Sample not found: ${sampleCase}`);
+          const sampleData = await res.json();
+          const transformed = transformFeedbackData(sampleData);
+          setFeedbackData(transformed);
+          setIsLoading(false);
+          return;
+        }
+
         let sessionId = urlSessionId || localStorage.getItem('currentSessionId');
         const token = ensureAuthenticated();
         if (!token) return;
@@ -426,6 +488,8 @@ export default function ResultsPage() {
     roadmap,
     interviewTips,
     praiseWorthy,
+    insufficientData,
+    interviewPrepResources,
     transcript,
     audio,
   } = feedbackData;
@@ -443,7 +507,25 @@ export default function ResultsPage() {
           {/* Hero */}
           <section id="hero">
             <HeroBanner summary={summary} meta={meta} />
+
+            {/* Theme toggle */}
+            <div className="flex justify-end mb-4">
+              <button onClick={toggleTheme}
+                className="text-xs px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+              </button>
+            </div>
           </section>
+
+          {/* Incomplete session notice */}
+          {insufficientData && (
+            <Card delay={0.05} className="border-amber-200/80 bg-amber-50/60 dark:bg-amber-500/10 dark:border-amber-500/20">
+              <p className="text-base font-semibold text-amber-800 dark:text-amber-300">⚠️ Limited data</p>
+              <p className="text-base text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
+                This session ended before enough conversation was captured for a full evaluation. Scores and analysis are based on available data and may not reflect your full abilities. Some sections below are unavailable or limited.
+              </p>
+            </Card>
+          )}
 
           {/* Reading guide */}
           <Card delay={0.1} className="border-emerald-200/80 bg-emerald-50/60">
@@ -514,7 +596,7 @@ export default function ResultsPage() {
 
           {/* ── Coaching Sections (new schema) ── */}
 
-          {/* Gap Analysis */}
+          {/* Gap Analysis (resources embedded on missing skills) */}
           {gapAnalysis && (
             <section id="gap-analysis">
               <GapAnalysis gapAnalysis={gapAnalysis} />
@@ -535,10 +617,10 @@ export default function ResultsPage() {
             </section>
           )}
 
-          {/* Interview Tips */}
+          {/* Interview Tips (with STAR / behavioral prep resources) */}
           {interviewTips.length > 0 && (
             <section id="tips">
-              <InterviewTips tips={interviewTips} />
+              <InterviewTips tips={interviewTips} resources={interviewPrepResources} />
             </section>
           )}
 

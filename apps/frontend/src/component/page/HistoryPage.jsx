@@ -452,10 +452,12 @@ const HistoryPage = () => {
                                 </span>
                                 <span className="text-xs text-slate-500 dark:text-slate-600 flex items-center gap-1">
                                   <Clock size={11} />
-                                  {new Date(interview.createdAt).toLocaleDateString('en-NZ', {
+                                  {new Date(interview.createdAt).toLocaleString('en-NZ', {
                                     day: 'numeric',
                                     month: 'short',
-                                    year: 'numeric'
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
                                   })}
                                 </span>
                                 {interview.duration > 0 && (
