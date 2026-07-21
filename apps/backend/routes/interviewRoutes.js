@@ -1,6 +1,9 @@
 import express from 'express';
 import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import { randomUUID } from 'crypto';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 import { executeCode } from '../lib/judge0.js';
 import { generateJavaScriptHarness } from '../lib/harness/javascript.js';
 import { generatePythonHarness } from '../lib/harness/python.js';
@@ -42,6 +45,7 @@ import { expireStaleTechnicalSessions, getAbandonedSessionStatus } from '../lib/
 import { setSessionOwner } from '../lib/sessionOwnerStore.js';
 import { setSessionProgress } from '../lib/sessionProgressStore.js';
 import { getRandomQuestion, toPublicQuestionPayload } from '../lib/technicalQuestions.js';
+import { enrichWithResearch, extractSessionConfig } from '../lib/feedbackResearch.mjs';
 
 const PROMPT_SETUP_WEBHOOK_URL = process.env.PROMPT_SETUP_WEBHOOK_URL || 'http://localhost:5678/webhook/a24ea15d-5793-4e3a-bfc4-1d6ce125cac7';
 const AGENT_SETUP_WEBHOOK_URL = process.env.AGENT_SETUP_WEBHOOK_URL || 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
@@ -56,6 +60,18 @@ if (!FEEDBACK_CALLBACK_SECRET) {
 }
 const WEBHOOK_TIMEOUT_MS = 55_000;
 
+// Direct DeepSeek for behavioural feedback (replaces n8n callback roundtrip)
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || '';
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+
+// Canonical behavioural feedback prompt — single source of truth shared with the
+// eval harness (test-suite/behavioural/feedback-eval also reads this same file).
+// Edit apps/backend/prompts/behavioural_feedback.md to change coaching behaviour.
+const BEHAVIOURAL_FEEDBACK_PROMPT = require('fs').readFileSync(
+  require('path').join(__dirname, '..', 'prompts', 'behavioural_feedback.md'),
+  'utf8'
+);
+
 // Weighted scoring: backend computes overall from dimension scores (0-10)
 const DIMENSION_WEIGHTS = {
   'Correctness & Completeness': 0.25,
@@ -65,6 +81,140 @@ const DIMENSION_WEIGHTS = {
   'Code Quality': 0.15,
   'Independence': 0.10,
 };
+
+/**
+ * Generate behavioural feedback via DeepSeek directly (no n8n roundtrip).
+ * Returns { feedback, error?, errorType? } — caller handles errorType.
+ */
+async function generateBehaviouralFeedback({ sessionId, userId, agentId, conversationId, sessionData }) {
+  if (!DEEPSEEK_API_KEY) return { error: 'Feedback service not configured', errorType: 'config' };
+
+  // Step 1: Fetch transcript from ElevenLabs
+  let transcript = '';
+  let transcriptError = null;
+  if (conversationId) {
+    try {
+      const resolved = await resolveElevenLabsKey(userId, 'behavioral');
+      const transcriptData = await fetchConversationTranscript(resolved.apiKey, conversationId);
+      if (transcriptData?.transcript) {
+        if (Array.isArray(transcriptData.transcript)) {
+          transcript = transcriptData.transcript
+            .map(t => `${t.role === 'agent' ? 'INTERVIEWER' : 'CANDIDATE'}: ${t.message || t.text || ''}`)
+            .join('\n');
+        } else if (typeof transcriptData.transcript === 'string') {
+          transcript = transcriptData.transcript;
+        }
+      } else {
+        transcriptError = 'Transcript not yet available. The interview recording may still be processing.';
+      }
+    } catch (e) {
+      console.error(`Transcript fetch error for session ${sessionId}:`, e.message);
+      transcriptError = 'Could not fetch interview transcript. Please try again.';
+    }
+  }
+
+  if (transcriptError && !transcript) {
+    return { error: transcriptError, errorType: 'transcript_unavailable' };
+  }
+
+  const cvContext = sessionData?.interviewPrompt || sessionData?.interviewPlan || '';
+
+  const userMessage = [
+    `## Interview Context`,
+    cvContext ? cvContext.slice(0, 4000) : '(no context)',
+    '',
+    `## Transcript`,
+    transcript || '(no transcript)',
+  ].join('\n');
+
+  // Step 2: Call DeepSeek for feedback
+  let llmResp;
+  try {
+    const resp = await fetch(DEEPSEEK_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: BEHAVIOURAL_FEEDBACK_PROMPT },
+          { role: 'user', content: userMessage },
+        ],
+        temperature: 0.3,
+        max_tokens: 8192,
+        response_format: { type: 'json_object' },
+      }),
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`DeepSeek ${resp.status}: ${errText.slice(0, 200)}`);
+    }
+    llmResp = await resp.json();
+  } catch (e) {
+    console.error(`DeepSeek error for session ${sessionId}:`, e.message);
+    return { error: 'Our analysis service is temporarily unavailable. Please retry in a moment.', errorType: 'ai_unavailable' };
+  }
+
+  const content = llmResp.choices?.[0]?.message?.content || '{}';
+
+  // Step 3: Parse feedback JSON
+  let parsed;
+  try {
+    const cleaned = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch (e) {
+    console.error(`JSON parse error for session ${sessionId}:`, e.message);
+    // Return degraded feedback instead of failing entirely
+    parsed = {
+      overall_assessment: 'Feedback could not be generated. Please try again.',
+      dimension_scores: {},
+      gap_analysis: { summary: '', missing_skills: [], under_communicated_strengths: [], market_context: '' },
+      project_suggestions: [],
+      roadmap: { immediate: [], short_term: [], medium_term: [] },
+      interview_tips: [],
+      praise_worthy: [],
+      insufficient_data: true,
+      star_examples: [],
+      _parse_error: true,
+    };
+  }
+
+  // Step 4: Hard gate — force insufficient if too few candidate turns
+  const candidateTurns = transcript.match(/CANDIDATE:/g)?.length || 0;
+  if (candidateTurns < 2 && transcript.length < 100) {
+    parsed.insufficient_data = true;
+    if (parsed.dimension_scores) {
+      for (const dim of Object.values(parsed.dimension_scores)) {
+        dim.score = Math.min(dim.score || 1, 3);
+      }
+    }
+  }
+
+  // Step 5: Enrich with web research (real projects, courses, guides)
+  try {
+    // Same extraction the eval harness uses — parses role/company/seniority from
+    // explicit fields, the combined role string, or the interviewPrompt text.
+    const sessionConfig = extractSessionConfig(sessionData || {});
+    parsed = await enrichWithResearch(parsed, sessionConfig);
+  } catch (err) {
+    console.error(`[feedback-research] Enrichment failed for session ${sessionId}:`, err.message);
+    // Continue with unenriched feedback
+  }
+
+  return { feedback: parsed, _transcript: transcript || null };
+}
+
+function computeBehaviouralScore(feedback) {
+  if (feedback?.insufficient_data) return 10;
+  const dims = feedback?.dimension_scores || {};
+  const scores = Object.values(dims).map(d => d?.score || 0).filter(s => s > 0);
+  if (scores.length === 0) return 0;
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+  return Math.round(avg * 10); // 0-10 → 0-100
+}
 
 function computeOverallScore(parsedFeedback) {
   const dimensions = parsedFeedback?.dimensions || [];
@@ -532,6 +682,7 @@ const normalizeDurationSeconds = (duration) => {
 };
 
 const getSessionStatus = ({ feedback, durationSeconds }) => {
+  if (feedback?.insufficient_data) return 'incomplete';
   if (durationSeconds != null && durationSeconds < 600) return 'incomplete';
   if (feedback) return 'completed';
   return 'pending';
@@ -727,9 +878,7 @@ router.get('/user/interviews', async (req, res) => {
     const sessions = await prisma.session.findMany({
       where: {
         userId,
-        status: {
-          not: 'expired'
-        }
+        status: 'completed'
       },
       orderBy: { [orderByColumn]: sortDir },
       skip: offset,
@@ -739,9 +888,7 @@ router.get('/user/interviews', async (req, res) => {
     const totalCount = await prisma.session.count({
       where: {
         userId,
-        status: {
-          not: 'expired'
-        }
+        status: 'completed'
       }
     });
 
@@ -1795,77 +1942,87 @@ router.post('/session/:sessionId/generate-feedback', async (req, res) => {
     }
 
     markFeedbackGenerationInFlight(sessionId);
-    let keepInFlightLock = false;
 
     try {
-      const callbackUrl = buildFeedbackCallbackUrl(req, sessionId);
-      const body = await runFeedbackWorkflow({
+      const conversationId = session.conversationId || payloadBody.conversation_id || payloadBody.conversationId || null;
+
+      // Fire-and-forget: generate feedback async, return 202 immediately
+      generateBehaviouralFeedback({
+        sessionId,
         userId,
-        sessionId,
         agentId,
-        feedbackPrompt,
-        conversationId: session.conversationId || payloadBody.conversation_id || payloadBody.conversationId || null,
-        callbackUrl,
-        callbackSecret: FEEDBACK_CALLBACK_SECRET || null
-      });
+        conversationId,
+        sessionData: session,
+      }).then(async (result) => {
+        clearFeedbackGenerationInFlight(sessionId);
 
-      const immediateFeedback = extractImmediateFeedbackPayload(body);
-      if (!immediateFeedback) {
-        keepInFlightLock = true;
-        return res.status(202).json({
-          success: false,
-          inProgress: true,
-          sessionId,
-          callback: true,
-          message: 'Feedback generation started. Waiting for callback completion.'
+        if (result.error) {
+          console.error(`Feedback generation failed for ${sessionId}: ${result.error}`);
+          // Emit error via SSE
+          const { feedbackSseClients } = await import('./interviewCallbackRoutes.js');
+          const clients = feedbackSseClients?.get(sessionId);
+          if (clients) {
+            for (const client of clients) {
+              client.write(`event: feedback-error\ndata: ${JSON.stringify({ error: result.error, errorType: result.errorType })}\n\n`);
+              client.end();
+            }
+            feedbackSseClients.delete(sessionId);
+          }
+          return;
+        }
+
+        const feedback = result.feedback;
+        const score = computeBehaviouralScore(feedback);
+
+        // Embed transcript in feedback for frontend display
+        if (result._transcript) {
+          feedback.transcript = result._transcript;
+        }
+
+        const sessionStatus = getSessionStatus({ feedback, durationSeconds: session.duration });
+
+        await prisma.session.update({
+          where: { id: sessionId },
+          data: { feedback, status: sessionStatus, ...(score > 0 ? { score } : {}) },
         });
-      }
 
-      const envelope = extractFeedbackEnvelope({ feedbackPayload: immediateFeedback, rawPayload: body || {} });
-      const feedbackResult = envelope.feedbackForScoring;
-      const parsedFeedback = unwrapFeedback(feedbackResult);
-      let score = parsedFeedback?.overall_score || parsedFeedback?.overallScore || parsedFeedback?.score || 0;
-      if (score <= 5) score = Math.round(score * 20);
-      else if (score <= 10) score = Math.round(score * 10);
-
-      const durationSeconds = envelope.durationSeconds ?? normalizeDurationSeconds(session.duration);
-      const updateData = {
-        feedback: envelope.storedFeedback,
-        status: getSessionStatus({ feedback: feedbackResult, durationSeconds })
-      };
-      if (score > 0) {
-        updateData.score = score;
-      }
-
-      await prisma.session.update({
-        where: { id: sessionId },
-        data: updateData
+        // Push to SSE clients
+        const { feedbackSseClients } = await import('./interviewCallbackRoutes.js');
+        const { feedbackEventStore } = await import('./interviewCallbackRoutes.js');
+        if (feedbackEventStore) {
+          feedbackEventStore.set(sessionId, {
+            event: 'feedback-ready',
+            payload: { sessionId, status: sessionStatus, duration: session.duration, score, feedback },
+            closeConnection: true,
+          });
+        }
+        if (feedbackSseClients) {
+          const clients = feedbackSseClients.get(sessionId);
+          if (clients) {
+            for (const client of clients) {
+              client.write(`event: feedback-ready\ndata: ${JSON.stringify({ sessionId, status: sessionStatus, score, feedback })}\n\n`);
+              client.end();
+            }
+            feedbackSseClients.delete(sessionId);
+          }
+        }
+      }).catch(err => {
+        clearFeedbackGenerationInFlight(sessionId);
+        console.error(`Feedback async error for ${sessionId}:`, err);
       });
 
-      return res.json({
-        success: true,
+      // Return immediately — feedback is being generated in background
+      return res.status(202).json({
+        success: false,
+        inProgress: true,
         sessionId,
-        agentId,
-        feedback: immediateFeedback
+        message: 'Feedback generation started. Results will arrive via SSE.',
       });
     } catch (error) {
-      if (error?.code === 'WEBHOOK_TIMEOUT' || error?.name === 'AbortError') {
-        keepInFlightLock = true;
-        return res.status(202).json({
-          success: false,
-          inProgress: true,
-          sessionId,
-          callback: true,
-          message: 'Feedback generation is still processing. Waiting for callback completion.'
-        });
-      }
-
       console.error('Error generating feedback:', error);
       return res.status(500).json({ error: 'Failed to generate feedback', details: error.message });
     } finally {
-      if (!keepInFlightLock) {
-        clearFeedbackGenerationInFlight(sessionId);
-      }
+      clearFeedbackGenerationInFlight(sessionId);
     }
   } catch (error) {
     console.error('Error generating feedback:', error);

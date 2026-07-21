@@ -22,6 +22,7 @@ const feedbackSseClients = new Map();
 // Fallback store in case callback arrives before results SSE connects
 const feedbackEventStore = new Map();
 
+export { feedbackSseClients, feedbackEventStore };
 const AGENT_SETUP_WEBHOOK_URL = process.env.AGENT_SETUP_WEBHOOK_URL || 'http://localhost:5678/webhook/9b19cc19-9275-43c2-8e66-6bcb0642c639';
 const ELEVENLABS_CONVAI_BASE_URL = 'https://api.elevenlabs.io/v1/convai';
 const CREDIT_TOOL_NAME = 'getCreditStatus';
