@@ -52,7 +52,7 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Body parser — reduced from 50MB to 5MB (DoS protection)
@@ -62,22 +62,6 @@ app.use(express.urlencoded({ limit: '5mb', extended: true }));
 // Cookie parser (for httpOnly JWT cookies)
 app.use(cookieParser());
 
-// CSRF protection: verify X-CSRF-Token header matches csrf_token cookie for state-changing requests
-const csrfProtection = (req, res, next) => {
-  // Skip for GET, HEAD, OPTIONS (safe methods)
-  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
-  // Skip for MCP, test endpoints, and login/register (public auth endpoints)
-  if (req.path.startsWith('/mcp') || req.path.startsWith('/api/test') || req.path.startsWith('/api/auth/login') || req.path.startsWith('/api/auth/register')) return next();
-
-  const cookieToken = req.cookies?.csrf_token;
-  const headerToken = req.headers['x-csrf-token'];
-
-  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
-    return res.status(403).json({ error: 'CSRF token validation failed' });
-  }
-  next();
-};
-app.use(csrfProtection);
 app.use('/api/auth', authRoutes);
 app.use('/api/interview', interviewCallbackRoutes);
 app.use('/api/interview', authMiddleware, interviewRoutes);

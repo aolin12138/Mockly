@@ -12,11 +12,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch CSRF token on mount
-  useEffect(() => {
-    fetch('/api/auth/csrf-token', { credentials: 'include' }).catch(() => {});
-  }, []);
-
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -31,15 +26,9 @@ const Login = () => {
     setError('');
 
     try {
-      // Read CSRF token from cookie
-      const csrfToken = (document.cookie.match(/(?:^|;\\s*)csrf_token=([^;]*)/) || [])[1] || '';
-
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(formData),
       });

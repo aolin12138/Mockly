@@ -1,8 +1,4 @@
-import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-
-// Generate a CSRF token (double-submit cookie pattern)
-const generateCsrfToken = () => crypto.randomBytes(32).toString('hex');
 
 function authMiddleware(req, res, next) {
   // Primary: httpOnly cookie (XSS-safe). Fallback: Authorization header (backward compat).

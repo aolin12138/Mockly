@@ -25,19 +25,8 @@ export const ensureAuthenticated = () => {
   return true;
 };
 
-// Read CSRF token from cookie (for double-submit pattern)
-const getCsrfToken = () => {
-  if (typeof document === 'undefined') return '';
-  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/);
-  return match ? match[1] : '';
-};
-
 export const authFetch = async (url, options = {}) => {
-  const csrfToken = getCsrfToken();
-  const headers = {
-    ...(options.headers || {}),
-    ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
-  };
+  const headers = { ...(options.headers || {}) };
 
   // Try to use cookie-based auth (httpOnly, auto-sent).
   // If the cookie is missing, the server will return 401.

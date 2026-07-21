@@ -1,7 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { prisma } from '../prismaClient.js';
 
@@ -16,22 +15,6 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// CSRF token generation
-const generateCsrfToken = () => crypto.randomBytes(32).toString('hex');
-
-// Set CSRF cookie helper
-const setCsrfCookie = (res) => {
-  const csrfToken = generateCsrfToken();
-  res.cookie('csrf_token', csrfToken, {
-    httpOnly: false, // Must be readable by frontend JS
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 24 * 60 * 60 * 1000, // 24h
-    path: '/',
-  });
-  res.setHeader('X-CSRF-Token', csrfToken); // Also send in response header for initial load
-};
-
 // Password validation: min 8 chars, uppercase, lowercase, digit
 const isValidPassword = (password) => {
   if (!password || password.length < 8) return false;
@@ -45,12 +28,6 @@ const isValidPassword = (password) => {
 const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
-
-// GET endpoint to provide CSRF token before login
-router.get('/csrf-token', (req, res) => {
-  setCsrfCookie(res);
-  res.json({ ok: true });
-});
 
 // Register endpoint (rate-limited)
 router.post('/register', authLimiter, async (req, res) => {
@@ -111,9 +88,6 @@ router.post('/register', authLimiter, async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000, // 24h
       path: '/',
     });
-
-    // Set CSRF token cookie (readable by JS, verified on state-changing requests)
-    setCsrfCookie(res);
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -208,9 +182,6 @@ router.post('/login', authLimiter, async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000, // 24h
       path: '/',
     });
-
-    // Set CSRF token cookie
-    setCsrfCookie(res);
 
     res.json({
       message: 'Login successful',
