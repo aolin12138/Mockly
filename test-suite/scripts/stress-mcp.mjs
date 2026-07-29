@@ -5,7 +5,11 @@
  * Judge0 concurrency is already tested by our 4-concurrent scenario runs
  */
 const BASE = 'http://localhost:3000';
-const TEST_KEY = 'REDACTED';
+const TEST_KEY = process.env.TEST_API_KEY;
+if (!TEST_KEY) {
+  console.error('FATAL: TEST_API_KEY not set in environment');
+  process.exit(1);
+}
 
 async function setup(id, code) {
   const r = await fetch(`${BASE}/api/test/setup`, {
@@ -62,4 +66,4 @@ async function main() {
   console.log(`\nTotal: ${Date.now()-t0}ms`);
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch(e => { console.error(e.message); process.exit(1); });
